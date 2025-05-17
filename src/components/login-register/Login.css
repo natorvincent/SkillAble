@@ -1,0 +1,55 @@
+.loginbutton {
+    padding: 17px 40px;
+    width: 200px;
+    border-radius: 10px;
+    border: 0;
+    background-color: #8AC926;
+    letter-spacing: 1.5px;
+    font-size: 18px;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+    box-shadow: #7FB824;
+    color: hsl(0, 0%, 100%);
+    cursor: pointer;
+  }
+  
+  .loginbutton:hover {
+    background-color: #7FB824;
+  }
+  
+  .loginbutton:active {
+    background-color: #8AC926;
+    /*50, 168, 80*/
+    box-shadow: #7FB824;
+    transform: translateY(5px);
+    transition: 200ms;
+  }
+  .landingbutton {
+    padding: 17px 40px;
+    width: 300px;
+    border-radius: 25px;
+    border: 0;
+    background-color: #8AC926;
+    letter-spacing: 1.5px;
+    font-size: 18px;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+    box-shadow: #7FB824;
+    color: hsl(0, 0%, 100%);
+    cursor: pointer;
+  }
+  
+  .landingbutton:hover {
+    background-color: #7FB824;
+  }
+  
+  .landingbutton:active {
+    background-color: #8AC926;
+    /*50, 168, 80*/
+    box-shadow: #7FB824;
+    transform: translateY(5px);
+    transition: 200ms;
+  }
+
+
+  
