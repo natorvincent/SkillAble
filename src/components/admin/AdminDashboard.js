@@ -4,8 +4,12 @@ import ShieldIcon from '@mui/icons-material/Shield';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import GroupIcon from '@mui/icons-material/Group';
 import HomeIcon from '@mui/icons-material/Home';
+import SchoolIcon from '@mui/icons-material/School';
+import MenuBookIcon from '@mui/icons-material/MenuBook'; // Import for Lesson tab
 import AdminInterface from './AdminInterface';
 import TeachersList from './TeachersList';
+import ModuleManagement from './ModuleManagement';
+import LessonManagement from './LessonManagement'; // New import
 import Background from '../Background';
 import Navbar from '../Navbar';
 
@@ -86,7 +90,8 @@ const AdminDashboard = () => {
             <Tabs 
               value={activeTab} 
               onChange={handleTabChange} 
-              variant="fullWidth"
+              variant="scrollable"
+              scrollButtons="auto"
               sx={{
                 borderBottom: 1,
                 borderColor: 'divider',
@@ -106,11 +111,23 @@ const AdminDashboard = () => {
                 iconPosition="start" 
                 label="Teachers List" 
               />
+              <Tab 
+                icon={<SchoolIcon />} 
+                iconPosition="start" 
+                label="Modules" 
+              />
+              <Tab 
+                icon={<MenuBookIcon />} 
+                iconPosition="start" 
+                label="Lessons" 
+              />
             </Tabs>
             
             <Box sx={{ p: 3 }}>
               {activeTab === 0 && <AdminInterface />}
               {activeTab === 1 && <TeachersList />}
+              {activeTab === 2 && <ModuleManagement />}
+              {activeTab === 3 && <LessonManagement />}
             </Box>
           </Paper>
         </Container>

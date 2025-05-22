@@ -1,3 +1,4 @@
+// src/App.js
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import './App.css';
@@ -8,8 +9,9 @@ import Homepage from './components/Homepage';
 import AccountPage from './components/AccountPage';
 import AdminDashboard from './components/admin/AdminDashboard';
 import AdminRoute from './components/admin/AdminRoute';
+import ModuleDetails from './components/ModuleDetails';
+import PersonalHygieneLevel1 from './components/lesson/PersonalHygieneLevel1';
 
-// Create a custom hook to listen for localStorage changes
 function useLocalStorage(key, defaultValue) {
   const [value, setValue] = useState(() => {
     const storedValue = localStorage.getItem(key);
@@ -22,10 +24,8 @@ function useLocalStorage(key, defaultValue) {
       setValue(newValue === null ? defaultValue : newValue === 'true');
     };
 
-    // Set up event listener for changes in localStorage
     window.addEventListener('storage', handleStorageChange);
     
-    // Custom event for local changes (within same window)
     window.addEventListener('localStorageChange', handleStorageChange);
     
     return () => {
@@ -38,12 +38,10 @@ function useLocalStorage(key, defaultValue) {
 }
 
 function App() {
-  // Use the custom hook to track auth status
   const isLoggedIn = useLocalStorage('isLoggedIn', false);
   const isAdmin = useLocalStorage('isAdmin', false);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Set loaded state after a short delay to ensure consistent rendering
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoaded(true);
@@ -51,7 +49,6 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Show nothing until auth state is loaded
   if (!isLoaded) {
     return null;
   }
@@ -75,7 +72,19 @@ function App() {
         <Route path="/account" element={
           isLoggedIn ? <AccountPage /> : <Navigate to="/login" replace />
         } />
+  
+        <Route path="/module/:moduleId" element={
+          isLoggedIn ? <ModuleDetails /> : <Navigate to="/login" replace />
+        } />
         
+        <Route path="/lesson/hygiene/:lessonId" element={
+          isLoggedIn ? <PersonalHygieneLevel1 /> : <Navigate to="/login" replace />
+        } />
+        <Route path="/module/:moduleId/lesson/:lessonId" element={
+          isLoggedIn ? <PersonalHygieneLevel1 /> : <Navigate to="/login" replace />
+        } />
+        
+        {/* Admin Routes */}
         <Route 
           path="/admin/*" 
           element={

@@ -1,35 +1,44 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import './Navbar.css';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
+import StarIcon from '@mui/icons-material/Star';
+import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
+import { Box, Typography, Avatar } from '@mui/material';
+import { getStudentModuleProgressStats } from '../services/progressService';
+import avatarImage from '../assets/profile.png';
 
 function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
+  const [progressStats, setProgressStats] = useState(null);
+  const [moduleStats, setModuleStats] = useState(null);
   const dropdownRef = useRef(null);
   const isLogoutInProgress = useRef(false);
 
-  // Check login status on component mount and when location changes
   useEffect(() => {
     const checkLoginStatus = () => {
       const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
       setIsLoggedIn(loggedIn);
+      
+      if (loggedIn) {
+        fetchUserProfile();
+      }
     };
     
     checkLoginStatus();
     
-    // Listen for storage changes from other components
     window.addEventListener('localStorageChange', checkLoginStatus);
     
     return () => {
       window.removeEventListener('localStorageChange', checkLoginStatus);
     };
-  }, [location.pathname]); // Better to only depend on pathname
+  }, [location.pathname]);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -43,31 +52,77 @@ function Navbar() {
     };
   }, []);
 
+  const fetchUserProfile = async () => {
+    try {
+      const userEmail = localStorage.getItem("userEmail");
+      if (!userEmail) return;
+
+      let response = await fetch(`http://localhost:8080/api/students/profile?email=${userEmail}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        response = await fetch(`http://localhost:8080/api/teachers/profile?email=${userEmail}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json"
+          }
+        });
+        
+        if (!response.ok) return;
+      }
+
+      const profileData = await response.json();
+      setUserProfile(profileData);
+      
+      if (profileData.userType === "STUDENT") {
+        fetchProgressStats(profileData.id);
+      }
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+    }
+  };
+
+  const fetchProgressStats = async (studentId) => {
+    try {
+      const storedStudentId = localStorage.getItem('studentId') || studentId;
+      
+      if (!storedStudentId) return;
+      
+      // Using getStudentModuleProgressStats for overall progress stats
+      // We'll use module ID 1 as default, but you might want to aggregate across all modules
+      const progressResponse = await getStudentModuleProgressStats(storedStudentId, 1);
+      setProgressStats(progressResponse);
+      setModuleStats(progressResponse);
+    } catch (error) {
+      console.error('Error fetching progress stats:', error);
+    }
+  };
+
   const handleLogout = () => {
-    // Prevent multiple logouts
     if (isLogoutInProgress.current) return;
     isLogoutInProgress.current = true;
 
-    // Close dropdown
     setDropdownOpen(false);
     
-    // Clear all relevant localStorage items
     localStorage.removeItem('token');
     localStorage.removeItem('userEmail');
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('isAdmin');
     localStorage.removeItem('userType');
     
-    // Dispatch event to notify other components
     window.dispatchEvent(new Event('localStorageChange'));
     
-    // Update state to trigger re-render before navigating
     setIsLoggedIn(false);
+    setUserProfile(null);
+    setProgressStats(null);
+    setModuleStats(null);
     
-    // Navigate with replace to avoid back button issues
     navigate('/login', { replace: true });
     
-    // Reset flag after a delay
     setTimeout(() => {
       isLogoutInProgress.current = false;
     }, 500);
@@ -76,54 +131,60 @@ function Navbar() {
   const handleHomeClick = (e) => {
     e.preventDefault();
     
-    // Check current location
     const currentPath = location.pathname;
     
-    // At login or register pages, navigate to landing page
     if (currentPath === '/login' || currentPath === '/register') {
       navigate('/');
     }
-    // At landing page, stay at landing page
     else if (currentPath === '/') {
       navigate('/');
     }
-    // Anywhere else, go to homepage
     else {
       navigate('/homepage');
     }
   };
 
-  // Determine target for title and home link
   const getHomeTarget = () => {
     const currentPath = location.pathname;
     
-    // At login, register, or landing page, target should be landing page
     if (currentPath === '/login' || currentPath === '/register' || currentPath === '/') {
       return '/';
     }
-    // Anywhere else, target should be homepage
     else {
       return '/homepage';
     }
   };
 
-  // Check if we should show the profile dropdown
   const shouldShowProfileDropdown = () => {
     const currentPath = location.pathname;
-    // Don't show dropdown on landing, login, or register pages, or when not logged in
     return isLoggedIn && currentPath !== '/' && currentPath !== '/login' && currentPath !== '/register';
+  };
+
+  const shouldShowProgressStats = () => {
+    return isLoggedIn && userProfile?.userType === "STUDENT" && progressStats && location.pathname !== '/' && location.pathname !== '/login' && location.pathname !== '/register';
+  };
+
+  const getUserDisplayName = () => {
+    if (!userProfile) return "User";
+    
+    if (userProfile.userType === "STUDENT") {
+      return userProfile.firstName || "Student";
+    } else if (userProfile.userType === "TEACHER") {
+      const fullName = userProfile.name || "Teacher";
+      return fullName.split(' ')[0];
+    }
+    
+    return "User";
   };
 
   const homeTarget = getHomeTarget();
 
   return (
     <nav className="nav-bar">
-      {/* Left: Title */}
       <RouterLink to={homeTarget} style={{ textDecoration: 'none' }}>
         <div className="navbar-title">SkillAble</div>
       </RouterLink>
 
-      {/* Center: Navigation links */}
       <ul className="navbar-links">
         <li>
           <a href="/" onClick={handleHomeClick}>Home</a>
@@ -132,16 +193,108 @@ function Navbar() {
         <li><a href="#contact">Contact</a></li>
       </ul>
 
-      {/* Right: Only show profile dropdown when appropriate */}
       <div className="navbar-right">
+        {shouldShowProgressStats() && (
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 1.5, 
+            mr: 2,
+          }}>
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 1,
+              backgroundColor: 'white',
+              borderRadius: '25px',
+              padding: '8px 12px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              border: '1px solid rgba(0, 0, 0, 0.1)',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                backgroundColor: '#f8f9fa',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                transform: 'translateY(-1px)'
+              }
+            }}>
+              <MenuBookIcon sx={{ color: '#4a6cf7', fontSize: 20 }} />
+              <Typography variant="body2" sx={{ color: '#333', fontWeight: 600 }}>
+                {progressStats?.completedLessons || 0}
+              </Typography>
+            </Box>
+            
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 1,
+              backgroundColor: 'white',
+              borderRadius: '25px',
+              padding: '8px 12px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              border: '1px solid rgba(0, 0, 0, 0.1)',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                backgroundColor: '#f8f9fa',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                transform: 'translateY(-1px)'
+              }
+            }}>
+              <StarIcon sx={{ color: '#ffc107', fontSize: 20 }} />
+              <Typography variant="body2" sx={{ color: '#333', fontWeight: 600 }}>
+                {progressStats?.totalStars || 0}
+              </Typography>
+            </Box>
+
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 1,
+              backgroundColor: 'white',
+              borderRadius: '25px',
+              padding: '8px 12px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              border: '1px solid rgba(0, 0, 0, 0.1)',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                backgroundColor: '#f8f9fa',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                transform: 'translateY(-1px)'
+              }
+            }}>
+              <AssignmentTurnedInIcon sx={{ color: '#48bb78', fontSize: 20 }} />
+              <Typography variant="body2" sx={{ color: '#333', fontWeight: 600 }}>
+                {progressStats?.completedModules || 0}
+              </Typography>
+            </Box>
+          </Box>
+        )}
+
         {shouldShowProfileDropdown() && (
           <div className="profile-dropdown" ref={dropdownRef}>
             <div 
-              className="profile-dropdown-trigger" 
+              className="profile-dropdown-trigger-white" 
               onClick={() => setDropdownOpen(!dropdownOpen)}
             >
-              <AccountCircleIcon sx={{ fontSize: 32, color: "white" }} />
-              <ExpandMoreIcon sx={{ color: "white" }} />
+              <Avatar
+                src={avatarImage}
+                alt={getUserDisplayName()}
+                sx={{ 
+                  width: 32, 
+                  height: 32,
+                  mr: 1
+                }}
+              />
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  color: '#333', 
+                  fontWeight: 600,
+                  mr: 0.5
+                }}
+              >
+                {getUserDisplayName()}
+              </Typography>
+              <ExpandMoreIcon sx={{ color: "#666", fontSize: 20 }} />
             </div>
             
             {dropdownOpen && (

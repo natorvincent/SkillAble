@@ -1,152 +1,201 @@
-/* Navbar styles */
 .nav-bar {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr; /* Creates 3 equal columns */
-    align-items: center;
-    padding: 1rem 2rem;
-    background-color: transparent;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: transparent;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.navbar-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: white;
+  justify-self: start;
+}
+
+.navbar-links {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  gap: 2rem;
+  justify-self: center;
+  font-family: Poppins, sans-serif;
+}
+
+.navbar-right {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+}
+
+.navbar-links li a {
+  text-decoration: none;
+  color: white;
+  font-size: 1rem;
+  transition: color 0.3s, text-decoration 0.3s;
+}
+
+.navbar-links li a:hover {
+  text-decoration: underline;
+  color: white;
+}
+
+.navbar-links li a.active {
+  text-decoration: underline;
+}
+
+.navbar-buttons {
+  display: flex;
+  gap: 1rem; 
+}
+
+.login-btn {
+  border-style: none;
+  background-color: transparent;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-decoration: none;
+  color: white;
+}
+
+.register-btn {
+  background-color: #8AC926;
+  color: white;
+  border: none;
+  padding: 0.5rem 2rem;
+  border-radius: 15px;
+  cursor: pointer;
+  font-size: 16px;
+  text-decoration: none;
+  transition: background-color 0.3s;
+}
+
+.register-btn:hover {
+  background-color: #7FB824; 
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
   }
-  
-  /* Title styles - will align to left */
-  .navbar-title {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: white;
-    justify-self: start;
-  }
-  
-  /* Navigation Links container - will center in middle column */
+
   .navbar-links {
-    display: flex;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    gap: 2rem;
+    justify-content: center;
+    margin-top: 1rem;
+    gap: 1rem;
+  }
+}
+
+.profile-dropdown {
+  position: relative;
+}
+
+.profile-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 30px;
+  transition: background-color 0.2s;
+}
+
+.profile-dropdown-trigger:hover {
+  background-color: rgba(74, 108, 247, 0.1);
+}
+
+.profile-dropdown-trigger-white {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 25px;
+  background-color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.profile-dropdown-trigger-white:hover {
+  background-color: #f8f9fa;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.profile-dropdown-menu {
+  position: absolute;
+  top: 55px;
+  right: 0;
+  background-color: white;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  min-width: 180px;
+  z-index: 10;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-item {
+  padding: 12px 16px;
+  display: block;
+  text-decoration: none;
+  color: #333;
+  transition: background-color 0.2s;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.dropdown-item:hover {
+  background-color: #f5f7ff;
+  color: #4a6cf7;
+}
+
+@media (max-width: 1024px) {
+  .nav-bar {
+    grid-template-columns: auto 1fr auto;
+    gap: 1rem;
+  }
+  
+  .navbar-links {
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .nav-bar {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 1rem;
+    text-align: center;
+    padding: 1rem;
+  }
+  
+  .navbar-title {
     justify-self: center;
-    font-family: Poppins, sans-serifArial;
+  }
+  
+  .navbar-links {
+    justify-self: center;
+    gap: 1rem;
   }
   
   .navbar-right {
-    justify-self: end;
+    justify-self: center;
+    flex-direction: column;
+    gap: 1rem;
   }
-    /* Link styles */
-  .navbar-links li a {
-    text-decoration: none;
-    color: white;
-    font-size: 1rem;
-    transition: color 0.3s, text-decoration 0.3s;
+
+  .profile-dropdown-trigger-white {
+    padding: 6px 10px;
   }
-  
-  /* Hover effect for links */
-  .navbar-links li a:hover {
-    text-decoration: underline;
-    color: white;
-  }
-  
-  /* Active link style */
-  .navbar-links li a.active {
-    text-decoration: underline;
-  }
-  
-    
-    /* Navbar buttons styles */
-    .navbar-buttons {
-      display: flex;
-      gap: 1rem; 
-    }
-    
-    /* Login button styles */
-    .login-btn {
-      border-style: none;
-      background-color: transparent;
-      padding: 0.5rem 1rem;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 0.9rem;
-      text-decoration: none;
-      color: white;
-    }
-    
-    /* Register button styles */
-    .register-btn {
-      background-color: #8AC926;
-      color: white;
-      border: none;
-      padding: 0.5rem 2rem;
-      border-radius: 15px;
-      cursor: pointer;
-      font-size: 16px;
-      text-decoration: none;
-      transition: background-color 0.3s;
-    }
-    
-    /* Register button hover effect */
-    .register-btn:hover {
-      background-color: #7FB824; 
-    }
-    
-    /* Smooth scrolling behavior */
-    html {
-      scroll-behavior: smooth;
-    }
-    
-    /* Mobile responsiveness for navbar */
-    @media (max-width: 768px) {
-      .navbar {
-        flex-direction: column;
-      }
-    
-      .navbar-links {
-        justify-content: center;
-        margin-top: 1rem;
-        gap: 1rem;
-      }
-    }
-    /* Profile dropdown styles */
-  .profile-dropdown {
-    position: relative;
-  }
-  
-  .profile-dropdown-trigger {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    padding: 5px;
-    border-radius: 30px;
-    transition: background-color 0.2s;
-  }
-  
-  .profile-dropdown-trigger:hover {
-    background-color: rgba(74, 108, 247, 0.1);
-  }
-  
-  .profile-dropdown-menu {
-    position: absolute;
-    top: 45px;
-    right: 0;
-    background-color: white;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    border-radius: 10px;
-    min-width: 180px;
-    z-index: 10;
-    overflow: hidden;
-  }
-  
-  .dropdown-item {
-    padding: 12px 16px;
-    display: block;
-    text-decoration: none;
-    color: #333;
-    transition: background-color 0.2s;
-    cursor: pointer;
-  }
-  
-  .dropdown-item:hover {
-    background-color: #f5f7ff;
-    color: #4a6cf7;
-  }
-  
+}
