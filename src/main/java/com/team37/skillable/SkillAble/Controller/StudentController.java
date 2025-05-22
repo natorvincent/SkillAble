@@ -2,6 +2,7 @@ package com.team37.skillable.SkillAble.Controller;
 
 import com.team37.skillable.SkillAble.Entity.Student;
 import com.team37.skillable.SkillAble.Service.StudentService;
+import com.team37.skillable.SkillAble.dto.StudentProfileResponse;
 import com.team37.skillable.SkillAble.dto.StudentProfileUpdateRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,10 +18,11 @@ public class StudentController {
     private StudentService studentService;
 
     @GetMapping("/profile")
-    public ResponseEntity<Student> getStudentProfile(@RequestParam String email) {
+    public ResponseEntity<?> getStudentProfile(@RequestParam String email) {
         try {
-            Student profile = studentService.getStudentProfile(email);
-            return ResponseEntity.ok(profile);
+            Student student = studentService.getStudentProfile(email);
+            StudentProfileResponse response = StudentProfileResponse.fromEntity(student);
+            return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(null);
