@@ -31,6 +31,10 @@ public class Module {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "module", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference("module-moduleprogress")  // Add this
+    private List<ModuleProgress> moduleProgresses = new ArrayList<>();
+
+    @OneToMany(mappedBy = "module", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonManagedReference("lesson-module")
     private List<Lesson> lessons = new ArrayList<>();
 

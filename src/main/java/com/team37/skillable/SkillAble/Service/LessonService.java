@@ -37,4 +37,11 @@ public class LessonService {
     public void deleteLesson(int id) {
         lessonRepository.deleteById(id);
     }
+    public List<Lesson> getLessonsByActivity(String activity) {
+        return lessonRepository.findByActivityAndActiveTrue(activity);
+    }
+
+    public List<Lesson> getInteractiveLessons() {
+        return lessonRepository.findByActivityIsNotNullAndActiveTrue();
+    }
 }

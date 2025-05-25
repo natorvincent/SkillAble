@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 @Setter
 @Table(name = "module_progress")
 public class ModuleProgress {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
@@ -24,41 +23,27 @@ public class ModuleProgress {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "module_id", nullable = false)
-    @JsonBackReference
+    @JsonBackReference("module-moduleprogress")
     private Module module;
 
-    @Column(nullable = false)
-    private int completedLessons;
-
-    @Column(nullable = false)
-    private int totalLessons;
-
-    @Column(nullable = false)
-    private boolean completed;
-
-    @Column(nullable = false)
-    private double averageScore;
-
-    @Column(nullable = false)
-    private int totalStars;
-
-    private LocalDateTime startedAt;
-
+    private int completedLessons = 0;
+    private int totalLessons = 0;
+    private int totalStars = 0;
+    private double averageScore = 0.0;
+    private boolean completed = false;
     private LocalDateTime completedAt;
-
-    private LocalDateTime lastAccessedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     @PrePersist
     public void prePersist() {
-        startedAt = LocalDateTime.now();
-        lastAccessedAt = LocalDateTime.now();
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
     public void preUpdate() {
-        lastAccessedAt = LocalDateTime.now();
-
-        // If just completed, set the completed timestamp
+        updatedAt = LocalDateTime.now();
         if (completed && completedAt == null) {
             completedAt = LocalDateTime.now();
         }

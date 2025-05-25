@@ -11,15 +11,16 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class StudentProgressDTO {
+public class ModuleProgressDTO {
     private int id;
     private int studentId;
-    private int lessonId;
-    private String lessonTitle;
-    private int score;
-    private int maxScore;
+    private int moduleId;
+    private String moduleName;
+    private int completedLessons;
+    private int totalLessons;
+    private int totalStars;
+    private double averageScore;
     private boolean completed;
-    private int starsEarned;
     private LocalDateTime completedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

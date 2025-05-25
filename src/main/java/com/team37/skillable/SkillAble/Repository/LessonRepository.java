@@ -10,4 +10,6 @@ import java.util.List;
 public interface LessonRepository extends JpaRepository<Lesson, Integer> {
     List<Lesson> findByModuleIdAndActiveTrue(int moduleId);
     List<Lesson> findByModuleIdAndLevelAndActiveTrue(int moduleId, int level);
+    List<Lesson> findByActivityAndActiveTrue(String activity);
+    List<Lesson> findByActivityIsNotNullAndActiveTrue();
 }

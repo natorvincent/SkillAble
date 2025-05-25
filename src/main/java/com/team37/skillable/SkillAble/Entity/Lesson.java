@@ -33,6 +33,9 @@ public class Lesson {
     @Column(nullable = false)
     private String type;
 
+    private String activity;
+    private String activityPath;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -44,7 +47,6 @@ public class Lesson {
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference("lesson-progress")
     private List<StudentProgress> progressList = new ArrayList<>();
-
 
     @PrePersist
     public void prePersist() {

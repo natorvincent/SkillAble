@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 @Setter
 @Table(name = "student_progress")
 public class StudentProgress {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
@@ -27,35 +26,23 @@ public class StudentProgress {
     @JsonBackReference("lesson-progress")
     private Lesson lesson;
 
-    @Column(nullable = false)
-    private int score;
-
-    @Column(nullable = false)
-    private int maxScore;
-
-    @Column(nullable = false)
-    private boolean completed;
-
-    @Column(nullable = false)
-    private int starsEarned;
-
-    private LocalDateTime startedAt;
-
+    private int score = 0;
+    private int maxScore = 0;
+    private boolean completed = false;
+    private int starsEarned = 0;
     private LocalDateTime completedAt;
-
-    private LocalDateTime lastAccessedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     @PrePersist
     public void prePersist() {
-        startedAt = LocalDateTime.now();
-        lastAccessedAt = LocalDateTime.now();
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
     }
 
     @PreUpdate
     public void preUpdate() {
-        lastAccessedAt = LocalDateTime.now();
-
-        // If just completed, set the completed timestamp
+        updatedAt = LocalDateTime.now();
         if (completed && completedAt == null) {
             completedAt = LocalDateTime.now();
         }

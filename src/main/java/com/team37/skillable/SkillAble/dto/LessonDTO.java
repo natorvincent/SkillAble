@@ -32,6 +32,13 @@ public class LessonDTO {
     @JsonProperty("type")
     private String type;
 
+    // NEW FIELDS for activity support
+    @JsonProperty("activity")
+    private String activity;
+
+    @JsonProperty("activityPath")
+    private String activityPath;
+
     @JsonProperty("createdAt")
     private LocalDateTime createdAt;
 

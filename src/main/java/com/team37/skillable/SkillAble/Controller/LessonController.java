@@ -53,6 +53,24 @@ public class LessonController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // NEW ENDPOINT for activity-based queries
+    @GetMapping("/activity/{activity}")
+    public List<LessonDTO> getLessonsByActivity(@PathVariable String activity) {
+        List<Lesson> lessons = lessonService.getLessonsByActivity(activity);
+        return lessons.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    // NEW ENDPOINT for interactive lessons
+    @GetMapping("/interactive")
+    public List<LessonDTO> getInteractiveLessons() {
+        List<Lesson> lessons = lessonService.getInteractiveLessons();
+        return lessons.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
     @PostMapping
     public ResponseEntity<LessonDTO> createLesson(@RequestBody Lesson lesson) {
         try {
@@ -112,6 +130,8 @@ public class LessonController {
                 lesson.getDisplayOrder(),
                 lesson.isActive(),
                 lesson.getType(),
+                lesson.getActivity(),
+                lesson.getActivityPath(),
                 lesson.getCreatedAt(),
                 lesson.getUpdatedAt(),
                 lesson.getModule() != null ? lesson.getModule().getId() : 0,
