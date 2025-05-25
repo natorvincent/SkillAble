@@ -32,7 +32,8 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Visibility as ViewIcon,
-  MenuBook as LessonIcon
+  MenuBook as LessonIcon,
+  SportsEsports as GameIcon
 } from '@mui/icons-material';
 
 const LessonManagement = () => {
@@ -43,7 +44,6 @@ const LessonManagement = () => {
   const [editingLesson, setEditingLesson] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   
-  // Form state
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -51,7 +51,8 @@ const LessonManagement = () => {
     displayOrder: 1,
     active: true,
     type: 'multiple_choice',
-    moduleId: ''
+    moduleId: '',
+    activity: ''
   });
 
   const lessonTypes = [
@@ -60,6 +61,16 @@ const LessonManagement = () => {
     { value: 'matching', label: 'Matching' },
     { value: 'fill_blanks', label: 'Fill in the Blanks' },
     { value: 'true_false', label: 'True/False' }
+  ];
+
+  const activityOptions = [
+    {
+      value: 'PersonalHygieneLevel1',
+      label: 'Personal Hygiene Level 1',
+      description: 'Interactive drag-and-drop hygiene categorization game',
+      path: '/lesson/hygiene',
+      icon: '🧼'
+    }
   ];
 
   useEffect(() => {
@@ -72,7 +83,7 @@ const LessonManagement = () => {
       const response = await fetch('http://localhost:8080/api/lessons');
       if (response.ok) {
         const data = await response.json();
-        console.log('Fetched lessons:', data); // Debug log
+        console.log('Fetched lessons:', data);
         setLessons(data);
       } else {
         showSnackbar('Failed to fetch lessons', 'error');
@@ -90,9 +101,7 @@ const LessonManagement = () => {
       const response = await fetch('http://localhost:8080/api/modules');
       if (response.ok) {
         const data = await response.json();
-        console.log('Fetched modules:', data); // Debug log
-        console.log('Number of modules:', data.length); // Debug log
-        console.log('First module structure:', data[0]); // Debug log
+        console.log('Fetched modules:', data);
         setModules(data);
       } else {
         console.error('Failed to fetch modules, status:', response.status);
@@ -104,11 +113,31 @@ const LessonManagement = () => {
     }
   };
 
+  const getNextLevelAndOrder = (moduleId) => {
+    if (!moduleId) return { nextLevel: 1, nextOrder: 1 };
+
+    const moduleLessons = lessons.filter(lesson => {
+      return lesson.moduleId === moduleId || 
+             (lesson.module && lesson.module.id === moduleId);
+    });
+
+    if (moduleLessons.length === 0) {
+      return { nextLevel: 1, nextOrder: 1 };
+    }
+
+    const maxLevel = Math.max(...moduleLessons.map(lesson => lesson.level || 1));
+    const maxOrder = Math.max(...moduleLessons.map(lesson => lesson.displayOrder || 1));
+
+    return {
+      nextLevel: maxLevel + 1,
+      nextOrder: maxOrder + 1
+    };
+  };
+
   const handleOpenDialog = (lesson = null) => {
     if (lesson) {
       setEditingLesson(lesson);
       
-      // Determine moduleId from various possible sources
       let moduleId = '';
       if (lesson.moduleId) {
         moduleId = lesson.moduleId;
@@ -116,7 +145,7 @@ const LessonManagement = () => {
         moduleId = lesson.module.id;
       }
       
-      console.log('Opening dialog for lesson:', lesson, 'moduleId:', moduleId); // Debug log
+      console.log('Opening dialog for lesson:', lesson, 'moduleId:', moduleId);
       
       setFormData({
         title: lesson.title || '',
@@ -125,7 +154,8 @@ const LessonManagement = () => {
         displayOrder: lesson.displayOrder || 1,
         active: lesson.active !== false,
         type: lesson.type || 'multiple_choice',
-        moduleId: moduleId
+        moduleId: moduleId,
+        activity: lesson.activity || ''
       });
     } else {
       setEditingLesson(null);
@@ -136,7 +166,8 @@ const LessonManagement = () => {
         displayOrder: 1,
         active: true,
         type: 'multiple_choice',
-        moduleId: ''
+        moduleId: '',
+        activity: ''
       });
     }
     setDialogOpen(true);
@@ -152,7 +183,8 @@ const LessonManagement = () => {
       displayOrder: 1,
       active: true,
       type: 'multiple_choice',
-      moduleId: ''
+      moduleId: '',
+      activity: ''
     });
   };
 
@@ -163,9 +195,26 @@ const LessonManagement = () => {
     }));
   };
 
+  const handleModuleChange = (moduleId) => {
+    const { nextLevel, nextOrder } = getNextLevelAndOrder(moduleId);
+    
+    setFormData(prev => ({
+      ...prev,
+      moduleId: moduleId,
+      level: editingLesson ? prev.level : nextLevel,
+      displayOrder: editingLesson ? prev.displayOrder : nextOrder
+    }));
+  };
+
+  const handleTypeChange = (value) => {
+    setFormData(prev => ({
+      ...prev,
+      type: value
+    }));
+  };
+
   const handleSubmit = async () => {
     try {
-      // Validation
       if (!formData.title.trim()) {
         showSnackbar('Title is required', 'error');
         return;
@@ -175,11 +224,18 @@ const LessonManagement = () => {
         return;
       }
 
-      // Find the selected module
       const selectedModule = modules.find(m => m.id === formData.moduleId);
       if (!selectedModule) {
         showSnackbar('Selected module not found', 'error');
         return;
+      }
+
+      let activityPath = null;
+      if (formData.activity) {
+        const selectedActivity = activityOptions.find(a => a.value === formData.activity);
+        if (selectedActivity) {
+          activityPath = selectedActivity.path;
+        }
       }
 
       const lessonData = {
@@ -189,6 +245,8 @@ const LessonManagement = () => {
         displayOrder: parseInt(formData.displayOrder),
         active: formData.active,
         type: formData.type,
+        activity: formData.activity || null,
+        activityPath: activityPath,
         module: {
           id: formData.moduleId,
           name: selectedModule.name
@@ -253,35 +311,36 @@ const LessonManagement = () => {
   };
 
   const getModuleName = (lesson) => {
-    // Check if lesson has moduleName (from DTO)
     if (lesson.moduleName) {
       return lesson.moduleName;
     }
     
-    // Check if lesson has module object with name
     if (lesson.module && lesson.module.name) {
       return lesson.module.name;
     }
     
-    // Check if lesson has moduleId and find in modules list
     if (lesson.moduleId) {
       const module = modules.find(m => m.id === lesson.moduleId);
       if (module) return module.name;
     }
     
-    // Check if lesson.module has id and find in modules list
     if (lesson.module && lesson.module.id) {
       const module = modules.find(m => m.id === lesson.module.id);
       if (module) return module.name;
     }
     
-    console.log('Could not find module for lesson:', lesson); // Debug log
+    console.log('Could not find module for lesson:', lesson);
     return 'Unknown Module';
   };
 
   const getLessonTypeLabel = (type) => {
     const lessonType = lessonTypes.find(t => t.value === type);
     return lessonType ? lessonType.label : type;
+  };
+
+  const getActivityLabel = (activity) => {
+    const activityOption = activityOptions.find(a => a.value === activity);
+    return activityOption ? activityOption.label : activity;
   };
 
   if (loading) {
@@ -321,6 +380,7 @@ const LessonManagement = () => {
               <TableCell sx={{ fontWeight: 600 }}>Title</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Module</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Type</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>Activity</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Level</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Order</TableCell>
               <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
@@ -330,7 +390,7 @@ const LessonManagement = () => {
           <TableBody>
             {lessons.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} sx={{ textAlign: 'center', py: 4 }}>
+                <TableCell colSpan={8} sx={{ textAlign: 'center', py: 4 }}>
                   <Typography color="text.secondary">
                     No lessons found. Create your first lesson!
                   </Typography>
@@ -361,7 +421,25 @@ const LessonManagement = () => {
                       label={getLessonTypeLabel(lesson.type)} 
                       size="small"
                       variant="outlined"
+                      color="default"
                     />
+                  </TableCell>
+                  <TableCell>
+                    {lesson.activity ? (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <GameIcon sx={{ fontSize: 16, color: '#4a6cf7' }} />
+                        <Chip 
+                          label={getActivityLabel(lesson.activity)} 
+                          size="small"
+                          color="secondary"
+                          variant="outlined"
+                        />
+                      </Box>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        -
+                      </Typography>
+                    )}
                   </TableCell>
                   <TableCell>
                     <Chip 
@@ -402,20 +480,44 @@ const LessonManagement = () => {
         </Table>
       </TableContainer>
 
-      {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {editingLesson ? 'Edit Lesson' : 'Add New Lesson'}
+        <DialogTitle sx={{ 
+          backgroundColor: '#f8f9fa', 
+          borderBottom: '1px solid #e9ecef',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1
+        }}>
+          <LessonIcon sx={{ color: '#4a6cf7' }} />
+          <Typography variant="h6" fontWeight={600}>
+            {editingLesson ? 'Edit Lesson' : 'Add New Lesson'}
+          </Typography>
         </DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ mt: 2 }}>
           <Grid container spacing={3} sx={{ mt: 1 }}>
             <Grid item xs={12}>
+              <Box sx={{ 
+                p: 2, 
+                backgroundColor: '#f0f7ff', 
+                borderRadius: '8px', 
+                border: '1px solid #bde0ff',
+                mb: 2
+              }}>
+                <Typography variant="body2" color="#1565c0" fontWeight={500}>
+                  💡 Tip: Select a module first to automatically assign the next level and display order
+                </Typography>
+              </Box>
               <TextField
                 fullWidth
                 label="Lesson Title"
                 value={formData.title}
                 onChange={(e) => handleInputChange('title', e.target.value)}
                 required
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '8px'
+                  }
+                }}
               />
             </Grid>
             
@@ -427,6 +529,12 @@ const LessonManagement = () => {
                 onChange={(e) => handleInputChange('description', e.target.value)}
                 multiline
                 rows={3}
+                placeholder="Describe what students will learn in this lesson..."
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '8px'
+                  }
+                }}
               />
             </Grid>
 
@@ -435,8 +543,9 @@ const LessonManagement = () => {
                 <InputLabel>Module</InputLabel>
                 <Select
                   value={formData.moduleId}
-                  onChange={(e) => handleInputChange('moduleId', e.target.value)}
+                  onChange={(e) => handleModuleChange(e.target.value)}
                   label="Module"
+                  sx={{ borderRadius: '8px' }}
                 >
                   {modules.length === 0 ? (
                     <MenuItem disabled>
@@ -445,15 +554,28 @@ const LessonManagement = () => {
                   ) : (
                     modules.map((module) => (
                       <MenuItem key={module.id} value={module.id}>
-                        {module.name || module.title || `Module ${module.id}`}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Box sx={{ 
+                            width: 8, 
+                            height: 8, 
+                            borderRadius: '50%', 
+                            backgroundColor: module.active ? '#4caf50' : '#bdbdbd' 
+                          }} />
+                          {module.name || module.title || `Module ${module.id}`}
+                        </Box>
                       </MenuItem>
                     ))
                   )}
                 </Select>
               </FormControl>
               {modules.length === 0 && (
-                <Typography variant="caption" color="error" sx={{ mt: 1 }}>
-                  No modules found. Please create a module first.
+                <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
+                  ⚠️ No modules found. Please create a module first.
+                </Typography>
+              )}
+              {formData.moduleId && !editingLesson && (
+                <Typography variant="caption" color="success.main" sx={{ mt: 1, display: 'block', fontWeight: 500 }}>
+                  ✓ Level and order will be auto-assigned
                 </Typography>
               )}
             </Grid>
@@ -463,16 +585,67 @@ const LessonManagement = () => {
                 <InputLabel>Lesson Type</InputLabel>
                 <Select
                   value={formData.type}
-                  onChange={(e) => handleInputChange('type', e.target.value)}
+                  onChange={(e) => handleTypeChange(e.target.value)}
                   label="Lesson Type"
+                  sx={{ borderRadius: '8px' }}
                 >
                   {lessonTypes.map((type) => (
                     <MenuItem key={type.value} value={type.value}>
-                      {type.label}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ 
+                          minWidth: 20, 
+                          fontSize: '14px',
+                          opacity: 0.7
+                        }}>
+                          {type.value === 'multiple_choice' && '🔘'}
+                          {type.value === 'drag_drop' && '🎯'}
+                          {type.value === 'matching' && '🔗'}
+                          {type.value === 'fill_blanks' && '📝'}
+                          {type.value === 'true_false' && '✅'}
+                        </Box>
+                        {type.label}
+                      </Box>
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>Activity (Optional)</InputLabel>
+                <Select
+                  value={formData.activity}
+                  onChange={(e) => handleInputChange('activity', e.target.value)}
+                  label="Activity (Optional)"
+                  sx={{ borderRadius: '8px' }}
+                >
+                  <MenuItem value="">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, fontStyle: 'italic', opacity: 0.7 }}>
+                      <span>📄</span>
+                      No Interactive Activity
+                    </Box>
+                  </MenuItem>
+                  {activityOptions.map((activity) => (
+                    <MenuItem key={activity.value} value={activity.value}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <span style={{ fontSize: '18px' }}>{activity.icon}</span>
+                        <Box>
+                          <Typography variant="body2" fontWeight={500}>
+                            {activity.label}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {activity.description}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                🎮 Interactive activities provide hands-on learning experiences
+              </Typography>
             </Grid>
 
             <Grid item xs={12} sm={4}>
@@ -483,6 +656,16 @@ const LessonManagement = () => {
                 value={formData.level}
                 onChange={(e) => handleInputChange('level', parseInt(e.target.value) || 1)}
                 inputProps={{ min: 1, max: 10 }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '8px',
+                    backgroundColor: !editingLesson && formData.moduleId ? '#f0f7ff' : 'inherit'
+                  }
+                }}
+                helperText={!editingLesson && formData.moduleId ? 
+                  `🎯 Auto-assigned: Level ${getNextLevelAndOrder(formData.moduleId).nextLevel}` : 
+                  'Difficulty level (1-10)'
+                }
               />
             </Grid>
 
@@ -494,39 +677,77 @@ const LessonManagement = () => {
                 value={formData.displayOrder}
                 onChange={(e) => handleInputChange('displayOrder', parseInt(e.target.value) || 1)}
                 inputProps={{ min: 1 }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '8px',
+                    backgroundColor: !editingLesson && formData.moduleId ? '#f0f7ff' : 'inherit'
+                  }
+                }}
+                helperText={!editingLesson && formData.moduleId ? 
+                  `📋 Auto-assigned: Order ${getNextLevelAndOrder(formData.moduleId).nextOrder}` : 
+                  'Order in module sequence'
+                }
               />
             </Grid>
 
             <Grid item xs={12} sm={4}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.active}
-                    onChange={(e) => handleInputChange('active', e.target.checked)}
-                    color="primary"
-                  />
-                }
-                label="Active"
-              />
+              <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center' }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.active}
+                      onChange={(e) => handleInputChange('active', e.target.checked)}
+                      color="primary"
+                    />
+                  }
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <span>{formData.active ? '✅' : '⏸️'}</span>
+                      {formData.active ? 'Active' : 'Inactive'}
+                    </Box>
+                  }
+                />
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                  {formData.active ? 'Students can access this lesson' : 'Hidden from students'}
+                </Typography>
+              </Box>
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
+        <DialogActions sx={{ 
+          px: 3, 
+          py: 2, 
+          backgroundColor: '#f8f9fa', 
+          borderTop: '1px solid #e9ecef',
+          gap: 1
+        }}>
+          <Button 
+            onClick={handleCloseDialog}
+            sx={{ 
+              color: '#6c757d',
+              '&:hover': {
+                backgroundColor: '#e9ecef'
+              }
+            }}
+          >
+            Cancel
+          </Button>
           <Button 
             onClick={handleSubmit} 
             variant="contained"
+            startIcon={editingLesson ? <EditIcon /> : <AddIcon />}
             sx={{
               backgroundColor: '#4a6cf7',
-              '&:hover': { backgroundColor: '#3a5ce5' }
+              '&:hover': { backgroundColor: '#3a5ce5' },
+              borderRadius: '8px',
+              px: 3
             }}
           >
-            {editingLesson ? 'Update' : 'Create'} Lesson
+            {editingLesson ? 'Update Lesson' : 'Create Lesson'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar for notifications */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}

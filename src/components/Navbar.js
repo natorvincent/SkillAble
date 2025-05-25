@@ -91,9 +91,6 @@ function Navbar() {
       const storedStudentId = localStorage.getItem('studentId') || studentId;
       
       if (!storedStudentId) return;
-      
-      // Using getStudentModuleProgressStats for overall progress stats
-      // We'll use module ID 1 as default, but you might want to aggregate across all modules
       const progressResponse = await getStudentModuleProgressStats(storedStudentId, 1);
       setProgressStats(progressResponse);
       setModuleStats(progressResponse);

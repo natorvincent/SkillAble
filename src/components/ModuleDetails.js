@@ -9,6 +9,7 @@ import {
   Grid,
   CircularProgress,
   Divider,
+  IconButton,
   Chip,
   Card,
   CardContent,
@@ -32,6 +33,7 @@ import {
   VideoLibraryOutlined,
   TextSnippetOutlined,
   Lock,
+  LockOpen,
   Star as StarIcon,
   Score as ScoreIcon
 } from '@mui/icons-material';
@@ -188,20 +190,15 @@ function ModuleDetails() {
     }
   };
 
-  const isPersonalHygieneModule = () => {
-    return moduleId === '1' || moduleId === 1 || 
-           (module && (module.name?.toLowerCase().includes('hygiene') || 
-                      module.name?.toLowerCase().includes('personal hygiene')));
-  };
 
-  const isFirstLessonOfHygiene = (lesson, index) => {
-    return isPersonalHygieneModule() && (lesson.level === 1 || index === 0);
-  };
 
   const handleStartLesson = (lesson, index) => {
-    if (isFirstLessonOfHygiene(lesson, index)) {
-      navigate(`/lesson/hygiene/${lesson.id}`);
+    // Check if the lesson has a custom activity path
+    if (lesson.activityPath) {
+      // Navigate to the custom activity path with lesson ID
+      navigate(`${lesson.activityPath}/${lesson.id}`);
     } else {
+      // Default lesson route
       navigate(`/lessons/${lesson.id}`);
     }
   };
@@ -494,7 +491,7 @@ function ModuleDetails() {
                       ? activityType.replace(/_/g, ' ') 
                       : '';
                     
-                    const isHygieneFirstLesson = isFirstLessonOfHygiene(lesson, index);
+                    const hasActivity = lesson.activity && lesson.activityPath;
                     
                     return (
                       <Card
@@ -536,7 +533,7 @@ function ModuleDetails() {
                           </Box>
                         )}
                         
-                        {isHygieneFirstLesson && !completed && (
+                        {hasActivity && !completed && (
                           <Box 
                             sx={{ 
                               position: 'absolute', 
@@ -563,8 +560,7 @@ function ModuleDetails() {
                             justifyContent: 'center',
                             alignItems: 'center',
                             bgcolor: completed ? '#4caf50' : 
-                                    locked ? '#9e9e9e' : 
-                                    isHygieneFirstLesson ? '#4a6cf7' : '#4a6cf7',
+                                    locked ? '#9e9e9e' : '#4a6cf7',
                             color: 'white',
                             height: 100,
                             position: 'relative'
@@ -596,15 +592,15 @@ function ModuleDetails() {
                           </Typography>
                           
                           <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                            {isHygieneFirstLesson && (
+                            {hasActivity && (
                               <Chip 
-                                label={formattedActivityType} 
+                                label="Interactive Game" 
                                 size="small" 
                                 color="primary"
                                 sx={{ mb: 1 }}
                               />
                             )}
-                            {formattedActivityType && !isHygieneFirstLesson && (
+                            {formattedActivityType && (
                               <Chip 
                                 label={formattedActivityType} 
                                 size="small" 

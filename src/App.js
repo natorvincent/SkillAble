@@ -80,9 +80,7 @@ function App() {
         <Route path="/lesson/hygiene/:lessonId" element={
           isLoggedIn ? <PersonalHygieneLevel1 /> : <Navigate to="/login" replace />
         } />
-        <Route path="/module/:moduleId/lesson/:lessonId" element={
-          isLoggedIn ? <PersonalHygieneLevel1 /> : <Navigate to="/login" replace />
-        } />
+
         
         {/* Admin Routes */}
         <Route 
