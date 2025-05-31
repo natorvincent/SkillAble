@@ -157,6 +157,49 @@ public class ProgressController {
         }
     }
 
+    @GetMapping("/teacher/{teacherEmail}/completion-rate")
+    public ResponseEntity<Map<String, Object>> getTeacherCompletionRate(@PathVariable String teacherEmail) {
+        try {
+            List<Student> students = teacherService.getTeacherStudents(teacherEmail);
+
+            if (students.isEmpty()) {
+                return ResponseEntity.ok(Map.of("averageCompletionRate", 0.0));
+            }
+
+            double totalCompletionRate = 0.0;
+            int studentsWithProgress = 0;
+
+            for (Student student : students) {
+                List<ModuleProgress> moduleProgresses = progressService.getStudentModuleProgresses(student.getId());
+
+                if (!moduleProgresses.isEmpty()) {
+                    int totalCompleted = moduleProgresses.stream()
+                            .mapToInt(ModuleProgress::getCompletedLessons)
+                            .sum();
+                    int totalLessons = moduleProgresses.stream()
+                            .mapToInt(ModuleProgress::getTotalLessons)
+                            .sum();
+
+                    if (totalLessons > 0) {
+                        double studentCompletionRate = (double) totalCompleted / totalLessons * 100;
+                        totalCompletionRate += studentCompletionRate;
+                        studentsWithProgress++;
+                    }
+                }
+            }
+
+            double averageCompletionRate = studentsWithProgress > 0 ? totalCompletionRate / studentsWithProgress : 0.0;
+
+            return ResponseEntity.ok(Map.of(
+                    "averageCompletionRate", Math.round(averageCompletionRate * 100.0) / 100.0,
+                    "studentsWithProgress", studentsWithProgress,
+                    "totalStudents", students.size()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     private StudentProgressDTO convertToStudentProgressDTO(StudentProgress progress) {
         return new StudentProgressDTO(
                 progress.getId(),
