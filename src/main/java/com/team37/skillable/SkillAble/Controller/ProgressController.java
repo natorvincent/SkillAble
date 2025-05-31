@@ -2,10 +2,13 @@ package com.team37.skillable.SkillAble.Controller;
 
 import com.team37.skillable.SkillAble.Entity.ModuleProgress;
 import com.team37.skillable.SkillAble.Entity.StudentProgress;
+import com.team37.skillable.SkillAble.Entity.Student;
 import com.team37.skillable.SkillAble.Service.ProgressService;
+import com.team37.skillable.SkillAble.Service.TeacherService;
 import com.team37.skillable.SkillAble.dto.ModuleProgressDTO;
 import com.team37.skillable.SkillAble.dto.StudentProgressDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +23,9 @@ public class ProgressController {
 
     @Autowired
     private ProgressService progressService;
+
+    @Autowired
+    private TeacherService teacherService;
 
     @PostMapping("/lesson")
     public ResponseEntity<StudentProgressDTO> saveStudentLessonProgress(@RequestBody Map<String, Object> request) {
@@ -76,6 +82,79 @@ public class ProgressController {
                 .map(this::convertToModuleProgressDTO)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
+    }
+
+    @GetMapping("/teacher/{teacherEmail}/students-progress")
+    public ResponseEntity<List<Map<String, Object>>> getTeacherStudentsProgress(@PathVariable String teacherEmail) {
+        try {
+            List<Student> students = teacherService.getTeacherStudents(teacherEmail);
+            List<Map<String, Object>> studentsWithProgress = students.stream()
+                    .map(student -> {
+                        List<ModuleProgress> moduleProgresses = progressService.getStudentModuleProgresses(student.getId());
+
+                        Map<String, Object> studentData = Map.of(
+                                "id", student.getId(),
+                                "firstName", student.getFirstName() != null ? student.getFirstName() : "",
+                                "lastName", student.getLastName() != null ? student.getLastName() : "",
+                                "email", student.getEmail(),
+                                "moduleProgresses", moduleProgresses.stream()
+                                        .map(this::convertToModuleProgressDTO)
+                                        .collect(Collectors.toList())
+                        );
+                        return studentData;
+                    })
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(studentsWithProgress);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("/teacher/{teacherEmail}/student/{studentId}/detailed")
+    public ResponseEntity<Map<String, Object>> getDetailedStudentProgress(
+            @PathVariable String teacherEmail,
+            @PathVariable int studentId) {
+        try {
+            List<Student> teacherStudents = teacherService.getTeacherStudents(teacherEmail);
+            boolean isTeacherStudent = teacherStudents.stream()
+                    .anyMatch(student -> student.getId() == studentId);
+
+            if (!isTeacherStudent) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+
+            Student student = teacherStudents.stream()
+                    .filter(s -> s.getId() == studentId)
+                    .findFirst()
+                    .orElse(null);
+
+            if (student == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            List<ModuleProgress> moduleProgresses = progressService.getStudentModuleProgresses(studentId);
+            List<StudentProgress> lessonProgresses = progressService.getStudentLessonProgresses(studentId);
+
+            Map<String, Object> detailedProgress = Map.of(
+                    "student", Map.of(
+                            "id", student.getId(),
+                            "firstName", student.getFirstName() != null ? student.getFirstName() : "",
+                            "lastName", student.getLastName() != null ? student.getLastName() : "",
+                            "email", student.getEmail()
+                    ),
+                    "moduleProgresses", moduleProgresses.stream()
+                            .map(this::convertToModuleProgressDTO)
+                            .collect(Collectors.toList()),
+                    "lessonProgresses", lessonProgresses.stream()
+                            .map(this::convertToStudentProgressDTO)
+                            .collect(Collectors.toList())
+            );
+
+            return ResponseEntity.ok(detailedProgress);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     private StudentProgressDTO convertToStudentProgressDTO(StudentProgress progress) {

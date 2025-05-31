@@ -21,7 +21,6 @@ public class StudentService {
     @Autowired
     private TeacherRepository teacherRepository;
 
-    // Update student profile
     public void updateStudentProfile(StudentProfileUpdateRequest request) {
         Optional<Student> studentOpt = studentRepository.findByEmail(request.getEmail());
 
@@ -32,12 +31,11 @@ public class StudentService {
         Student student = studentOpt.get();
         student.setFirstName(request.getFirstName());
         student.setLastName(request.getLastName());
-        student.setAge(request.getAge());
+        student.setDateOfBirth(request.getDateOfBirth());  // Changed from setAge to setDateOfBirth
 
         studentRepository.save(student);
     }
 
-    // Get student profile - modified to return Student entity directly
     public Student getStudentProfile(String email) {
         Optional<Student> studentOpt = studentRepository.findByEmail(email);
 
@@ -48,12 +46,10 @@ public class StudentService {
         return studentOpt.get();
     }
 
-    // Get all students
     public List<Student> getAllStudents() {
         return studentRepository.findAll();
     }
 
-    // Delete student
     public void deleteStudent(String email) {
         Optional<Student> studentOpt = studentRepository.findByEmail(email);
 
@@ -64,7 +60,6 @@ public class StudentService {
         studentRepository.delete(studentOpt.get());
     }
 
-    // Get students that are not teachers
     public List<Student> getStudentsNotTeachers() {
         List<Student> allStudents = studentRepository.findAll();
         List<String> teacherEmails = teacherRepository.findAll().stream()
