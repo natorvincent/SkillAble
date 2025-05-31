@@ -11,6 +11,8 @@ import AdminDashboard from './components/admin/AdminDashboard';
 import AdminRoute from './components/admin/AdminRoute';
 import ModuleDetails from './components/ModuleDetails';
 import PersonalHygieneLevel1 from './components/lesson/PersonalHygieneLevel1';
+import ManageStudents from './components/teacher/ManageStudents';
+import StudentProgress from './components/teacher/StudentProgress';
 
 function useLocalStorage(key, defaultValue) {
   const [value, setValue] = useState(() => {
@@ -79,6 +81,13 @@ function App() {
         
         <Route path="/lesson/hygiene/:lessonId" element={
           isLoggedIn ? <PersonalHygieneLevel1 /> : <Navigate to="/login" replace />
+        } />
+
+        <Route path="/manageStudents" element={
+          isLoggedIn ? <ManageStudents /> : <Navigate to="/login" replace />
+        } />
+        <Route path="/studentProgress" element={
+          isLoggedIn ? <StudentProgress /> : <Navigate to="/login" replace />
         } />
 
         

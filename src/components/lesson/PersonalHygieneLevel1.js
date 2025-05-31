@@ -43,11 +43,9 @@ import comb from "../../assets/hygieneLevel1/comb.png"
 export default function PersonalHygieneLevel1() {
   const navigate = useNavigate();
   const { moduleId, lessonId } = useParams();
-  
   const [lesson, setLesson] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
   const [currentItemIndex, setCurrentItemIndex] = useState(0);
   const [answers, setAnswers] = useState([]);
   const [draggedItem, setDraggedItem] = useState(null);
@@ -61,6 +59,32 @@ export default function PersonalHygieneLevel1() {
   const [progressSaved, setProgressSaved] = useState(false);
   const [showTip, setShowTip] = useState('');
   
+  const getStudentId = () => {
+  const studentId = localStorage.getItem('studentId');
+  const userType = localStorage.getItem('userType');
+  
+  console.log("Getting student ID - Type:", userType, "ID:", studentId);
+  
+  if (userType !== 'STUDENT') {
+    console.error('User is not a student:', userType);
+    return null;
+  }
+  
+  if (!studentId || studentId === 'null') {
+    console.error('No student ID found in localStorage');
+    return null;
+  }
+  
+  const parsedId = parseInt(studentId, 10);
+  if (isNaN(parsedId)) {
+    console.error('Invalid student ID format:', studentId);
+    return null;
+  }
+  
+  return parsedId;
+};
+
+
   const activityData = {
     instructions: "Drag the item to where it belongs!",
     categories: [
@@ -103,25 +127,32 @@ export default function PersonalHygieneLevel1() {
   const progressPercentage = ((currentItemIndex + (gameCompleted ? 1 : 0)) / activityData.items.length) * 100;
 
   useEffect(() => {
-    const fetchUserProgress = async () => {
-      try {
-        const studentId = localStorage.getItem('studentId') || localStorage.getItem('userId');
-        if (!studentId || !lessonId) return;
-        
-        const progressResponse = await getStudentLessonProgress(studentId, lessonId);
-        if (progressResponse) {
-          setScore(progressResponse.score || 0);
-          if (progressResponse.completed) {
-            setShowTip("Great job! You finished this before. Want to try again?");
-          }
-        }
-      } catch (error) {
-        console.log('Starting fresh');
+  const fetchUserProgress = async () => {
+    try {
+      const studentId = getStudentId();
+      if (!studentId || !lessonId) {
+        console.log('Missing studentId or lessonId:', { studentId, lessonId });
+        return;
       }
-    };
-    
-    fetchUserProgress();
-  }, [lessonId]);
+      
+      console.log('Fetching progress for student:', studentId, 'lesson:', lessonId);
+      const progressResponse = await getStudentLessonProgress(studentId, lessonId);
+      if (progressResponse) {
+        setScore(progressResponse.score || 0);
+        if (progressResponse.completed) {
+          setShowTip("Great job! You finished this before. Want to try again?");
+        }
+        console.log('Loaded existing progress:', progressResponse);
+      } else {
+        console.log('No existing progress found - starting fresh');
+      }
+    } catch (error) {
+      console.log('Error fetching progress, starting fresh:', error);
+    }
+  };
+  
+  fetchUserProgress();
+}, [lessonId]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -219,21 +250,28 @@ const handleDrop = (e, category) => {
 
   try {
     setProgressSaving(true);
-    const studentId = localStorage.getItem('studentId') || localStorage.getItem('userId');
+    const studentId = getStudentId();
     
-    if (!studentId || !lessonId) return;
+    if (!studentId || !lessonId) {
+      console.error('Cannot save progress - missing data:', { studentId, lessonId });
+      return;
+    }
     
-    // Calculate final score based on correct answers
     const finalScore = answers.filter(answer => answer.isCorrect).length;
     
     const progressData = {
-      score: finalScore, // Use calculated final score
+      studentId: studentId,
+      lessonId: parseInt(lessonId, 10),
+      score: finalScore,
       maxScore: activityData.items.length,
       completed: true,
       starsEarned: getStarRating()
     };
     
+    console.log('Saving progress for student:', studentId, progressData);
     await saveStudentLessonProgress(studentId, lessonId, progressData);
+    
+    console.log('Progress saved successfully!');
     setProgressSaved(true);
     
   } catch (error) {

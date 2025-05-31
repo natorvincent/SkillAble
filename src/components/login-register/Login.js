@@ -43,11 +43,15 @@ function Login() {
         navigate('/homepage', { replace: true });
       }
     } else {
-      // Clean up any stale auth data
+      // Clean up any stale auth data - CLEAR ALL USER-SPECIFIC DATA
       localStorage.removeItem('token');
       localStorage.removeItem('userEmail');
       localStorage.removeItem('isAdmin');
       localStorage.removeItem('userType');
+      localStorage.removeItem('studentId');  // Add this
+      localStorage.removeItem('teacherId');  // Add this
+      localStorage.removeItem('userId');     // Add this
+      localStorage.removeItem('isLoggedIn');
     }
   }, [navigate]);
 
@@ -113,13 +117,17 @@ function Login() {
       const result = await response.text();
       console.log("Login successful, token:", result);
 
-      // Extract user role from token
+      // Parse token to extract user info
+      // Token format: "user_[userId]_[role]_[timestamp]"
+      let userId = null;
       let userRole = "STUDENT"; // Default role
+      
       try {
         const tokenParts = result.split('_');
-        if (tokenParts.length >= 3) {
+        if (tokenParts.length >= 4) {
+          userId = parseInt(tokenParts[1]);
           userRole = tokenParts[2];
-          console.log("Role detected from token:", userRole);
+          console.log("Parsed from token - User ID:", userId, "Role:", userRole);
         }
       } catch (e) {
         console.error("Error parsing token:", e);
@@ -129,14 +137,33 @@ function Login() {
       const isAdmin = userRole === "ADMIN";
       console.log("Is admin user:", isAdmin);
       
-      // First store all authentication data - do this BEFORE showing messages
+      // CLEAR ALL PREVIOUS USER DATA FIRST
+      localStorage.removeItem('studentId');
+      localStorage.removeItem('teacherId');
+      localStorage.removeItem('userId');
+      
+      // Store authentication data
       localStorage.setItem("token", result);
       localStorage.setItem("userEmail", email);
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("userType", userRole);
       localStorage.setItem("isAdmin", isAdmin ? "true" : "false");
       
-      // Then show success message
+      // Store user-specific ID based on role
+      if (userId) {
+        if (userRole === "STUDENT") {
+          localStorage.setItem("studentId", userId.toString());
+          console.log("Stored student ID:", userId);
+        } else if (userRole === "TEACHER") {
+          localStorage.setItem("teacherId", userId.toString());
+          console.log("Stored teacher ID:", userId);
+        } else if (userRole === "ADMIN") {
+          localStorage.setItem("userId", userId.toString());
+          console.log("Stored admin ID:", userId);
+        }
+      }
+      
+      // Show success message
       setSuccessMessage("Login successful!");
       setOpenSnackbar(true);
       
@@ -147,7 +174,10 @@ function Login() {
       console.log("localStorage after login:", {
         isLoggedIn: localStorage.getItem("isLoggedIn"),
         userType: localStorage.getItem("userType"),
-        isAdmin: localStorage.getItem("isAdmin")
+        isAdmin: localStorage.getItem("isAdmin"),
+        studentId: localStorage.getItem("studentId"),
+        teacherId: localStorage.getItem("teacherId"),
+        userId: localStorage.getItem("userId")
       });
       
       // Wait a moment before navigating to ensure localStorage values are set

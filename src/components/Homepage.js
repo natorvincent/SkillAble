@@ -52,7 +52,7 @@ function Homepage() {
   const [userProfile, setUserProfile] = useState(null);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [age, setAge] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [teacherName, setTeacherName] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -61,6 +61,10 @@ function Homepage() {
   const [modules, setModules] = useState([]);
   const [moduleProgress, setModuleProgress] = useState({});
   const [loadingModules, setLoadingModules] = useState(false);
+  const [enrolledStudentsCount, setEnrolledStudentsCount] = useState(0);
+  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [completionRate, setCompletionRate] = useState(0);
+  const [loadingCompletionRate, setLoadingCompletionRate] = useState(false);
   const navigate = useNavigate();
 
   const moduleImages = [
@@ -84,7 +88,11 @@ function Homepage() {
     if (userProfile && !isProfileComplete()) {
       setOpenProfileModal(true);
     } else if (userProfile && isProfileComplete()) {
-      fetchModules();
+      if (userProfile.userType === "STUDENT") {
+        fetchModules();
+      } else if (userProfile.userType === "TEACHER") {
+        fetchTeacherData();
+      }
     }
   }, [userProfile]);
 
@@ -116,7 +124,7 @@ function Homepage() {
       if (profileData.userType === "STUDENT") {
         setFirstName(profileData.firstName || "");
         setLastName(profileData.lastName || "");
-        setAge(profileData.age || "");
+        setDateOfBirth(profileData.dateOfBirth || "");
         
         if (profileData.id && !localStorage.getItem('studentId')) {
           localStorage.setItem('studentId', profileData.id);
@@ -134,6 +142,62 @@ function Homepage() {
     }
   };
 
+  const fetchTeacherData = async () => {
+    await Promise.all([fetchModules(), fetchEnrolledStudents(), fetchCompletionRate()]);
+  };
+
+  const fetchEnrolledStudents = async () => {
+    if (!userProfile || userProfile.userType !== "TEACHER") return;
+    
+    setLoadingStudents(true);
+    try {
+      const userEmail = localStorage.getItem("userEmail");
+      const response = await fetch(`http://localhost:8080/api/teachers/students?email=${userEmail}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch enrolled students");
+      }
+
+      const studentsData = await response.json();
+      setEnrolledStudentsCount(studentsData.length);
+      setLoadingStudents(false);
+    } catch (err) {
+      console.error("Error fetching enrolled students:", err);
+      setEnrolledStudentsCount(0);
+      setLoadingStudents(false);
+    }
+  };
+   const fetchCompletionRate = async () => {
+    if (!userProfile || userProfile.userType !== "TEACHER") return;
+    
+    setLoadingCompletionRate(true);
+    try {
+      const userEmail = localStorage.getItem("userEmail");
+      const response = await fetch(`http://localhost:8080/api/progress/teacher/${userEmail}/completion-rate`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch completion rate");
+      }
+
+      const completionData = await response.json();
+      setCompletionRate(Math.round(completionData.averageCompletionRate));
+      setLoadingCompletionRate(false);
+    } catch (err) {
+      console.error("Error fetching completion rate:", err);
+      setCompletionRate(0);
+      setLoadingCompletionRate(false);
+    }
+  };
   const fetchModuleProgress = async (moduleId, studentId) => {
     try {
       const moduleProgressResponse = await getStudentModuleProgress(studentId, moduleId);
@@ -145,29 +209,26 @@ function Homepage() {
   };
 
   const fetchModules = async () => {
-    if (!userProfile) return;
-    
     setLoadingModules(true);
     try {
       const userEmail = localStorage.getItem("userEmail");
-      const studentId = localStorage.getItem('studentId') || userProfile.id;
       
-      let url = "http://localhost:8080/api/modules";
-      
-      if (userProfile.userType === "STUDENT") {
-        const availableResponse = await fetch("http://localhost:8080/api/modules/available", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "Email": userEmail
-          }
-        });
-        
-        if (!availableResponse.ok) {
-          throw new Error("Failed to fetch available modules");
+      const availableResponse = await fetch("http://localhost:8080/api/modules/available", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Email": userEmail
         }
-        
-        const modulesData = await availableResponse.json();
+      });
+      
+      if (!availableResponse.ok) {
+        throw new Error("Failed to fetch available modules");
+      }
+      
+      const modulesData = await availableResponse.json();
+      
+      if (userProfile?.userType === "STUDENT") {
+        const studentId = localStorage.getItem('studentId') || userProfile.id;
         
         const moduleProgressPromises = modulesData.map(async (module) => {
           const progress = await fetchModuleProgress(module.id, studentId);
@@ -181,23 +242,9 @@ function Homepage() {
         });
         
         setModuleProgress(progressMap);
-        setModules(modulesData);
-      } else {
-        const response = await fetch(url, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json"
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error("Failed to fetch modules");
-        }
-        
-        const modulesData = await response.json();
-        setModules(modulesData);
       }
       
+      setModules(modulesData);
       setLoadingModules(false);
     } catch (err) {
       console.error("Error fetching modules:", err);
@@ -210,7 +257,7 @@ function Homepage() {
   const handleStudentFormSubmit = async (e) => {
     e.preventDefault();
     
-    if (!firstName || !lastName || !age) {
+    if (!firstName || !lastName || !dateOfBirth) {
       setError("All fields are required");
       setOpenSnackbar(true);
       return;
@@ -227,7 +274,7 @@ function Homepage() {
           email: userEmail,
           firstName,
           lastName,
-          age: parseInt(age)
+          dateOfBirth
         })
       });
 
@@ -306,7 +353,7 @@ function Homepage() {
     if (!userProfile) return false;
     
     if (userProfile.userType === "STUDENT") {
-      return userProfile.firstName && userProfile.lastName && userProfile.age;
+      return userProfile.firstName && userProfile.lastName && userProfile.dateOfBirth;
     } else if (userProfile.userType === "TEACHER") {
       return userProfile.name;
     }
@@ -394,7 +441,7 @@ function Homepage() {
                     Teacher Dashboard
                   </Typography>
                   <Typography variant="body1" color="#4a5568" sx={{ mt: 0.5 }}>
-                    Welcome back, {userProfile.name || 'Teacher'}! Manage your modules and track student progress.
+                    Welcome back, Teacher {userProfile.name || 'Teacher'}! Manage your modules and track student progress.
                   </Typography>
                 </Box>
               </Box>
@@ -444,7 +491,11 @@ function Homepage() {
                   }}>
                     <GroupIcon sx={{ fontSize: 40, color: '#eab308', mb: 1 }} />
                     <Typography variant="h5" fontWeight={600} color="#2d3748">
-                      --
+                      {loadingStudents ? (
+                        <CircularProgress size={20} sx={{ color: '#eab308' }} />
+                      ) : (
+                        enrolledStudentsCount
+                      )}
                     </Typography>
                     <Typography variant="body2" color="#4a5568">
                       Students Enrolled
@@ -461,7 +512,11 @@ function Homepage() {
                   }}>
                     <AssessmentIcon sx={{ fontSize: 40, color: '#ec4899', mb: 1 }} />
                     <Typography variant="h5" fontWeight={600} color="#2d3748">
-                      --
+                      {loadingCompletionRate ? (
+                        <CircularProgress size={20} sx={{ color: '#ec4899' }} />
+                      ) : (
+                        `${completionRate}%`
+                      )}
                     </Typography>
                     <Typography variant="body2" color="#4a5568">
                       Avg. Completion Rate
@@ -472,27 +527,9 @@ function Homepage() {
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={() => navigate("/create-module")}
-                  sx={{
-                    borderRadius: "12px",
-                    backgroundColor: "#4a6cf7",
-                    py: 1.5,
-                    px: 3,
-                    "&:hover": {
-                      backgroundColor: "#3a5ce5"
-                    },
-                    fontWeight: 600,
-                    textTransform: 'none'
-                  }}
-                >
-                  Create New Module
-                </Button>
-                <Button
                   variant="outlined"
                   startIcon={<GroupIcon />}
-                  onClick={() => navigate("/teacher/students")}
+                  onClick={() => navigate("/manageStudents")}
                   sx={{
                     borderRadius: "12px",
                     borderColor: "#4a6cf7",
@@ -512,7 +549,7 @@ function Homepage() {
                 <Button
                   variant="outlined"
                   startIcon={<AssessmentIcon />}
-                  onClick={() => navigate("/teacher/dashboard")}
+                  onClick={() => navigate("/studentProgress")}
                   sx={{
                     borderRadius: "12px",
                     borderColor: "#22c55e",
@@ -533,82 +570,72 @@ function Homepage() {
             </Paper>
           )}
 
-          <Paper 
-            sx={{ 
-              padding: 4, 
-              backgroundColor: "transparent",
-              mb: 4,
-              boxShadow: "none"
-            }}
-          >
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="h5" color="#2d3748" fontWeight={600} gutterBottom>
-                {userProfile?.userType === "STUDENT" ? "Your Learning Modules" : "Your Modules"}
-              </Typography>
-              <Typography variant="body1" color="#4a5568">
-                {userProfile?.userType === "STUDENT" 
-                  ? "Continue your learning journey with these assigned modules."
-                  : "Manage and monitor your created learning modules."}
-              </Typography>
-            </Box>
-            
-            {loadingModules ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-                <CircularProgress size={40} sx={{ color: "#4a6cf7" }} />
+          {userProfile?.userType === "STUDENT" && (
+            <Paper 
+              sx={{ 
+                padding: 4, 
+                backgroundColor: "transparent",
+                mb: 4,
+                boxShadow: "none"
+              }}
+            >
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h5" color="#2d3748" fontWeight={600} gutterBottom>
+                  Your Learning Modules
+                </Typography>
+                <Typography variant="body1" color="#4a5568">
+                  Continue your learning journey with these assigned modules.
+                </Typography>
               </Box>
-            ) : modules.length > 0 ? (
-              <Grid container spacing={4} sx={{ justifyContent: 'center'}}>
-                {modules.map((module, index) => {
-                  const progress = moduleProgress[module.id];
-                  const progressPercentage = getProgressPercentage(module.id);
-                  
-                  return (
-                    <Grid item xs={12} sm={12} md={6} key={module.id}>
-                      <Card 
-                        sx={{ 
-                          height: userProfile?.userType === "STUDENT" ? '550px' : '450px', 
-                          width: '450px',
-                          display: 'flex', 
-                          flexDirection: 'column',
-                          borderRadius: '15px',
-                          overflow: 'hidden',
-                          margin: '0 auto',
-                          backgroundColor: 'white',
-                          boxShadow: "none",
-                          border: '1px solid #e0e0e0'
-                        }}
-                      >
-                        <CardMedia
-                          component="img"
-                          sx={{
-                            height: 180,
-                            objectFit: 'cover'
+              
+              {loadingModules ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+                  <CircularProgress size={40} sx={{ color: "#4a6cf7" }} />
+                </Box>
+              ) : modules.length > 0 ? (
+                <Grid container spacing={4} sx={{ justifyContent: 'center'}}>
+                  {modules.map((module, index) => {
+                    const progress = moduleProgress[module.id];
+                    const progressPercentage = getProgressPercentage(module.id);
+                    
+                    return (
+                      <Grid item xs={12} sm={12} md={6} key={module.id}>
+                        <Card 
+                          sx={{ 
+                            height: '550px', 
+                            width: '450px',
+                            display: 'flex', 
+                            flexDirection: 'column',
+                            borderRadius: '15px',
+                            overflow: 'hidden',
+                            margin: '0 auto',
+                            backgroundColor: 'white',
+                            boxShadow: "none",
+                            border: '1px solid #e0e0e0'
                           }}
-                          image={getModuleImage(index)}
-                          alt={`${module.name || 'Module'} cover`}
-                        />
-                        <CardContent sx={{ flexGrow: 1, pb: 1, px: 3, pt: 3 }}>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                            <Typography variant="subtitle2" color="text.secondary">
-                              {module.name || "Module"}
+                        >
+                          <CardMedia
+                            component="img"
+                            sx={{
+                              height: 180,
+                              objectFit: 'cover'
+                            }}
+                            image={getModuleImage(index)}
+                            alt={`${module.name || 'Module'} cover`}
+                          />
+                          <CardContent sx={{ flexGrow: 1, pb: 1, px: 3, pt: 3 }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                              <Typography variant="subtitle2" color="text.secondary">
+                                {module.name || "Module"}
+                              </Typography>
+                            </Box>
+                            <Typography gutterBottom variant="h6" component="div" fontWeight={600}>
+                              {module.title}
                             </Typography>
-                            {userProfile?.userType === "TEACHER" && (
-                              <Chip
-                                label={module.active ? "Active" : "Inactive"}
-                                color={module.active ? "success" : "default"}
-                                size="small"
-                                sx={{ fontWeight: 500 }}
-                              />
-                            )}
-                          </Box>
-                          <Typography gutterBottom variant="h6" component="div" fontWeight={600}>
-                            {module.title}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                            {module.description}
-                          </Typography>
-                          
-                          {userProfile?.userType === "STUDENT" && (
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                              {module.description}
+                            </Typography>
+                            
                             <Box sx={{ mt: 2, mb: 2 }}>
                               {progress ? (
                                 <>
@@ -689,10 +716,8 @@ function Homepage() {
                                 </Box>
                               )}
                             </Box>
-                          )}
-                        </CardContent>
-                        <CardActions sx={{ p: 3, pt: 0, mt: 'auto' }}>
-                          {userProfile?.userType === "STUDENT" && (
+                          </CardContent>
+                          <CardActions sx={{ p: 3, pt: 0, mt: 'auto' }}>
                             <Button 
                               size="medium" 
                               variant="contained"
@@ -712,98 +737,30 @@ function Homepage() {
                             >
                               {getModuleButtonText(module.id)}
                             </Button>
-                          )}
-                          
-                          {userProfile?.userType === "TEACHER" && (
-                            <Stack direction="row" spacing={1} sx={{ width: '100%' }}>
-                              <Button 
-                                size="medium"
-                                variant="contained"
-                                onClick={() => navigate(`/module-details/${module.id}`)}
-                                startIcon={<VisibilityIcon />}
-                                sx={{ 
-                                  borderRadius: "8px",
-                                  backgroundColor: "#4a6cf7",
-                                  py: 1,
-                                  flex: 1,
-                                  "&:hover": {
-                                    backgroundColor: "#3a5ce5"
-                                  },
-                                  textTransform: 'none',
-                                  fontWeight: 500
-                                }}
-                              >
-                                View
-                              </Button>
-                              <Button 
-                                size="medium"
-                                variant="outlined"
-                                onClick={() => navigate(`/edit-module/${module.id}`)}
-                                startIcon={<EditIcon />}
-                                sx={{ 
-                                  borderRadius: "8px",
-                                  borderColor: "#4a6cf7",
-                                  color: "#4a6cf7",
-                                  py: 1,
-                                  flex: 1,
-                                  "&:hover": {
-                                    borderColor: "#3a5ce5",
-                                    backgroundColor: "rgba(74, 108, 247, 0.05)"
-                                  },
-                                  textTransform: 'none',
-                                  fontWeight: 500
-                                }}
-                              >
-                                Edit
-                              </Button>
-                            </Stack>
-                          )}
-                        </CardActions>
-                      </Card>
-                    </Grid>
-                  );
-                })}
-              </Grid>
-            ) : (
-              <Box sx={{ 
-                p: 5, 
-                textAlign: 'center', 
-                backgroundColor: '#f8f9fa',
-                borderRadius: '15px',
-                border: '1px dashed #dee2e6'
-              }}>
-                <Typography variant="h6" color="#4a5568" gutterBottom>
-                  No Modules Available
-                </Typography>
-                <Typography variant="body1" color="#4a5568" sx={{ mb: 3 }}>
-                  {userProfile?.userType === "STUDENT" 
-                    ? "No learning modules are available for you at the moment." 
-                    : "You haven't created any learning modules yet."}
-                </Typography>
-                
-                {userProfile?.userType === "TEACHER" && (
-                  <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={() => navigate("/create-module")}
-                    sx={{ 
-                      mt: 2,
-                      borderRadius: "10px",
-                      backgroundColor: "#4a6cf7",
-                      py: 1.5,
-                      px: 3,
-                      "&:hover": {
-                        backgroundColor: "#3a5ce5"
-                      },
-                      fontWeight: 500
-                    }}
-                  >
-                    Create Your First Module
-                  </Button>
-                )}
-              </Box>
-            )}
-          </Paper>
+                          </CardActions>
+                        </Card>
+                      </Grid>
+                    );
+                  })}
+                </Grid>
+              ) : (
+                <Box sx={{ 
+                  p: 5, 
+                  textAlign: 'center', 
+                  backgroundColor: '#f8f9fa',
+                  borderRadius: '15px',
+                  border: '1px dashed #dee2e6'
+                }}>
+                  <Typography variant="h6" color="#4a5568" gutterBottom>
+                    No Modules Available
+                  </Typography>
+                  <Typography variant="body1" color="#4a5568" sx={{ mb: 3 }}>
+                    No learning modules are available for you at the moment.
+                  </Typography>
+                </Box>
+              )}
+            </Paper>
+          )}
           
           {localStorage.getItem('isAdmin') === 'true' && (
             <Paper
@@ -922,10 +879,13 @@ function Homepage() {
                 <TextField
                   required
                   fullWidth
-                  label="Age"
-                  type="number"
-                  value={age}
-                  onChange={(e) => setAge(e.target.value)}
+                  label="Date of Birth"
+                  type="date"
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
                   sx={{ 
                     mb: 3,
                     "& .MuiOutlinedInput-root": {
