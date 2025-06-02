@@ -70,8 +70,21 @@ const LessonManagement = () => {
       description: 'Interactive drag-and-drop hygiene categorization game',
       path: '/lesson/hygiene',
       icon: '🧼'
-    }
-  ];
+    },
+
+    {
+     value: 'cooking-level-1',
+     label: 'Cooking Level 1',
+     description: 'Interactive drag-and-drop cooking ingredients game',
+     component: 'CookingLevel1',
+     path: '/lesson/cooking',
+     icon: '🍳'
+  },
+
+];
+
+
+  
 
   useEffect(() => {
     fetchLessons();

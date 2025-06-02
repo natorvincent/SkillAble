@@ -11,6 +11,7 @@ import AdminDashboard from './components/admin/AdminDashboard';
 import AdminRoute from './components/admin/AdminRoute';
 import ModuleDetails from './components/ModuleDetails';
 import PersonalHygieneLevel1 from './components/lesson/PersonalHygieneLevel1';
+import CookingLevel1 from './components/lesson/CookingLevel1';
 import ManageStudents from './components/teacher/ManageStudents';
 import StudentProgress from './components/teacher/StudentProgress';
 
@@ -89,6 +90,12 @@ function App() {
         <Route path="/studentProgress" element={
           isLoggedIn ? <StudentProgress /> : <Navigate to="/login" replace />
         } />
+
+        <Route path="/lesson/cooking/:lessonId" element={
+          isLoggedIn ? <CookingLevel1 /> : <Navigate to="/login" replace />
+        } />
+
+    
 
         
         {/* Admin Routes */}
