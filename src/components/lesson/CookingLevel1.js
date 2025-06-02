@@ -1,18 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { 
+  getStudentLessonProgress, 
+  saveStudentLessonProgress,
+  updateModuleProgress
+} from '../../services/progressService';
 
 export default function CookingIngredientsLevel1() {
-  // Simulate navigation and params without react-router-dom
-  const navigate = (path) => {
-    if (path === -1) {
-      window.history.back();
-    } else {
-      window.location.href = path;
-    }
-  };
-  
-  // Simulate useParams - you can replace this with actual values
-  const moduleId = "1";
-  const lessonId = "cooking-level-1";
+  const navigate = useNavigate();
+  const { moduleId, lessonId } = useParams();
   const [lesson, setLesson] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -146,8 +142,7 @@ export default function CookingIngredientsLevel1() {
         }
         
         console.log('Fetching progress for student:', studentId, 'lesson:', lessonId);
-        // Simulate progress fetching - replace with actual service call
-        const progressResponse = null; // await getStudentLessonProgress(studentId, lessonId);
+        const progressResponse = await getStudentLessonProgress(studentId, lessonId);
         if (progressResponse) {
           setScore(progressResponse.score || 0);
           if (progressResponse.completed) {
@@ -211,6 +206,7 @@ export default function CookingIngredientsLevel1() {
     }
   };
 
+  // Update the score state to reflect current game score
   const handleDrop = (e, category) => {
     e.preventDefault();
     setDropZoneActive(null);
@@ -281,11 +277,7 @@ export default function CookingIngredientsLevel1() {
       };
       
       console.log('Saving progress for student:', studentId, progressData);
-      // Simulate progress saving - replace with actual service call
-      // await saveStudentLessonProgress(studentId, lessonId, progressData);
-      
-      // Simulate delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await saveStudentLessonProgress(studentId, lessonId, progressData);
       
       console.log('Progress saved successfully!');
       setProgressSaved(true);
@@ -331,7 +323,7 @@ export default function CookingIngredientsLevel1() {
   };
 
   const handleGoHome = () => {
-    window.location.href = '/homepage';
+    navigate('/homepage');
   };
 
   const getCategoryItems = (categoryId) => {
@@ -712,7 +704,7 @@ export default function CookingIngredientsLevel1() {
                 Oops! Something went wrong.
               </h2>
               <button 
-                onClick={() => window.location.href = '/homepage'}
+                onClick={() => navigate('/homepage')}
                 style={{
                   ...styles.button,
                   backgroundColor: '#FF595E',
