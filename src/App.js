@@ -7,13 +7,11 @@ import Register from './components/login-register/Register';
 import LandingPage from './components/LandingPage';
 import Homepage from './components/Homepage';
 import AccountPage from './components/AccountPage';
+import BadgesPage from './components/BadgesPage';
 import AdminDashboard from './components/admin/AdminDashboard';
 import AdminRoute from './components/admin/AdminRoute';
 import ModuleDetails from './components/ModuleDetails';
 import PersonalHygieneLevel1 from './components/lesson/PersonalHygieneLevel1';
-import CookingLevel1 from './components/lesson/CookingLevel1';
-import ManageStudents from './components/teacher/ManageStudents';
-import StudentProgress from './components/teacher/StudentProgress';
 
 function useLocalStorage(key, defaultValue) {
   const [value, setValue] = useState(() => {
@@ -75,6 +73,11 @@ function App() {
         <Route path="/account" element={
           isLoggedIn ? <AccountPage /> : <Navigate to="/login" replace />
         } />
+        
+        <Route path="/badges" element={
+          !isLoggedIn ? <Navigate to="/login" replace /> : 
+            (isAdmin ? <Navigate to="/admin" replace /> : <BadgesPage />)
+        } />
   
         <Route path="/module/:moduleId" element={
           isLoggedIn ? <ModuleDetails /> : <Navigate to="/login" replace />
@@ -83,19 +86,6 @@ function App() {
         <Route path="/lesson/hygiene/:lessonId" element={
           isLoggedIn ? <PersonalHygieneLevel1 /> : <Navigate to="/login" replace />
         } />
-
-        <Route path="/manageStudents" element={
-          isLoggedIn ? <ManageStudents /> : <Navigate to="/login" replace />
-        } />
-        <Route path="/studentProgress" element={
-          isLoggedIn ? <StudentProgress /> : <Navigate to="/login" replace />
-        } />
-
-        <Route path="/lesson/cooking/:lessonId" element={
-          isLoggedIn ? <CookingLevel1 /> : <Navigate to="/login" replace />
-        } />
-
-    
 
         
         {/* Admin Routes */}

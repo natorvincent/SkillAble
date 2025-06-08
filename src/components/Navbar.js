@@ -110,13 +110,8 @@ function Navbar() {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('isAdmin');
     localStorage.removeItem('userType');
-    localStorage.removeItem("studentId"); 
-    localStorage.removeItem("teacherId");  
-    localStorage.removeItem("userId");    
     
     window.dispatchEvent(new Event('localStorageChange'));
-
-    console.log("All user data cleared from localStorage");
     
     setIsLoggedIn(false);
     setUserProfile(null);
@@ -146,6 +141,11 @@ function Navbar() {
     }
   };
 
+  const handleBadgesClick = (e) => {
+    e.preventDefault();
+    navigate('/badges');
+  };
+
   const getHomeTarget = () => {
     const currentPath = location.pathname;
     
@@ -164,6 +164,10 @@ function Navbar() {
 
   const shouldShowProgressStats = () => {
     return isLoggedIn && userProfile?.userType === "STUDENT" && progressStats && location.pathname !== '/' && location.pathname !== '/login' && location.pathname !== '/register';
+  };
+
+  const shouldShowMyBadges = () => {
+    return isLoggedIn && userProfile?.userType === "STUDENT";
   };
 
   const getUserDisplayName = () => {
@@ -304,6 +308,11 @@ function Navbar() {
                 <RouterLink to="/account" className="dropdown-item">
                   Account
                 </RouterLink>
+                {shouldShowMyBadges() && (
+                  <RouterLink to="/badges" className="dropdown-item">
+                    My Badges
+                  </RouterLink>
+                )}
                 <div className="dropdown-item" onClick={handleLogout}>
                   Log out
                 </div>
