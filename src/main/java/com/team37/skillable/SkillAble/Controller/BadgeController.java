@@ -39,6 +39,17 @@ public class BadgeController {
         return new ResponseEntity<>(createdBadge, HttpStatus.CREATED);
     }
 
+    //Student GET
+    @GetMapping("/student/{studentId}")
+    public ResponseEntity<Map<String, Object>> getStudentBadges(@PathVariable Long studentId) {
+        try {
+            Map<String, Object> badgesData = badgeService.calculateStudentBadges(studentId);
+            return new ResponseEntity<>(badgesData, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     // Update a badge
     @PutMapping("/{id}")
     public ResponseEntity<Badge> updateBadge(@PathVariable Long id, @RequestBody Badge badgeDetails) {
