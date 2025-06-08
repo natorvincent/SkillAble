@@ -53,7 +53,7 @@ public class AuthService {
         student.setPassword(request.getPassword());
         student.setFirstName(request.getFirstName() != null ? request.getFirstName() : "");
         student.setLastName(request.getLastName() != null ? request.getLastName() : "");
-        student.setAge(request.getAge() > 0 ? request.getAge() : 0);
+        student.setDateOfBirth(request.getDateOfBirth()); // Changed from setAge to setDateOfBirth
         student.setCreatedAt(LocalDateTime.now());
         student.setUpdatedAt(LocalDateTime.now());
         studentRepository.save(student);

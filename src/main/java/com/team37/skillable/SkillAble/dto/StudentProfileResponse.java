@@ -3,6 +3,7 @@ package com.team37.skillable.SkillAble.dto;
 import com.team37.skillable.SkillAble.Entity.Student;
 import lombok.Getter;
 import lombok.Setter;
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -11,7 +12,7 @@ public class StudentProfileResponse {
     private String email;
     private String firstName;
     private String lastName;
-    private int age;
+    private LocalDate dateOfBirth;  // Changed from int age to LocalDate dateOfBirth
     private String userType = "STUDENT";
 
     public static StudentProfileResponse fromEntity(Student student) {
@@ -20,7 +21,7 @@ public class StudentProfileResponse {
         response.setEmail(student.getEmail());
         response.setFirstName(student.getFirstName());
         response.setLastName(student.getLastName());
-        response.setAge(student.getAge());
+        response.setDateOfBirth(student.getDateOfBirth());  // Changed from getAge to getDateOfBirth
         return response;
     }
 }
