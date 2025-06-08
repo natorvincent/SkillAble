@@ -110,7 +110,11 @@ function Navbar() {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('isAdmin');
     localStorage.removeItem('userType');
-    
+    localStorage.removeItem("studentId"); 
+    localStorage.removeItem("teacherId");  
+    localStorage.removeItem("userId");    
+
+
     window.dispatchEvent(new Event('localStorageChange'));
     
     setIsLoggedIn(false);
