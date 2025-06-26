@@ -313,8 +313,8 @@ function Navbar() {
                   Account
                 </RouterLink>
                 {shouldShowMyBadges() && (
-                  <RouterLink to="/badges" className="dropdown-item">
-                    My Badges
+                  <RouterLink to="/achievements" className="dropdown-item">
+                    Achievements
                   </RouterLink>
                 )}
                 <div className="dropdown-item" onClick={handleLogout}>

@@ -333,7 +333,7 @@ function BadgesPage() {
                 fontSize: '14px',
                 fontWeight: 600
               }}>
-                Your Badges
+               Achievements
               </Box>
             </Typography>
 
@@ -451,27 +451,6 @@ function BadgesPage() {
             </Grid>
           </Box>
 
-          {/* Earn More Badges Button */}
-          <Box sx={{ textAlign: 'center', mt: 4 }}>
-            <Box sx={{
-              backgroundColor: '#8bc34a',
-              color: 'white',
-              padding: '12px 24px',
-              borderRadius: '25px',
-              fontSize: '16px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'inline-block',
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                backgroundColor: '#7cb342',
-                transform: 'translateY(-2px)',
-                boxShadow: '0 4px 12px rgba(139, 195, 74, 0.3)'
-              }
-            }}>
-              Earn more badges
-            </Box>
-          </Box>
         </Container>
       </div>
     </div>

@@ -7,7 +7,7 @@ import Register from './components/login-register/Register';
 import LandingPage from './components/LandingPage';
 import Homepage from './components/Homepage';
 import AccountPage from './components/AccountPage';
-import BadgesPage from './components/BadgesPage';
+import BadgesPage from './components/AchievementsPage';
 import AdminDashboard from './components/admin/AdminDashboard';
 import AdminRoute from './components/admin/AdminRoute';
 import ModuleDetails from './components/ModuleDetails';
@@ -15,6 +15,7 @@ import PersonalHygieneLevel1 from './components/lesson/PersonalHygieneLevel1';
 import CookingLevel1 from './components/lesson/CookingLevel1';
 import ManageStudents from './components/teacher/ManageStudents';
 import StudentProgress from './components/teacher/StudentProgress';
+import AchievementsPage from './components/AchievementsPage';
 
 function useLocalStorage(key, defaultValue) {
   const [value, setValue] = useState(() => {
@@ -77,11 +78,12 @@ function App() {
           isLoggedIn ? <AccountPage /> : <Navigate to="/login" replace />
         } />
         
-        <Route path="/badges" element={
+     
+        <Route path="/achievements" element={
           !isLoggedIn ? <Navigate to="/login" replace /> : 
-            (isAdmin ? <Navigate to="/admin" replace /> : <BadgesPage />)
+            (isAdmin ? <Navigate to="/admin" replace /> : <AchievementsPage/>)
         } />
-  
+
         <Route path="/module/:moduleId" element={
           isLoggedIn ? <ModuleDetails /> : <Navigate to="/login" replace />
         } />
