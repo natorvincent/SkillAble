@@ -6,11 +6,11 @@ import {
   updateModuleProgress
 } from '../../services/progressService';
 
-export default function CookingLevel1() {
+export default function CookingActionsLevel2() {
   const navigate = useNavigate();
   const { moduleId, lessonId } = useParams();
   
-  const [currentIngredient, setCurrentIngredient] = useState(0);
+  const [currentAction, setCurrentAction] = useState(0);
   const [gameMode, setGameMode] = useState('learn'); // 'learn' or 'practice'
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -24,51 +24,71 @@ export default function CookingLevel1() {
   const [showTip, setShowTip] = useState('');
   
   // Level progression props
-  const [currentLevel] = useState(1); // Level 1
-  const [maxLevel] = useState(3); // Total number of levels available
-  const [moduleIdentifier] = useState('cooking-basics'); // Module identifier
-  const [lessonIdentifier] = useState('ingredients'); // Lesson identifier
+  const [currentLevel] = useState(2); // Level 2
+  const [maxLevel] = useState(3);
+  const [moduleIdentifier] = useState('cooking-basics');
+  const [lessonIdentifier] = useState('cooking-actions');
 
-  const ingredients = [
+  // Level 2: Basic Cooking Actions - Building on ingredient knowledge
+  const cookingActions = [
     { 
       id: 1, 
-      name: "EGG", 
+      name: "CRACK", 
       emoji: "🥚", 
-      color: "#FFF3E0",
-      sound: "egg",
-      description: "We crack eggs to cook them",
-      encouragement: "Great job! Eggs are for breakfast!"
+      actionEmoji: "",
+      color: "#FFF3E0", // Soft orange
+      sound: "crack",
+      description: "We crack eggs by tapping them gently on a bowl",
+      encouragement: "Great! You know how to crack eggs safely!",
+      demonstration: "Tap the egg, then pull apart with your thumbs"
     },
     { 
       id: 2, 
-      name: "MILK", 
+      name: "POUR", 
       emoji: "🥛", 
-      color: "#E8F5E8",
-      sound: "milk", 
-      description: "Milk is white and good to drink",
-      encouragement: "Wonderful! Milk comes from cows!"
+      actionEmoji: "",
+      color: "#E8F5E8", // Soft green
+      sound: "pour", 
+      description: "We pour milk slowly into a cup or bowl",
+      encouragement: "Perfect! Pouring slowly prevents spills!",
+      demonstration: "Tilt the container slowly and steadily"
     },
     { 
       id: 3, 
-      name: "BREAD", 
+      name: "SLICE", 
       emoji: "🍞", 
-      color: "#FFF8E1",
-      sound: "bread",
-      description: "Bread is soft and we can make toast",
-      encouragement: "Excellent! Bread is yummy!"
+      actionEmoji: "",
+      color: "#FFF8E1", // Soft yellow
+      sound: "slice",
+      description: "We slice bread carefully with a knife",
+      encouragement: "Excellent! Always be careful with knives!",
+      demonstration: "Use a sawing motion, keep fingers away from blade"
     },
     { 
       id: 4, 
-      name: "APPLE", 
+      name: "WASH", 
       emoji: "🍎", 
-      color: "#FFEBEE",
-      sound: "apple",
-      description: "Apples are red and crunchy",
-      encouragement: "Amazing! Apples are healthy!"
+      actionEmoji: "",
+      color: "#FFEBEE", // Soft pink
+      sound: "wash",
+      description: "We wash apples with clean water before eating",
+      encouragement: "Wonderful! Clean food is healthy food!",
+      demonstration: "Rinse under running water and rub gently"
+    },
+    { 
+      id: 5, 
+      name: "MIX", 
+      emoji: "🥣", 
+      actionEmoji: "",
+      color: "#F3E5F5", // Soft purple
+      sound: "mix",
+      description: "We mix ingredients together with a spoon",
+      encouragement: "Amazing! Mixing makes ingredients combine!",
+      demonstration: "Stir in circles, scrape the sides of the bowl"
     }
   ];
 
-  const currentItem = ingredients[currentIngredient];
+  const currentItem = cookingActions[currentAction];
 
   // Get student ID from localStorage
   const getStudentId = () => {
@@ -104,7 +124,7 @@ export default function CookingLevel1() {
         if (!studentId || !lessonId) {
           console.log('Missing studentId or lessonId:', { studentId, lessonId });
           setLoading(false);
-          setShowTip('Let\'s learn about cooking ingredients!');
+          setShowTip('Ready to learn cooking actions? Let\'s get started!');
           return;
         }
         
@@ -113,18 +133,18 @@ export default function CookingLevel1() {
         if (progressResponse) {
           setScore(progressResponse.score || 0);
           if (progressResponse.completed) {
-            setShowTip("Great job! You finished this before. Want to try again?");
+            setShowTip("Awesome! You've completed this level before. Want to practice more?");
           } else {
-            setShowTip('Let\'s learn about cooking ingredients!');
+            setShowTip('Ready to learn cooking actions? Let\'s get started!');
           }
           console.log('Loaded existing progress:', progressResponse);
         } else {
           console.log('No existing progress found - starting fresh');
-          setShowTip('Let\'s learn about cooking ingredients!');
+          setShowTip('Ready to learn cooking actions? Let\'s get started!');
         }
       } catch (error) {
         console.log('Error fetching progress, starting fresh:', error);
-        setShowTip('Let\'s learn about cooking ingredients!');
+        setShowTip('Ready to learn cooking actions? Let\'s get started!');
       } finally {
         setLoading(false);
       }
@@ -133,19 +153,22 @@ export default function CookingLevel1() {
     fetchUserProgress();
   }, [lessonId]);
 
-  // Simple audio feedback (using speech synthesis)
+  // Gentle audio feedback for cooking instructions
   const speak = (text) => {
     if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.8;
-      utterance.pitch = 1.2;
+      utterance.rate = 0.7; // Slower for cooking instructions
+      utterance.pitch = 1.1; 
+      utterance.volume = 0.8;
       speechSynthesis.speak(utterance);
     }
   };
 
   const handleLearnMode = () => {
     if (autoPlayEnabled) {
-      speak(currentItem.name);
+      setTimeout(() => {
+        speak(`${currentItem.name}. ${currentItem.description}`);
+      }, 500);
     }
   };
 
@@ -153,23 +176,22 @@ export default function CookingLevel1() {
     if (gameMode === 'learn' && !loading) {
       handleLearnMode();
     }
-  }, [currentIngredient, gameMode, loading]);
+  }, [currentAction, gameMode, loading]);
 
-  const nextIngredient = () => {
-    if (currentIngredient < ingredients.length - 1) {
-      setCurrentIngredient(prev => prev + 1);
+  const nextAction = () => {
+    if (currentAction < cookingActions.length - 1) {
+      setCurrentAction(prev => prev + 1);
       setSelectedAnswer(null);
       setShowFeedback(false);
     } else {
-      // All ingredients learned, offer practice
       setGameMode('practice');
-      setCurrentIngredient(0);
+      setCurrentAction(0);
     }
   };
 
-  const previousIngredient = () => {
-    if (currentIngredient > 0) {
-      setCurrentIngredient(prev => prev - 1);
+  const previousAction = () => {
+    if (currentAction > 0) {
+      setCurrentAction(prev => prev - 1);
       setSelectedAnswer(null);
       setShowFeedback(false);
     }
@@ -184,25 +206,33 @@ export default function CookingLevel1() {
     if (isCorrect) {
       setScore(prev => prev + 1);
       setCompleted(prev => [...prev, currentItem.id]);
-      speak(currentItem.encouragement);
       
       setTimeout(() => {
-        if (currentIngredient < ingredients.length - 1) {
-          setCurrentIngredient(prev => prev + 1);
+        speak(currentItem.encouragement);
+      }, 300);
+      
+      setTimeout(() => {
+        if (currentAction < cookingActions.length - 1) {
+          setCurrentAction(prev => prev + 1);
           setSelectedAnswer(null);
           setShowFeedback(false);
         } else {
           setShowCelebration(true);
           saveProgress();
-          speak("Wonderful job! You learned all the ingredients!");
+          setTimeout(() => {
+            speak("Fantastic! You learned all the cooking actions!");
+          }, 500);
         }
-      }, 3000);
+      }, 3500);
     } else {
-      speak(`Try again! This is ${currentItem.name}`);
+      setTimeout(() => {
+        speak(`Let's try again. This cooking action is ${currentItem.name}`);
+      }, 300);
+      
       setTimeout(() => {
         setSelectedAnswer(null);
         setShowFeedback(false);
-      }, 2000);
+      }, 2500);
     }
   };
 
@@ -225,7 +255,7 @@ export default function CookingLevel1() {
         studentId: studentId,
         lessonId: parseInt(lessonId, 10),
         score: finalScore,
-        maxScore: ingredients.length,
+        maxScore: cookingActions.length,
         completed: true,
         starsEarned: getStarRating(finalScore)
       };
@@ -245,7 +275,7 @@ export default function CookingLevel1() {
 
   // Calculate star rating based on score
   const getStarRating = (finalScore = score) => {
-    const percentage = (finalScore / ingredients.length) * 100;
+    const percentage = (finalScore / cookingActions.length) * 100;
     if (percentage >= 90) return 3;
     if (percentage >= 70) return 2;
     if (percentage >= 50) return 1;
@@ -253,7 +283,7 @@ export default function CookingLevel1() {
   };
 
   const resetGame = () => {
-    setCurrentIngredient(0);
+    setCurrentAction(0);
     setGameMode('learn');
     setSelectedAnswer(null);
     setShowFeedback(false);
@@ -283,11 +313,11 @@ export default function CookingLevel1() {
     
     setTimeout(() => {
       if (hasNextLevel) {
-        // Navigate to Level 2
+        // Navigate to Level 3 (if it exists)
         if (navigate) {
-          navigate('/lesson/cooking/level-2');
+          navigate('/lesson/cooking/level-3');
         } else {
-          window.location.href = '/lesson/cooking/level-2';
+          window.location.href = '/lesson/cooking/level-3';
         }
       } else {
         goToHomepage();
@@ -302,7 +332,7 @@ export default function CookingLevel1() {
     return (
       <div style={{
         minHeight: "100vh",
-        background: 'linear-gradient(135deg, #E3F2FD, #F3E5F5, #FFF3E0)',
+        background: 'linear-gradient(135deg, #F8F9FA, #FFF3E0, #E8F5E8)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -310,23 +340,24 @@ export default function CookingLevel1() {
       }}>
         <div style={{
           backgroundColor: '#FFFFFF',
-          borderRadius: '30px',
+          borderRadius: '25px',
           padding: '40px',
           textAlign: 'center',
           maxWidth: '400px',
           width: '100%',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+          boxShadow: '0 6px 24px rgba(0, 0, 0, 0.08)',
+          border: '3px solid #FF9800'
         }}>
           <div style={{
             width: '48px',
             height: '48px',
-            border: '4px solid #4CAF50',
+            border: '4px solid #FF9800',
             borderTop: '4px solid transparent',
             borderRadius: '50%',
             animation: 'spin 1s linear infinite',
             margin: '0 auto 20px auto'
           }}></div>
-          <h3 style={{ fontSize: '1.5rem', color: '#2E7D32', margin: 0 }}>Loading cooking lesson...</h3>
+          <h3 style={{ fontSize: '1.5rem', color: '#E65100', margin: 0 }}>Loading cooking lesson...</h3>
           <style>{`
             @keyframes spin {
               0% { transform: rotate(0deg); }
@@ -341,38 +372,38 @@ export default function CookingLevel1() {
   const styles = {
     container: {
       minHeight: "100vh",
-      background: 'linear-gradient(135deg, #E3F2FD, #F3E5F5, #FFF3E0)',
+      background: 'linear-gradient(135deg, #F8F9FA, #FFF3E0, #E8F5E8)', 
       padding: '20px',
-      fontFamily: 'Arial, sans-serif'
+      fontFamily: '"Comic Sans MS", cursive, Arial, sans-serif'
     },
     mainCard: {
-      maxWidth: '800px',
+      maxWidth: '850px',
       margin: '0 auto',
       backgroundColor: '#FFFFFF',
-      borderRadius: '30px',
-      padding: '30px',
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-      border: '4px solid #4CAF50'
+      borderRadius: '25px',
+      padding: '35px',
+      boxShadow: '0 6px 24px rgba(0, 0, 0, 0.08)',
+      border: '3px solid #FF9800' // Orange for cooking theme
     },
     headerSection: {
       textAlign: 'center',
       marginBottom: '30px'
     },
     title: {
-      fontSize: '2.5rem',
+      fontSize: '2.3rem',
       fontWeight: 'bold',
-      color: '#2E7D32',
+      color: '#E65100', // Cooking orange
       marginBottom: '10px',
-      textShadow: '2px 2px 4px rgba(0,0,0,0.1)'
+      textShadow: '1px 1px 3px rgba(0,0,0,0.1)'
     },
     subtitle: {
-      fontSize: '1.3rem',
-      color: '#1976D2',
+      fontSize: '1.2rem',
+      color: '#5D4037', // Warm brown
       marginBottom: '20px'
     },
     tipSection: {
-      backgroundColor: '#E8F5E8',
-      border: '2px solid #4CAF50',
+      backgroundColor: '#FFF3E0',
+      border: '2px solid #FF9800',
       borderRadius: '15px',
       padding: '15px',
       marginBottom: '20px',
@@ -380,9 +411,20 @@ export default function CookingLevel1() {
     },
     tipText: {
       fontSize: '1.1rem',
-      color: '#2E7D32',
+      color: '#E65100',
       margin: 0,
       fontWeight: '500'
+    },
+    levelIndicator: {
+      textAlign: 'center',
+      marginBottom: '20px',
+      fontSize: '1.1rem',
+      color: '#E65100',
+      fontWeight: 'bold',
+      backgroundColor: '#FFF3E0',
+      padding: '10px 20px',
+      borderRadius: '20px',
+      display: 'inline-block'
     },
     modeToggle: {
       display: 'flex',
@@ -391,90 +433,112 @@ export default function CookingLevel1() {
       marginBottom: '30px'
     },
     modeButton: {
-      padding: '15px 30px',
-      borderRadius: '25px',
-      border: 'none',
-      fontSize: '1.2rem',
-      fontWeight: 'bold',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease',
-      minWidth: '150px'
-    },
-    activeMode: {
-      backgroundColor: '#4CAF50',
-      color: 'white',
-      transform: 'scale(1.05)'
-    },
-    inactiveMode: {
-      backgroundColor: '#E0E0E0',
-      color: '#666'
-    },
-    progressBar: {
-      width: '100%',
-      height: '20px',
-      backgroundColor: '#E0E0E0',
-      borderRadius: '10px',
-      marginBottom: '20px',
-      overflow: 'hidden'
-    },
-    progressFill: {
-      height: '100%',
-      backgroundColor: '#4CAF50',
-      borderRadius: '10px',
-      transition: 'width 0.5s ease',
-      width: `${((currentIngredient + 1) / ingredients.length) * 100}%`
-    },
-    ingredientDisplay: {
-      textAlign: 'center',
-      backgroundColor: currentItem?.color || '#F5F5F5',
-      borderRadius: '25px',
-      padding: '40px',
-      marginBottom: '30px',
-      border: '3px solid #4CAF50'
-    },
-    emojiLarge: {
-      fontSize: '8rem',
-      marginBottom: '20px',
-      display: 'block',
-      filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))'
-    },
-    ingredientName: {
-      fontSize: '3rem',
-      fontWeight: 'bold',
-      color: '#2E7D32',
-      marginBottom: '15px',
-      textShadow: '2px 2px 4px rgba(0,0,0,0.1)'
-    },
-    description: {
-      fontSize: '1.4rem',
-      color: '#1976D2',
-      lineHeight: 1.5,
-      maxWidth: '500px',
-      margin: '0 auto'
-    },
-    controlButtons: {
-      display: 'flex',
-      justifyContent: 'center',
-      gap: '20px',
-      marginBottom: '30px',
-      flexWrap: 'wrap'
-    },
-    controlButton: {
-      padding: '15px 25px',
+      padding: '12px 25px',
       borderRadius: '20px',
       border: 'none',
       fontSize: '1.1rem',
       fontWeight: 'bold',
       cursor: 'pointer',
+      transition: 'all 0.4s ease',
+      minWidth: '140px'
+    },
+    activeMode: {
+      backgroundColor: '#FF9800',
+      color: 'white',
+      transform: 'scale(1.02)'
+    },
+    inactiveMode: {
+      backgroundColor: '#F5F5F5',
+      color: '#666'
+    },
+    progressBar: {
+      width: '100%',
+      height: '18px',
+      backgroundColor: '#F5F5F5',
+      borderRadius: '12px',
+      marginBottom: '20px',
+      overflow: 'hidden',
+      border: '2px solid #E0E0E0'
+    },
+    progressFill: {
+      height: '100%',
+      backgroundColor: '#FF9800',
+      borderRadius: '12px',
+      transition: 'width 0.8s ease',
+      width: `${((currentAction + 1) / cookingActions.length) * 100}%`
+    },
+    actionDisplay: {
+      textAlign: 'center',
+      backgroundColor: currentItem?.color || '#F8F9FA',
+      borderRadius: '20px',
+      padding: '35px',
+      marginBottom: '30px',
+      border: '2px solid #FF9800',
+      transition: 'background-color 0.5s ease'
+    },
+    actionVisual: {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: '20px',
+      marginBottom: '20px'
+    },
+    emojiLarge: {
+      fontSize: '5rem',
+      filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.15))'
+    },
+    actionEmoji: {
+      fontSize: '3rem',
+      color: '#E65100'
+    },
+    actionName: {
+      fontSize: '2.5rem',
+      fontWeight: 'bold',
+      color: '#E65100',
+      marginBottom: '15px',
+      textShadow: '1px 1px 3px rgba(0,0,0,0.1)'
+    },
+    description: {
+      fontSize: '1.3rem',
+      color: '#5D4037',
+      lineHeight: 1.6,
+      maxWidth: '500px',
+      margin: '0 auto 15px auto'
+    },
+    demonstration: {
+      fontSize: '1.1rem',
+      color: '#795548',
+      fontStyle: 'italic',
+      maxWidth: '450px',
+      margin: '0 auto',
+      backgroundColor: '#FFF8E1',
+      padding: '10px 15px',
+      borderRadius: '15px',
+      border: '1px solid #FFE0B2'
+    },
+    controlButtons: {
+      display: 'flex',
+      justifyContent: 'center',
+      gap: '15px',
+      marginBottom: '25px',
+      flexWrap: 'wrap'
+    },
+    controlButton: {
+      padding: '12px 20px',
+      borderRadius: '18px',
+      border: 'none',
+      fontSize: '1rem',
+      fontWeight: 'bold',
+      cursor: 'pointer',
       transition: 'all 0.3s ease',
-      minWidth: '120px'
+      minWidth: '130px'
     },
     primaryButton: {
       backgroundColor: '#2196F3',
       color: 'white'
     },
     secondaryButton: {
-      backgroundColor: '#FF9800',
+      backgroundColor: '#4CAF50',
       color: 'white'
     },
     navigationButton: {
@@ -483,43 +547,52 @@ export default function CookingLevel1() {
     },
     practiceGrid: {
       display: 'grid',
-      gridTemplateColumns: 'repeat(2, 1fr)',
-      gap: '20px',
-      maxWidth: '600px',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+      gap: '18px',
+      maxWidth: '700px',
       margin: '0 auto'
     },
     answerOption: {
-      padding: '20px',
-      borderRadius: '20px',
-      border: '3px solid #E0E0E0',
+      padding: '18px',
+      borderRadius: '18px',
+      border: '2px solid #E8E8E8',
       cursor: 'pointer',
-      transition: 'all 0.3s ease',
+      transition: 'all 0.4s ease',
       textAlign: 'center',
-      backgroundColor: '#FFFFFF'
+      backgroundColor: '#FAFAFA'
     },
     correctAnswer: {
       backgroundColor: '#C8E6C9',
-      border: '3px solid #4CAF50',
-      transform: 'scale(1.05)'
+      border: '2px solid #4CAF50',
+      transform: 'scale(1.02)'
     },
     incorrectAnswer: {
       backgroundColor: '#FFCDD2',
-      border: '3px solid #F44336'
+      border: '2px solid #E57373'
+    },
+    answerVisual: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: '5px',
+      marginBottom: '8px'
     },
     answerEmoji: {
-      fontSize: '3rem',
-      marginBottom: '10px',
-      display: 'block'
+      fontSize: '2rem'
+    },
+    answerActionEmoji: {
+      fontSize: '1.5rem',
+      color: '#E65100'
     },
     answerText: {
-      fontSize: '1.3rem',
+      fontSize: '1.1rem',
       fontWeight: 'bold',
-      color: '#2E7D32'
+      color: '#E65100'
     },
     feedbackSection: {
       textAlign: 'center',
-      padding: '20px',
-      borderRadius: '20px',
+      padding: '18px',
+      borderRadius: '18px',
       marginTop: '20px'
     },
     celebration: {
@@ -528,7 +601,7 @@ export default function CookingLevel1() {
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(76, 175, 80, 0.95)',
+      backgroundColor: 'rgba(255, 152, 0, 0.92)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -547,8 +620,8 @@ export default function CookingLevel1() {
       marginBottom: '20px'
     },
     audioToggle: {
-      fontSize: '1.1rem',
-      color: '#1976D2'
+      fontSize: '1rem',
+      color: '#5D4037'
     },
     progressStatus: {
       textAlign: 'center',
@@ -571,16 +644,10 @@ export default function CookingLevel1() {
       <div style={styles.mainCard}>
         
         <div style={styles.headerSection}>
-          <h1 style={styles.title}>🍳 Learning Ingredients</h1>
-          <p style={styles.subtitle}>Let's learn about cooking ingredients!</p>
-          <div style={{ 
-            textAlign: 'center', 
-            marginBottom: '15px',
-            fontSize: '1.1rem',
-            color: '#1976D2',
-            fontWeight: 'bold'
-          }}>
-            📚 Level {currentLevel} of {maxLevel}
+          <h1 style={styles.title}>👨‍🍳 Cooking Actions</h1>
+          <p style={styles.subtitle}>Let's learn how to cook safely!</p>
+          <div style={styles.levelIndicator}>
+            🔥 Level {currentLevel} of {maxLevel} - Cooking Skills!
           </div>
 
           {showTip && (
@@ -590,14 +657,14 @@ export default function CookingLevel1() {
           )}
           
           <div style={styles.toggleContainer}>
-            <span style={styles.audioToggle}>🔊 Sound:</span>
+            <span style={styles.audioToggle}>🔊 Cooking Instructions:</span>
             <button
               onClick={() => setAutoPlayEnabled(!autoPlayEnabled)}
               style={{
                 ...styles.controlButton,
                 ...(autoPlayEnabled ? styles.primaryButton : styles.secondaryButton),
-                minWidth: '80px',
-                padding: '8px 15px'
+                minWidth: '70px',
+                padding: '8px 12px'
               }}
             >
               {autoPlayEnabled ? 'ON' : 'OFF'}
@@ -612,7 +679,7 @@ export default function CookingLevel1() {
                 ...(gameMode === 'learn' ? styles.activeMode : styles.inactiveMode)
               }}
             >
-              📚 Learn
+              📖 Learn
             </button>
             <button
               onClick={() => setGameMode('practice')}
@@ -629,16 +696,21 @@ export default function CookingLevel1() {
         <div style={styles.progressBar}>
           <div style={styles.progressFill}></div>
         </div>
-        <p style={{ textAlign: 'center', fontSize: '1.1rem', color: '#1976D2', marginBottom: '20px' }}>
-          Ingredient {currentIngredient + 1} of {ingredients.length}
+        <p style={{ textAlign: 'center', fontSize: '1rem', color: '#5D4037', marginBottom: '20px' }}>
+          Cooking Action {currentAction + 1} of {cookingActions.length}
         </p>
 
         {gameMode === 'learn' ? (
           <>
-            <div style={styles.ingredientDisplay}>
-              <span style={styles.emojiLarge}>{currentItem.emoji}</span>
-              <h2 style={styles.ingredientName}>{currentItem.name}</h2>
+            <div style={styles.actionDisplay}>
+              <div style={styles.actionVisual}>
+                <span style={styles.emojiLarge}>{currentItem.emoji}</span>
+              </div>
+              <h2 style={styles.actionName}>{currentItem.name}</h2>
               <p style={styles.description}>{currentItem.description}</p>
+              <div style={styles.demonstration}>
+                💡 How to: {currentItem.demonstration}
+              </div>
             </div>
 
             <div style={styles.controlButtons}>
@@ -649,39 +721,39 @@ export default function CookingLevel1() {
                   ...styles.primaryButton
                 }}
               >
-                🔊 Say Name
+                🔊 Say Action
               </button>
               <button
-                onClick={() => speak(currentItem.description)}
+                onClick={() => speak(currentItem.demonstration)}
                 style={{
                   ...styles.controlButton,
                   ...styles.secondaryButton
                 }}
               >
-                📖 Read Info
+                📝 How To
               </button>
             </div>
 
             <div style={styles.controlButtons}>
               <button
-                onClick={previousIngredient}
-                disabled={currentIngredient === 0}
+                onClick={previousAction}
+                disabled={currentAction === 0}
                 style={{
                   ...styles.controlButton,
                   ...styles.navigationButton,
-                  opacity: currentIngredient === 0 ? 0.5 : 1
+                  opacity: currentAction === 0 ? 0.5 : 1
                 }}
               >
-                ⬅️ Previous
+                ⬅️ Back
               </button>
               <button
-                onClick={nextIngredient}
+                onClick={nextAction}
                 style={{
                   ...styles.controlButton,
                   ...styles.navigationButton
                 }}
               >
-                {currentIngredient === ingredients.length - 1 ? '🎯 Practice!' : '➡️ Next'}
+                {currentAction === cookingActions.length - 1 ? '🎯 Try Practice!' : '➡️ Next'}
               </button>
               <button
                 onClick={goToHomepage}
@@ -696,26 +768,28 @@ export default function CookingLevel1() {
           </>
         ) : (
           <>
-            <div style={styles.ingredientDisplay}>
-              <span style={styles.emojiLarge}>❓</span>
-              <h2 style={styles.ingredientName}>Which ingredient is this?</h2>
+            <div style={styles.actionDisplay}>
+              <span style={styles.emojiLarge}>🤔</span>
+              <h2 style={styles.actionName}>What do we do with this?</h2>
               <span style={styles.emojiLarge}>{currentItem.emoji}</span>
             </div>
 
             <div style={styles.practiceGrid}>
-              {ingredients.map((ingredient) => (
+              {cookingActions.map((action) => (
                 <div
-                  key={ingredient.id}
-                  onClick={() => !showFeedback && handlePracticeAnswer(ingredient.id)}
+                  key={action.id}
+                  onClick={() => !showFeedback && handlePracticeAnswer(action.id)}
                   style={{
                     ...styles.answerOption,
-                    ...(showFeedback && selectedAnswer === ingredient.id && ingredient.id === currentItem.id ? styles.correctAnswer : {}),
-                    ...(showFeedback && selectedAnswer === ingredient.id && ingredient.id !== currentItem.id ? styles.incorrectAnswer : {}),
+                    ...(showFeedback && selectedAnswer === action.id && action.id === currentItem.id ? styles.correctAnswer : {}),
+                    ...(showFeedback && selectedAnswer === action.id && action.id !== currentItem.id ? styles.incorrectAnswer : {}),
                     cursor: showFeedback ? 'not-allowed' : 'pointer'
                   }}
                 >
-                  <span style={styles.answerEmoji}>{ingredient.emoji}</span>
-                  <div style={styles.answerText}>{ingredient.name}</div>
+                  <div style={styles.answerVisual}>
+                    <span style={styles.answerEmoji}>{action.emoji}</span>
+                  </div>
+                  <div style={styles.answerText}>{action.name}</div>
                 </div>
               ))}
             </div>
@@ -725,13 +799,13 @@ export default function CookingLevel1() {
                 ...styles.feedbackSection,
                 backgroundColor: selectedAnswer === currentItem.id ? '#C8E6C9' : '#FFCDD2'
               }}>
-                <h3 style={{ fontSize: '1.5rem', margin: '0 0 10px 0' }}>
-                  {selectedAnswer === currentItem.id ? '🎉 Correct!' : '💪 Try Again!'}
+                <h3 style={{ fontSize: '1.4rem', margin: '0 0 10px 0' }}>
+                  {selectedAnswer === currentItem.id ? '🎉 Perfect!' : '💪 Keep trying!'}
                 </h3>
-                <p style={{ fontSize: '1.2rem', margin: 0 }}>
+                <p style={{ fontSize: '1.1rem', margin: 0 }}>
                   {selectedAnswer === currentItem.id 
                     ? currentItem.encouragement
-                    : `This is ${currentItem.name}. ${currentItem.description}`
+                    : `We ${currentItem.name} the ${currentItem.emoji}. ${currentItem.description}`
                   }
                 </p>
               </div>
@@ -745,7 +819,7 @@ export default function CookingLevel1() {
                   ...styles.secondaryButton
                 }}
               >
-                📚 Learn Again
+                📖 Learn Again
               </button>
               <button
                 onClick={goToHomepage}
@@ -764,14 +838,14 @@ export default function CookingLevel1() {
       {showCelebration && (
         <div style={styles.celebration}>
           <div style={styles.celebrationContent}>
-            <div style={{ fontSize: '6rem', marginBottom: '20px' }}>🎉</div>
-            <h2 style={{ fontSize: '3rem', marginBottom: '20px' }}>Great Job!</h2>
-            <p style={{ fontSize: '1.5rem', marginBottom: '10px' }}>
-              You learned all {ingredients.length} ingredients!
+            <div style={{ fontSize: '5rem', marginBottom: '20px' }}>👨‍🍳</div>
+            <h2 style={{ fontSize: '2.5rem', marginBottom: '20px' }}>Great Cooking!</h2>
+            <p style={{ fontSize: '1.3rem', marginBottom: '10px' }}>
+              You learned all {cookingActions.length} cooking actions!
             </p>
-            <p style={{ fontSize: '1.2rem', marginBottom: '20px', opacity: 0.9 }}>
+            <p style={{ fontSize: '1.1rem', marginBottom: '20px', opacity: 0.9 }}>
               Level {currentLevel} Complete! 
-              {hasNextLevel ? ` Ready for Level ${currentLevel + 1}?` : ' You finished all levels!'}
+              {hasNextLevel ? ` Ready to learn more cooking skills?` : ' You\'re becoming a great cook!'}
             </p>
 
             {/* Progress Saving Status */}
@@ -787,7 +861,7 @@ export default function CookingLevel1() {
                     animation: 'spin 1s linear infinite',
                     marginRight: '10px'
                   }}></div>
-                  <span style={{ color: 'white', fontWeight: 'bold' }}>Saving your progress...</span>
+                  <span style={{ color: 'white', fontWeight: 'bold' }}>Saving your cooking progress...</span>
                 </div>
               </div>
             )}
@@ -796,12 +870,12 @@ export default function CookingLevel1() {
               <div style={{...styles.progressStatus, ...styles.savedProgress}}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <span style={{ color: 'white', marginRight: '8px', fontSize: '1.2rem' }}>✓</span>
-                  <span style={{ color: 'white', fontWeight: 'bold' }}>Progress saved successfully!</span>
+                  <span style={{ color: 'white', fontWeight: 'bold' }}>Cooking skills saved!</span>
                 </div>
               </div>
             )}
             
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', flexWrap: 'wrap' }}>
               <button
                 onClick={continueToNextLevel}
                 disabled={progressSaving}
@@ -809,9 +883,9 @@ export default function CookingLevel1() {
                   ...styles.controlButton,
                   backgroundColor: hasNextLevel ? '#4CAF50' : '#2196F3',
                   color: 'white',
-                  fontSize: '1.3rem',
-                  padding: '20px 40px',
-                  border: '3px solid white',
+                  fontSize: '1.2rem',
+                  padding: '15px 30px',
+                  border: '2px solid white',
                   opacity: progressSaving ? 0.7 : 1,
                   cursor: progressSaving ? 'not-allowed' : 'pointer'
                 }}
@@ -825,23 +899,23 @@ export default function CookingLevel1() {
                   ...styles.controlButton,
                   backgroundColor: 'transparent',
                   color: 'white',
-                  border: '3px solid white',
-                  fontSize: '1.3rem',
-                  padding: '20px 40px'
+                  border: '2px solid white',
+                  fontSize: '1.2rem',
+                  padding: '15px 30px'
                 }}
               >
-                🔄 Replay Level
+                🔄 Practice Again
               </button>
               
               <button
                 onClick={goToHomepage}
                 style={{
                   ...styles.controlButton,
-                  backgroundColor: '#FF9800',
+                  backgroundColor: '#9C27B0',
                   color: 'white',
-                  fontSize: '1.3rem',
-                  padding: '20px 40px',
-                  border: '3px solid white'
+                  fontSize: '1.2rem',
+                  padding: '15px 30px',
+                  border: '2px solid white'
                 }}
               >
                 🏠 Home

@@ -71,20 +71,23 @@ const LessonManagement = () => {
       path: '/lesson/hygiene',
       icon: '🧼'
     },
-
     {
-     value: 'cooking-level-1',
-     label: 'Cooking Level 1',
-     description: 'Interactive drag-and-drop cooking ingredients game',
-     component: 'CookingLevel1',
-     path: '/lesson/cooking',
-     icon: '🍳'
-  },
-
-];
-
-
-  
+      value: 'cooking-level-1',
+      label: 'Cooking Level 1 - Ingredients',
+      description: 'Learn basic cooking ingredients identification',
+      component: 'CookingLevel1',
+      path: '/lesson/cooking/level-1',
+      icon: '🥚'
+    },
+    {
+      value: 'cooking-level-2',
+      label: 'Cooking Level 2 - Actions',
+      description: 'Learn basic cooking actions and techniques',
+      component: 'CookingLevel2',
+      path: '/lesson/cooking/level-2',
+      icon: '👨‍🍳'
+    }
+  ];
 
   useEffect(() => {
     fetchLessons();

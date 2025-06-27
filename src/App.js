@@ -13,6 +13,7 @@ import AdminRoute from './components/admin/AdminRoute';
 import ModuleDetails from './components/ModuleDetails';
 import PersonalHygieneLevel1 from './components/lesson/PersonalHygieneLevel1';
 import CookingLevel1 from './components/lesson/CookingLevel1';
+import CookingLevel2 from './components/lesson/CookingLevel2'; // Add this import
 import ManageStudents from './components/teacher/ManageStudents';
 import StudentProgress from './components/teacher/StudentProgress';
 import AchievementsPage from './components/AchievementsPage';
@@ -78,7 +79,6 @@ function App() {
           isLoggedIn ? <AccountPage /> : <Navigate to="/login" replace />
         } />
         
-     
         <Route path="/achievements" element={
           !isLoggedIn ? <Navigate to="/login" replace /> : 
             (isAdmin ? <Navigate to="/admin" replace /> : <AchievementsPage/>)
@@ -95,16 +95,24 @@ function App() {
           isLoggedIn ? <StudentProgress /> : <Navigate to="/login" replace />
         } />
 
+        {/* Cooking Level Routes */}
+        <Route path="/lesson/cooking/level-1" element={
+          isLoggedIn ? <CookingLevel1 /> : <Navigate to="/login" replace />
+        } />
+        
+        <Route path="/lesson/cooking/level-2" element={
+          isLoggedIn ? <CookingLevel2 /> : <Navigate to="/login" replace />
+        } />
+
+        {/* Generic cooking route (backwards compatibility) */}
         <Route path="/lesson/cooking/:lessonId" element={
           isLoggedIn ? <CookingLevel1 /> : <Navigate to="/login" replace />
         } />
 
-        
         <Route path="/lesson/hygiene/:lessonId" element={
           isLoggedIn ? <PersonalHygieneLevel1 /> : <Navigate to="/login" replace />
         } />
 
-        
         {/* Admin Routes */}
         <Route 
           path="/admin/*" 
