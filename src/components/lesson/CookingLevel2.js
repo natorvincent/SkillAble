@@ -1,15 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { 
-  getStudentLessonProgress, 
-  saveStudentLessonProgress,
-  updateModuleProgress
-} from '../../services/progressService';
 
 export default function CookingActionsLevel2() {
-  const navigate = useNavigate();
-  const { moduleId, lessonId } = useParams();
-  
   const [currentAction, setCurrentAction] = useState(0);
   const [gameMode, setGameMode] = useState('learn'); // 'learn' or 'practice'
   const [selectedAnswer, setSelectedAnswer] = useState(null);
@@ -18,16 +9,12 @@ export default function CookingActionsLevel2() {
   const [completed, setCompleted] = useState([]);
   const [showCelebration, setShowCelebration] = useState(false);
   const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
-  const [loading, setLoading] = useState(true);
-  const [progressSaving, setProgressSaving] = useState(false);
-  const [progressSaved, setProgressSaved] = useState(false);
-  const [showTip, setShowTip] = useState('');
   
   // Level progression props
   const [currentLevel] = useState(2); // Level 2
   const [maxLevel] = useState(3);
-  const [moduleIdentifier] = useState('cooking-basics');
-  const [lessonIdentifier] = useState('cooking-actions');
+  const [moduleId] = useState('cooking-basics');
+  const [lessonId] = useState('cooking-actions');
 
   // Level 2: Basic Cooking Actions - Building on ingredient knowledge
   const cookingActions = [
@@ -90,69 +77,6 @@ export default function CookingActionsLevel2() {
 
   const currentItem = cookingActions[currentAction];
 
-  // Get student ID from localStorage
-  const getStudentId = () => {
-    const studentId = localStorage.getItem('studentId');
-    const userType = localStorage.getItem('userType');
-    
-    console.log("Getting student ID - Type:", userType, "ID:", studentId);
-    
-    if (userType !== 'STUDENT') {
-      console.error('User is not a student:', userType);
-      return null;
-    }
-    
-    if (!studentId || studentId === 'null') {
-      console.error('No student ID found in localStorage');
-      return null;
-    }
-    
-    const parsedId = parseInt(studentId, 10);
-    if (isNaN(parsedId)) {
-      console.error('Invalid student ID format:', studentId);
-      return null;
-    }
-    
-    return parsedId;
-  };
-
-  // Load previous progress on component mount
-  useEffect(() => {
-    const fetchUserProgress = async () => {
-      try {
-        const studentId = getStudentId();
-        if (!studentId || !lessonId) {
-          console.log('Missing studentId or lessonId:', { studentId, lessonId });
-          setLoading(false);
-          setShowTip('Ready to learn cooking actions? Let\'s get started!');
-          return;
-        }
-        
-        console.log('Fetching progress for student:', studentId, 'lesson:', lessonId);
-        const progressResponse = await getStudentLessonProgress(studentId, lessonId);
-        if (progressResponse) {
-          setScore(progressResponse.score || 0);
-          if (progressResponse.completed) {
-            setShowTip("Awesome! You've completed this level before. Want to practice more?");
-          } else {
-            setShowTip('Ready to learn cooking actions? Let\'s get started!');
-          }
-          console.log('Loaded existing progress:', progressResponse);
-        } else {
-          console.log('No existing progress found - starting fresh');
-          setShowTip('Ready to learn cooking actions? Let\'s get started!');
-        }
-      } catch (error) {
-        console.log('Error fetching progress, starting fresh:', error);
-        setShowTip('Ready to learn cooking actions? Let\'s get started!');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchUserProgress();
-  }, [lessonId]);
-
   // Gentle audio feedback for cooking instructions
   const speak = (text) => {
     if ('speechSynthesis' in window) {
@@ -173,10 +97,10 @@ export default function CookingActionsLevel2() {
   };
 
   useEffect(() => {
-    if (gameMode === 'learn' && !loading) {
+    if (gameMode === 'learn') {
       handleLearnMode();
     }
-  }, [currentAction, gameMode, loading]);
+  }, [currentAction, gameMode]);
 
   const nextAction = () => {
     if (currentAction < cookingActions.length - 1) {
@@ -218,7 +142,6 @@ export default function CookingActionsLevel2() {
           setShowFeedback(false);
         } else {
           setShowCelebration(true);
-          saveProgress();
           setTimeout(() => {
             speak("Fantastic! You learned all the cooking actions!");
           }, 500);
@@ -236,52 +159,6 @@ export default function CookingActionsLevel2() {
     }
   };
 
-  // Save progress to database
-  const saveProgress = async () => {
-    if (progressSaving || progressSaved) return;
-
-    try {
-      setProgressSaving(true);
-      const studentId = getStudentId();
-      
-      if (!studentId || !lessonId) {
-        console.error('Cannot save progress - missing data:', { studentId, lessonId });
-        return;
-      }
-      
-      const finalScore = score + (completed.length > score ? 1 : 0); // Account for current correct answer
-      
-      const progressData = {
-        studentId: studentId,
-        lessonId: parseInt(lessonId, 10),
-        score: finalScore,
-        maxScore: cookingActions.length,
-        completed: true,
-        starsEarned: getStarRating(finalScore)
-      };
-      
-      console.log('Saving progress for student:', studentId, progressData);
-      await saveStudentLessonProgress(studentId, lessonId, progressData);
-      
-      console.log('Progress saved successfully!');
-      setProgressSaved(true);
-      
-    } catch (error) {
-      console.error('Error saving progress:', error);
-    } finally {
-      setProgressSaving(false);
-    }
-  };
-
-  // Calculate star rating based on score
-  const getStarRating = (finalScore = score) => {
-    const percentage = (finalScore / cookingActions.length) * 100;
-    if (percentage >= 90) return 3;
-    if (percentage >= 70) return 2;
-    if (percentage >= 50) return 1;
-    return 0;
-  };
-
   const resetGame = () => {
     setCurrentAction(0);
     setGameMode('learn');
@@ -290,84 +167,29 @@ export default function CookingActionsLevel2() {
     setScore(0);
     setCompleted([]);
     setShowCelebration(false);
-    setProgressSaved(false);
-    setProgressSaving(false);
   };
 
   const goToHomepage = () => {
-    if (navigate) {
-      navigate('/homepage');
-    } else if (window.history && window.history.length > 1) {
+    if (window.history && window.history.length > 1) {
       window.history.back();
     } else {
       window.location.href = '/homepage';
     }
   };
 
-  const continueToNextLevel = async () => {
-    if (!progressSaved && !progressSaving) {
-      await saveProgress();
-    }
-    
+  const continueToNextLevel = () => {
     const hasNextLevel = currentLevel < maxLevel;
     
-    setTimeout(() => {
-      if (hasNextLevel) {
-        // Navigate to Level 3 (if it exists)
-        if (navigate) {
-          navigate('/lesson/cooking/level-3');
-        } else {
-          window.location.href = '/lesson/cooking/level-3';
-        }
-      } else {
-        goToHomepage();
-      }
-    }, 300);
+    if (hasNextLevel) {
+      const nextLevel = currentLevel + 1;
+      const nextLevelUrl = `/module/${moduleId}/lesson/${lessonId}/level/${nextLevel}`;
+      window.location.href = nextLevelUrl;
+    } else {
+      goToHomepage();
+    }
   };
 
   const hasNextLevel = currentLevel < maxLevel;
-
-  // Loading state
-  if (loading) {
-    return (
-      <div style={{
-        minHeight: "100vh",
-        background: 'linear-gradient(135deg, #F8F9FA, #FFF3E0, #E8F5E8)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px'
-      }}>
-        <div style={{
-          backgroundColor: '#FFFFFF',
-          borderRadius: '25px',
-          padding: '40px',
-          textAlign: 'center',
-          maxWidth: '400px',
-          width: '100%',
-          boxShadow: '0 6px 24px rgba(0, 0, 0, 0.08)',
-          border: '3px solid #FF9800'
-        }}>
-          <div style={{
-            width: '48px',
-            height: '48px',
-            border: '4px solid #FF9800',
-            borderTop: '4px solid transparent',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-            margin: '0 auto 20px auto'
-          }}></div>
-          <h3 style={{ fontSize: '1.5rem', color: '#E65100', margin: 0 }}>Loading cooking lesson...</h3>
-          <style>{`
-            @keyframes spin {
-              0% { transform: rotate(0deg); }
-              100% { transform: rotate(360deg); }
-            }
-          `}</style>
-        </div>
-      </div>
-    );
-  }
 
   const styles = {
     container: {
@@ -400,20 +222,6 @@ export default function CookingActionsLevel2() {
       fontSize: '1.2rem',
       color: '#5D4037', // Warm brown
       marginBottom: '20px'
-    },
-    tipSection: {
-      backgroundColor: '#FFF3E0',
-      border: '2px solid #FF9800',
-      borderRadius: '15px',
-      padding: '15px',
-      marginBottom: '20px',
-      textAlign: 'center'
-    },
-    tipText: {
-      fontSize: '1.1rem',
-      color: '#E65100',
-      margin: 0,
-      fontWeight: '500'
     },
     levelIndicator: {
       textAlign: 'center',
@@ -622,20 +430,6 @@ export default function CookingActionsLevel2() {
     audioToggle: {
       fontSize: '1rem',
       color: '#5D4037'
-    },
-    progressStatus: {
-      textAlign: 'center',
-      padding: '15px',
-      borderRadius: '15px',
-      marginBottom: '20px'
-    },
-    savingProgress: {
-      backgroundColor: 'rgba(33, 150, 243, 0.2)',
-      border: '2px solid rgba(33, 150, 243, 0.5)'
-    },
-    savedProgress: {
-      backgroundColor: 'rgba(76, 175, 80, 0.2)',
-      border: '2px solid rgba(76, 175, 80, 0.5)'
     }
   };
 
@@ -649,12 +443,6 @@ export default function CookingActionsLevel2() {
           <div style={styles.levelIndicator}>
             🔥 Level {currentLevel} of {maxLevel} - Cooking Skills!
           </div>
-
-          {showTip && (
-            <div style={styles.tipSection}>
-              <p style={styles.tipText}>{showTip}</p>
-            </div>
-          )}
           
           <div style={styles.toggleContainer}>
             <span style={styles.audioToggle}>🔊 Cooking Instructions:</span>
@@ -843,54 +631,24 @@ export default function CookingActionsLevel2() {
             <p style={{ fontSize: '1.3rem', marginBottom: '10px' }}>
               You learned all {cookingActions.length} cooking actions!
             </p>
-            <p style={{ fontSize: '1.1rem', marginBottom: '20px', opacity: 0.9 }}>
+            <p style={{ fontSize: '1.1rem', marginBottom: '30px', opacity: 0.9 }}>
               Level {currentLevel} Complete! 
               {hasNextLevel ? ` Ready to learn more cooking skills?` : ' You\'re becoming a great cook!'}
             </p>
-
-            {/* Progress Saving Status */}
-            {progressSaving && (
-              <div style={{...styles.progressStatus, ...styles.savingProgress}}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
-                  <div style={{
-                    width: '20px',
-                    height: '20px',
-                    border: '2px solid #2196F3',
-                    borderTop: '2px solid transparent',
-                    borderRadius: '50%',
-                    animation: 'spin 1s linear infinite',
-                    marginRight: '10px'
-                  }}></div>
-                  <span style={{ color: 'white', fontWeight: 'bold' }}>Saving your cooking progress...</span>
-                </div>
-              </div>
-            )}
-            
-            {progressSaved && (
-              <div style={{...styles.progressStatus, ...styles.savedProgress}}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ color: 'white', marginRight: '8px', fontSize: '1.2rem' }}>✓</span>
-                  <span style={{ color: 'white', fontWeight: 'bold' }}>Cooking skills saved!</span>
-                </div>
-              </div>
-            )}
             
             <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', flexWrap: 'wrap' }}>
               <button
                 onClick={continueToNextLevel}
-                disabled={progressSaving}
                 style={{
                   ...styles.controlButton,
                   backgroundColor: hasNextLevel ? '#4CAF50' : '#2196F3',
                   color: 'white',
                   fontSize: '1.2rem',
                   padding: '15px 30px',
-                  border: '2px solid white',
-                  opacity: progressSaving ? 0.7 : 1,
-                  cursor: progressSaving ? 'not-allowed' : 'pointer'
+                  border: '2px solid white'
                 }}
               >
-                {progressSaving ? 'Saving...' : (hasNextLevel ? '🚀 Next Level' : '🏠 Go Home')}
+                {hasNextLevel ? '🚀 Next Level' : '🏠 Go Home'}
               </button>
               
               <button
