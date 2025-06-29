@@ -13,10 +13,12 @@ import AdminRoute from './components/admin/AdminRoute';
 import ModuleDetails from './components/ModuleDetails';
 import PersonalHygieneLevel1 from './components/lesson/PersonalHygieneLevel1';
 import CookingLevel1 from './components/lesson/CookingLevel1';
-import CookingLevel2 from './components/lesson/CookingLevel2'; // Add this import
+import CookingLevel2 from './components/lesson/CookingLevel2';
 import ManageStudents from './components/teacher/ManageStudents';
 import StudentProgress from './components/teacher/StudentProgress';
 import AchievementsPage from './components/AchievementsPage';
+import AboutUsPage from './components/AboutUsPage'; // Add this import
+import ContactPage from './components/ContactPage'; // Add this import
 
 function useLocalStorage(key, defaultValue) {
   const [value, setValue] = useState(() => {
@@ -31,7 +33,6 @@ function useLocalStorage(key, defaultValue) {
     };
 
     window.addEventListener('storage', handleStorageChange);
-    
     window.addEventListener('localStorageChange', handleStorageChange);
     
     return () => {
@@ -64,6 +65,10 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         
+        {/* Public routes (accessible without login) */}
+        <Route path="/about" element={<AboutUsPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        
         <Route path="/login" element={
           isLoggedIn ? (isAdmin ? <Navigate to="/admin" replace /> : <Navigate to="/homepage" replace />) : <Login />
         } />
@@ -71,6 +76,7 @@ function App() {
           isLoggedIn ? <Navigate to="/homepage" replace /> : <Register />
         } />
         
+        {/* Protected routes (require login) */}
         <Route path="/homepage" element={
           !isLoggedIn ? <Navigate to="/login" replace /> : 
             (isAdmin ? <Navigate to="/admin" replace /> : <Homepage />)
