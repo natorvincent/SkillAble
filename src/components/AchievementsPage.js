@@ -269,6 +269,17 @@ function BadgesPage() {
       progress: `${completedModules}/25`
     });
 
+    // Perfectionist Badge
+    badges.push({
+      id: 'perfectionist',
+      label: 'Perfectionist',
+      icon: <TrendingUpIcon sx={{ fontSize: 40, color: progressPercentage >= 100 ? '#28a745' : '#ccc' }} />,
+      description: '100% completion',
+      category: 'Completion',
+      earned: progressPercentage >= 100,
+      progress: `${progressPercentage}%`
+    });
+
     console.log("Final badges calculated:", badges.length);
     return badges;
   };
@@ -337,120 +348,134 @@ function BadgesPage() {
               </Box>
             </Typography>
 
-            <Grid container spacing={6} sx={{ justifyContent: 'center' }}>
+            <Grid container spacing={4} sx={{ justifyContent: 'center' }}>
               {badges.map((badge, index) => {
                 // Additional safety check for each badge
                 if (!badge) return null;
                 
                 return (
-                  <Grid item xs={6} sm={4} md={3} lg={2.4} key={badge.id || index}>
-                    <Card sx={{
-                      height: '220px',
-                      width: '100%',
-                      maxWidth: '180px',
-                      margin: '0 auto',
+                  <Grid item xs={12} sm={6} md={4} lg={3} key={badge.id || index}>
+                    <Box sx={{ 
                       display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      padding: '20px',
-                      backgroundColor: badge.earned ? 'rgba(255, 255, 255, 0.95)' : 'rgba(245, 245, 245, 0.95)',
-                      border: badge.earned ? '3px solid #4caf50' : '3px solid #e0e0e0',
-                      borderRadius: '16px',
-                      opacity: badge.earned ? 1 : 0.7,
-                      transition: 'all 0.3s ease',
-                      cursor: 'pointer',
-                      position: 'relative',
-                      '&:hover': {
-                        transform: 'translateY(-4px)',
-                        boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-                        borderColor: badge.earned ? '#4caf50' : '#bbb'
-                      }
+                      justifyContent: 'center',
+                      width: '100%'
                     }}>
-                      {/* Earned Badge Indicator */}
-                      {badge.earned && (
-                        <Box sx={{
-                          position: 'absolute',
-                          top: -8,
-                          right: -8,
-                          backgroundColor: '#4caf50',
-                          borderRadius: '50%',
-                          width: 24,
-                          height: 24,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'white',
-                          fontSize: '12px',
-                          fontWeight: 600
-                        }}>
-                          ✓
-                        </Box>
-                      )}
-
-                      <CardContent sx={{ 
-                        textAlign: 'center', 
-                        padding: 0,
-                        '&:last-child': { paddingBottom: 0 }
+                      <Card sx={{
+                        height: '220px',
+                        width: '240px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        padding: '20px',
+                        backgroundColor: badge.earned ? 'rgba(255, 255, 255, 0.95)' : 'rgba(245, 245, 245, 0.95)',
+                        border: badge.earned ? '3px solid #4caf50' : '3px solid #e0e0e0',
+                        borderRadius: '16px',
+                        opacity: badge.earned ? 1 : 0.7,
+                        transition: 'all 0.3s ease',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        '&:hover': {
+                          transform: 'translateY(-4px)',
+                          boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                          borderColor: badge.earned ? '#4caf50' : '#bbb'
+                        }
                       }}>
-                        {/* Badge Icon */}
-                        <Box sx={{
-                          width: 60,
-                          height: 60,
-                          backgroundColor: 'white',
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          mb: 1.5,
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                          margin: '0 auto 12px auto'
-                        }}>
-                          {badge.icon || <HelpOutlineIcon sx={{ fontSize: 32, color: '#ccc' }} />}
-                        </Box>
+                        {/* Enhanced Earned Badge Indicator - more visible for perfectionist */}
+                        {badge.earned && (
+                          <Box sx={{
+                            position: 'absolute',
+                            top: -8,
+                            right: -8,
+                            backgroundColor: badge.id === 'perfectionist' ? '#2e7d32' : '#4caf50',
+                            borderRadius: '50%',
+                            width: 36,
+                            height: 36,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontSize: '16px',
+                            fontWeight: 700,
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                            border: badge.id === 'perfectionist' ? '2px solid white' : 'none'
+                          }}>
+                            ✓
+                          </Box>
+                        )}
 
-                        {/* Badge Name */}
-                        <Typography variant="h6" sx={{
-                          color: '#333',
-                          fontWeight: 600,
-                          fontSize: '13px',
-                          mb: 0.5,
-                          lineHeight: 1.2,
-                          textAlign: 'center'
+                        <CardContent sx={{ 
+                          textAlign: 'center', 
+                          padding: 0,
+                          width: '100%',
+                          '&:last-child': { paddingBottom: 0 }
                         }}>
-                          {badge.label || 'Unknown Badge'}
-                        </Typography>
+                          {/* Badge Icon */}
+                          <Box sx={{
+                            width: 60,
+                            height: 60,
+                            backgroundColor: 'white',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            mb: 1.5,
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                            margin: '0 auto 12px auto'
+                          }}>
+                            {badge.icon || <HelpOutlineIcon sx={{ fontSize: 32, color: '#ccc' }} />}
+                          </Box>
 
-                        {/* Badge Description */}
-                        <Typography variant="body2" sx={{
-                          color: '#666',
-                          fontSize: '11px',
-                          mb: 1,
-                          lineHeight: 1.3,
-                          textAlign: 'center'
-                        }}>
-                          {badge.description || 'No description'}
-                        </Typography>
+                          {/* Badge Name */}
+                          <Typography variant="h6" sx={{
+                            color: '#333',
+                            fontWeight: 600,
+                            fontSize: '14px',
+                            mb: 0.5,
+                            lineHeight: 1.2,
+                            textAlign: 'center',
+                            minHeight: '40px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            {badge.label || 'Unknown Badge'}
+                          </Typography>
 
-                        {/* Progress */}
-                        <Typography variant="caption" sx={{
-                          color: badge.earned ? '#4caf50' : '#999',
-                          fontSize: '10px',
-                          fontWeight: 600,
-                          backgroundColor: badge.earned ? '#e8f5e8' : '#f0f0f0',
-                          padding: '2px 6px',
-                          borderRadius: '12px',
-                          display: 'inline-block'
-                        }}>
-                          {badge.progress || '0/0'}
-                        </Typography>
-                      </CardContent>
-                    </Card>
+                          {/* Badge Description */}
+                          <Typography variant="body2" sx={{
+                            color: '#666',
+                            fontSize: '12px',
+                            mb: 1,
+                            lineHeight: 1.3,
+                            textAlign: 'center',
+                            minHeight: '40px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            {badge.description || 'No description'}
+                          </Typography>
+
+                          {/* Progress */}
+                          <Typography variant="caption" sx={{
+                            color: badge.earned ? '#4caf50' : '#999',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            backgroundColor: badge.earned ? '#e8f5e8' : '#f0f0f0',
+                            padding: '4px 8px',
+                            borderRadius: '12px',
+                            display: 'inline-block'
+                          }}>
+                            {badge.progress || '0/0'}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Box>
                   </Grid>
                 );
               })}
             </Grid>
           </Box>
-
         </Container>
       </div>
     </div>
