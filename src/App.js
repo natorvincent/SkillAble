@@ -101,16 +101,10 @@ function App() {
           isLoggedIn ? <StudentProgress /> : <Navigate to="/login" replace />
         } />
 
-        {/* Cooking Level Routes */}
-        <Route path="/lesson/cooking/level-1" element={
-          isLoggedIn ? <CookingLevel1 /> : <Navigate to="/login" replace />
-        } />
-        
-        <Route path="/lesson/cooking/level-2" element={
+        <Route path="/lesson/cooking/level-2/:lessonId" element={
           isLoggedIn ? <CookingLevel2 /> : <Navigate to="/login" replace />
         } />
 
-        {/* Generic cooking route (backwards compatibility) */}
         <Route path="/lesson/cooking/:lessonId" element={
           isLoggedIn ? <CookingLevel1 /> : <Navigate to="/login" replace />
         } />
