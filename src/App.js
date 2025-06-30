@@ -12,13 +12,14 @@ import AdminDashboard from './components/admin/AdminDashboard';
 import AdminRoute from './components/admin/AdminRoute';
 import ModuleDetails from './components/ModuleDetails';
 import PersonalHygieneLevel1 from './components/lesson/PersonalHygieneLevel1';
+import SortingLevel1 from './components/lesson/SortingLevel1'; 
 import CookingLevel1 from './components/lesson/CookingLevel1';
 import CookingLevel2 from './components/lesson/CookingLevel2';
 import ManageStudents from './components/teacher/ManageStudents';
 import StudentProgress from './components/teacher/StudentProgress';
 import AchievementsPage from './components/AchievementsPage';
-import AboutUsPage from './components/AboutUsPage'; // Add this import
-import ContactPage from './components/ContactPage'; // Add this import
+import AboutUsPage from './components/AboutUsPage';
+import ContactPage from './components/ContactPage';
 
 function useLocalStorage(key, defaultValue) {
   const [value, setValue] = useState(() => {
@@ -111,6 +112,11 @@ function App() {
 
         <Route path="/lesson/hygiene/:lessonId" element={
           isLoggedIn ? <PersonalHygieneLevel1 /> : <Navigate to="/login" replace />
+        } />
+
+        {/* New Food Sorting Route */}
+        <Route path="/lesson/food-sorting/:lessonId" element={
+          isLoggedIn ? <SortingLevel1 /> : <Navigate to="/login" replace />
         } />
 
         {/* Admin Routes */}

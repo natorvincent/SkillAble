@@ -86,6 +86,13 @@ const LessonManagement = () => {
       component: 'CookingLevel2',
       path: '/lesson/cooking/level-2',
       icon: '👨‍🍳'
+    },
+    {
+      value: 'SortingLevel1',
+      label: 'Food Sorting Level 1',
+      description: 'Identify healthy vs. unhealthy food',
+      path: '/lesson/food-sorting',
+      icon: '🍎'
     }
   ];
 
