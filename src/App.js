@@ -102,6 +102,10 @@ function App() {
           isLoggedIn ? <StudentProgress /> : <Navigate to="/login" replace />
         } />
 
+        <Route path="/lesson/cooking/level-1/:lessonId" element={
+          isLoggedIn ? <CookingLevel1 /> : <Navigate to="/login" replace />
+        } />
+
         <Route path="/lesson/cooking/level-2/:lessonId" element={
           isLoggedIn ? <CookingLevel2 /> : <Navigate to="/login" replace />
         } />

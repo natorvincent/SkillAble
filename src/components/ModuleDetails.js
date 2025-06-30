@@ -46,6 +46,9 @@ import {
 } from '../services/progressService';
 import module1 from "../assets/hygiene.png";
 import module2 from "../assets/culinary-skills.jpg";
+import { useGlobalBackgroundMusic } from "./background music/useGlobalBackgroundMusic";
+import AudioToggleButton from "../components/AudioToggleButton";
+import backgroundMusic from '../assets/background-music.mp3';
 
 
 function ModuleDetails() {
@@ -60,6 +63,7 @@ function ModuleDetails() {
   const [moduleProgress, setModuleProgress] = useState(null);
   const [progressStats, setProgressStats] = useState(null);
   const [lessonProgress, setLessonProgress] = useState({});
+  const { audioPlaying, toggleAudio } = useGlobalBackgroundMusic(backgroundMusic);
 
   const moduleImages = [
   module1,
@@ -312,6 +316,7 @@ function ModuleDetails() {
           >
             Back to Modules
           </Button>
+          <AudioToggleButton audioPlaying={audioPlaying} toggleAudio={toggleAudio} />
           
           {progressStats && (
             <Card sx={{ mb: 4, p: 3, borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>

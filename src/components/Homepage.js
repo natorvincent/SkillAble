@@ -46,6 +46,9 @@ import {
   getStudentModuleProgressStats,
   getStudentLessonProgress 
 } from '../services/progressService';
+import { useGlobalBackgroundMusic } from "../components/background music/useGlobalBackgroundMusic";
+import AudioToggleButton from "../components/background music/AudioToggleButton";
+import backgroundMusic from '../assets/background-music.mp3';
 
 function Homepage() {
   const [loading, setLoading] = useState(true);
@@ -65,6 +68,7 @@ function Homepage() {
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [completionRate, setCompletionRate] = useState(0);
   const [loadingCompletionRate, setLoadingCompletionRate] = useState(false);
+  const { audioPlaying, toggleAudio } = useGlobalBackgroundMusic(backgroundMusic);
   const navigate = useNavigate();
 
   const moduleImages = [
@@ -579,6 +583,7 @@ function Homepage() {
                 boxShadow: "none"
               }}
             >
+              <AudioToggleButton audioPlaying={audioPlaying} toggleAudio={toggleAudio} />
               <Box sx={{ mb: 3 }}>
                 <Typography variant="h5" color="#2d3748" fontWeight={600} gutterBottom>
                   Your Learning Modules
@@ -812,6 +817,9 @@ function Homepage() {
         BackdropComponent={Backdrop}
         BackdropProps={{
           timeout: 500,
+          sx: {
+            backgroundColor: 'rgba(74, 108, 247, 0.1)', // Light blue backdrop instead of dark
+          }
         }}
         sx={{
           display: 'flex',
@@ -826,27 +834,34 @@ function Homepage() {
               p: 4,
               outline: 'none',
               borderRadius: '20px',
-              boxShadow: "none",
-              border: '2px solid #e0e0e0'
+              boxShadow: "0 10px 40px rgba(74, 108, 247, 0.15)", // Bright blue shadow
+              border: '2px solid #4a6cf7', // Blue border matching button
+              background: 'linear-gradient(135deg, #ffffff 0%, #f8faff 100%)', // Subtle gradient
             }}
           >
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, alignItems: 'center' }}>
-              <Typography variant="h5" fontWeight={600} color="#2d3748">
+              <Typography variant="h5" fontWeight={600} color="#4a6cf7"> {/* Blue text color */}
                 {isProfileComplete() ? 'Edit Your Profile' : 'Complete Your Profile'}
               </Typography>
               {isProfileComplete() && (
                 <IconButton
                   edge="end"
-                  color="inherit"
                   onClick={handleCloseProfileModal}
                   aria-label="close"
+                  sx={{
+                    color: "#4a6cf7",
+                    backgroundColor: "rgba(74, 108, 247, 0.1)",
+                    "&:hover": {
+                      backgroundColor: "rgba(74, 108, 247, 0.2)",
+                    }
+                  }}
                 >
                   <CloseIcon />
                 </IconButton>
               )}
             </Box>
 
-            <Divider sx={{ mb: 3 }} />
+            <Divider sx={{ mb: 3, backgroundColor: "#4a6cf7", height: 2 }} /> {/* Blue divider */}
             
             {userProfile?.userType === "STUDENT" && (
               <Box component="form" onSubmit={handleStudentFormSubmit} sx={{ mt: 2 }}>
@@ -860,7 +875,23 @@ function Homepage() {
                     mb: 3,
                     "& .MuiOutlinedInput-root": {
                       borderRadius: "10px",
+                      "& fieldset": {
+                        borderColor: "#4a6cf7",
+                        borderWidth: 2,
+                      },
+                      "&:hover fieldset": {
+                        borderColor: "#3a5ce5",
+                      },
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#4a6cf7",
+                      }
                     },
+                    "& .MuiInputLabel-root": {
+                      color: "#4a6cf7",
+                      "&.Mui-focused": {
+                        color: "#4a6cf7",
+                      }
+                    }
                   }}
                 />
                 <TextField
@@ -873,7 +904,23 @@ function Homepage() {
                     mb: 3,
                     "& .MuiOutlinedInput-root": {
                       borderRadius: "10px",
+                      "& fieldset": {
+                        borderColor: "#4a6cf7",
+                        borderWidth: 2,
+                      },
+                      "&:hover fieldset": {
+                        borderColor: "#3a5ce5",
+                      },
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#4a6cf7",
+                      }
                     },
+                    "& .MuiInputLabel-root": {
+                      color: "#4a6cf7",
+                      "&.Mui-focused": {
+                        color: "#4a6cf7",
+                      }
+                    }
                   }}
                 />
                 <TextField
@@ -890,7 +937,23 @@ function Homepage() {
                     mb: 3,
                     "& .MuiOutlinedInput-root": {
                       borderRadius: "10px",
+                      "& fieldset": {
+                        borderColor: "#4a6cf7",
+                        borderWidth: 2,
+                      },
+                      "&:hover fieldset": {
+                        borderColor: "#3a5ce5",
+                      },
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#4a6cf7",
+                      }
                     },
+                    "& .MuiInputLabel-root": {
+                      color: "#4a6cf7",
+                      "&.Mui-focused": {
+                        color: "#4a6cf7",
+                      }
+                    }
                   }}
                 />
                 <Button
@@ -902,8 +965,13 @@ function Homepage() {
                     height: "50px",
                     borderRadius: "10px",
                     backgroundColor: "#4a6cf7",
+                    fontSize: "16px",
+                    fontWeight: 600,
+                    boxShadow: "0 4px 15px rgba(74, 108, 247, 0.3)",
                     "&:hover": {
-                      backgroundColor: "#3a5ce5"
+                      backgroundColor: "#3a5ce5",
+                      boxShadow: "0 6px 20px rgba(74, 108, 247, 0.4)",
+                      transform: "translateY(-1px)",
                     }
                   }}
                 >
@@ -924,7 +992,23 @@ function Homepage() {
                     mb: 3,
                     "& .MuiOutlinedInput-root": {
                       borderRadius: "10px",
+                      "& fieldset": {
+                        borderColor: "#4a6cf7",
+                        borderWidth: 2,
+                      },
+                      "&:hover fieldset": {
+                        borderColor: "#3a5ce5",
+                      },
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#4a6cf7",
+                      }
                     },
+                    "& .MuiInputLabel-root": {
+                      color: "#4a6cf7",
+                      "&.Mui-focused": {
+                        color: "#4a6cf7",
+                      }
+                    }
                   }}
                 />
                 <Button
@@ -936,8 +1020,13 @@ function Homepage() {
                     height: "50px",
                     borderRadius: "10px",
                     backgroundColor: "#4a6cf7",
+                    fontSize: "16px",
+                    fontWeight: 600,
+                    boxShadow: "0 4px 15px rgba(74, 108, 247, 0.3)",
                     "&:hover": {
-                      backgroundColor: "#3a5ce5"
+                      backgroundColor: "#3a5ce5",
+                      boxShadow: "0 6px 20px rgba(74, 108, 247, 0.4)",
+                      transform: "translateY(-1px)",
                     }
                   }}
                 >
