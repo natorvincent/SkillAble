@@ -33,14 +33,14 @@ import {
 // Import food images
 import apple from "../../assets/sortingLevel1/apple.png";
 import carrots from "../../assets/sortingLevel1/carrots.png";
-import fish from "../../assets/sortingLevel1/fish.jpeg";
-import oliveOil from "../../assets/sortingLevel1/oliveoil.jpg";
+import fish from "../../assets/sortingLevel1/fish.png";
+import oliveOil from "../../assets/sortingLevel1/oliveoil.png";
 import water from "../../assets/sortingLevel1/water.png";
 import hotdog from "../../assets/sortingLevel1/hotdogs.png";
-import cereal from "../../assets/sortingLevel1/cereal.jpg";
+import cereal from "../../assets/sortingLevel1/cereal.png";
 import soda from "../../assets/sortingLevel1/soda.png";
 import chocobar from "../../assets/sortingLevel1/chocobar.png";
-import chips from "../../assets/sortingLevel1/potatochips.jpg";
+import chips from "../../assets/sortingLevel1/potatochips.png";
 import kitchenBg from "../../assets/sortingLevel1/kitchen.jpg";
 
 export default function SortingLevel1() {
@@ -372,353 +372,439 @@ export default function SortingLevel1() {
 
   return (
     <div style={{
-      position: "relative",
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
       overflow: "hidden",
-      minHeight: "100vh",
-      width: "100%",
       backgroundImage: `url(${kitchenBg})`,
       backgroundSize: "cover",
-      backgroundPosition: "center"
+      backgroundPosition: "center",
     }}>
       <Navbar />
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Paper sx={{ 
-          p: 4, 
-          borderRadius: '20px', 
-          backgroundColor: 'rgba(255, 250, 244, 0.9)',
-          boxShadow: '0 6px 24px rgba(0, 0, 0, 0.1)',
-          border: '2px solid #FFCA3A'
-        }}>
-          
-          <Box textAlign="center" mb={4}>
-            <div style={{
-              display: "inline-block",
-              backgroundColor: "#540D6E",
-              borderRadius: "40px",
-              padding: "10px 30px",
-              boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
-              marginBottom: "20px",
-            }}>
-              <Typography variant="h3" sx={{ 
+      
+      {/* Main content container */}
+      <Box sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        height: 'calc(100vh - 80px)',
+        padding: '20px',
+        justifyContent: 'flex-start',
+        width: '100%',
+        maxWidth: '1400px',
+        margin: '0 auto'
+      }}>
+        {/* Progress bar */}
+        <Box mb={4} sx={{ width: '100%', maxWidth: '800px' }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+            <Typography variant="h6" sx={{ color: 'white', fontWeight: 'bold', textShadow: '1px 1px 3px rgba(0,0,0,0.8)' }}>
+              Item {currentItemIndex + 1} of {shuffledItems.length}
+            </Typography>
+            <Chip 
+              label={`Score: ${score}/${shuffledItems.length}`} 
+              sx={{ 
+                backgroundColor: '#FF595E', 
                 color: 'white', 
-                fontWeight: '700',
-                fontSize: '2.5rem',
-                margin: 0
-              }}>
-                Food Sorting
-              </Typography>
-            </div>
-            <Typography variant="h6" sx={{ color: '#280B60', mb: 3 }}>
-              Learn about healthy and unhealthy foods!
-            </Typography>
-            
-            {showTip && (
-              <Paper sx={{ p: 3, mb: 3, backgroundColor: '#FFCA3A', borderRadius: '20px' }}>
-                <Typography variant="body1" sx={{ color: '#280B60', fontWeight: 'bold' }}>
-                  {showTip}
-                </Typography>
-              </Paper>
-            )}
-          </Box>
-
-          <Box mb={4}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-              <Typography variant="h6" sx={{ color: '#280B60', fontWeight: 'bold' }}>
-                Item {currentItemIndex + 1} of {shuffledItems.length}
-              </Typography>
-              <Chip 
-                label={`Score: ${score}/${shuffledItems.length}`} 
-                sx={{ backgroundColor: '#FF595E', color: 'white', fontWeight: 'bold' }}
-              />
-            </Stack>
-            <LinearProgress 
-              variant="determinate" 
-              value={progressPercentage} 
-              sx={{ height: 12, borderRadius: '20px' }} 
+                fontWeight: 'bold',
+                fontSize: '1rem',
+                padding: '5px 10px'
+              }}
             />
-          </Box>
+          </Stack>
+          <LinearProgress 
+            variant="determinate" 
+            value={progressPercentage} 
+            sx={{ 
+              height: 12, 
+              borderRadius: '20px',
+              backgroundColor: 'rgba(255,255,255,0.3)',
+              '& .MuiLinearProgress-bar': {
+                backgroundColor: '#FFCA3A'
+              }
+            }} 
+          />
+        </Box>
 
-          <Paper sx={{ p: 3, mb: 4, backgroundColor: '#1982C4', borderRadius: '20px' }}>
-            <Typography variant="h6" sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>
-              {activityData.instructions}
-            </Typography>
-          </Paper>
+        {/* Instructions */}
+        <Box sx={{ 
+          p: 2, 
+          mb: 4, 
+          backgroundColor: 'rgba(25, 130, 196, 0.9)',
+          borderRadius: '20px',
+          maxWidth: '800px',
+          width: '100%'
+        }}>
+          <Typography variant="h6" sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>
+            {activityData.instructions}
+          </Typography>
+        </Box>
 
-          {!gameCompleted && currentItem && (
-            <Box mb={4}>
-              <Typography variant="h5" sx={{ color: '#FF595E', fontWeight: 'bold', textAlign: 'center', mb: 3 }}>
+        {/* Game area - items and drop zones */}
+        {!gameCompleted && currentItem && (
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'flex-start', 
+            gap: 4,
+            mb: 4,
+            width: '100%',
+            maxWidth: '1200px',
+            padding: '0 20px'
+          }}>
+            {/* Draggable Item */}
+            <Box sx={{ 
+              backgroundColor: 'rgba(255, 250, 244, 0.85)',
+              borderRadius: '20px',
+              padding: '20px',
+              border: '4px solid #FFCA3A',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+              width: '220px',
+              flexShrink: 0
+            }}>
+              <Typography variant="h5" sx={{ color: '#FF595E', fontWeight: 'bold', textAlign: 'center', mb: 2 }}>
                 Drag this item:
               </Typography>
-              
-              <Box display="flex" justifyContent="center" mb={4}>
-                <div 
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, currentItem)}
-                  style={{
-                    width: '220px',
-                    height: '280px',
-                    borderRadius: '20px',
-                    background: '#FFFAF4',
-                    position: 'relative',
-                    padding: '1.8rem',
-                    border: '4px solid #FFCA3A',
-                    transition: 'all 0.3s ease',
-                    overflow: 'visible',
-                    cursor: 'grab',
-                    textAlign: 'center',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <CardMedia
-                    component="img"
-                    image={currentItem?.imageUrl}
-                    alt={currentItem?.name}
-                    sx={{ width: 120, height: 120, objectFit: 'contain', mb: 2 }}
-                  />
-                  <Typography variant="h6" sx={{ color: '#280B60', fontWeight: 'bold', mb: 1 }}>
-                    {currentItem?.name}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: '#280B60', fontStyle: 'italic' }}>
-                    {currentItem?.hint}
-                  </Typography>
-                </div>
-              </Box>
+              <div 
+                draggable
+                onDragStart={(e) => handleDragStart(e, currentItem)}
+                style={{
+                  width: '180px',
+                  height: '220px',
+                  borderRadius: '15px',
+                  position: 'relative',
+                  padding: '1rem',
+                  transition: 'all 0.3s ease',
+                  overflow: 'visible',
+                  cursor: 'grab',
+                  textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <CardMedia
+                  component="img"
+                  image={currentItem?.imageUrl}
+                  alt={currentItem?.name}
+                  sx={{ width: 80, height: 80, objectFit: 'contain', mb: 1 }}
+                />
+                <Typography variant="h6" sx={{ color: '#280B60', fontWeight: 'bold', mb: 1, fontSize: '1rem' }}>
+                  {currentItem?.name}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#280B60', fontStyle: 'italic', fontSize: '0.8rem' }}>
+                  {currentItem?.hint}
+                </Typography>
+              </div>
             </Box>
-          )}
 
-          <Typography variant="h5" sx={{ color: '#FF595E', fontWeight: 'bold', textAlign: 'center', mb: 3 }}>
-            Drop it here:
-          </Typography>
-
-          <Grid container spacing={10} mb={4} justifyContent="center">
-            {activityData.categories.map(category => (
-              <Grid item xs={12} sm={6} key={category.id}>
-                <div
-                  onDragOver={handleDragOver}
-                  onDragEnter={(e) => handleDragEnter(e, category.id)}
-                  onDragLeave={handleDragLeave}
-                  onDrop={(e) => handleDrop(e, category)}
-                  style={{
-                    width: '80%',
-                    minHeight: '320px',
-                    minWidth: '200px',
-                    borderRadius: '20px',
-                    background: dropZoneActive === category.id ? 'rgba(255, 255, 255, 0.95)' : '#FFFAF4',
-                    position: 'relative',
-                    padding: '1.8rem',
-                    border: `4px solid ${dropZoneActive === category.id ? '#FFCA3A' : category.color}`,
-                    transition: 'all 0.3s ease',
-                    overflow: 'visible',
-                    textAlign: 'center',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center'
-                  }}
-                >
-                  <Typography variant="h4" sx={{ mb: 2 }}>
-                    {category.emoji}
-                  </Typography>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#280B60', mb: 1 }}>
+            {/* Drop Zones */}
+            <Box sx={{ 
+              display: 'flex', 
+              gap: 4,
+              backgroundColor: 'rgba(255, 250, 244, 0.7)',
+              borderRadius: '20px',
+              padding: '20px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+              width: 'calc(100% - 260px)',
+              minWidth: '800px',
+              justifyContent: 'space-around'
+            }}>
+              {activityData.categories.map((category) => (
+                <Box key={category.id} sx={{ 
+                  width: '45%',
+                  padding: '0 10px',
+                  boxSizing: 'border-box',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center'
+                }}>
+                  <Typography variant="h5" sx={{ 
+                    color: category.color, 
+                    fontWeight: 'bold', 
+                    textAlign: 'center', 
+                    mb: 2,
+                    textShadow: '1px 1px 2px rgba(0,0,0,0.2)',
+                    width: '100%'
+                  }}>
                     {category.name}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: '#280B60', mb: 3 }}>
-                    {category.description}
-                  </Typography>
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragEnter={(e) => handleDragEnter(e, category.id)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, category)}
+                    style={{
+                      width: '100%',
+                      minHeight: '220px',
+                      borderRadius: '15px',
+                      background: dropZoneActive === category.id ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 250, 244, 0.9)',
+                      position: 'relative',
+                      padding: '1rem',
+                      border: `4px solid ${dropZoneActive === category.id ? '#FFCA3A' : category.color}`,
+                      transition: 'all 0.3s ease',
+                      textAlign: 'center',
+                    }}
+                  >
+                    <Typography variant="h4" sx={{ mb: 1 }}>
+                      {category.emoji}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#280B60', mb: 2, fontSize: '0.9rem' }}>
+                      {category.description}
+                    </Typography>
 
-                  <Box sx={{ minHeight: 140, width: '100%' }}>
-                    {getCategoryItems(category.id).length === 0 ? (
-                      <Box sx={{ 
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        height: 140,
-                        border: '2px dashed #ccc',
-                        borderRadius: '15px',
-                        backgroundColor: 'rgba(255, 255, 255, 0.3)'
-                      }}>
-                        <FavoriteIcon sx={{ fontSize: 40, color: '#ccc', mb: 1 }} />
-                        <Typography variant="body2" sx={{ color: '#999' }}>
-                          Drop here
-                        </Typography>
-                      </Box>
-                    ) : (
-                      getCategoryItems(category.id).map(item => (
-                        <Paper
-                          key={item.id}
-                          sx={{
-                            p: 2,
-                            mb: 1,
-                            textAlign: 'center',
-                            backgroundColor: '#FFFAF4',
-                            border: '2px solid',
-                            borderColor: answers.find(a => a.itemId === item.id)?.isCorrect ? '#90BE6D' : '#FF595E',
-                            borderRadius: '15px',
-                            position: 'relative'
-                          }}
-                        >
-                          <CardMedia
-                            component="img"
-                            image={item.imageUrl}
-                            alt={item.name}
-                            sx={{ width: 50, height: 50, objectFit: 'contain', mx: 'auto', mb: 1 }}
-                          />
-                          <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#280B60' }}>
-                            {item.name}
+                    <Box sx={{ 
+                      width: '100%',
+                      minHeight: '120px',
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '6px',
+                      
+                      justifyContent: 'center',
+                      alignContent: 'flex-start',
+                    }}>
+                      {getCategoryItems(category.id).length === 0 ? (
+                        <Box sx={{ 
+                          width: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'space-around',
+                          height: '120px',
+                          border: '2px dashed #ccc',
+                          borderRadius: '10px',
+                          backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                          padding: '0 20px' // Add this line for equal horizontal padding
+                        }}>
+                          <FavoriteIcon sx={{ fontSize: 40, color: '#ccc', mb: 1 }} />
+                          <Typography variant="body2" sx={{ color: '#999' }}>
+                            Drop here
                           </Typography>
-                          <CheckCircleIcon 
-                            sx={{ 
-                              position: 'absolute',
-                              top: -8,
-                              right: -8,
-                              color: answers.find(a => a.itemId === item.id)?.isCorrect ? '#90BE6D' : '#FF595E',
+                        </Box>
+                      ) : (
+                        getCategoryItems(category.id).map(item => (
+                          <Paper
+                            key={item.id}
+                            sx={{
+                              p: '4px',
+                              textAlign: 'center',
                               backgroundColor: '#FFFAF4',
-                              borderRadius: '50%',
-                              fontSize: 24,
-                              border: '2px solid #FFFAF4'
-                            }} 
-                          />
-                        </Paper>
-                      ))
-                    )}
-                  </Box>
-                </div>
-              </Grid>
-            ))}
-          </Grid>
-
-          <Stack direction="row" spacing={3} justifyContent="center">
-            <Button 
-              variant="outlined"
-              onClick={resetGame}
-              sx={{ borderColor: '#FF595E', color: '#FF595E' }}
-            >
-              Start Over
-            </Button>
-            <Button 
-              variant="outlined"
-              onClick={handleGoHome}
-              sx={{ borderColor: '#1982C4', color: '#1982C4' }}
-            >
-              Go Home
-            </Button>
-          </Stack>
-        </Paper>
-        
-        <Dialog
-          open={showFeedback}
-          maxWidth="sm"
-          fullWidth
-          PaperProps={{
-            sx: { 
-              borderRadius: '20px',
-              backgroundColor: '#FFFAF4',
-              border: `4px solid ${feedbackData?.isCorrect ? '#90BE6D' : '#FFCA3A'}`
-            }
-          }}
-        >
-          <DialogTitle sx={{ textAlign: 'center', pb: 2 }}>
-            <CheckCircleIcon sx={{ fontSize: 80, color: feedbackData?.isCorrect ? '#90BE6D' : '#FFCA3A', mb: 2 }} />
-            <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#280B60' }}>
-              {feedbackData?.isCorrect ? 'Great job!' : 'Good try!'}
-            </Typography>
-          </DialogTitle>
-          <DialogContent sx={{ textAlign: 'center', py: 2 }}>
-            <Typography variant="h6" sx={{ color: '#280B60' }}>
-              {feedbackData?.isCorrect 
-                ? `${feedbackData.item?.name} is ${feedbackData.category?.name.toLowerCase()}!`
-                : `${feedbackData?.item?.name} is actually ${activityData.categories.find(cat => cat.id === feedbackData?.item?.category)?.name.toLowerCase()}.`
-              }
-            </Typography>
-          </DialogContent>
-          <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
-            <Button 
-              onClick={handleNext} 
-              variant="contained"
-              sx={{ backgroundColor: '#FF595E' }}
-            >
-              {currentItemIndex < shuffledItems.length - 1 ? 'Next Item' : 'Finish'}
-            </Button>
-          </DialogActions>
-        </Dialog>
-        
-        <Dialog
-          open={showSuccess}
-          maxWidth="sm"
-          fullWidth
-          PaperProps={{
-            sx: { 
-              borderRadius: '20px',
-              backgroundColor: '#FFFAF4',
-              border: '4px solid #FFCA3A'
-            }
-          }}
-        >
-          <DialogTitle sx={{ textAlign: 'center', py: 4 }}>
-            <EmojiEventsIcon sx={{ fontSize: 100, color: '#FFCA3A', mb: 2 }} />
-            <Typography variant="h3" sx={{ fontWeight: 'bold', color: '#280B60' }}>
-              You did it!
-            </Typography>
-            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-              {[...Array(getStarRating())].map((_, i) => (
-                <StarIcon key={i} sx={{ color: '#FFCA3A', fontSize: 50, mx: 0.5 }} />
-              ))}
-              {[...Array(3 - getStarRating())].map((_, i) => (
-                <StarIcon key={i} sx={{ color: '#E0E0E0', fontSize: 50, mx: 0.5 }} />
+                              border: '2px solid',
+                              borderColor: answers.find(a => a.itemId === item.id)?.isCorrect ? '#90BE6D' : '#FF595E',
+                              borderRadius: '8px',
+                              position: 'relative',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              height: '50px',
+                              width: 'calc(15% - 6px)',
+                              minWidth: '0'
+                            }}
+                          >
+                            <CardMedia
+                              component="img"
+                              image={item.imageUrl}
+                              alt={item.name}
+                              sx={{ width: 30, height: 30, objectFit: 'contain', mb: '2px' }}
+                            />
+                            <Typography variant="caption" sx={{ 
+                              fontWeight: 'bold', 
+                              color: '#280B60',
+                              fontSize: '0.6rem',
+                              lineHeight: '1',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              width: '100%'
+                            }}>
+                              {item.name}
+                            </Typography>
+                            <CheckCircleIcon 
+                              sx={{ 
+                                position: 'absolute',
+                                top: -6,
+                                right: -6,
+                                color: answers.find(a => a.itemId === item.id)?.isCorrect ? '#90BE6D' : '#FF595E',
+                                backgroundColor: '#FFFAF4',
+                                borderRadius: '50%',
+                                fontSize: 16,
+                                border: '2px solid #FFFAF4'
+                              }} 
+                            />
+                          </Paper>
+                        ))
+                      )}
+                    </Box>
+                  </div>
+                </Box>
               ))}
             </Box>
-          </DialogTitle>
-          <DialogContent sx={{ textAlign: 'center', py: 2 }}>
-            <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#FF595E', mb: 2 }}>
-              Score: {score}/{shuffledItems.length}
-            </Typography>
-            <Typography variant="h6" sx={{ color: '#280B60', lineHeight: 1.6 }}>
-              You learned about healthy and unhealthy foods! Great job completing this lesson.
-            </Typography>
-            
-            {progressSaving && (
-              <Box sx={{ mt: 3, p: 3, backgroundColor: '#1982C4', borderRadius: '15px', color: 'white' }}>
-                <CircularProgress size={20} sx={{ mr: 1, color: 'white' }} />
-                <Typography variant="body2">
-                  Saving your progress...
-                </Typography>
-              </Box>
-            )}
-            
-            {progressSaved && (
-              <Box sx={{ mt: 3, p: 3, backgroundColor: '#90BE6D', borderRadius: '15px', color: 'white' }}>
-                <CheckCircleIcon sx={{ mr: 1, fontSize: 24 }} />
-                <Typography variant="body2">
-                  Progress saved successfully!
-                </Typography>
-              </Box>
-            )}
-          </DialogContent>
-          <DialogActions sx={{ justifyContent: 'center', pb: 4, gap: 3 }}>
-            <Button 
-              onClick={() => {
-                setShowSuccess(false);
-                resetGame();
-              }} 
-              variant="outlined"
-              sx={{ borderColor: '#FFCA3A', color: '#280B60' }}
-            >
-              Play Again
-            </Button>
-            <Button 
-              variant="contained"
-              onClick={handleContinue}
-              disabled={progressSaving}
-              sx={{ backgroundColor: '#FF595E' }}
-            >
-              {progressSaving ? 'Saving...' : 'Continue'}
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </Container>
+          </Box>
+        )}
+
+        {/* Buttons */}
+        <Stack direction="row" spacing={3} justifyContent="center" sx={{ mt: 'auto', mb: 4 }}>
+          <Button 
+            variant="contained"
+            onClick={resetGame}
+            sx={{ 
+              backgroundColor: '#FF595E',
+              '&:hover': { backgroundColor: '#E5383B' },
+              borderRadius: '10px',
+              padding: '8px 20px'
+            }}
+          >
+            Start Over
+          </Button>
+          <Button 
+            variant="contained"
+            onClick={handleGoHome}
+            sx={{ 
+              backgroundColor: '#1982C4',
+              '&:hover': { backgroundColor: '#1565C0' },
+              borderRadius: '10px',
+              padding: '8px 20px'
+            }}
+          >
+            Go Home
+          </Button>
+        </Stack>
+      </Box>
+      
+      
+      
+      
+      
+      {/* Feedback Dialog */}
+      <Dialog
+        open={showFeedback}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: { 
+            borderRadius: '20px',
+            backgroundColor: '#FFFAF4',
+            border: `4px solid ${feedbackData?.isCorrect ? '#90BE6D' : '#FFCA3A'}`
+          }
+        }}
+      >
+        <DialogTitle sx={{ textAlign: 'center', pb: 2 }}>
+          <CheckCircleIcon sx={{ fontSize: 80, color: feedbackData?.isCorrect ? '#90BE6D' : '#FFCA3A', mb: 2 }} />
+          <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#280B60' }}>
+            {feedbackData?.isCorrect ? 'Great job!' : 'Good try!'}
+          </Typography>
+        </DialogTitle>
+        <DialogContent sx={{ textAlign: 'center', py: 2 }}>
+          <Typography variant="h6" sx={{ color: '#280B60' }}>
+            {feedbackData?.isCorrect 
+              ? `${feedbackData.item?.name} is ${feedbackData.category?.name.toLowerCase()}!`
+              : `${feedbackData?.item?.name} is actually ${activityData.categories.find(cat => cat.id === feedbackData?.item?.category)?.name.toLowerCase()}.`
+            }
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
+          <Button 
+            onClick={handleNext} 
+            variant="contained"
+            sx={{ 
+              backgroundColor: '#FF595E',
+              '&:hover': { backgroundColor: '#E5383B' },
+              borderRadius: '10px',
+              padding: '8px 25px'
+            }}
+          >
+            {currentItemIndex < shuffledItems.length - 1 ? 'Next Item' : 'Finish'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
+      {/* Success Dialog */}
+      <Dialog
+        open={showSuccess}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: { 
+            borderRadius: '20px',
+            backgroundColor: '#FFFAF4',
+            border: '4px solid #FFCA3A'
+          }
+        }}
+      >
+        <DialogTitle sx={{ textAlign: 'center', py: 4 }}>
+          <EmojiEventsIcon sx={{ fontSize: 100, color: '#FFCA3A', mb: 2 }} />
+          <Typography variant="h3" sx={{ fontWeight: 'bold', color: '#280B60' }}>
+            You did it!
+          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+            {[...Array(getStarRating())].map((_, i) => (
+              <StarIcon key={i} sx={{ color: '#FFCA3A', fontSize: 50, mx: 0.5 }} />
+            ))}
+            {[...Array(3 - getStarRating())].map((_, i) => (
+              <StarIcon key={i} sx={{ color: '#E0E0E0', fontSize: 50, mx: 0.5 }} />
+            ))}
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ textAlign: 'center', py: 2 }}>
+          <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#FF595E', mb: 2 }}>
+            Score: {score}/{shuffledItems.length}
+          </Typography>
+          <Typography variant="h6" sx={{ color: '#280B60', lineHeight: 1.6 }}>
+            You learned about healthy and unhealthy foods! Great job completing this lesson.
+          </Typography>
+          
+          {progressSaving && (
+            <Box sx={{ mt: 3, p: 3, backgroundColor: '#1982C4', borderRadius: '15px', color: 'white' }}>
+              <CircularProgress size={20} sx={{ mr: 1, color: 'white' }} />
+              <Typography variant="body2">
+                Saving your progress...
+              </Typography>
+            </Box>
+          )}
+          
+          {progressSaved && (
+            <Box sx={{ mt: 3, p: 3, backgroundColor: '#90BE6D', borderRadius: '15px', color: 'white' }}>
+              <CheckCircleIcon sx={{ mr: 1, fontSize: 24 }} />
+              <Typography variant="body2">
+                Progress saved successfully!
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', pb: 4, gap: 3 }}>
+          <Button 
+            onClick={() => {
+              setShowSuccess(false);
+              resetGame();
+            }} 
+            variant="outlined"
+            sx={{ 
+              borderColor: '#FFCA3A', 
+              color: '#280B60',
+              borderRadius: '10px',
+              padding: '8px 25px'
+            }}
+          >
+            Play Again
+          </Button>
+          <Button 
+            variant="contained"
+            onClick={handleContinue}
+            disabled={progressSaving}
+            sx={{ 
+              backgroundColor: '#FF595E',
+              '&:hover': { backgroundColor: '#E5383B' },
+              borderRadius: '10px',
+              padding: '8px 25px'
+            }}
+          >
+            {progressSaving ? 'Saving...' : 'Continue'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
