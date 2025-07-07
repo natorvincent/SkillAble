@@ -12,6 +12,7 @@ import AdminDashboard from './components/admin/AdminDashboard';
 import AdminRoute from './components/admin/AdminRoute';
 import ModuleDetails from './components/ModuleDetails';
 import PersonalHygieneLevel1 from './components/lesson/PersonalHygieneLevel1';
+import PersonalHygieneLevel2 from './components/lesson/PersonalHygieneLevel2';
 import SortingLevel1 from './components/lesson/SortingLevel1'; 
 import CookingLevel1 from './components/lesson/CookingLevel1';
 import CookingLevel2 from './components/lesson/CookingLevel2';
@@ -103,31 +104,41 @@ function App() {
           isLoggedIn ? <StudentProgress /> : <Navigate to="/login" replace />
         } />
 
-        <Route path="/lesson/cooking/level-1/:lessonId" element={
-          isLoggedIn ? <CookingLevel1 /> : <Navigate to="/login" replace />
-        } />
+          {/* Cooking Routes */}
+          <Route path="/lesson/cooking/level-1/:lessonId" element={
+            isLoggedIn ? <CookingLevel1 /> : <Navigate to="/login" replace />
+          } />
 
-        <Route path="/lesson/cooking/level-2/:lessonId" element={
-          isLoggedIn ? <CookingLevel2 /> : <Navigate to="/login" replace />
-        } />
+          <Route path="/lesson/cooking/level-2/:lessonId" element={
+            isLoggedIn ? <CookingLevel2 /> : <Navigate to="/login" replace />
+          } />
 
-        <Route path="/lesson/cooking/:lessonId" element={
-          isLoggedIn ? <CookingLevel1 /> : <Navigate to="/login" replace />
-        } />
+          <Route path="/lesson/cooking/level-3/:lessonId" element={
+            isLoggedIn ? <CookingLevel3 /> : <Navigate to="/login" replace /> 
+          } />
 
-        <Route path="/lesson/cooking/level-3/:lessonId" element={
-          isLoggedIn ? <CookingLevel3 /> : <Navigate to="/login" replace /> 
-        } />
+          <Route path="/lesson/cooking/:lessonId" element={
+            isLoggedIn ? <CookingLevel1 /> : <Navigate to="/login" replace />
+          } />
 
-        <Route path="/lesson/hygiene/:lessonId" element={
-          isLoggedIn ? <PersonalHygieneLevel1 /> : <Navigate to="/login" replace />
-        } />
+          {/* Personal Hygiene Level Routes */}
+          <Route path="/lesson/hygiene/level-1/:moduleId/:lessonId" element={
+            isLoggedIn ? <PersonalHygieneLevel1 /> : <Navigate to="/login" replace />
+          } />
 
-        {/* New Food Sorting Route */}
-        <Route path="/lesson/food-sorting/:lessonId" element={
-          isLoggedIn ? <SortingLevel1 /> : <Navigate to="/login" replace />
-        } />
+          <Route path="/lesson/hygiene/level-2/:moduleId/:lessonId" element={
+            isLoggedIn ? <PersonalHygieneLevel2 /> : <Navigate to="/login" replace />
+          } />
 
+          {/* Generic hygiene route (backwards compatibility) */}
+          <Route path="/lesson/hygiene/:lessonId" element={
+            isLoggedIn ? <PersonalHygieneLevel1 /> : <Navigate to="/login" replace />
+          } />
+
+          {/* New Food Sorting Route */}
+          <Route path="/lesson/food-sorting/:lessonId" element={
+            isLoggedIn ? <SortingLevel1 /> : <Navigate to="/login" replace />
+          } />
         {/* Admin Routes */}
         <Route 
           path="/admin/*" 
@@ -136,7 +147,7 @@ function App() {
               <AdminDashboard />
             </AdminRoute>
           } 
-        />
+        /> 
         
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

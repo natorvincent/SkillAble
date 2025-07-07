@@ -72,6 +72,13 @@ const LessonManagement = () => {
       icon: '🧼'
     },
     {
+    value: 'PersonalHygieneLevel2',
+    label: 'Personal Hygiene Level 2',
+    description: 'Daily routine sequencing and hygiene habit formation',
+    path: '/lesson/hygiene/level-2',
+    icon: '🗓️'
+    },
+    {
       value: 'cooking-level-1',
       label: 'Cooking Level 1 - Ingredients',
       description: 'Learn basic cooking ingredients identification',

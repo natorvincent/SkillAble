@@ -197,15 +197,28 @@ function ModuleDetails() {
 
 
   const handleStartLesson = (lesson, index) => {
-    // Check if the lesson has a custom activity path
-    if (lesson.activityPath) {
-      // Navigate to the custom activity path with lesson ID
-      navigate(`${lesson.activityPath}/${lesson.id}`);
+  console.log("🚀 Starting lesson:", lesson);
+  console.log("📍 Module ID:", moduleId);
+  
+  // Check if the lesson has a custom activity path
+  if (lesson.activityPath) {
+    // Special handling for hygiene Level 2 that needs moduleId
+    if (lesson.activityPath === '/lesson/hygiene/level-2') {
+      const navigationPath = `${lesson.activityPath}/${moduleId}/${lesson.id}`;
+      console.log("📍 Navigating to hygiene level 2:", navigationPath);
+      navigate(navigationPath);
     } else {
-      // Default lesson route
-      navigate(`/lessons/${lesson.id}`);
+      // All other lessons (including hygiene level 1) use original format
+      const navigationPath = `${lesson.activityPath}/${lesson.id}`;
+      console.log("📍 Navigating to other lesson:", navigationPath);
+      navigate(navigationPath);
     }
-  };
+  } else {
+    // Default lesson route
+    console.log("📍 Navigating to default lesson route");
+    navigate(`/lessons/${lesson.id}`);
+  }
+};
 
   const getLessonIcon = (activityType) => {
     switch (activityType) {
