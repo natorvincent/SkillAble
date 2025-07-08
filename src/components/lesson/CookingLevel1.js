@@ -1,10 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
+  Box, 
+  Typography, 
+  Container, 
+  Button, 
+  Card, 
+  CardContent,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Stack,
+  LinearProgress,
+  CircularProgress,
+  Chip,
+  Switch,
+  FormControlLabel
+} from '@mui/material';
+import Navbar from '../Navbar';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import StarIcon from '@mui/icons-material/Star';
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import VolumeOffIcon from '@mui/icons-material/VolumeOff';
+import { 
   getStudentLessonProgress, 
   saveStudentLessonProgress,
   updateModuleProgress
 } from '../../services/progressService';
+
+// Import kitchen background only
+import kitchenBg from "../../assets/sortingLevel1/kitchen.jpg";
 
 export default function CookingLevel1() {
   const navigate = useNavigate();
@@ -69,6 +96,7 @@ export default function CookingLevel1() {
   ];
 
   const currentItem = ingredients[currentIngredient];
+  const progressPercentage = ((currentIngredient + 1) / ingredients.length) * 100;
 
   // Get student ID from localStorage
   const getStudentId = () => {
@@ -297,559 +325,637 @@ export default function CookingLevel1() {
 
   const hasNextLevel = currentLevel < maxLevel;
 
-  // Loading state
+  // Loading state with Material-UI styling
   if (loading) {
     return (
       <div style={{
+        position: "relative",
+        overflow: "hidden",
         minHeight: "100vh",
-        background: 'linear-gradient(135deg, #E3F2FD, #F3E5F5, #FFF3E0)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px'
+        width: "100%",
+        backgroundImage: `url(${kitchenBg})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed"
       }}>
-        <div style={{
-          backgroundColor: '#FFFFFF',
-          borderRadius: '30px',
-          padding: '40px',
-          textAlign: 'center',
-          maxWidth: '400px',
-          width: '100%',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
-        }}>
-          <div style={{
-            width: '48px',
-            height: '48px',
-            border: '4px solid #4CAF50',
-            borderTop: '4px solid transparent',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-            margin: '0 auto 20px auto'
-          }}></div>
-          <h3 style={{ fontSize: '1.5rem', color: '#2E7D32', margin: 0 }}>Loading cooking lesson...</h3>
-          <style>{`
-            @keyframes spin {
-              0% { transform: rotate(0deg); }
-              100% { transform: rotate(360deg); }
-            }
-          `}</style>
-        </div>
+        <Box sx={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.4)",
+          zIndex: 1
+        }} />
+        <Navbar />
+        <Container sx={{ py: 8, textAlign: 'center', position: 'relative', zIndex: 2 }}>
+          <CircularProgress size={50} sx={{ color: '#4CAF50' }} />
+          <Typography variant="h5" sx={{ mt: 3, color: 'white', fontWeight: 'bold', textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
+            Loading cooking lesson...
+          </Typography>
+        </Container>
       </div>
     );
   }
 
-  const styles = {
-    container: {
-      minHeight: "100vh",
-      background: 'linear-gradient(135deg, #E3F2FD, #F3E5F5, #FFF3E0)',
-      padding: '20px',
-      fontFamily: 'Arial, sans-serif'
-    },
-    mainCard: {
-      maxWidth: '800px',
-      margin: '0 auto',
-      backgroundColor: '#FFFFFF',
-      borderRadius: '30px',
-      padding: '30px',
-      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-      border: '4px solid #4CAF50'
-    },
-    headerSection: {
-      textAlign: 'center',
-      marginBottom: '30px'
-    },
-    title: {
-      fontSize: '2.5rem',
-      fontWeight: 'bold',
-      color: '#2E7D32',
-      marginBottom: '10px',
-      textShadow: '2px 2px 4px rgba(0,0,0,0.1)'
-    },
-    subtitle: {
-      fontSize: '1.3rem',
-      color: '#1976D2',
-      marginBottom: '20px'
-    },
-    tipSection: {
-      backgroundColor: '#E8F5E8',
-      border: '2px solid #4CAF50',
-      borderRadius: '15px',
-      padding: '15px',
-      marginBottom: '20px',
-      textAlign: 'center'
-    },
-    tipText: {
-      fontSize: '1.1rem',
-      color: '#2E7D32',
-      margin: 0,
-      fontWeight: '500'
-    },
-    modeToggle: {
-      display: 'flex',
-      justifyContent: 'center',
-      gap: '15px',
-      marginBottom: '30px'
-    },
-    modeButton: {
-      padding: '15px 30px',
-      borderRadius: '25px',
-      border: 'none',
-      fontSize: '1.2rem',
-      fontWeight: 'bold',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease',
-      minWidth: '150px'
-    },
-    activeMode: {
-      backgroundColor: '#4CAF50',
-      color: 'white',
-      transform: 'scale(1.05)'
-    },
-    inactiveMode: {
-      backgroundColor: '#E0E0E0',
-      color: '#666'
-    },
-    progressBar: {
-      width: '100%',
-      height: '20px',
-      backgroundColor: '#E0E0E0',
-      borderRadius: '10px',
-      marginBottom: '20px',
-      overflow: 'hidden'
-    },
-    progressFill: {
-      height: '100%',
-      backgroundColor: '#4CAF50',
-      borderRadius: '10px',
-      transition: 'width 0.5s ease',
-      width: `${((currentIngredient + 1) / ingredients.length) * 100}%`
-    },
-    ingredientDisplay: {
-      textAlign: 'center',
-      backgroundColor: currentItem?.color || '#F5F5F5',
-      borderRadius: '25px',
-      padding: '40px',
-      marginBottom: '30px',
-      border: '3px solid #4CAF50'
-    },
-    emojiLarge: {
-      fontSize: '8rem',
-      marginBottom: '20px',
-      display: 'block',
-      filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))'
-    },
-    ingredientName: {
-      fontSize: '3rem',
-      fontWeight: 'bold',
-      color: '#2E7D32',
-      marginBottom: '15px',
-      textShadow: '2px 2px 4px rgba(0,0,0,0.1)'
-    },
-    description: {
-      fontSize: '1.4rem',
-      color: '#1976D2',
-      lineHeight: 1.5,
-      maxWidth: '500px',
-      margin: '0 auto'
-    },
-    controlButtons: {
-      display: 'flex',
-      justifyContent: 'center',
-      gap: '20px',
-      marginBottom: '30px',
-      flexWrap: 'wrap'
-    },
-    controlButton: {
-      padding: '15px 25px',
-      borderRadius: '20px',
-      border: 'none',
-      fontSize: '1.1rem',
-      fontWeight: 'bold',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease',
-      minWidth: '120px'
-    },
-    primaryButton: {
-      backgroundColor: '#2196F3',
-      color: 'white'
-    },
-    secondaryButton: {
-      backgroundColor: '#FF9800',
-      color: 'white'
-    },
-    navigationButton: {
-      backgroundColor: '#9C27B0',
-      color: 'white'
-    },
-    practiceGrid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(2, 1fr)',
-      gap: '20px',
-      maxWidth: '600px',
-      margin: '0 auto'
-    },
-    answerOption: {
-      padding: '20px',
-      borderRadius: '20px',
-      border: '3px solid #E0E0E0',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease',
-      textAlign: 'center',
-      backgroundColor: '#FFFFFF'
-    },
-    correctAnswer: {
-      backgroundColor: '#C8E6C9',
-      border: '3px solid #4CAF50',
-      transform: 'scale(1.05)'
-    },
-    incorrectAnswer: {
-      backgroundColor: '#FFCDD2',
-      border: '3px solid #F44336'
-    },
-    answerEmoji: {
-      fontSize: '3rem',
-      marginBottom: '10px',
-      display: 'block'
-    },
-    answerText: {
-      fontSize: '1.3rem',
-      fontWeight: 'bold',
-      color: '#2E7D32'
-    },
-    feedbackSection: {
-      textAlign: 'center',
-      padding: '20px',
-      borderRadius: '20px',
-      marginTop: '20px'
-    },
-    celebration: {
-      position: 'fixed',
+  return (
+    <div style={{
+      position: "fixed",
       top: 0,
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(76, 175, 80, 0.95)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000
-    },
-    celebrationContent: {
-      textAlign: 'center',
-      color: 'white',
-      padding: '20px'
-    },
-    toggleContainer: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '10px',
-      marginBottom: '20px'
-    },
-    audioToggle: {
-      fontSize: '1.1rem',
-      color: '#1976D2'
-    },
-    progressStatus: {
-      textAlign: 'center',
-      padding: '15px',
-      borderRadius: '15px',
-      marginBottom: '20px'
-    },
-    savingProgress: {
-      backgroundColor: 'rgba(33, 150, 243, 0.2)',
-      border: '2px solid rgba(33, 150, 243, 0.5)'
-    },
-    savedProgress: {
-      backgroundColor: 'rgba(76, 175, 80, 0.2)',
-      border: '2px solid rgba(76, 175, 80, 0.5)'
-    }
-  };
-
-  return (
-    <div style={styles.container}>
-      <div style={styles.mainCard}>
+      backgroundImage: `url(${kitchenBg})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundAttachment: "fixed",
+    }}>
+      {/* Kitchen overlay for better text readability */}
+      <Box sx={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.3)",
+        zIndex: 1
+      }} />
+      
+      <Box sx={{ 
+        position: 'relative', 
+        zIndex: 2,
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        <Navbar />
         
-        <div style={styles.headerSection}>
-          <h1 style={styles.title}>🍳 Learning Ingredients</h1>
-          <p style={styles.subtitle}>Let's learn about cooking ingredients!</p>
-          <div style={{ 
-            textAlign: 'center', 
-            marginBottom: '15px',
-            fontSize: '1.1rem',
-            color: '#1976D2',
-            fontWeight: 'bold'
+        {/* Main content container - SCROLLABLE */}
+        <Box sx={{
+          flex: 1,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          padding: '15px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }}>
+          {/* Content wrapper */}
+          <Box sx={{
+            width: '100%',
+            maxWidth: '1000px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 2
           }}>
-            📚 Level {currentLevel} of {maxLevel}
-          </div>
-
-          {showTip && (
-            <div style={styles.tipSection}>
-              <p style={styles.tipText}>{showTip}</p>
-            </div>
-          )}
-          
-          <div style={styles.toggleContainer}>
-            <span style={styles.audioToggle}>🔊 Sound:</span>
-            <button
-              onClick={() => setAutoPlayEnabled(!autoPlayEnabled)}
-              style={{
-                ...styles.controlButton,
-                ...(autoPlayEnabled ? styles.primaryButton : styles.secondaryButton),
-                minWidth: '80px',
-                padding: '8px 15px'
-              }}
-            >
-              {autoPlayEnabled ? 'ON' : 'OFF'}
-            </button>
-          </div>
-
-          <div style={styles.modeToggle}>
-            <button
-              onClick={() => setGameMode('learn')}
-              style={{
-                ...styles.modeButton,
-                ...(gameMode === 'learn' ? styles.activeMode : styles.inactiveMode)
-              }}
-            >
-              📚 Learn
-            </button>
-            <button
-              onClick={() => setGameMode('practice')}
-              style={{
-                ...styles.modeButton,
-                ...(gameMode === 'practice' ? styles.activeMode : styles.inactiveMode)
-              }}
-            >
-              🎯 Practice
-            </button>
-          </div>
-        </div>
-
-        <div style={styles.progressBar}>
-          <div style={styles.progressFill}></div>
-        </div>
-        <p style={{ textAlign: 'center', fontSize: '1.1rem', color: '#1976D2', marginBottom: '20px' }}>
-          Ingredient {currentIngredient + 1} of {ingredients.length}
-        </p>
-
-        {gameMode === 'learn' ? (
-          <>
-            <div style={styles.ingredientDisplay}>
-              <span style={styles.emojiLarge}>{currentItem.emoji}</span>
-              <h2 style={styles.ingredientName}>{currentItem.name}</h2>
-              <p style={styles.description}>{currentItem.description}</p>
-            </div>
-
-            <div style={styles.controlButtons}>
-              <button
-                onClick={() => speak(currentItem.name)}
-                style={{
-                  ...styles.controlButton,
-                  ...styles.primaryButton
+            {/* Header Section */}
+            <Box sx={{ textAlign: 'center', width: '100%', maxWidth: '800px' }}>
+              <Typography variant="h3" sx={{ 
+                fontWeight: 'bold', 
+                color: 'white', 
+                mb: 1,
+                textShadow: '3px 3px 6px rgba(0,0,0,0.8)'
+              }}>
+                🍳 Learning Ingredients
+              </Typography>
+              
+              <Chip 
+                label={`Level ${currentLevel} of ${maxLevel}`}
+                sx={{ 
+                  backgroundColor: 'rgba(25, 118, 210, 0.9)', 
+                  color: 'white', 
+                  fontWeight: 'bold',
+                  fontSize: '1rem',
+                  padding: '8px 12px',
+                  mb: 2,
+                  border: '2px solid rgba(255, 255, 255, 0.3)'
                 }}
-              >
-                🔊 Say Name
-              </button>
-              <button
-                onClick={() => speak(currentItem.description)}
-                style={{
-                  ...styles.controlButton,
-                  ...styles.secondaryButton
-                }}
-              >
-                📖 Read Info
-              </button>
-            </div>
+              />
 
-            <div style={styles.controlButtons}>
-              <button
-                onClick={previousIngredient}
-                disabled={currentIngredient === 0}
-                style={{
-                  ...styles.controlButton,
-                  ...styles.navigationButton,
-                  opacity: currentIngredient === 0 ? 0.5 : 1
-                }}
-              >
-                ⬅️ Previous
-              </button>
-              <button
-                onClick={nextIngredient}
-                style={{
-                  ...styles.controlButton,
-                  ...styles.navigationButton
-                }}
-              >
-                {currentIngredient === ingredients.length - 1 ? '🎯 Practice!' : '➡️ Next'}
-              </button>
-              <button
-                onClick={goToHomepage}
-                style={{
-                  ...styles.controlButton,
-                  ...styles.primaryButton
-                }}
-              >
-                🏠 Home
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <div style={styles.ingredientDisplay}>
-              <span style={styles.emojiLarge}>❓</span>
-              <h2 style={styles.ingredientName}>Which ingredient is this?</h2>
-              <span style={styles.emojiLarge}>{currentItem.emoji}</span>
-            </div>
+              {showTip && (
+                <Box sx={{ 
+                  backgroundColor: 'rgba(33, 150, 243, 0.9)',
+                  borderRadius: '12px',
+                  padding: '8px 16px',
+                  mb: 2,
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)'
+                }}>
+                  <Typography sx={{ 
+                    fontSize: '0.9rem', 
+                    color: 'white', 
+                    fontWeight: '500',
+                    textShadow: '1px 1px 2px rgba(0,0,0,0.5)'
+                  }}>
+                    {showTip}
+                  </Typography>
+                </Box>
+              )}
+              
+              {/* Controls Row */}
+              <Stack direction="row" spacing={2} justifyContent="center" alignItems="center" sx={{ mb: 2, flexWrap: 'wrap', gap: 2 }}>
+                {/* Audio Toggle */}
+                <Box sx={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  borderRadius: '20px',
+                  padding: '6px 15px',
+                  backdropFilter: 'blur(10px)'
+                }}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={autoPlayEnabled}
+                        onChange={(e) => setAutoPlayEnabled(e.target.checked)}
+                        color="primary"
+                        size="small"
+                      />
+                    }
+                    label={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        {autoPlayEnabled ? <VolumeUpIcon fontSize="small" /> : <VolumeOffIcon fontSize="small" />}
+                        <Typography variant="body2" fontWeight="bold">Sound</Typography>
+                      </Box>
+                    }
+                  />
+                </Box>
 
-            <div style={styles.practiceGrid}>
-              {ingredients.map((ingredient) => (
-                <div
-                  key={ingredient.id}
-                  onClick={() => !showFeedback && handlePracticeAnswer(ingredient.id)}
-                  style={{
-                    ...styles.answerOption,
-                    ...(showFeedback && selectedAnswer === ingredient.id && ingredient.id === currentItem.id ? styles.correctAnswer : {}),
-                    ...(showFeedback && selectedAnswer === ingredient.id && ingredient.id !== currentItem.id ? styles.incorrectAnswer : {}),
-                    cursor: showFeedback ? 'not-allowed' : 'pointer'
+                {/* Mode Toggle */}
+                <Button
+                  onClick={() => setGameMode('learn')}
+                  variant={gameMode === 'learn' ? 'contained' : 'outlined'}
+                  size="medium"
+                  sx={{
+                    borderRadius: '20px',
+                    minWidth: '100px',
+                    backgroundColor: gameMode === 'learn' ? 'rgba(76, 175, 80, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+                    borderColor: '#4CAF50',
+                    color: gameMode === 'learn' ? 'white' : '#4CAF50',
+                    backdropFilter: 'blur(10px)',
+                    border: '2px solid #4CAF50',
+                    '&:hover': {
+                      backgroundColor: gameMode === 'learn' ? 'rgba(69, 160, 73, 0.9)' : 'rgba(76, 175, 80, 0.1)',
+                    }
                   }}
                 >
-                  <span style={styles.answerEmoji}>{ingredient.emoji}</span>
-                  <div style={styles.answerText}>{ingredient.name}</div>
-                </div>
-              ))}
-            </div>
+                  📚 Learn
+                </Button>
+                <Button
+                  onClick={() => setGameMode('practice')}
+                  variant={gameMode === 'practice' ? 'contained' : 'outlined'}
+                  size="medium"
+                  sx={{
+                    borderRadius: '20px',
+                    minWidth: '100px',
+                    backgroundColor: gameMode === 'practice' ? 'rgba(76, 175, 80, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+                    borderColor: '#4CAF50',
+                    color: gameMode === 'practice' ? 'white' : '#4CAF50',
+                    backdropFilter: 'blur(10px)',
+                    border: '2px solid #4CAF50',
+                    '&:hover': {
+                      backgroundColor: gameMode === 'practice' ? 'rgba(69, 160, 73, 0.9)' : 'rgba(76, 175, 80, 0.1)',
+                    }
+                  }}
+                >
+                  🎯 Practice
+                </Button>
+              </Stack>
+            </Box>
 
-            {showFeedback && (
-              <div style={{
-                ...styles.feedbackSection,
-                backgroundColor: selectedAnswer === currentItem.id ? '#C8E6C9' : '#FFCDD2'
-              }}>
-                <h3 style={{ fontSize: '1.5rem', margin: '0 0 10px 0' }}>
-                  {selectedAnswer === currentItem.id ? '🎉 Correct!' : '💪 Try Again!'}
-                </h3>
-                <p style={{ fontSize: '1.2rem', margin: 0 }}>
-                  {selectedAnswer === currentItem.id 
-                    ? currentItem.encouragement
-                    : `This is ${currentItem.name}. ${currentItem.description}`
+            {/* Progress bar */}
+            <Box sx={{ width: '100%', maxWidth: '700px' }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
+                <Typography variant="body1" sx={{ 
+                  color: 'white', 
+                  fontWeight: 'bold',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
+                }}>
+                  Ingredient {currentIngredient + 1} of {ingredients.length}
+                </Typography>
+                <Chip 
+                  label={`Score: ${score}/${ingredients.length}`} 
+                  sx={{ 
+                    backgroundColor: 'rgba(255, 152, 0, 0.9)', 
+                    color: 'white', 
+                    fontWeight: 'bold',
+                    fontSize: '0.9rem',
+                    padding: '4px 8px',
+                    border: '2px solid rgba(255, 255, 255, 0.3)',
+                    backdropFilter: 'blur(10px)'
+                  }}
+                />
+              </Stack>
+              <LinearProgress 
+                variant="determinate" 
+                value={progressPercentage} 
+                sx={{ 
+                  height: 8, 
+                  borderRadius: '10px',
+                  backgroundColor: 'rgba(255,255,255,0.3)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  '& .MuiLinearProgress-bar': {
+                    backgroundColor: '#4CAF50'
                   }
-                </p>
-              </div>
-            )}
+                }} 
+              />
+            </Box>
 
-            <div style={styles.controlButtons}>
-              <button
-                onClick={resetGame}
-                style={{
-                  ...styles.controlButton,
-                  ...styles.secondaryButton
-                }}
-              >
-                📚 Learn Again
-              </button>
-              <button
-                onClick={goToHomepage}
-                style={{
-                  ...styles.controlButton,
-                  ...styles.primaryButton
-                }}
-              >
-                🏠 Go Home
-              </button>
-            </div>
-          </>
-        )}
-      </div>
+            {gameMode === 'learn' ? (
+              /* Learn Mode */
+              <Box sx={{ 
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                width: '100%',
+                maxWidth: '600px',
+                pb: 4
+              }}>
+                {/* Ingredient Display Card */}
+                <Card sx={{
+                  backgroundColor: 'rgba(255, 250, 244, 0.95)',
+                  borderRadius: '20px',
+                  padding: '25px',
+                  mb: 3,
+                  border: '3px solid #4CAF50',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                  textAlign: 'center',
+                  width: '100%',
+                  backdropFilter: 'blur(15px)'
+                }}>
+                  {/* Ingredient emoji */}
+                  <Typography sx={{ 
+                    fontSize: '8rem', 
+                    mb: 2,
+                    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))',
+                    lineHeight: 1
+                  }}>
+                    {currentItem.emoji}
+                  </Typography>
+                  <Typography variant="h4" sx={{ 
+                    fontWeight: 'bold', 
+                    color: '#2E7D32', 
+                    mb: 1,
+                    textShadow: '1px 1px 2px rgba(0,0,0,0.1)'
+                  }}>
+                    {currentItem.name}
+                  </Typography>
+                  <Typography variant="body1" sx={{ 
+                    color: '#1976D2', 
+                    lineHeight: 1.4,
+                    fontSize: '1.1rem'
+                  }}>
+                    {currentItem.description}
+                  </Typography>
+                </Card>
 
-      {showCelebration && (
-        <div style={styles.celebration}>
-          <div style={styles.celebrationContent}>
-            <div style={{ fontSize: '6rem', marginBottom: '20px' }}>🎉</div>
-            <h2 style={{ fontSize: '3rem', marginBottom: '20px' }}>Great Job!</h2>
-            <p style={{ fontSize: '1.5rem', marginBottom: '10px' }}>
-              You learned all {ingredients.length} ingredients!
-            </p>
-            <p style={{ fontSize: '1.2rem', marginBottom: '20px', opacity: 0.9 }}>
-              Level {currentLevel} Complete! 
-              {hasNextLevel ? ` Ready for Level ${currentLevel + 1}?` : ' You finished all levels!'}
-            </p>
+                {/* Control Buttons */}
+                <Stack direction="row" spacing={2} sx={{ mb: 3, flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <Button
+                    onClick={() => speak(currentItem.name)}
+                    variant="contained"
+                    size="medium"
+                    sx={{
+                      backgroundColor: '#2196F3',
+                      borderRadius: '15px',
+                      minWidth: '100px',
+                      '&:hover': { backgroundColor: '#1976D2' }
+                    }}
+                  >
+                    🔊 Say Name
+                  </Button>
+                  <Button
+                    onClick={() => speak(currentItem.description)}
+                    variant="contained"
+                    size="medium"
+                    sx={{
+                      backgroundColor: '#FF9800',
+                      borderRadius: '15px',
+                      minWidth: '100px',
+                      '&:hover': { backgroundColor: '#F57C00' }
+                    }}
+                  >
+                    📖 Read Info
+                  </Button>
+                </Stack>
 
-            {/* Progress Saving Status */}
-            {progressSaving && (
-              <div style={{...styles.progressStatus, ...styles.savingProgress}}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
-                  <div style={{
-                    width: '20px',
-                    height: '20px',
-                    border: '2px solid #2196F3',
-                    borderTop: '2px solid transparent',
-                    borderRadius: '50%',
-                    animation: 'spin 1s linear infinite',
-                    marginRight: '10px'
-                  }}></div>
-                  <span style={{ color: 'white', fontWeight: 'bold' }}>Saving your progress...</span>
-                </div>
-              </div>
+                {/* Navigation Buttons */}
+                <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <Button
+                    onClick={previousIngredient}
+                    disabled={currentIngredient === 0}
+                    variant="contained"
+                    size="medium"
+                    sx={{
+                      backgroundColor: '#9C27B0',
+                      borderRadius: '15px',
+                      minWidth: '80px',
+                      opacity: currentIngredient === 0 ? 0.5 : 1,
+                      '&:hover': { backgroundColor: '#7B1FA2' }
+                    }}
+                  >
+                    ⬅️ Prev
+                  </Button>
+                  <Button
+                    onClick={nextIngredient}
+                    variant="contained"
+                    size="medium"
+                    sx={{
+                      backgroundColor: '#9C27B0',
+                      borderRadius: '15px',
+                      minWidth: '80px',
+                      '&:hover': { backgroundColor: '#7B1FA2' }
+                    }}
+                  >
+                    {currentIngredient === ingredients.length - 1 ? '🎯 Practice' : '➡️ Next'}
+                  </Button>
+                  <Button
+                    onClick={goToHomepage}
+                    variant="contained"
+                    size="medium"
+                    sx={{
+                      backgroundColor: '#2196F3',
+                      borderRadius: '15px',
+                      minWidth: '80px',
+                      '&:hover': { backgroundColor: '#1976D2' }
+                    }}
+                  >
+                    🏠 Home
+                  </Button>
+                </Stack>
+              </Box>
+            ) : (
+              /* Practice Mode */
+              <Box sx={{ 
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                width: '100%',
+                maxWidth: '600px',
+                pb: 4
+              }}>
+                {/* Question Display */}
+                <Card sx={{
+                  backgroundColor: 'rgba(255, 250, 244, 0.95)',
+                  borderRadius: '20px',
+                  padding: '25px',
+                  mb: 3,
+                  border: '3px solid #4CAF50',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                  textAlign: 'center',
+                  width: '100%',
+                  backdropFilter: 'blur(15px)'
+                }}>
+                  <Typography sx={{ fontSize: '3rem', mb: 1 }}>❓</Typography>
+                  <Typography variant="h5" sx={{ 
+                    fontWeight: 'bold', 
+                    color: '#2E7D32', 
+                    mb: 2
+                  }}>
+                    Which ingredient is this?
+                  </Typography>
+                  {/* Ingredient emoji for question */}
+                  <Typography sx={{ 
+                    fontSize: '6rem', 
+                    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))',
+                    lineHeight: 1
+                  }}>
+                    {currentItem.emoji}
+                  </Typography>
+                </Card>
+
+                {/* Answer Options */}
+                <Box sx={{ 
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, 1fr)',
+                  gap: 2,
+                  width: '100%',
+                  maxWidth: '400px',
+                  mb: 3
+                }}>
+                  {ingredients.map((ingredient) => (
+                    <Card
+                      key={ingredient.id}
+                      onClick={() => !showFeedback && handlePracticeAnswer(ingredient.id)}
+                      sx={{
+                        padding: '15px',
+                        borderRadius: '15px',
+                        border: '2px solid',
+                        borderColor: showFeedback && selectedAnswer === ingredient.id && ingredient.id === currentItem.id 
+                          ? '#4CAF50' 
+                          : showFeedback && selectedAnswer === ingredient.id && ingredient.id !== currentItem.id 
+                          ? '#F44336'
+                          : '#E0E0E0',
+                        cursor: showFeedback ? 'not-allowed' : 'pointer',
+                        textAlign: 'center',
+                        backgroundColor: showFeedback && selectedAnswer === ingredient.id && ingredient.id === currentItem.id 
+                          ? 'rgba(200, 230, 201, 0.95)'
+                          : showFeedback && selectedAnswer === ingredient.id && ingredient.id !== currentItem.id 
+                          ? 'rgba(255, 205, 210, 0.95)'
+                          : 'rgba(255, 255, 255, 0.95)',
+                        transition: 'all 0.3s ease',
+                        transform: showFeedback && selectedAnswer === ingredient.id && ingredient.id === currentItem.id 
+                          ? 'scale(1.05)' : 'scale(1)',
+                        backdropFilter: 'blur(10px)',
+                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
+                        '&:hover': {
+                          transform: showFeedback ? 'scale(1)' : 'scale(1.02)',
+                          boxShadow: showFeedback ? '0 4px 20px rgba(0, 0, 0, 0.2)' : '0 6px 25px rgba(0,0,0,0.3)'
+                        }
+                      }}
+                    >
+                      {/* Ingredient emoji for options */}
+                      <Typography sx={{ 
+                        fontSize: '3rem', 
+                        mb: 1,
+                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
+                        lineHeight: 1
+                      }}>
+                        {ingredient.emoji}
+                      </Typography>
+                      <Typography variant="body1" sx={{ 
+                        fontWeight: 'bold', 
+                        color: '#2E7D32',
+                        fontSize: '0.9rem'
+                      }}>
+                        {ingredient.name}
+                      </Typography>
+                    </Card>
+                  ))}
+                </Box>
+
+                {/* Feedback Section */}
+                {showFeedback && (
+                  <Card sx={{
+                    padding: '15px',
+                    borderRadius: '15px',
+                    textAlign: 'center',
+                    backgroundColor: selectedAnswer === currentItem.id ? 'rgba(200, 230, 201, 0.95)' : 'rgba(255, 205, 210, 0.95)',
+                    border: '2px solid',
+                    borderColor: selectedAnswer === currentItem.id ? '#4CAF50' : '#F44336',
+                    mb: 3,
+                    width: '100%',
+                    backdropFilter: 'blur(15px)',
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)'
+                  }}>
+                    <Typography variant="h6" sx={{ 
+                      fontWeight: 'bold',
+                      mb: 1 
+                    }}>
+                      {selectedAnswer === currentItem.id ? '🎉 Correct!' : '💪 Try Again!'}
+                    </Typography>
+                    <Typography variant="body1">
+                      {selectedAnswer === currentItem.id 
+                        ? currentItem.encouragement
+                        : `This is ${currentItem.name}. ${currentItem.description}`
+                      }
+                    </Typography>
+                  </Card>
+                )}
+
+                {/* Control Buttons */}
+                <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <Button
+                    onClick={resetGame}
+                    variant="contained"
+                    size="medium"
+                    sx={{
+                      backgroundColor: '#FF9800',
+                      borderRadius: '15px',
+                      minWidth: '100px',
+                      '&:hover': { backgroundColor: '#F57C00' }
+                    }}
+                  >
+                    📚 Learn Again
+                  </Button>
+                  <Button
+                    onClick={goToHomepage}
+                    variant="contained"
+                    size="medium"
+                    sx={{
+                      backgroundColor: '#2196F3',
+                      borderRadius: '15px',
+                      minWidth: '100px',
+                      '&:hover': { backgroundColor: '#1976D2' }
+                    }}
+                  >
+                    🏠 Go Home
+                  </Button>
+                </Stack>
+              </Box>
             )}
-            
-            {progressSaved && (
-              <div style={{...styles.progressStatus, ...styles.savedProgress}}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ color: 'white', marginRight: '8px', fontSize: '1.2rem' }}>✓</span>
-                  <span style={{ color: 'white', fontWeight: 'bold' }}>Progress saved successfully!</span>
-                </div>
-              </div>
-            )}
-            
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
-              <button
-                onClick={continueToNextLevel}
-                disabled={progressSaving}
-                style={{
-                  ...styles.controlButton,
-                  backgroundColor: hasNextLevel ? '#4CAF50' : '#2196F3',
-                  color: 'white',
-                  fontSize: '1.3rem',
-                  padding: '20px 40px',
-                  border: '3px solid white',
-                  opacity: progressSaving ? 0.7 : 1,
-                  cursor: progressSaving ? 'not-allowed' : 'pointer'
-                }}
-              >
-                {progressSaving ? 'Saving...' : (hasNextLevel ? '🚀 Next Level' : '🏠 Go Home')}
-              </button>
-              
-              <button
-                onClick={resetGame}
-                style={{
-                  ...styles.controlButton,
-                  backgroundColor: 'transparent',
-                  color: 'white',
-                  border: '3px solid white',
-                  fontSize: '1.3rem',
-                  padding: '20px 40px'
-                }}
-              >
-                🔄 Replay Level
-              </button>
-              
-              <button
-                onClick={goToHomepage}
-                style={{
-                  ...styles.controlButton,
-                  backgroundColor: '#FF9800',
-                  color: 'white',
-                  fontSize: '1.3rem',
-                  padding: '20px 40px',
-                  border: '3px solid white'
-                }}
-              >
-                🏠 Home
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Success Dialog */}
+      <Dialog
+        open={showCelebration}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: { 
+            borderRadius: '20px',
+            backgroundColor: 'rgba(255, 250, 244, 0.98)',
+            border: '4px solid #4CAF50',
+            backdropFilter: 'blur(15px)'
+          }
+        }}
+      >
+        <DialogTitle sx={{ textAlign: 'center', py: 3 }}>
+          <EmojiEventsIcon sx={{ fontSize: 80, color: '#4CAF50', mb: 2 }} />
+          <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#2E7D32' }}>
+            Great Job!
+          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+            {[...Array(getStarRating())].map((_, i) => (
+              <StarIcon key={i} sx={{ color: '#FFCA3A', fontSize: 40, mx: 0.5 }} />
+            ))}
+            {[...Array(3 - getStarRating())].map((_, i) => (
+              <StarIcon key={i} sx={{ color: '#E0E0E0', fontSize: 40, mx: 0.5 }} />
+            ))}
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ textAlign: 'center', py: 2 }}>
+          <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#FF9800', mb: 1 }}>
+            You learned all {ingredients.length} ingredients!
+          </Typography>
+          <Typography variant="body1" sx={{ color: '#2E7D32', lineHeight: 1.4, mb: 2 }}>
+            Level {currentLevel} Complete! 
+            {hasNextLevel ? ` Ready for Level ${currentLevel + 1}?` : ' You finished all levels!'}
+          </Typography>
+          
+          {progressSaving && (
+            <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(33, 150, 243, 0.9)', borderRadius: '12px', color: 'white', backdropFilter: 'blur(10px)' }}>
+              <CircularProgress size={16} sx={{ mr: 1, color: 'white' }} />
+              <Typography variant="body2">
+                Saving your progress...
+              </Typography>
+            </Box>
+          )}
+          
+          {progressSaved && (
+            <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(76, 175, 80, 0.9)', borderRadius: '12px', color: 'white', backdropFilter: 'blur(10px)' }}>
+              <CheckCircleIcon sx={{ mr: 1, fontSize: 20 }} />
+              <Typography variant="body2">
+                Progress saved successfully!
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', pb: 3, gap: 2 }}>
+          <Button 
+            onClick={continueToNextLevel}
+            disabled={progressSaving}
+            variant="contained"
+            size="medium"
+            sx={{ 
+              backgroundColor: hasNextLevel ? 'rgba(76, 175, 80, 0.9)' : 'rgba(33, 150, 243, 0.9)',
+              borderRadius: '10px',
+              minWidth: '120px',
+              backdropFilter: 'blur(10px)',
+              '&:hover': { 
+                backgroundColor: hasNextLevel ? 'rgba(69, 160, 73, 0.9)' : 'rgba(25, 118, 210, 0.9)'
+              }
+            }}
+          >
+            {progressSaving ? 'Saving...' : (hasNextLevel ? '🚀 Next Level' : '🏠 Go Home')}
+          </Button>
+          
+          <Button 
+            onClick={resetGame}
+            variant="outlined"
+            size="medium"
+            sx={{ 
+              borderColor: '#4CAF50', 
+              color: '#2E7D32',
+              borderRadius: '10px',
+              minWidth: '120px',
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              backdropFilter: 'blur(10px)',
+              '&:hover': {
+                backgroundColor: 'rgba(76, 175, 80, 0.1)',
+              }
+            }}
+          >
+            🔄 Replay
+          </Button>
+          
+          <Button 
+            onClick={goToHomepage}
+            variant="contained"
+            size="medium"
+            sx={{ 
+              backgroundColor: 'rgba(255, 152, 0, 0.9)',
+              borderRadius: '10px',
+              minWidth: '120px',
+              backdropFilter: 'blur(10px)',
+              '&:hover': { backgroundColor: 'rgba(245, 124, 0, 0.9)' }
+            }}
+          >
+            🏠 Home
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
