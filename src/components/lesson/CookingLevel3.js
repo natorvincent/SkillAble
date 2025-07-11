@@ -6,174 +6,305 @@ import {
   updateModuleProgress
 } from '../../services/progressService';
 
-export default function CookingLevel3() {
+export default function ToolMatchingLevel3() {
   const navigate = useNavigate();
-  const { moduleId: routeModuleId, lessonId: routeLessonId } = useParams();
-  const [currentIngredient, setCurrentIngredient] = useState(0);
-  const [gameMode, setGameMode] = useState('explore'); // 'explore', 'memory', or 'create'
+  const { moduleId, lessonId } = useParams();
+  
+  const [gamePhase, setGamePhase] = useState('introduction'); // 'introduction', 'matching', 'celebration'
+  const [currentToolIndex, setCurrentToolIndex] = useState(0);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [score, setScore] = useState(0);
-  const [discovered, setDiscovered] = useState([]);
-  const [memoryCards, setMemoryCards] = useState([]);
-  const [showCelebration, setShowCelebration] = useState(false);
+  const [correctAnswers, setCorrectAnswers] = useState([]); // Track individual correct answers
+  const [completedTools, setCompletedTools] = useState([]);
   const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
+  const [soundEffectsEnabled, setSoundEffectsEnabled] = useState(false);
+  const [needsBreak, setNeedsBreak] = useState(false);
+  const [showToolAnimation, setShowToolAnimation] = useState(false);
+  
+  // Progress tracking states
   const [loading, setLoading] = useState(true);
   const [progressSaving, setProgressSaving] = useState(false);
   const [progressSaved, setProgressSaved] = useState(false);
-  const [soundEffectsEnabled, setSoundEffectsEnabled] = useState(false); // Off by default for sensory sensitivity
-  const [currentRecipe, setCurrentRecipe] = useState([]);
-  const [animationSpeed, setAnimationSpeed] = useState('normal'); // 'slow', 'normal', 'fast'
+  const [showTip, setShowTip] = useState('');
   
   // Level progression props
-  const currentLevel = 3; // Level 3
-  const maxLevel = 3;
-  const moduleId = routeModuleId || 'cooking-basics';
-  const lessonId = routeLessonId || 'sensory-cooking';
+  const [currentLevel] = useState(3); // Level 3
+  const [maxLevel] = useState(3);
 
-  // Level 3: Sensory-Friendly Cooking Experience - Gentle textures and familiar foods
-  const sensoryIngredients = [
-    { 
-      id: 1, 
-      name: "SOFT BANANA", 
-      emoji: "🍌", 
-      textureEmoji: "🟡",
-      color: "#FFF9C4", // Very soft yellow
-      texture: "smooth and creamy",
-      temperature: "room temperature",
-      description: "Bananas are soft, sweet, and easy to mash with a fork",
-      sensoryTip: "Feel the smooth peel and soft inside",
-      soundDescription: "quiet squishing sound when mashed",
-      encouragement: "Great! Bananas are perfect for gentle cooking!"
+  // Get student ID from localStorage
+  const getStudentId = () => {
+    const studentId = localStorage.getItem('studentId');
+    const userType = localStorage.getItem('userType');
+    
+    console.log("Getting student ID - Type:", userType, "ID:", studentId);
+    
+    if (userType !== 'STUDENT') {
+      console.error('User is not a student:', userType);
+      return null;
+    }
+    
+    if (!studentId || studentId === 'null') {
+      console.error('No student ID found in localStorage');
+      return null;
+    }
+    
+    const parsedId = parseInt(studentId, 10);
+    if (isNaN(parsedId)) {
+      console.error('Invalid student ID format:', studentId);
+      return null;
+    }
+    
+    return parsedId;
+  };
+
+  // Kitchen tools with clear descriptions and uses
+  const kitchenTools = [
+    {
+      id: 'spoon',
+      name: 'SPOON',
+      emoji: '🥄',
+      color: '#E3F2FD',
+      borderColor: '#2196F3',
+      description: 'We use a spoon to scoop and stir food',
+      use: 'scoop or stir',
+      animation: 'stirring motion',
+      examples: ['soup', 'cereal', 'yogurt'],
+      sound: 'This is a spoon. We use it to scoop or stir food.'
     },
-    { 
-      id: 2, 
-      name: "WARM OATS", 
-      emoji: "🥣", 
-      textureEmoji: "🟤",
-      color: "#F3E5AB", // Warm beige
-      texture: "soft and warm",
-      temperature: "comfortably warm",
-      description: "Oats become soft and creamy when cooked with warm milk",
-      sensoryTip: "Stir gently and feel the smooth texture",
-      soundDescription: "gentle bubbling when cooking",
-      encouragement: "Perfect! Warm oats are so comforting!"
+    {
+      id: 'fork',
+      name: 'FORK',
+      emoji: '🍴',
+      color: '#E8F5E8',
+      borderColor: '#4CAF50',
+      description: 'We use a fork to pick up and eat soft food',
+      use: 'pick up food',
+      animation: 'picking motion',
+      examples: ['pasta', 'salad', 'fruit'],
+      sound: 'This is a fork. We use it to pick up and eat soft food.'
     },
-    { 
-      id: 3, 
-      name: "COOL YOGURT", 
-      emoji: "🥛", 
-      textureEmoji: "⚪",
-      color: "#F8F8FF", // Very pale blue-white
-      texture: "smooth and cool",
-      temperature: "pleasantly cool",
-      description: "Yogurt is creamy, cool, and gentle on the tummy",
-      sensoryTip: "Notice the cool, smooth feeling",
-      soundDescription: "very quiet stirring sound",
-      encouragement: "Wonderful! Cool yogurt feels so refreshing!"
+    {
+      id: 'knife',
+      name: 'KNIFE',
+      emoji: '🔪',
+      color: '#FFF3E0',
+      borderColor: '#FF9800',
+      description: 'We use a knife to cut and slice food. Be careful!',
+      use: 'cut or slice',
+      animation: 'cutting motion',
+      examples: ['bread', 'apple', 'cheese'],
+      sound: 'This is a knife. We use it to cut or slice food. Be careful!',
+      safety: true
     },
-    { 
-      id: 4, 
-      name: "SOFT BERRIES", 
-      emoji: "🫐", 
-      textureEmoji: "🔵",
-      color: "#E8EAF6", // Very soft lavender
-      texture: "small and juicy",
-      temperature: "cool and fresh",
-      description: "Blueberries are small, sweet, and burst with gentle flavor",
-      sensoryTip: "Feel their small, round shape",
-      soundDescription: "tiny pop when you bite them",
-      encouragement: "Amazing! Berries add gentle sweetness!"
+    {
+      id: 'whisk',
+      name: 'WHISK',
+      emoji: '🥢',
+      color: '#FCE4EC',
+      borderColor: '#E91E63',
+      description: 'We use a whisk to mix eggs and liquids',
+      use: 'mix and beat',
+      animation: 'whisking motion',
+      examples: ['eggs', 'batter', 'cream'],
+      sound: 'This is a whisk. We use it to mix eggs and liquids.'
     },
-    { 
-      id: 5, 
-      name: "SMOOTH HONEY", 
-      emoji: "🍯", 
-      textureEmoji: "🟨",
-      color: "#FFF8E1", // Very pale honey
-      texture: "smooth and flowing",
-      temperature: "room temperature",
-      description: "Honey drizzles slowly and tastes sweet and gentle",
-      sensoryTip: "Watch it drizzle slowly and smoothly",
-      soundDescription: "no sound - completely quiet",
-      encouragement: "Perfect! Honey makes everything taste sweet!"
+    {
+      id: 'measuring-cup',
+      name: 'MEASURING CUP',
+      emoji: '🥛',
+      color: '#F3E5F5',
+      borderColor: '#9C27B0',
+      description: 'We use a measuring cup to pour and measure liquids',
+      use: 'pour and measure',
+      animation: 'pouring motion',
+      examples: ['milk', 'water', 'juice'],
+      sound: 'This is a measuring cup. We use it to pour and measure drinks like milk or water.'
     }
   ];
 
-  const currentItem = sensoryIngredients[currentIngredient];
-
-  // Simple, sensory-friendly recipes
-  const gentleRecipes = [
+  // Matching questions that use the tools
+  const matchingQuestions = [
     {
-      name: "Calming Breakfast Bowl",
-      ingredients: ["WARM OATS", "SOFT BANANA", "SMOOTH HONEY"],
-      description: "A warm, comforting bowl perfect for starting the day"
+      id: 1,
+      action: 'We mix the egg',
+      emoji: '🥚',
+      correctTool: 'whisk',
+      choices: ['knife', 'whisk', 'spoon'],
+      feedback: 'Great! A whisk is perfect for mixing eggs!'
     },
     {
-      name: "Cool Berry Treat",
-      ingredients: ["COOL YOGURT", "SOFT BERRIES", "SMOOTH HONEY"],
-      description: "A refreshing, cool snack that's gentle and sweet"
+      id: 2,
+      action: 'We cut the apple',
+      emoji: '🍎',
+      correctTool: 'knife',
+      choices: ['fork', 'spoon', 'knife'],
+      feedback: 'Excellent! A knife cuts the apple into pieces!'
+    },
+    {
+      id: 3,
+      action: 'We scoop the soup',
+      emoji: '🍲',
+      correctTool: 'spoon',
+      choices: ['spoon', 'whisk', 'measuring-cup'],
+      feedback: 'Perfect! A spoon is great for scooping soup!'
+    },
+    {
+      id: 4,
+      action: 'We pour the milk',
+      emoji: '🥛',
+      correctTool: 'measuring-cup',
+      choices: ['whisk', 'fork', 'measuring-cup'],
+      feedback: 'Wonderful! A measuring cup pours milk perfectly!'
+    },
+    {
+      id: 5,
+      action: 'We pick up pasta',
+      emoji: '🍝',
+      correctTool: 'fork',
+      choices: ['fork', 'knife', 'spoon'],
+      feedback: 'Amazing! A fork picks up pasta easily!'
     }
   ];
 
-  // Load progress on component mount
+  const currentTool = kitchenTools[currentToolIndex];
+  const currentQuestion = matchingQuestions[currentQuestionIndex];
+
+  // Load previous progress on component mount
   useEffect(() => {
-    const loadProgress = async () => {
+    const fetchUserProgress = async () => {
       try {
-        setLoading(true);
-        const progress = await getStudentLessonProgress(moduleId, lessonId);
+        const studentId = getStudentId();
+        if (!studentId || !lessonId) {
+          console.log('Missing studentId or lessonId:', { studentId, lessonId });
+          setLoading(false);
+          setShowTip('Ready to learn kitchen tools? Let\'s get started!');
+          return;
+        }
         
-        if (progress) {
-          setCurrentIngredient(progress.currentIngredient || 0);
-          setGameMode(progress.gameMode || 'explore');
-          setScore(progress.score || 0);
-          setDiscovered(progress.discovered || []);
-          setCurrentRecipe(progress.currentRecipe || []);
+        console.log('Fetching progress for student:', studentId, 'lesson:', lessonId);
+        const progressResponse = await getStudentLessonProgress(studentId, lessonId);
+        if (progressResponse) {
+          const existingScore = progressResponse.score || 0;
+          setScore(existingScore);
           
-          if (progress.discovered && progress.discovered.length === sensoryIngredients.length) {
-            setShowCelebration(true);
+          // Initialize correct answers based on existing score
+          if (existingScore > 0) {
+            const initialCorrect = Array.from({length: Math.min(existingScore, matchingQuestions.length)}, (_, i) => i + 1);
+            setCorrectAnswers(initialCorrect);
           }
+          
+          if (progressResponse.completed) {
+            setShowTip("Fantastic! You've mastered kitchen tools before. Want to practice more?");
+          } else {
+            setShowTip('Ready to learn kitchen tools? Let\'s get started!');
+          }
+          console.log('Loaded existing progress:', progressResponse);
+        } else {
+          console.log('No existing progress found - starting fresh');
+          setShowTip('Ready to learn kitchen tools? Let\'s get started!');
         }
       } catch (error) {
-        console.error('Error loading progress:', error);
+        console.log('Error fetching progress, starting fresh:', error);
+        setShowTip('Ready to learn kitchen tools? Let\'s get started!');
       } finally {
         setLoading(false);
       }
     };
+    
+    fetchUserProgress();
+  }, [lessonId]);
 
-    loadProgress();
-  }, [moduleId, lessonId]);
+  // Speech function with slower pace
+  const speak = (text) => {
+    if ('speechSynthesis' in window && autoPlayEnabled) {
+      speechSynthesis.cancel(); // Stop any current speech
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.6; // Slower for processing
+      utterance.pitch = 1.0;
+      utterance.volume = 0.8;
+      speechSynthesis.speak(utterance);
+    }
+  };
 
-  // Save progress
-  const saveProgress = async (progressData) => {
+  // Gentle sound effects
+  const playGentleSound = (soundType) => {
+    if (!soundEffectsEnabled) return;
+    
     try {
-      setProgressSaving(true);
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
       
-      const progressToSave = {
-        moduleId,
-        lessonId,
-        currentLevel,
-        currentIngredient: progressData.currentIngredient,
-        gameMode: progressData.gameMode,
-        score: progressData.score,
-        discovered: progressData.discovered,
-        currentRecipe: progressData.currentRecipe,
-        lastUpdated: new Date().toISOString(),
-        isCompleted: progressData.discovered.length === sensoryIngredients.length
-      };
-
-      await saveStudentLessonProgress(moduleId, lessonId, progressToSave);
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
       
-      if (progressToSave.isCompleted) {
-        await updateModuleProgress(moduleId, {
-          lessonsCompleted: [lessonId],
-          lastCompletedLesson: lessonId,
-          overallProgress: progressToSave.score / sensoryIngredients.length
-        });
+      gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+      
+      switch(soundType) {
+        case 'correct':
+          oscillator.frequency.setValueAtTime(523, audioContext.currentTime); // Happy C
+          break;
+        case 'wrong':
+          oscillator.frequency.setValueAtTime(220, audioContext.currentTime); // Low A
+          break;
+        case 'celebration':
+          oscillator.frequency.setValueAtTime(659, audioContext.currentTime); // E
+          break;
+        default:
+          oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
       }
       
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + 0.4);
+    } catch (error) {
+      console.log('Audio not available:', error);
+    }
+  };
+
+  // Save progress to database
+  const saveProgress = async () => {
+    if (progressSaving || progressSaved) return;
+
+    try {
+      setProgressSaving(true);
+      const studentId = getStudentId();
+      
+      if (!studentId || !lessonId) {
+        console.error('Cannot save progress - missing data:', { studentId, lessonId });
+        return;
+      }
+      
+      // Calculate final score based on unique correct answers
+      const uniqueCorrectAnswers = [...new Set(correctAnswers)];
+      const finalScore = uniqueCorrectAnswers.length;
+      
+      const progressData = {
+        studentId: studentId,
+        lessonId: parseInt(lessonId, 10),
+        score: finalScore,
+        maxScore: matchingQuestions.length,
+        completed: gamePhase === 'celebration',
+        starsEarned: getStarRating(finalScore)
+      };
+      
+      console.log('Saving progress for student:', studentId, progressData);
+      await saveStudentLessonProgress(studentId, lessonId, progressData);
+      
+      // Update module progress if lesson is completed
+      if (progressData.completed && moduleId) {
+        try {
+          console.log('Updating module progress for module:', moduleId);
+          await updateModuleProgress(studentId, parseInt(moduleId, 10));
+        } catch (moduleError) {
+          console.error('Error updating module progress:', moduleError);
+          // Don't fail the save if module update fails
+        }
+      }
+      
+      console.log('Progress saved successfully!');
       setProgressSaved(true);
-      setTimeout(() => setProgressSaved(false), 2000);
       
     } catch (error) {
       console.error('Error saving progress:', error);
@@ -182,224 +313,152 @@ export default function CookingLevel3() {
     }
   };
 
-  // Auto-save progress
+  // Calculate star rating based on score
+  const getStarRating = (finalScore = score) => {
+    const percentage = (finalScore / matchingQuestions.length) * 100;
+    if (percentage >= 90) return 3;
+    if (percentage >= 70) return 2;
+    if (percentage >= 50) return 1;
+    return 0;
+  };
+
+  // Auto-speak when tool changes
   useEffect(() => {
-    if (!loading) {
-      const progressData = {
-        currentIngredient,
-        gameMode,
-        score,
-        discovered,
-        currentRecipe
-      };
-      
-      const saveTimer = setTimeout(() => {
-        saveProgress(progressData);
-      }, 1500); // Slightly longer delay for sensory comfort
-
-      return () => clearTimeout(saveTimer);
-    }
-  }, [currentIngredient, gameMode, score, discovered, currentRecipe, loading]);
-
-  // Gentle audio feedback
-  const speak = (text, options = {}) => {
-    if ('speechSynthesis' in window && autoPlayEnabled) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.6; // Even slower for sensory comfort
-      utterance.pitch = 1.0; // Neutral pitch
-      utterance.volume = 0.6; // Quieter for sensitivity
-      speechSynthesis.speak(utterance);
-    }
-  };
-
-  // Gentle sound effects (optional)
-  const playGentleSound = (soundType) => {
-    if (!soundEffectsEnabled) return;
-    
-    // Very quiet, pleasant sound effects only
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime); // Very quiet
-    
-    switch(soundType) {
-      case 'discover':
-        oscillator.frequency.setValueAtTime(330, audioContext.currentTime); // Gentle E note
-        break;
-      case 'success':
-        oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // Gentle A note
-        break;
-      default:
-        oscillator.frequency.setValueAtTime(220, audioContext.currentTime); // Gentle A note
-    }
-    
-    oscillator.start();
-    oscillator.stop(audioContext.currentTime + 0.3); // Very brief
-  };
-
-  const handleExploreMode = () => {
-    if (autoPlayEnabled && currentItem) {
+    if (gamePhase === 'introduction' && autoPlayEnabled && currentTool && !loading) {
       setTimeout(() => {
-        speak(`Let's explore ${currentItem.name}. ${currentItem.description}. ${currentItem.sensoryTip}`);
-      }, 800);
+        speak(currentTool.sound);
+      }, 1000);
     }
-  };
+  }, [currentToolIndex, gamePhase, autoPlayEnabled, loading]);
 
+  // Auto-speak when question changes
   useEffect(() => {
-    if (gameMode === 'explore' && !loading) {
-      handleExploreMode();
+    if (gamePhase === 'matching' && autoPlayEnabled && currentQuestion && !loading) {
+      setTimeout(() => {
+        speak(`${currentQuestion.action}. What tool do we use?`);
+      }, 1000);
     }
-  }, [currentIngredient, gameMode, autoPlayEnabled, loading]);
+  }, [currentQuestionIndex, gamePhase, autoPlayEnabled, loading]);
 
-  const nextIngredient = () => {
-    if (currentIngredient < sensoryIngredients.length - 1) {
-      setCurrentIngredient(prev => prev + 1);
-      setSelectedAnswer(null);
-      setShowFeedback(false);
-    } else if (gameMode === 'explore') {
-      setGameMode('memory');
-      setCurrentIngredient(0);
-      setupMemoryGame();
+  // Auto-save progress periodically during matching phase
+  useEffect(() => {
+    if (gamePhase === 'matching' && score > 0 && !progressSaving && !progressSaved) {
+      const autoSaveInterval = setInterval(() => {
+        if (score > 0) {
+          console.log('Auto-saving progress...');
+          saveProgress();
+        }
+      }, 30000); // Auto-save every 30 seconds
+
+      return () => clearInterval(autoSaveInterval);
+    }
+  }, [gamePhase, score, progressSaving, progressSaved]);
+
+  // Tool introduction navigation
+  const nextTool = () => {
+    if (currentToolIndex < kitchenTools.length - 1) {
+      setCurrentToolIndex(currentToolIndex + 1);
+    } else {
+      setGamePhase('matching');
+      setCurrentQuestionIndex(0);
     }
   };
 
-  const previousIngredient = () => {
-    if (currentIngredient > 0) {
-      setCurrentIngredient(prev => prev - 1);
-      setSelectedAnswer(null);
-      setShowFeedback(false);
+  const previousTool = () => {
+    if (currentToolIndex > 0) {
+      setCurrentToolIndex(currentToolIndex - 1);
     }
   };
 
-  const discoverIngredient = () => {
-    if (!discovered.includes(currentItem.id)) {
-      const newDiscovered = [...discovered, currentItem.id];
-      const newScore = score + 1;
-      
-      setDiscovered(newDiscovered);
-      setScore(newScore);
-      
-      playGentleSound('discover');
-      
+  const repeatToolInfo = () => {
+    if (autoPlayEnabled && currentTool) {
+      speak(currentTool.sound);
+    }
+    setShowToolAnimation(true);
+    setTimeout(() => setShowToolAnimation(false), 2000);
+  };
+
+  // Matching game functions
+  const handleAnswerSelect = (toolId) => {
+    setSelectedAnswer(toolId);
+    setShowFeedback(true);
+    
+    const isCorrect = toolId === currentQuestion.correctTool;
+    
+    if (isCorrect) {
+      // Only increment score if this answer hasn't been correct before
+      if (!correctAnswers.includes(currentQuestion.id)) {
+        setScore(prev => prev + 1);
+        setCorrectAnswers(prev => [...prev, currentQuestion.id]);
+      }
+      playGentleSound('correct');
+      if (autoPlayEnabled) {
+        setTimeout(() => speak(currentQuestion.feedback), 500);
+      }
+    } else {
+      playGentleSound('wrong');
+      if (autoPlayEnabled) {
+        setTimeout(() => speak('Try again! Think about what this tool does.'), 500);
+      }
+    }
+    
+    if (isCorrect) {
       setTimeout(() => {
-        speak(currentItem.encouragement);
-      }, 400);
-      
+        nextQuestion();
+      }, 3000);
+    } else {
       setTimeout(() => {
-        nextIngredient();
+        setSelectedAnswer(null);
+        setShowFeedback(false);
       }, 2500);
     }
   };
 
-  const setupMemoryGame = () => {
-    // Create gentle memory matching pairs
-    const shuffledIngredients = [...sensoryIngredients]
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 3); // Only 3 pairs for sensory comfort
-    
-    const pairs = shuffledIngredients.concat(shuffledIngredients)
-      .sort(() => Math.random() - 0.5)
-      .map((item, index) => ({
-        ...item,
-        cardId: index,
-        isFlipped: false,
-        isMatched: false
-      }));
-    
-    setMemoryCards(pairs);
-  };
-
-  const handleMemoryCard = (cardId) => {
-    const flippedCards = memoryCards.filter(card => card.isFlipped && !card.isMatched);
-    if (flippedCards.length >= 2) return;
-    
-    const newCards = memoryCards.map(card => 
-      card.cardId === cardId ? { ...card, isFlipped: true } : card
-    );
-    
-    setMemoryCards(newCards);
-    
-    const newFlippedCards = newCards.filter(card => card.isFlipped && !card.isMatched);
-    
-    if (newFlippedCards.length === 2) {
-      setTimeout(() => {
-        if (newFlippedCards[0].id === newFlippedCards[1].id) {
-          // Match found
-          const matchedCards = newCards.map(card => 
-            card.id === newFlippedCards[0].id ? { ...card, isMatched: true } : card
-          );
-          setMemoryCards(matchedCards);
-          playGentleSound('success');
-          
-          // Check if all matched
-          if (matchedCards.every(card => card.isMatched)) {
-            setTimeout(() => {
-              setGameMode('create');
-            }, 1500);
-          }
-        } else {
-          // No match - flip back
-          const resetCards = newCards.map(card => 
-            newFlippedCards.includes(card) ? { ...card, isFlipped: false } : card
-          );
-          setMemoryCards(resetCards);
-        }
-      }, 1200); // Longer delay for processing
-    }
-  };
-
-  const addToRecipe = (ingredientName) => {
-    if (!currentRecipe.includes(ingredientName)) {
-      const newRecipe = [...currentRecipe, ingredientName];
-      setCurrentRecipe(newRecipe);
-      playGentleSound('discover');
-      
-      // Check if recipe is complete
-      const matchingRecipe = gentleRecipes.find(recipe => 
-        recipe.ingredients.every(ing => newRecipe.includes(ing)) &&
-        newRecipe.length === recipe.ingredients.length
-      );
-      
-      if (matchingRecipe) {
-        setTimeout(() => {
-          setShowCelebration(true);
-          speak(`Wonderful! You made ${matchingRecipe.name}! ${matchingRecipe.description}`);
-        }, 1000);
+  const nextQuestion = () => {
+    if (currentQuestionIndex < matchingQuestions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setSelectedAnswer(null);
+      setShowFeedback(false);
+    } else {
+      setGamePhase('celebration');
+      saveProgress();
+      playGentleSound('celebration');
+      if (autoPlayEnabled) {
+        setTimeout(() => speak('Amazing work! You learned all the kitchen tools! You are a great cook!'), 1000);
       }
     }
   };
 
-  const resetGame = () => {
-    setCurrentIngredient(0);
-    setGameMode('explore');
+  const restartGame = () => {
+    setGamePhase('introduction');
+    setCurrentToolIndex(0);
+    setCurrentQuestionIndex(0);
     setSelectedAnswer(null);
     setShowFeedback(false);
     setScore(0);
-    setDiscovered([]);
-    setCurrentRecipe([]);
-    setMemoryCards([]);
-    setShowCelebration(false);
-    
-    saveProgress({
-      currentIngredient: 0,
-      gameMode: 'explore',
-      score: 0,
-      discovered: [],
-      currentRecipe: []
-    });
+    setCorrectAnswers([]);
+    setCompletedTools([]);
+    setProgressSaved(false);
+    setProgressSaving(false);
+  };
+
+  const goToMatching = () => {
+    setGamePhase('matching');
+    setCurrentQuestionIndex(0);
   };
 
   const goToHomepage = () => {
     navigate('/homepage');
   };
 
-  const continueToNextLevel = () => {
-    // This is the final level, so go home
-    goToHomepage();
+  const continueToNextLevel = async () => {
+    if (!progressSaved && !progressSaving) {
+      await saveProgress();
+    }
+    
+    setTimeout(() => {
+      navigate(-1); // Go back to previous screen since this is the final level
+    }, 300);
   };
 
   // Loading state
@@ -407,701 +466,771 @@ export default function CookingLevel3() {
     return (
       <div style={{
         minHeight: "100vh",
+        background: 'linear-gradient(to bottom, #F8F9FA, #E3F2FD)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #F8F9FA, #F3E5F5, #E8F5E8)',
-        fontFamily: '"Segoe UI", "Comic Sans MS", cursive, Arial, sans-serif'
+        padding: '20px'
       }}>
         <div style={{
-          textAlign: 'center',
           backgroundColor: '#FFFFFF',
-          borderRadius: '30px',
+          borderRadius: '25px',
           padding: '40px',
-          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.05)',
-          border: '2px solid #E8EAF6'
+          textAlign: 'center',
+          maxWidth: '400px',
+          width: '100%',
+          boxShadow: '0 6px 24px rgba(0, 0, 0, 0.08)',
+          border: '3px solid #2196F3'
         }}>
-          <div style={{ fontSize: '3rem', marginBottom: '20px' }}>🌟</div>
-          <h2 style={{ fontSize: '1.4rem', color: '#5E35B1', marginBottom: '10px' }}>
-            Loading your gentle cooking experience...
-          </h2>
-          <div style={{ 
-            width: '30px', 
-            height: '30px', 
-            border: '3px solid #E1BEE7',
-            borderTop: '3px solid #9C27B0',
+          <div style={{
+            width: '48px',
+            height: '48px',
+            border: '4px solid #2196F3',
+            borderTop: '4px solid transparent',
             borderRadius: '50%',
-            animation: `spin ${animationSpeed === 'slow' ? '2s' : '1s'} linear infinite`,
-            margin: '0 auto'
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 20px auto'
           }}></div>
+          <h3 style={{ fontSize: '1.5rem', color: '#1976D2', margin: 0 }}>Loading kitchen tools...</h3>
+          <style>{`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}</style>
         </div>
       </div>
     );
   }
 
-  const getAnimationDuration = () => {
-    switch(animationSpeed) {
-      case 'slow': return '1s';
-      case 'fast': return '0.3s';
-      default: return '0.6s';
-    }
-  };
+  // Tool Introduction Phase
+  const ToolIntroduction = () => (
+    <div style={{ textAlign: 'center' }}>
+      <h2 style={{
+        fontSize: '2rem',
+        color: '#1976D2',
+        marginBottom: '20px',
+        fontWeight: 'bold'
+      }}>
+        🧑‍🏫 LEARNING KITCHEN TOOLS
+      </h2>
+      
+      <div style={{
+        backgroundColor: '#F8F9FA',
+        borderRadius: '15px',
+        padding: '20px',
+        marginBottom: '30px',
+        border: '2px solid #E0E0E0'
+      }}>
+        <p style={{ fontSize: '1.2rem', color: '#666', margin: 0 }}>
+          Tool {currentToolIndex + 1} of {kitchenTools.length}
+        </p>
+      </div>
 
-  const styles = {
-    container: {
-      minHeight: "100vh",
-      background: 'linear-gradient(135deg, #F8F9FA, #F3E5F5, #E8F5E8)', 
-      padding: '20px',
-      fontFamily: '"Segoe UI", "Comic Sans MS", cursive, Arial, sans-serif'
-    },
-    mainCard: {
-      maxWidth: '900px',
-      margin: '0 auto',
-      backgroundColor: '#FFFFFF',
-      borderRadius: '30px',
-      padding: '40px',
-      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
-      border: '2px solid #E8EAF6'
-    },
-    headerSection: {
-      textAlign: 'center',
-      marginBottom: '35px'
-    },
-    title: {
-      fontSize: '2.2rem',
-      fontWeight: '600', // Slightly lighter
-      color: '#5E35B1',
-      marginBottom: '10px',
-      textShadow: '1px 1px 2px rgba(0,0,0,0.05)' // Softer shadow
-    },
-    subtitle: {
-      fontSize: '1.1rem',
-      color: '#6A4C93',
-      marginBottom: '20px'
-    },
-    levelIndicator: {
-      textAlign: 'center',
-      marginBottom: '20px',
-      fontSize: '1rem',
-      color: '#5E35B1',
-      fontWeight: '500',
-      backgroundColor: '#F3E5F5',
-      padding: '8px 16px',
-      borderRadius: '20px',
-      display: 'inline-block'
-    },
-    accessibilityControls: {
-      display: 'flex',
-      justifyContent: 'center',
-      gap: '20px',
-      marginBottom: '25px',
-      flexWrap: 'wrap'
-    },
-    accessibilityGroup: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      fontSize: '0.9rem'
-    },
-    progressIndicator: {
-      textAlign: 'center',
-      marginBottom: '15px',
-      fontSize: '0.9rem',
-      color: progressSaving ? '#9C27B0' : progressSaved ? '#4CAF50' : '#666',
-      opacity: progressSaving || progressSaved ? 1 : 0.7
-    },
-    modeToggle: {
-      display: 'flex',
-      justifyContent: 'center',
-      gap: '12px',
-      marginBottom: '30px',
-      flexWrap: 'wrap'
-    },
-    modeButton: {
-      padding: '10px 20px',
-      borderRadius: '20px',
-      border: 'none',
-      fontSize: '1rem',
-      fontWeight: '500',
-      cursor: 'pointer',
-      transition: `all ${getAnimationDuration()} ease`,
-      minWidth: '120px'
-    },
-    activeMode: {
-      backgroundColor: '#9C27B0',
-      color: 'white',
-      transform: 'scale(1.02)'
-    },
-    inactiveMode: {
-      backgroundColor: '#F5F5F5',
-      color: '#666'
-    },
-    progressBar: {
-      width: '100%',
-      height: '12px',
-      backgroundColor: '#F5F5F5',
-      borderRadius: '10px',
-      marginBottom: '20px',
-      overflow: 'hidden',
-      border: '1px solid #E0E0E0'
-    },
-    progressFill: {
-      height: '100%',
-      backgroundColor: '#9C27B0',
-      borderRadius: '10px',
-      transition: `width ${getAnimationDuration()} ease`,
-      width: `${((currentIngredient + 1) / sensoryIngredients.length) * 100}%`
-    },
-    ingredientDisplay: {
-      textAlign: 'center',
-      backgroundColor: currentItem?.color || '#F8F9FA',
-      borderRadius: '25px',
-      padding: '30px',
-      marginBottom: '25px',
-      border: '2px solid #E8EAF6',
-      transition: `background-color ${getAnimationDuration()} ease`
-    },
-    ingredientVisual: {
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      gap: '15px',
-      marginBottom: '20px'
-    },
-    emojiLarge: {
-      fontSize: '4rem',
-      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
-    },
-    textureEmoji: {
-      fontSize: '2rem',
-      opacity: 0.7
-    },
-    ingredientName: {
-      fontSize: '2rem',
-      fontWeight: '500',
-      color: '#5E35B1',
-      marginBottom: '15px'
-    },
-    description: {
-      fontSize: '1.2rem',
-      color: '#6A4C93',
-      lineHeight: 1.5,
-      maxWidth: '500px',
-      margin: '0 auto 15px auto'
-    },
-    sensoryInfo: {
-      fontSize: '1rem',
-      color: '#7B1FA2',
-      fontStyle: 'italic',
-      maxWidth: '400px',
-      margin: '0 auto',
-      backgroundColor: '#F3E5F5',
-      padding: '10px 15px',
-      borderRadius: '15px',
-      border: '1px solid #E1BEE7'
-    },
-    controlButtons: {
-      display: 'flex',
-      justifyContent: 'center',
-      gap: '12px',
-      marginBottom: '20px',
-      flexWrap: 'wrap'
-    },
-    controlButton: {
-      padding: '10px 16px',
-      borderRadius: '16px',
-      border: 'none',
-      fontSize: '0.95rem',
-      fontWeight: '500',
-      cursor: 'pointer',
-      transition: `all ${getAnimationDuration()} ease`,
-      minWidth: '120px'
-    },
-    primaryButton: {
-      backgroundColor: '#2196F3',
-      color: 'white'
-    },
-    secondaryButton: {
-      backgroundColor: '#4CAF50',
-      color: 'white'
-    },
-    gentleButton: {
-      backgroundColor: '#9C27B0',
-      color: 'white'
-    },
-    exploreButton: {
-      backgroundColor: '#FF9800',
-      color: 'white',
-      fontSize: '1.1rem',
-      padding: '12px 24px'
-    },
-    memoryGrid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(3, 1fr)',
-      gap: '15px',
-      maxWidth: '400px',
-      margin: '0 auto',
-      padding: '20px'
-    },
-    memoryCard: {
-      width: '100px',
-      height: '100px',
-      borderRadius: '15px',
-      border: '2px solid #E8EAF6',
-      cursor: 'pointer',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      transition: `all ${getAnimationDuration()} ease`,
-      backgroundColor: '#FAFAFA'
-    },
-    memoryCardFlipped: {
-      backgroundColor: '#F3E5F5',
-      transform: 'scale(1.02)'
-    },
-    memoryCardMatched: {
-      backgroundColor: '#C8E6C9',
-      border: '2px solid #4CAF50'
-    },
-    recipeBuilder: {
-      textAlign: 'center',
-      padding: '20px'
-    },
-    recipeGrid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-      gap: '15px',
-      maxWidth: '600px',
-      margin: '20px auto'
-    },
-    ingredientCard: {
-      padding: '15px',
-      borderRadius: '15px',
-      border: '2px solid #E8EAF6',
-      cursor: 'pointer',
-      transition: `all ${getAnimationDuration()} ease`,
-      backgroundColor: '#FAFAFA'
-    },
-    selectedIngredient: {
-      backgroundColor: '#E8F5E8',
-      border: '2px solid #4CAF50',
-      transform: 'scale(1.02)'
-    },
-    celebration: {
+      <div style={{
+        backgroundColor: currentTool.color,
+        border: `4px solid ${currentTool.borderColor}`,
+        borderRadius: '25px',
+        padding: '40px',
+        marginBottom: '30px',
+        minHeight: '300px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{
+          fontSize: '6rem',
+          marginBottom: '20px',
+          transform: showToolAnimation ? 'scale(1.1)' : 'scale(1)',
+          transition: 'transform 0.3s ease'
+        }}>
+          {currentTool.emoji}
+        </div>
+        
+        <h3 style={{
+          fontSize: '2.5rem',
+          color: currentTool.borderColor,
+          marginBottom: '15px',
+          fontWeight: 'bold'
+        }}>
+          {currentTool.name}
+        </h3>
+        
+        <div style={{
+          backgroundColor: '#FFFFFF',
+          padding: '20px',
+          borderRadius: '15px',
+          border: '2px solid #E0E0E0',
+          maxWidth: '500px'
+        }}>
+          <p style={{
+            fontSize: '1.5rem',
+            color: '#333',
+            lineHeight: '1.4',
+            margin: 0
+          }}>
+            {currentTool.description}
+          </p>
+        </div>
+        
+        {currentTool.safety && (
+          <div style={{
+            backgroundColor: '#FFEBEE',
+            border: '2px solid #F44336',
+            borderRadius: '10px',
+            padding: '10px 15px',
+            marginTop: '15px'
+          }}>
+            <p style={{
+              fontSize: '1.1rem',
+              color: '#C62828',
+              margin: 0,
+              fontWeight: 'bold'
+            }}>
+              ⚠️ Always ask an adult for help with knives!
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        gap: '15px',
+        marginBottom: '20px',
+        flexWrap: 'wrap'
+      }}>
+        <button
+          onClick={repeatToolInfo}
+          style={{
+            padding: '15px 25px',
+            borderRadius: '20px',
+            border: 'none',
+            fontSize: '1.3rem',
+            backgroundColor: '#2196F3',
+            color: 'white',
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
+        >
+          🔊 LISTEN AGAIN
+        </button>
+        
+        <button
+          onClick={previousTool}
+          disabled={currentToolIndex === 0}
+          style={{
+            padding: '15px 25px',
+            borderRadius: '20px',
+            border: 'none',
+            fontSize: '1.3rem',
+            backgroundColor: currentToolIndex === 0 ? '#E0E0E0' : '#9C27B0',
+            color: 'white',
+            cursor: currentToolIndex === 0 ? 'not-allowed' : 'pointer',
+            fontWeight: 'bold'
+          }}
+        >
+          ⬅️ BACK
+        </button>
+        
+        <button
+          onClick={nextTool}
+          style={{
+            padding: '15px 25px',
+            borderRadius: '20px',
+            border: 'none',
+            fontSize: '1.3rem',
+            backgroundColor: '#4CAF50',
+            color: 'white',
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
+        >
+          {currentToolIndex === kitchenTools.length - 1 ? '🎮 START MATCHING!' : '➡️ NEXT TOOL'}
+        </button>
+      </div>
+    </div>
+  );
+
+  // Matching Game Phase
+  const MatchingGame = () => (
+    <div style={{ textAlign: 'center' }}>
+      <h2 style={{
+        fontSize: '2rem',
+        color: '#1976D2',
+        marginBottom: '20px',
+        fontWeight: 'bold'
+      }}>
+        🎮 MATCH THE TOOL
+      </h2>
+      
+      <div style={{
+        backgroundColor: '#F8F9FA',
+        borderRadius: '15px',
+        padding: '20px',
+        marginBottom: '30px',
+        border: '2px solid #E0E0E0'
+      }}>
+        <p style={{ fontSize: '1.2rem', color: '#666', margin: 0 }}>
+          Question {currentQuestionIndex + 1} of {matchingQuestions.length} • Score: {score}/{matchingQuestions.length} • ⭐ {getStarRating()}
+        </p>
+      </div>
+
+      <div style={{
+        backgroundColor: '#E3F2FD',
+        border: '4px solid #2196F3',
+        borderRadius: '25px',
+        padding: '30px',
+        marginBottom: '30px'
+      }}>
+        <div style={{ fontSize: '4rem', marginBottom: '15px' }}>
+          {currentQuestion.emoji}
+        </div>
+        
+        <h3 style={{
+          fontSize: '2rem',
+          color: '#1976D2',
+          marginBottom: '15px',
+          fontWeight: 'bold'
+        }}>
+          {currentQuestion.action}
+        </h3>
+        
+        <p style={{
+          fontSize: '1.5rem',
+          color: '#333',
+          marginBottom: '20px'
+        }}>
+          What tool do we use?
+        </p>
+      </div>
+
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: '20px',
+        maxWidth: '700px',
+        margin: '0 auto 30px auto'
+      }}>
+        {currentQuestion.choices.map((toolId) => {
+          const tool = kitchenTools.find(t => t.id === toolId);
+          const isSelected = selectedAnswer === toolId;
+          const isCorrect = toolId === currentQuestion.correctTool;
+          const showResult = showFeedback && isSelected;
+          
+          return (
+            <button
+              key={toolId}
+              onClick={() => !showFeedback && handleAnswerSelect(toolId)}
+              disabled={showFeedback}
+              style={{
+                padding: '20px',
+                borderRadius: '20px',
+                border: `4px solid ${
+                  showResult ? (isCorrect ? '#4CAF50' : '#F44336') : 
+                  isSelected ? '#2196F3' : tool.borderColor
+                }`,
+                backgroundColor: showResult ? 
+                  (isCorrect ? '#C8E6C9' : '#FFCDD2') : 
+                  isSelected ? '#E3F2FD' : tool.color,
+                cursor: showFeedback ? 'not-allowed' : 'pointer',
+                transition: 'all 0.3s ease',
+                transform: isSelected ? 'scale(1.02)' : 'scale(1)'
+              }}
+            >
+              <div style={{ fontSize: '3rem', marginBottom: '10px' }}>
+                {tool.emoji}
+              </div>
+              <div style={{
+                fontSize: '1.3rem',
+                fontWeight: 'bold',
+                color: showResult ? (isCorrect ? '#2E7D32' : '#C62828') : tool.borderColor
+              }}>
+                {tool.name}
+              </div>
+              {showResult && (
+                <div style={{
+                  fontSize: '2rem',
+                  marginTop: '10px'
+                }}>
+                  {isCorrect ? '✅' : '❌'}
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {showFeedback && selectedAnswer === currentQuestion.correctTool && (
+        <div style={{
+          backgroundColor: '#C8E6C9',
+          border: '3px solid #4CAF50',
+          borderRadius: '15px',
+          padding: '20px',
+          marginBottom: '20px',
+          maxWidth: '600px',
+          margin: '0 auto 20px auto'
+        }}>
+          <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🌟</div>
+          <h3 style={{
+            fontSize: '1.8rem',
+            color: '#2E7D32',
+            margin: 0,
+            fontWeight: 'bold'
+          }}>
+            {currentQuestion.feedback}
+          </h3>
+        </div>
+      )}
+
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        gap: '15px',
+        flexWrap: 'wrap'
+      }}>
+        <button
+          onClick={() => setGamePhase('introduction')}
+          style={{
+            padding: '12px 20px',
+            borderRadius: '15px',
+            border: '2px solid #9C27B0',
+            fontSize: '1.1rem',
+            backgroundColor: '#9C27B0',
+            color: 'white',
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
+        >
+          🧑‍🏫 REVIEW TOOLS
+        </button>
+        
+        <button
+          onClick={() => speak(`${currentQuestion.action}. What tool do we use?`)}
+          style={{
+            padding: '12px 20px',
+            borderRadius: '15px',
+            border: '2px solid #2196F3',
+            fontSize: '1.1rem',
+            backgroundColor: '#2196F3',
+            color: 'white',
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
+        >
+          🔊 REPEAT QUESTION
+        </button>
+      </div>
+    </div>
+  );
+
+  // Celebration Phase
+  const Celebration = () => (
+    <div style={{
       position: 'fixed',
       top: 0,
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(156, 39, 176, 0.9)',
+      backgroundColor: 'rgba(76, 175, 80, 0.95)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 1000
-    },
-    celebrationContent: {
-      textAlign: 'center',
-      color: 'white',
-      padding: '20px'
-    }
-  };
+    }}>
+      <div style={{
+        textAlign: 'center',
+        color: 'white',
+        padding: '40px'
+      }}>
+        <div style={{ fontSize: '6rem', marginBottom: '20px' }}>🏆</div>
+        <h2 style={{
+          fontSize: '3rem',
+          marginBottom: '20px',
+          fontWeight: 'bold'
+        }}>
+          KITCHEN TOOL EXPERT!
+        </h2>
+        
+        {/* Star Rating Display */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+          {[...Array(getStarRating())].map((_, i) => (
+            <span key={i} style={{ fontSize: '3rem', color: '#FFD700', margin: '0 5px' }}>⭐</span>
+          ))}
+          {[...Array(3 - getStarRating())].map((_, i) => (
+            <span key={i} style={{ fontSize: '3rem', color: 'rgba(255,255,255,0.3)', margin: '0 5px' }}>⭐</span>
+          ))}
+        </div>
+        
+        <p style={{
+          fontSize: '1.8rem',
+          marginBottom: '10px'
+        }}>
+          You got {score} out of {matchingQuestions.length} correct!
+        </p>
+        <p style={{
+          fontSize: '1.5rem',
+          marginBottom: '20px'
+        }}>
+          You know all the kitchen tools! 🍴
+        </p>
+        <p style={{
+          fontSize: '1.2rem',
+          marginBottom: '30px',
+          opacity: 0.9
+        }}>
+          Final Score: {score}/{matchingQuestions.length} ({Math.round((score/matchingQuestions.length)*100)}%)
+        </p>
+
+        {/* Progress Saving Status */}
+        {progressSaving && (
+          <div style={{
+            backgroundColor: 'rgba(33, 150, 243, 0.3)',
+            border: '2px solid rgba(33, 150, 243, 0.6)',
+            borderRadius: '15px',
+            padding: '15px',
+            marginBottom: '20px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{
+                width: '20px',
+                height: '20px',
+                border: '2px solid white',
+                borderTop: '2px solid transparent',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                marginRight: '10px'
+              }}></div>
+              <span style={{ color: 'white', fontWeight: 'bold' }}>Saving your kitchen tool mastery...</span>
+            </div>
+          </div>
+        )}
+        
+        {progressSaved && (
+          <div style={{
+            backgroundColor: 'rgba(76, 175, 80, 0.3)',
+            border: '2px solid rgba(76, 175, 80, 0.6)',
+            borderRadius: '15px',
+            padding: '15px',
+            marginBottom: '20px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ color: 'white', marginRight: '8px', fontSize: '1.2rem' }}>✓</span>
+              <span style={{ color: 'white', fontWeight: 'bold' }}>Kitchen tool skills saved!</span>
+            </div>
+          </div>
+        )}
+        
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
+          <button
+            onClick={continueToNextLevel}
+            disabled={progressSaving}
+            style={{
+              padding: '20px 40px',
+              borderRadius: '25px',
+              border: '3px solid white',
+              fontSize: '1.5rem',
+              backgroundColor: '#4CAF50',
+              color: 'white',
+              cursor: progressSaving ? 'not-allowed' : 'pointer',
+              fontWeight: 'bold',
+              opacity: progressSaving ? 0.7 : 1
+            }}
+          >
+            {progressSaving ? 'Saving...' : '✅ Continue'}
+          </button>
+          
+          <button
+            onClick={restartGame}
+            style={{
+              padding: '20px 40px',
+              borderRadius: '25px',
+              border: '3px solid white',
+              fontSize: '1.5rem',
+              backgroundColor: 'transparent',
+              color: 'white',
+              cursor: 'pointer',
+              fontWeight: 'bold'
+            }}
+          >
+            🔄 PLAY AGAIN
+          </button>
+          
+          <button
+            onClick={goToHomepage}
+            style={{
+              padding: '20px 40px',
+              borderRadius: '25px',
+              border: '3px solid white',
+              fontSize: '1.5rem',
+              backgroundColor: '#9C27B0',
+              color: 'white',
+              cursor: 'pointer',
+              fontWeight: 'bold'
+            }}
+          >
+            🏠 GO HOME
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
-    <div style={styles.container}>
-      <div style={styles.mainCard}>
+    <div style={{
+      minHeight: "100vh",
+      background: 'linear-gradient(to bottom, #F8F9FA, #E3F2FD)',
+      padding: '20px',
+      fontFamily: 'Arial, sans-serif'
+    }}>
+      <div style={{
+        maxWidth: '900px',
+        margin: '0 auto',
+        backgroundColor: '#FFFFFF',
+        borderRadius: '25px',
+        padding: '30px',
+        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+        border: '3px solid #E0E0E0'
+      }}>
         
-        <div style={styles.headerSection}>
-          <h1 style={styles.title}>🌟 Gentle Cooking</h1>
-          <p style={styles.subtitle}>Explore ingredients with all your senses</p>
-          <div style={styles.levelIndicator}>
-            ✨ Level {currentLevel} - Sensory Experience
-          </div>
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+          <h1 style={{
+            fontSize: '2.5rem',
+            color: '#1976D2',
+            marginBottom: '10px',
+            fontFamily: 'Arial, sans-serif',
+            fontWeight: 'bold'
+          }}>
+            🍴 KITCHEN TOOLS
+          </h1>
+          <p style={{
+            fontSize: '1.3rem',
+            color: '#666',
+            marginBottom: '20px'
+          }}>
+            Learn tools, then match them to cooking actions
+          </p>
           
-          <div style={styles.progressIndicator}>
-            {progressSaving && '💾 Saving gently...'}
-            {progressSaved && '✅ Saved!'}
-            {!progressSaving && !progressSaved && `🌟 Discovered: ${discovered.length}/${sensoryIngredients.length}`}
-          </div>
-          
-          <div style={styles.accessibilityControls}>
-            <div style={styles.accessibilityGroup}>
-              <span>🔊 Voice:</span>
-              <button
-                onClick={() => setAutoPlayEnabled(!autoPlayEnabled)}
-                style={{
-                  ...styles.controlButton,
-                  ...(autoPlayEnabled ? styles.primaryButton : styles.secondaryButton),
-                  minWidth: '60px',
-                  padding: '6px 10px'
-                }}
-              >
-                {autoPlayEnabled ? 'ON' : 'OFF'}
-              </button>
-            </div>
-            
-            <div style={styles.accessibilityGroup}>
-              <span>🔔 Sounds:</span>
-              <button
-                onClick={() => setSoundEffectsEnabled(!soundEffectsEnabled)}
-                style={{
-                  ...styles.controlButton,
-                  ...(soundEffectsEnabled ? styles.primaryButton : styles.secondaryButton),
-                  minWidth: '60px',
-                  padding: '6px 10px'
-                }}
-              >
-                {soundEffectsEnabled ? 'ON' : 'OFF'}
-              </button>
-            </div>
-            
-            <div style={styles.accessibilityGroup}>
-              <span>⚡ Speed:</span>
-              <select
-                value={animationSpeed}
-                onChange={(e) => setAnimationSpeed(e.target.value)}
-                style={{
-                  padding: '6px 10px',
-                  borderRadius: '8px',
-                  border: '1px solid #E0E0E0',
-                  fontSize: '0.9rem'
-                }}
-              >
-                <option value="slow">Slow</option>
-                <option value="normal">Normal</option>
-                <option value="fast">Fast</option>
-              </select>
-            </div>
+          {/* Level indicator */}
+          <div style={{
+            backgroundColor: '#E3F2FD',
+            border: '2px solid #2196F3',
+            borderRadius: '15px',
+            padding: '10px 20px',
+            marginBottom: '20px',
+            display: 'inline-block'
+          }}>
+            <span style={{
+              fontSize: '1.1rem',
+              color: '#1976D2',
+              fontWeight: 'bold'
+            }}>
+              🔥 Level {currentLevel} of {maxLevel} - Kitchen Tool Mastery!
+            </span>
           </div>
 
-          <div style={styles.modeToggle}>
-            <button
-              onClick={() => setGameMode('explore')}
-              style={{
-                ...styles.modeButton,
-                ...(gameMode === 'explore' ? styles.activeMode : styles.inactiveMode)
-              }}
-            >
-              🔍 Explore
-            </button>
-            <button
-              onClick={() => { setGameMode('memory'); setupMemoryGame(); }}
-              style={{
-                ...styles.modeButton,
-                ...(gameMode === 'memory' ? styles.activeMode : styles.inactiveMode)
-              }}
-            >
-              🧠 Memory
-            </button>
-            <button
-              onClick={() => setGameMode('create')}
-              style={{
-                ...styles.modeButton,
-                ...(gameMode === 'create' ? styles.activeMode : styles.inactiveMode)
-              }}
-            >
-              👨‍🍳 Create
-            </button>
-          </div>
-        </div>
-
-        <div style={styles.progressBar}>
-          <div style={styles.progressFill}></div>
-        </div>
-
-        {gameMode === 'explore' && (
-          <>
-            <p style={{ textAlign: 'center', fontSize: '1rem', color: '#6A4C93', marginBottom: '20px' }}>
-              Ingredient {currentIngredient + 1} of {sensoryIngredients.length}
-            </p>
-            
-            <div style={styles.ingredientDisplay}>
-              <div style={styles.ingredientVisual}>
-                <span style={styles.emojiLarge}>{currentItem.emoji}</span>
-                <span style={styles.textureEmoji}>{currentItem.textureEmoji}</span>
-              </div>
-              <h2 style={styles.ingredientName}>{currentItem.name}</h2>
-              <p style={styles.description}>{currentItem.description}</p>
-              <div style={styles.sensoryInfo}>
-                🤚 Feel: {currentItem.texture} • 🌡️ {currentItem.temperature}
-                <br />
-                💡 {currentItem.sensoryTip}
-              </div>
+          {/* Score Display */}
+          {gamePhase === 'matching' && (
+            <div style={{
+              backgroundColor: '#E8F5E8',
+              border: '2px solid #4CAF50',
+              borderRadius: '15px',
+              padding: '10px 20px',
+              marginBottom: '20px',
+              display: 'inline-block',
+              marginLeft: '10px'
+            }}>
+              <span style={{
+                fontSize: '1.2rem',
+                color: '#2E7D32',
+                fontWeight: 'bold'
+              }}>
+                🏆 Score: {score}/{matchingQuestions.length} | ⭐ Stars: {getStarRating()}
+              </span>
             </div>
+          )}
 
-            <div style={styles.controlButtons}>
-              <button
-                onClick={() => speak(`${currentItem.name}. ${currentItem.description}`)}
-                style={{
-                  ...styles.controlButton,
-                  ...styles.primaryButton
-                }}
-              >
-                🔊 Listen
-              </button>
-              <button
-                onClick={() => speak(currentItem.sensoryTip)}
-                style={{
-                  ...styles.controlButton,
-                  ...styles.secondaryButton
-                }}
-              >
-                💡 Sensory Tip
-              </button>
-              <button
-                onClick={discoverIngredient}
-                style={{
-                  ...styles.controlButton,
-                  ...styles.exploreButton
-                }}
-              >
-                ✨ Discover
-              </button>
-            </div>
-
-            <div style={styles.controlButtons}>
-              <button
-                onClick={previousIngredient}
-                disabled={currentIngredient === 0}
-                style={{
-                  ...styles.controlButton,
-                  ...styles.gentleButton,
-                  opacity: currentIngredient === 0 ? 0.5 : 1
-                }}
-              >
-                ⬅️ Previous
-              </button>
-              <button
-                onClick={nextIngredient}
-                style={{
-                  ...styles.controlButton,
-                  ...styles.gentleButton
-                }}
-              >
-                {currentIngredient === sensoryIngredients.length - 1 ? '🧠 Try Memory!' : '➡️ Next'}
-              </button>
-              <button
-                onClick={goToHomepage}
-                style={{
-                  ...styles.controlButton,
-                  ...styles.primaryButton
-                }}
-              >
-                🏠 Home
-              </button>
-            </div>
-          </>
-        )}
-
-        {gameMode === 'memory' && (
-          <>
-            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-              <h3 style={{ color: '#5E35B1', fontSize: '1.5rem', marginBottom: '10px' }}>
-                🧠 Gentle Memory Game
-              </h3>
-              <p style={{ color: '#6A4C93', fontSize: '1rem' }}>
-                Find matching pairs of ingredients. Take your time!
+          {showTip && (
+            <div style={{
+              backgroundColor: '#FFF3E0',
+              border: '2px solid #FF9800',
+              borderRadius: '15px',
+              padding: '15px',
+              marginBottom: '20px'
+            }}>
+              <p style={{
+                fontSize: '1.1rem',
+                color: '#E65100',
+                margin: 0,
+                fontWeight: '500'
+              }}>
+                {showTip}
               </p>
             </div>
+          )}
+          
+          {/* Phase indicator */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '10px',
+            marginBottom: '20px'
+          }}>
+            <div style={{
+              padding: '8px 16px',
+              borderRadius: '15px',
+              backgroundColor: gamePhase === 'introduction' ? '#2196F3' : '#E0E0E0',
+              color: gamePhase === 'introduction' ? 'white' : '#666',
+              fontWeight: 'bold'
+            }}>
+              1. LEARN TOOLS
+            </div>
+            <div style={{
+              padding: '8px 16px',
+              borderRadius: '15px',
+              backgroundColor: gamePhase === 'matching' ? '#2196F3' : '#E0E0E0',
+              color: gamePhase === 'matching' ? 'white' : '#666',
+              fontWeight: 'bold'
+            }}>
+              2. MATCH TOOLS
+            </div>
+          </div>
+          
+          {/* Controls */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '15px',
+            marginBottom: '20px',
+            flexWrap: 'wrap'
+          }}>
+            <button
+              onClick={() => setAutoPlayEnabled(!autoPlayEnabled)}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '15px',
+                border: '2px solid #2196F3',
+                fontSize: '1rem',
+                backgroundColor: autoPlayEnabled ? '#2196F3' : '#FFFFFF',
+                color: autoPlayEnabled ? 'white' : '#2196F3',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              🔊 VOICE: {autoPlayEnabled ? 'ON' : 'OFF'}
+            </button>
             
-            <div style={styles.memoryGrid}>
-              {memoryCards.map((card) => (
-                <div
-                  key={card.cardId}
-                  onClick={() => handleMemoryCard(card.cardId)}
-                  style={{
-                    ...styles.memoryCard,
-                    ...(card.isFlipped ? styles.memoryCardFlipped : {}),
-                    ...(card.isMatched ? styles.memoryCardMatched : {}),
-                    cursor: card.isMatched ? 'default' : 'pointer'
-                  }}
-                >
-                  {card.isFlipped || card.isMatched ? (
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: '2rem' }}>{card.emoji}</div>
-                      <div style={{ fontSize: '0.7rem', color: '#5E35B1', marginTop: '5px' }}>
-                        {card.name.split(' ')[0]}
-                      </div>
-                    </div>
-                  ) : (
-                    <div style={{ fontSize: '2rem', color: '#9C27B0' }}>❓</div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <div style={styles.controlButtons}>
+            <button
+              onClick={() => setNeedsBreak(true)}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '15px',
+                border: '2px solid #FF9800',
+                fontSize: '1rem',
+                backgroundColor: '#FF9800',
+                color: 'white',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              ⏸️ BREAK
+            </button>
+            
+            {gamePhase === 'introduction' && (
               <button
-                onClick={() => setGameMode('explore')}
+                onClick={goToMatching}
                 style={{
-                  ...styles.controlButton,
-                  ...styles.secondaryButton
-                }}
-              >
-                🔍 Back to Explore
-              </button>
-              <button
-                onClick={() => setGameMode('create')}
-                style={{
-                  ...styles.controlButton,
-                  ...styles.gentleButton
-                }}
-              >
-                👨‍🍳 Create Recipe
-              </button>
-            </div>
-          </>
-        )}
-
-        {gameMode === 'create' && (
-          <>
-            <div style={styles.recipeBuilder}>
-              <h3 style={{ color: '#5E35B1', fontSize: '1.5rem', marginBottom: '10px' }}>
-                👨‍🍳 Create Your Gentle Recipe
-              </h3>
-              <p style={{ color: '#6A4C93', fontSize: '1rem', marginBottom: '20px' }}>
-                Choose ingredients to make a delicious treat!
-              </p>
-              
-              {currentRecipe.length > 0 && (
-                <div style={{
-                  backgroundColor: '#E8F5E8',
-                  padding: '15px',
+                  padding: '8px 16px',
                   borderRadius: '15px',
-                  margin: '20px auto',
-                  maxWidth: '400px',
-                  border: '2px solid #4CAF50'
-                }}>
-                  <h4 style={{ color: '#2E7D32', marginBottom: '10px' }}>Your Recipe:</h4>
-                  <div style={{ fontSize: '1.1rem' }}>
-                    {currentRecipe.join(' + ')}
-                  </div>
-                </div>
-              )}
-              
-              <div style={styles.recipeGrid}>
-                {sensoryIngredients.map((ingredient) => (
-                  <div
-                    key={ingredient.id}
-                    onClick={() => addToRecipe(ingredient.name)}
-                    style={{
-                      ...styles.ingredientCard,
-                      ...(currentRecipe.includes(ingredient.name) ? styles.selectedIngredient : {}),
-                      cursor: currentRecipe.includes(ingredient.name) ? 'default' : 'pointer'
-                    }}
-                  >
-                    <div style={{ fontSize: '2rem', marginBottom: '8px' }}>{ingredient.emoji}</div>
-                    <div style={{ fontSize: '0.9rem', color: '#5E35B1', fontWeight: '500' }}>
-                      {ingredient.name}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              <div style={{ marginTop: '20px' }}>
-                <h4 style={{ color: '#5E35B1', marginBottom: '15px' }}>Recipe Ideas:</h4>
-                {gentleRecipes.map((recipe, index) => (
-                  <div key={index} style={{
-                    backgroundColor: '#F3E5F5',
-                    padding: '10px 15px',
-                    borderRadius: '12px',
-                    margin: '8px auto',
-                    maxWidth: '500px',
-                    textAlign: 'left'
-                  }}>
-                    <strong style={{ color: '#5E35B1' }}>{recipe.name}:</strong> {recipe.ingredients.join(' + ')}
-                    <br />
-                    <span style={{ fontSize: '0.9rem', color: '#6A4C93', fontStyle: 'italic' }}>
-                      {recipe.description}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div style={styles.controlButtons}>
-              <button
-                onClick={() => setCurrentRecipe([])}
-                style={{
-                  ...styles.controlButton,
-                  ...styles.secondaryButton
-                }}
-              >
-                🔄 Clear Recipe
-              </button>
-              <button
-                onClick={() => setGameMode('explore')}
-                style={{
-                  ...styles.controlButton,
-                  ...styles.gentleButton
-                }}
-              >
-                🔍 Back to Explore
-              </button>
-              <button
-                onClick={goToHomepage}
-                style={{
-                  ...styles.controlButton,
-                  ...styles.primaryButton
-                }}
-              >
-                🏠 Home
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-
-      {showCelebration && (
-        <div style={styles.celebration}>
-          <div style={styles.celebrationContent}>
-            <div style={{ fontSize: '5rem', marginBottom: '20px' }}>🌟</div>
-            <h2 style={{ fontSize: '2.5rem', marginBottom: '20px' }}>Wonderful Cooking!</h2>
-            <p style={{ fontSize: '1.3rem', marginBottom: '10px' }}>
-              You completed the gentle cooking experience!
-            </p>
-            <p style={{ fontSize: '1.1rem', marginBottom: '30px', opacity: 0.9 }}>
-              You've learned to cook with all your senses!
-            </p>
-            
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', flexWrap: 'wrap' }}>
-              <button
-                onClick={continueToNextLevel}
-                style={{
-                  ...styles.controlButton,
+                  border: '2px solid #4CAF50',
+                  fontSize: '1rem',
                   backgroundColor: '#4CAF50',
                   color: 'white',
-                  fontSize: '1.2rem',
-                  padding: '15px 30px',
-                  border: '2px solid white'
+                  cursor: 'pointer',
+                  fontWeight: 'bold'
                 }}
               >
-                🏠 Complete Journey
+                🎮 SKIP TO MATCHING
               </button>
-              
-              <button
-                onClick={resetGame}
-                style={{
-                  ...styles.controlButton,
-                  backgroundColor: 'transparent',
-                  color: 'white',
-                  border: '2px solid white',
-                  fontSize: '1.2rem',
-                  padding: '15px 30px'
-                }}
-              >
-                🔄 Experience Again
-              </button>
-            </div>
+            )}
+          </div>
+        </div>
+
+        {/* Game Content */}
+        {gamePhase === 'introduction' && <ToolIntroduction />}
+        {gamePhase === 'matching' && <MatchingGame />}
+        
+        {/* Home Button */}
+        <div style={{ textAlign: 'center', marginTop: '30px' }}>
+          <button
+            onClick={goToHomepage}
+            style={{
+              padding: '12px 24px',
+              borderRadius: '20px',
+              border: '2px solid #9C27B0',
+              fontSize: '1.2rem',
+              backgroundColor: '#9C27B0',
+              color: 'white',
+              cursor: 'pointer',
+              fontWeight: 'bold'
+            }}
+          >
+            🏠 HOME
+          </button>
+        </div>
+      </div>
+
+      {/* Break Modal */}
+      {needsBreak && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: '#FFFFFF',
+            padding: '40px',
+            borderRadius: '25px',
+            textAlign: 'center',
+            border: '4px solid #2196F3'
+          }}>
+            <div style={{ fontSize: '4rem', marginBottom: '20px' }}>⏸️</div>
+            <h2 style={{ fontSize: '2rem', color: '#2196F3', marginBottom: '20px' }}>
+              BREAK TIME
+            </h2>
+            <p style={{ fontSize: '1.3rem', color: '#666', marginBottom: '30px' }}>
+              Take your time. When you're ready, click continue.
+            </p>
+            <button
+              onClick={() => setNeedsBreak(false)}
+              style={{
+                padding: '15px 30px',
+                borderRadius: '20px',
+                border: 'none',
+                fontSize: '1.5rem',
+                backgroundColor: '#4CAF50',
+                color: 'white',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              ✅ I'M READY
+            </button>
           </div>
         </div>
       )}
-      
-      <style>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
+
+      {/* Celebration */}
+      {gamePhase === 'celebration' && <Celebration />}
     </div>
   );
 }
