@@ -1,12 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
+  Box, 
+  Typography, 
+  Container, 
+  Button, 
+  Card, 
+  CardContent,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Stack,
+  LinearProgress,
+  CircularProgress,
+  Chip,
+  Switch,
+  FormControlLabel
+} from '@mui/material';
+import Navbar from '../Navbar';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import StarIcon from '@mui/icons-material/Star';
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import VolumeOffIcon from '@mui/icons-material/VolumeOff';
+import { 
   getStudentLessonProgress, 
   saveStudentLessonProgress,
   updateModuleProgress
 } from '../../services/progressService';
 
-export default function ToolMatchingLevel3() {
+// Import kitchen background only (using online URLs for clipart)
+import kitchenBg from "../../assets/sortingLevel1/kitchen.jpg";
+
+export default function CookingActionsLevel3() {
   const navigate = useNavigate();
   const { moduleId, lessonId } = useParams();
   
@@ -18,48 +45,21 @@ export default function ToolMatchingLevel3() {
   const [score, setScore] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState([]); // Track individual correct answers
   const [completedTools, setCompletedTools] = useState([]);
+  const [showCelebration, setShowCelebration] = useState(false);
   const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
-  const [soundEffectsEnabled, setSoundEffectsEnabled] = useState(false);
-  const [needsBreak, setNeedsBreak] = useState(false);
-  const [showToolAnimation, setShowToolAnimation] = useState(false);
-  
-  // Progress tracking states
   const [loading, setLoading] = useState(true);
   const [progressSaving, setProgressSaving] = useState(false);
   const [progressSaved, setProgressSaved] = useState(false);
   const [showTip, setShowTip] = useState('');
+  const [showToolAnimation, setShowToolAnimation] = useState(false);
   
   // Level progression props
   const [currentLevel] = useState(3); // Level 3
   const [maxLevel] = useState(3);
+  const [moduleIdentifier] = useState('cooking-basics');
+  const [lessonIdentifier] = useState('cooking-tools');
 
-  // Get student ID from localStorage
-  const getStudentId = () => {
-    const studentId = localStorage.getItem('studentId');
-    const userType = localStorage.getItem('userType');
-    
-    console.log("Getting student ID - Type:", userType, "ID:", studentId);
-    
-    if (userType !== 'STUDENT') {
-      console.error('User is not a student:', userType);
-      return null;
-    }
-    
-    if (!studentId || studentId === 'null') {
-      console.error('No student ID found in localStorage');
-      return null;
-    }
-    
-    const parsedId = parseInt(studentId, 10);
-    if (isNaN(parsedId)) {
-      console.error('Invalid student ID format:', studentId);
-      return null;
-    }
-    
-    return parsedId;
-  };
-
-  // Kitchen tools with clear descriptions and uses
+  // Level 3: Kitchen Tools - Advanced cooking knowledge
   const kitchenTools = [
     {
       id: 'spoon',
@@ -71,7 +71,8 @@ export default function ToolMatchingLevel3() {
       use: 'scoop or stir',
       animation: 'stirring motion',
       examples: ['soup', 'cereal', 'yogurt'],
-      sound: 'This is a spoon. We use it to scoop or stir food.'
+      sound: 'This is a spoon. We use it to scoop or stir food.',
+      encouragement: 'Perfect! A spoon is great for mixing and eating!'
     },
     {
       id: 'fork',
@@ -83,7 +84,8 @@ export default function ToolMatchingLevel3() {
       use: 'pick up food',
       animation: 'picking motion',
       examples: ['pasta', 'salad', 'fruit'],
-      sound: 'This is a fork. We use it to pick up and eat soft food.'
+      sound: 'This is a fork. We use it to pick up and eat soft food.',
+      encouragement: 'Excellent! Forks help us eat neatly!'
     },
     {
       id: 'knife',
@@ -96,7 +98,8 @@ export default function ToolMatchingLevel3() {
       animation: 'cutting motion',
       examples: ['bread', 'apple', 'cheese'],
       sound: 'This is a knife. We use it to cut or slice food. Be careful!',
-      safety: true
+      safety: true,
+      encouragement: 'Great! Remember to always be careful with knives!'
     },
     {
       id: 'whisk',
@@ -108,7 +111,8 @@ export default function ToolMatchingLevel3() {
       use: 'mix and beat',
       animation: 'whisking motion',
       examples: ['eggs', 'batter', 'cream'],
-      sound: 'This is a whisk. We use it to mix eggs and liquids.'
+      sound: 'This is a whisk. We use it to mix eggs and liquids.',
+      encouragement: 'Amazing! Whisks make the best scrambled eggs!'
     },
     {
       id: 'measuring-cup',
@@ -120,7 +124,8 @@ export default function ToolMatchingLevel3() {
       use: 'pour and measure',
       animation: 'pouring motion',
       examples: ['milk', 'water', 'juice'],
-      sound: 'This is a measuring cup. We use it to pour and measure drinks like milk or water.'
+      sound: 'This is a measuring cup. We use it to pour and measure drinks like milk or water.',
+      encouragement: 'Wonderful! Measuring cups help us cook perfectly!'
     }
   ];
 
@@ -170,6 +175,33 @@ export default function ToolMatchingLevel3() {
 
   const currentTool = kitchenTools[currentToolIndex];
   const currentQuestion = matchingQuestions[currentQuestionIndex];
+  const progressPercentage = gamePhase === 'introduction' 
+    ? ((currentToolIndex + 1) / kitchenTools.length) * 100
+    : ((currentQuestionIndex + 1) / matchingQuestions.length) * 100;
+
+  // Get student ID from localStorage
+  const getStudentId = () => {
+    const studentId = localStorage.getItem('studentId');
+    const userType = localStorage.getItem('userType');
+    
+    if (userType !== 'STUDENT') {
+      console.error('User is not a student:', userType);
+      return null;
+    }
+    
+    if (!studentId || studentId === 'null') {
+      console.error('No student ID found in localStorage');
+      return null;
+    }
+    
+    const parsedId = parseInt(studentId, 10);
+    if (isNaN(parsedId)) {
+      console.error('Invalid student ID format:', studentId);
+      return null;
+    }
+    
+    return parsedId;
+  };
 
   // Load previous progress on component mount
   useEffect(() => {
@@ -177,36 +209,24 @@ export default function ToolMatchingLevel3() {
       try {
         const studentId = getStudentId();
         if (!studentId || !lessonId) {
-          console.log('Missing studentId or lessonId:', { studentId, lessonId });
           setLoading(false);
           setShowTip('Ready to learn kitchen tools? Let\'s get started!');
           return;
         }
         
-        console.log('Fetching progress for student:', studentId, 'lesson:', lessonId);
         const progressResponse = await getStudentLessonProgress(studentId, lessonId);
         if (progressResponse) {
-          const existingScore = progressResponse.score || 0;
-          setScore(existingScore);
-          
-          // Initialize correct answers based on existing score
-          if (existingScore > 0) {
-            const initialCorrect = Array.from({length: Math.min(existingScore, matchingQuestions.length)}, (_, i) => i + 1);
-            setCorrectAnswers(initialCorrect);
-          }
-          
+          setScore(progressResponse.score || 0);
           if (progressResponse.completed) {
             setShowTip("Fantastic! You've mastered kitchen tools before. Want to practice more?");
           } else {
             setShowTip('Ready to learn kitchen tools? Let\'s get started!');
           }
-          console.log('Loaded existing progress:', progressResponse);
         } else {
-          console.log('No existing progress found - starting fresh');
           setShowTip('Ready to learn kitchen tools? Let\'s get started!');
         }
       } catch (error) {
-        console.log('Error fetching progress, starting fresh:', error);
+        console.log('Error fetching progress:', error);
         setShowTip('Ready to learn kitchen tools? Let\'s get started!');
       } finally {
         setLoading(false);
@@ -216,120 +236,30 @@ export default function ToolMatchingLevel3() {
     fetchUserProgress();
   }, [lessonId]);
 
-  // Speech function with slower pace
+  // Gentle audio feedback for cooking instructions
   const speak = (text) => {
-    if ('speechSynthesis' in window && autoPlayEnabled) {
-      speechSynthesis.cancel(); // Stop any current speech
+    if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.6; // Slower for processing
-      utterance.pitch = 1.0;
+      utterance.rate = 0.7; // Slower for cooking instructions
+      utterance.pitch = 1.1; 
       utterance.volume = 0.8;
       speechSynthesis.speak(utterance);
     }
   };
 
-  // Gentle sound effects
-  const playGentleSound = (soundType) => {
-    if (!soundEffectsEnabled) return;
-    
-    try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-      
-      switch(soundType) {
-        case 'correct':
-          oscillator.frequency.setValueAtTime(523, audioContext.currentTime); // Happy C
-          break;
-        case 'wrong':
-          oscillator.frequency.setValueAtTime(220, audioContext.currentTime); // Low A
-          break;
-        case 'celebration':
-          oscillator.frequency.setValueAtTime(659, audioContext.currentTime); // E
-          break;
-        default:
-          oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
-      }
-      
-      oscillator.start();
-      oscillator.stop(audioContext.currentTime + 0.4);
-    } catch (error) {
-      console.log('Audio not available:', error);
-    }
-  };
-
-  // Save progress to database
-  const saveProgress = async () => {
-    if (progressSaving || progressSaved) return;
-
-    try {
-      setProgressSaving(true);
-      const studentId = getStudentId();
-      
-      if (!studentId || !lessonId) {
-        console.error('Cannot save progress - missing data:', { studentId, lessonId });
-        return;
-      }
-      
-      // Calculate final score based on unique correct answers
-      const uniqueCorrectAnswers = [...new Set(correctAnswers)];
-      const finalScore = uniqueCorrectAnswers.length;
-      
-      const progressData = {
-        studentId: studentId,
-        lessonId: parseInt(lessonId, 10),
-        score: finalScore,
-        maxScore: matchingQuestions.length,
-        completed: gamePhase === 'celebration',
-        starsEarned: getStarRating(finalScore)
-      };
-      
-      console.log('Saving progress for student:', studentId, progressData);
-      await saveStudentLessonProgress(studentId, lessonId, progressData);
-      
-      // Update module progress if lesson is completed
-      if (progressData.completed && moduleId) {
-        try {
-          console.log('Updating module progress for module:', moduleId);
-          await updateModuleProgress(studentId, parseInt(moduleId, 10));
-        } catch (moduleError) {
-          console.error('Error updating module progress:', moduleError);
-          // Don't fail the save if module update fails
-        }
-      }
-      
-      console.log('Progress saved successfully!');
-      setProgressSaved(true);
-      
-    } catch (error) {
-      console.error('Error saving progress:', error);
-    } finally {
-      setProgressSaving(false);
-    }
-  };
-
-  // Calculate star rating based on score
-  const getStarRating = (finalScore = score) => {
-    const percentage = (finalScore / matchingQuestions.length) * 100;
-    if (percentage >= 90) return 3;
-    if (percentage >= 70) return 2;
-    if (percentage >= 50) return 1;
-    return 0;
-  };
-
-  // Auto-speak when tool changes
-  useEffect(() => {
-    if (gamePhase === 'introduction' && autoPlayEnabled && currentTool && !loading) {
+  const handleLearnMode = () => {
+    if (autoPlayEnabled && currentTool) {
       setTimeout(() => {
         speak(currentTool.sound);
-      }, 1000);
+      }, 500);
     }
-  }, [currentToolIndex, gamePhase, autoPlayEnabled, loading]);
+  };
+
+  useEffect(() => {
+    if (gamePhase === 'introduction' && !loading) {
+      handleLearnMode();
+    }
+  }, [currentToolIndex, gamePhase, loading]);
 
   // Auto-speak when question changes
   useEffect(() => {
@@ -339,20 +269,6 @@ export default function ToolMatchingLevel3() {
       }, 1000);
     }
   }, [currentQuestionIndex, gamePhase, autoPlayEnabled, loading]);
-
-  // Auto-save progress periodically during matching phase
-  useEffect(() => {
-    if (gamePhase === 'matching' && score > 0 && !progressSaving && !progressSaved) {
-      const autoSaveInterval = setInterval(() => {
-        if (score > 0) {
-          console.log('Auto-saving progress...');
-          saveProgress();
-        }
-      }, 30000); // Auto-save every 30 seconds
-
-      return () => clearInterval(autoSaveInterval);
-    }
-  }, [gamePhase, score, progressSaving, progressSaved]);
 
   // Tool introduction navigation
   const nextTool = () => {
@@ -379,7 +295,7 @@ export default function ToolMatchingLevel3() {
   };
 
   // Matching game functions
-  const handleAnswerSelect = (toolId) => {
+  const handlePracticeAnswer = (toolId) => {
     setSelectedAnswer(toolId);
     setShowFeedback(true);
     
@@ -391,22 +307,29 @@ export default function ToolMatchingLevel3() {
         setScore(prev => prev + 1);
         setCorrectAnswers(prev => [...prev, currentQuestion.id]);
       }
-      playGentleSound('correct');
-      if (autoPlayEnabled) {
-        setTimeout(() => speak(currentQuestion.feedback), 500);
-      }
-    } else {
-      playGentleSound('wrong');
-      if (autoPlayEnabled) {
-        setTimeout(() => speak('Try again! Think about what this tool does.'), 500);
-      }
-    }
-    
-    if (isCorrect) {
+      
       setTimeout(() => {
-        nextQuestion();
-      }, 3000);
+        speak(currentQuestion.feedback);
+      }, 300);
+      
+      setTimeout(() => {
+        if (currentQuestionIndex < matchingQuestions.length - 1) {
+          setCurrentQuestionIndex(prev => prev + 1);
+          setSelectedAnswer(null);
+          setShowFeedback(false);
+        } else {
+          setShowCelebration(true);
+          saveProgress();
+          setTimeout(() => {
+            speak("Fantastic! You learned all the kitchen tools!");
+          }, 500);
+        }
+      }, 3500);
     } else {
+      setTimeout(() => {
+        speak(`Let's try again. This cooking action uses ${currentQuestion.correctTool.replace('-', ' ')}`);
+      }, 300);
+      
       setTimeout(() => {
         setSelectedAnswer(null);
         setShowFeedback(false);
@@ -414,22 +337,50 @@ export default function ToolMatchingLevel3() {
     }
   };
 
-  const nextQuestion = () => {
-    if (currentQuestionIndex < matchingQuestions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-      setSelectedAnswer(null);
-      setShowFeedback(false);
-    } else {
-      setGamePhase('celebration');
-      saveProgress();
-      playGentleSound('celebration');
-      if (autoPlayEnabled) {
-        setTimeout(() => speak('Amazing work! You learned all the kitchen tools! You are a great cook!'), 1000);
+  // Save progress to database
+  const saveProgress = async () => {
+    if (progressSaving || progressSaved) return;
+
+    try {
+      setProgressSaving(true);
+      const studentId = getStudentId();
+      
+      if (!studentId || !lessonId) {
+        console.error('Cannot save progress - missing data:', { studentId, lessonId });
+        return;
       }
+      
+      const finalScore = score + (correctAnswers.length > score ? 1 : 0);
+      
+      const progressData = {
+        studentId: studentId,
+        lessonId: parseInt(lessonId, 10),
+        score: finalScore,
+        maxScore: matchingQuestions.length,
+        completed: true,
+        starsEarned: getStarRating(finalScore)
+      };
+      
+      await saveStudentLessonProgress(studentId, lessonId, progressData);
+      setProgressSaved(true);
+      
+    } catch (error) {
+      console.error('Error saving progress:', error);
+    } finally {
+      setProgressSaving(false);
     }
   };
 
-  const restartGame = () => {
+  // Calculate star rating based on score
+  const getStarRating = (finalScore = score) => {
+    const percentage = (finalScore / matchingQuestions.length) * 100;
+    if (percentage >= 90) return 3;
+    if (percentage >= 70) return 2;
+    if (percentage >= 50) return 1;
+    return 0;
+  };
+
+  const resetGame = () => {
     setGamePhase('introduction');
     setCurrentToolIndex(0);
     setCurrentQuestionIndex(0);
@@ -438,17 +389,19 @@ export default function ToolMatchingLevel3() {
     setScore(0);
     setCorrectAnswers([]);
     setCompletedTools([]);
+    setShowCelebration(false);
     setProgressSaved(false);
     setProgressSaving(false);
   };
 
-  const goToMatching = () => {
-    setGamePhase('matching');
-    setCurrentQuestionIndex(0);
-  };
-
   const goToHomepage = () => {
-    navigate('/homepage');
+    if (navigate) {
+      navigate('/homepage');
+    } else if (window.history && window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = '/homepage';
+    }
   };
 
   const continueToNextLevel = async () => {
@@ -457,780 +410,716 @@ export default function ToolMatchingLevel3() {
     }
     
     setTimeout(() => {
-      navigate(-1); // Go back to previous screen since this is the final level
+      goToHomepage(); // This is the final level
     }, 300);
   };
+
+  const hasNextLevel = false; // This is the final level
 
   // Loading state
   if (loading) {
     return (
       <div style={{
+        position: "relative",
+        overflow: "hidden",
         minHeight: "100vh",
-        background: 'linear-gradient(to bottom, #F8F9FA, #E3F2FD)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px'
+        width: "100%",
+        backgroundImage: `url(${kitchenBg})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed"
       }}>
-        <div style={{
-          backgroundColor: '#FFFFFF',
-          borderRadius: '25px',
-          padding: '40px',
-          textAlign: 'center',
-          maxWidth: '400px',
-          width: '100%',
-          boxShadow: '0 6px 24px rgba(0, 0, 0, 0.08)',
-          border: '3px solid #2196F3'
-        }}>
-          <div style={{
-            width: '48px',
-            height: '48px',
-            border: '4px solid #2196F3',
-            borderTop: '4px solid transparent',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-            margin: '0 auto 20px auto'
-          }}></div>
-          <h3 style={{ fontSize: '1.5rem', color: '#1976D2', margin: 0 }}>Loading kitchen tools...</h3>
-          <style>{`
-            @keyframes spin {
-              0% { transform: rotate(0deg); }
-              100% { transform: rotate(360deg); }
-            }
-          `}</style>
-        </div>
-      </div>
-    );
-  }
-
-  // Tool Introduction Phase
-  const ToolIntroduction = () => (
-    <div style={{ textAlign: 'center' }}>
-      <h2 style={{
-        fontSize: '2rem',
-        color: '#1976D2',
-        marginBottom: '20px',
-        fontWeight: 'bold'
-      }}>
-        🧑‍🏫 LEARNING KITCHEN TOOLS
-      </h2>
-      
-      <div style={{
-        backgroundColor: '#F8F9FA',
-        borderRadius: '15px',
-        padding: '20px',
-        marginBottom: '30px',
-        border: '2px solid #E0E0E0'
-      }}>
-        <p style={{ fontSize: '1.2rem', color: '#666', margin: 0 }}>
-          Tool {currentToolIndex + 1} of {kitchenTools.length}
-        </p>
-      </div>
-
-      <div style={{
-        backgroundColor: currentTool.color,
-        border: `4px solid ${currentTool.borderColor}`,
-        borderRadius: '25px',
-        padding: '40px',
-        marginBottom: '30px',
-        minHeight: '300px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <div style={{
-          fontSize: '6rem',
-          marginBottom: '20px',
-          transform: showToolAnimation ? 'scale(1.1)' : 'scale(1)',
-          transition: 'transform 0.3s ease'
-        }}>
-          {currentTool.emoji}
-        </div>
-        
-        <h3 style={{
-          fontSize: '2.5rem',
-          color: currentTool.borderColor,
-          marginBottom: '15px',
-          fontWeight: 'bold'
-        }}>
-          {currentTool.name}
-        </h3>
-        
-        <div style={{
-          backgroundColor: '#FFFFFF',
-          padding: '20px',
-          borderRadius: '15px',
-          border: '2px solid #E0E0E0',
-          maxWidth: '500px'
-        }}>
-          <p style={{
-            fontSize: '1.5rem',
-            color: '#333',
-            lineHeight: '1.4',
-            margin: 0
-          }}>
-            {currentTool.description}
-          </p>
-        </div>
-        
-        {currentTool.safety && (
-          <div style={{
-            backgroundColor: '#FFEBEE',
-            border: '2px solid #F44336',
-            borderRadius: '10px',
-            padding: '10px 15px',
-            marginTop: '15px'
-          }}>
-            <p style={{
-              fontSize: '1.1rem',
-              color: '#C62828',
-              margin: 0,
-              fontWeight: 'bold'
-            }}>
-              ⚠️ Always ask an adult for help with knives!
-            </p>
-          </div>
-        )}
-      </div>
-
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        gap: '15px',
-        marginBottom: '20px',
-        flexWrap: 'wrap'
-      }}>
-        <button
-          onClick={repeatToolInfo}
-          style={{
-            padding: '15px 25px',
-            borderRadius: '20px',
-            border: 'none',
-            fontSize: '1.3rem',
-            backgroundColor: '#2196F3',
-            color: 'white',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          🔊 LISTEN AGAIN
-        </button>
-        
-        <button
-          onClick={previousTool}
-          disabled={currentToolIndex === 0}
-          style={{
-            padding: '15px 25px',
-            borderRadius: '20px',
-            border: 'none',
-            fontSize: '1.3rem',
-            backgroundColor: currentToolIndex === 0 ? '#E0E0E0' : '#9C27B0',
-            color: 'white',
-            cursor: currentToolIndex === 0 ? 'not-allowed' : 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          ⬅️ BACK
-        </button>
-        
-        <button
-          onClick={nextTool}
-          style={{
-            padding: '15px 25px',
-            borderRadius: '20px',
-            border: 'none',
-            fontSize: '1.3rem',
-            backgroundColor: '#4CAF50',
-            color: 'white',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          {currentToolIndex === kitchenTools.length - 1 ? '🎮 START MATCHING!' : '➡️ NEXT TOOL'}
-        </button>
-      </div>
-    </div>
-  );
-
-  // Matching Game Phase
-  const MatchingGame = () => (
-    <div style={{ textAlign: 'center' }}>
-      <h2 style={{
-        fontSize: '2rem',
-        color: '#1976D2',
-        marginBottom: '20px',
-        fontWeight: 'bold'
-      }}>
-        🎮 MATCH THE TOOL
-      </h2>
-      
-      <div style={{
-        backgroundColor: '#F8F9FA',
-        borderRadius: '15px',
-        padding: '20px',
-        marginBottom: '30px',
-        border: '2px solid #E0E0E0'
-      }}>
-        <p style={{ fontSize: '1.2rem', color: '#666', margin: 0 }}>
-          Question {currentQuestionIndex + 1} of {matchingQuestions.length} • Score: {score}/{matchingQuestions.length} • ⭐ {getStarRating()}
-        </p>
-      </div>
-
-      <div style={{
-        backgroundColor: '#E3F2FD',
-        border: '4px solid #2196F3',
-        borderRadius: '25px',
-        padding: '30px',
-        marginBottom: '30px'
-      }}>
-        <div style={{ fontSize: '4rem', marginBottom: '15px' }}>
-          {currentQuestion.emoji}
-        </div>
-        
-        <h3 style={{
-          fontSize: '2rem',
-          color: '#1976D2',
-          marginBottom: '15px',
-          fontWeight: 'bold'
-        }}>
-          {currentQuestion.action}
-        </h3>
-        
-        <p style={{
-          fontSize: '1.5rem',
-          color: '#333',
-          marginBottom: '20px'
-        }}>
-          What tool do we use?
-        </p>
-      </div>
-
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '20px',
-        maxWidth: '700px',
-        margin: '0 auto 30px auto'
-      }}>
-        {currentQuestion.choices.map((toolId) => {
-          const tool = kitchenTools.find(t => t.id === toolId);
-          const isSelected = selectedAnswer === toolId;
-          const isCorrect = toolId === currentQuestion.correctTool;
-          const showResult = showFeedback && isSelected;
-          
-          return (
-            <button
-              key={toolId}
-              onClick={() => !showFeedback && handleAnswerSelect(toolId)}
-              disabled={showFeedback}
-              style={{
-                padding: '20px',
-                borderRadius: '20px',
-                border: `4px solid ${
-                  showResult ? (isCorrect ? '#4CAF50' : '#F44336') : 
-                  isSelected ? '#2196F3' : tool.borderColor
-                }`,
-                backgroundColor: showResult ? 
-                  (isCorrect ? '#C8E6C9' : '#FFCDD2') : 
-                  isSelected ? '#E3F2FD' : tool.color,
-                cursor: showFeedback ? 'not-allowed' : 'pointer',
-                transition: 'all 0.3s ease',
-                transform: isSelected ? 'scale(1.02)' : 'scale(1)'
-              }}
-            >
-              <div style={{ fontSize: '3rem', marginBottom: '10px' }}>
-                {tool.emoji}
-              </div>
-              <div style={{
-                fontSize: '1.3rem',
-                fontWeight: 'bold',
-                color: showResult ? (isCorrect ? '#2E7D32' : '#C62828') : tool.borderColor
-              }}>
-                {tool.name}
-              </div>
-              {showResult && (
-                <div style={{
-                  fontSize: '2rem',
-                  marginTop: '10px'
-                }}>
-                  {isCorrect ? '✅' : '❌'}
-                </div>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {showFeedback && selectedAnswer === currentQuestion.correctTool && (
-        <div style={{
-          backgroundColor: '#C8E6C9',
-          border: '3px solid #4CAF50',
-          borderRadius: '15px',
-          padding: '20px',
-          marginBottom: '20px',
-          maxWidth: '600px',
-          margin: '0 auto 20px auto'
-        }}>
-          <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🌟</div>
-          <h3 style={{
-            fontSize: '1.8rem',
-            color: '#2E7D32',
-            margin: 0,
-            fontWeight: 'bold'
-          }}>
-            {currentQuestion.feedback}
-          </h3>
-        </div>
-      )}
-
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        gap: '15px',
-        flexWrap: 'wrap'
-      }}>
-        <button
-          onClick={() => setGamePhase('introduction')}
-          style={{
-            padding: '12px 20px',
-            borderRadius: '15px',
-            border: '2px solid #9C27B0',
-            fontSize: '1.1rem',
-            backgroundColor: '#9C27B0',
-            color: 'white',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          🧑‍🏫 REVIEW TOOLS
-        </button>
-        
-        <button
-          onClick={() => speak(`${currentQuestion.action}. What tool do we use?`)}
-          style={{
-            padding: '12px 20px',
-            borderRadius: '15px',
-            border: '2px solid #2196F3',
-            fontSize: '1.1rem',
-            backgroundColor: '#2196F3',
-            color: 'white',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          🔊 REPEAT QUESTION
-        </button>
-      </div>
-    </div>
-  );
-
-  // Celebration Phase
-  const Celebration = () => (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(76, 175, 80, 0.95)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000
-    }}>
-      <div style={{
-        textAlign: 'center',
-        color: 'white',
-        padding: '40px'
-      }}>
-        <div style={{ fontSize: '6rem', marginBottom: '20px' }}>🏆</div>
-        <h2 style={{
-          fontSize: '3rem',
-          marginBottom: '20px',
-          fontWeight: 'bold'
-        }}>
-          KITCHEN TOOL EXPERT!
-        </h2>
-        
-        {/* Star Rating Display */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
-          {[...Array(getStarRating())].map((_, i) => (
-            <span key={i} style={{ fontSize: '3rem', color: '#FFD700', margin: '0 5px' }}>⭐</span>
-          ))}
-          {[...Array(3 - getStarRating())].map((_, i) => (
-            <span key={i} style={{ fontSize: '3rem', color: 'rgba(255,255,255,0.3)', margin: '0 5px' }}>⭐</span>
-          ))}
-        </div>
-        
-        <p style={{
-          fontSize: '1.8rem',
-          marginBottom: '10px'
-        }}>
-          You got {score} out of {matchingQuestions.length} correct!
-        </p>
-        <p style={{
-          fontSize: '1.5rem',
-          marginBottom: '20px'
-        }}>
-          You know all the kitchen tools! 🍴
-        </p>
-        <p style={{
-          fontSize: '1.2rem',
-          marginBottom: '30px',
-          opacity: 0.9
-        }}>
-          Final Score: {score}/{matchingQuestions.length} ({Math.round((score/matchingQuestions.length)*100)}%)
-        </p>
-
-        {/* Progress Saving Status */}
-        {progressSaving && (
-          <div style={{
-            backgroundColor: 'rgba(33, 150, 243, 0.3)',
-            border: '2px solid rgba(33, 150, 243, 0.6)',
-            borderRadius: '15px',
-            padding: '15px',
-            marginBottom: '20px'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{
-                width: '20px',
-                height: '20px',
-                border: '2px solid white',
-                borderTop: '2px solid transparent',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite',
-                marginRight: '10px'
-              }}></div>
-              <span style={{ color: 'white', fontWeight: 'bold' }}>Saving your kitchen tool mastery...</span>
-            </div>
-          </div>
-        )}
-        
-        {progressSaved && (
-          <div style={{
-            backgroundColor: 'rgba(76, 175, 80, 0.3)',
-            border: '2px solid rgba(76, 175, 80, 0.6)',
-            borderRadius: '15px',
-            padding: '15px',
-            marginBottom: '20px'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ color: 'white', marginRight: '8px', fontSize: '1.2rem' }}>✓</span>
-              <span style={{ color: 'white', fontWeight: 'bold' }}>Kitchen tool skills saved!</span>
-            </div>
-          </div>
-        )}
-        
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
-          <button
-            onClick={continueToNextLevel}
-            disabled={progressSaving}
-            style={{
-              padding: '20px 40px',
-              borderRadius: '25px',
-              border: '3px solid white',
-              fontSize: '1.5rem',
-              backgroundColor: '#4CAF50',
-              color: 'white',
-              cursor: progressSaving ? 'not-allowed' : 'pointer',
-              fontWeight: 'bold',
-              opacity: progressSaving ? 0.7 : 1
-            }}
-          >
-            {progressSaving ? 'Saving...' : '✅ Continue'}
-          </button>
-          
-          <button
-            onClick={restartGame}
-            style={{
-              padding: '20px 40px',
-              borderRadius: '25px',
-              border: '3px solid white',
-              fontSize: '1.5rem',
-              backgroundColor: 'transparent',
-              color: 'white',
-              cursor: 'pointer',
-              fontWeight: 'bold'
-            }}
-          >
-            🔄 PLAY AGAIN
-          </button>
-          
-          <button
-            onClick={goToHomepage}
-            style={{
-              padding: '20px 40px',
-              borderRadius: '25px',
-              border: '3px solid white',
-              fontSize: '1.5rem',
-              backgroundColor: '#9C27B0',
-              color: 'white',
-              cursor: 'pointer',
-              fontWeight: 'bold'
-            }}
-          >
-            🏠 GO HOME
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <div style={{
-      minHeight: "100vh",
-      background: 'linear-gradient(to bottom, #F8F9FA, #E3F2FD)',
-      padding: '20px',
-      fontFamily: 'Arial, sans-serif'
-    }}>
-      <div style={{
-        maxWidth: '900px',
-        margin: '0 auto',
-        backgroundColor: '#FFFFFF',
-        borderRadius: '25px',
-        padding: '30px',
-        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
-        border: '3px solid #E0E0E0'
-      }}>
-        
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-          <h1 style={{
-            fontSize: '2.5rem',
-            color: '#1976D2',
-            marginBottom: '10px',
-            fontFamily: 'Arial, sans-serif',
-            fontWeight: 'bold'
-          }}>
-            🍴 KITCHEN TOOLS
-          </h1>
-          <p style={{
-            fontSize: '1.3rem',
-            color: '#666',
-            marginBottom: '20px'
-          }}>
-            Learn tools, then match them to cooking actions
-          </p>
-          
-          {/* Level indicator */}
-          <div style={{
-            backgroundColor: '#E3F2FD',
-            border: '2px solid #2196F3',
-            borderRadius: '15px',
-            padding: '10px 20px',
-            marginBottom: '20px',
-            display: 'inline-block'
-          }}>
-            <span style={{
-              fontSize: '1.1rem',
-              color: '#1976D2',
-              fontWeight: 'bold'
-            }}>
-              🔥 Level {currentLevel} of {maxLevel} - Kitchen Tool Mastery!
-            </span>
-          </div>
-
-          {/* Score Display */}
-          {gamePhase === 'matching' && (
-            <div style={{
-              backgroundColor: '#E8F5E8',
-              border: '2px solid #4CAF50',
-              borderRadius: '15px',
-              padding: '10px 20px',
-              marginBottom: '20px',
-              display: 'inline-block',
-              marginLeft: '10px'
-            }}>
-              <span style={{
-                fontSize: '1.2rem',
-                color: '#2E7D32',
-                fontWeight: 'bold'
-              }}>
-                🏆 Score: {score}/{matchingQuestions.length} | ⭐ Stars: {getStarRating()}
-              </span>
-            </div>
-          )}
-
-          {showTip && (
-            <div style={{
-              backgroundColor: '#FFF3E0',
-              border: '2px solid #FF9800',
-              borderRadius: '15px',
-              padding: '15px',
-              marginBottom: '20px'
-            }}>
-              <p style={{
-                fontSize: '1.1rem',
-                color: '#E65100',
-                margin: 0,
-                fontWeight: '500'
-              }}>
-                {showTip}
-              </p>
-            </div>
-          )}
-          
-          {/* Phase indicator */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '10px',
-            marginBottom: '20px'
-          }}>
-            <div style={{
-              padding: '8px 16px',
-              borderRadius: '15px',
-              backgroundColor: gamePhase === 'introduction' ? '#2196F3' : '#E0E0E0',
-              color: gamePhase === 'introduction' ? 'white' : '#666',
-              fontWeight: 'bold'
-            }}>
-              1. LEARN TOOLS
-            </div>
-            <div style={{
-              padding: '8px 16px',
-              borderRadius: '15px',
-              backgroundColor: gamePhase === 'matching' ? '#2196F3' : '#E0E0E0',
-              color: gamePhase === 'matching' ? 'white' : '#666',
-              fontWeight: 'bold'
-            }}>
-              2. MATCH TOOLS
-            </div>
-          </div>
-          
-          {/* Controls */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '15px',
-            marginBottom: '20px',
-            flexWrap: 'wrap'
-          }}>
-            <button
-              onClick={() => setAutoPlayEnabled(!autoPlayEnabled)}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '15px',
-                border: '2px solid #2196F3',
-                fontSize: '1rem',
-                backgroundColor: autoPlayEnabled ? '#2196F3' : '#FFFFFF',
-                color: autoPlayEnabled ? 'white' : '#2196F3',
-                cursor: 'pointer',
-                fontWeight: 'bold'
-              }}
-            >
-              🔊 VOICE: {autoPlayEnabled ? 'ON' : 'OFF'}
-            </button>
-            
-            <button
-              onClick={() => setNeedsBreak(true)}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '15px',
-                border: '2px solid #FF9800',
-                fontSize: '1rem',
-                backgroundColor: '#FF9800',
-                color: 'white',
-                cursor: 'pointer',
-                fontWeight: 'bold'
-              }}
-            >
-              ⏸️ BREAK
-            </button>
-            
-            {gamePhase === 'introduction' && (
-              <button
-                onClick={goToMatching}
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: '15px',
-                  border: '2px solid #4CAF50',
-                  fontSize: '1rem',
-                  backgroundColor: '#4CAF50',
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontWeight: 'bold'
-                }}
-              >
-                🎮 SKIP TO MATCHING
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Game Content */}
-        {gamePhase === 'introduction' && <ToolIntroduction />}
-        {gamePhase === 'matching' && <MatchingGame />}
-        
-        {/* Home Button */}
-        <div style={{ textAlign: 'center', marginTop: '30px' }}>
-          <button
-            onClick={goToHomepage}
-            style={{
-              padding: '12px 24px',
-              borderRadius: '20px',
-              border: '2px solid #9C27B0',
-              fontSize: '1.2rem',
-              backgroundColor: '#9C27B0',
-              color: 'white',
-              cursor: 'pointer',
-              fontWeight: 'bold'
-            }}
-          >
-            🏠 HOME
-          </button>
-        </div>
-      </div>
-
-      {/* Break Modal */}
-      {needsBreak && (
-        <div style={{
-          position: 'fixed',
+        <Box sx={{
+          position: "absolute",
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.8)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: '#FFFFFF',
-            padding: '40px',
-            borderRadius: '25px',
-            textAlign: 'center',
-            border: '4px solid #2196F3'
-          }}>
-            <div style={{ fontSize: '4rem', marginBottom: '20px' }}>⏸️</div>
-            <h2 style={{ fontSize: '2rem', color: '#2196F3', marginBottom: '20px' }}>
-              BREAK TIME
-            </h2>
-            <p style={{ fontSize: '1.3rem', color: '#666', marginBottom: '30px' }}>
-              Take your time. When you're ready, click continue.
-            </p>
-            <button
-              onClick={() => setNeedsBreak(false)}
-              style={{
-                padding: '15px 30px',
-                borderRadius: '20px',
-                border: 'none',
-                fontSize: '1.5rem',
-                backgroundColor: '#4CAF50',
-                color: 'white',
-                cursor: 'pointer',
-                fontWeight: 'bold'
-              }}
-            >
-              ✅ I'M READY
-            </button>
-          </div>
-        </div>
-      )}
+          backgroundColor: "rgba(0, 0, 0, 0.4)",
+          zIndex: 1
+        }} />
+        <Navbar />
+        <Container sx={{ py: 8, textAlign: 'center', position: 'relative', zIndex: 2 }}>
+          <CircularProgress size={50} sx={{ color: '#FF9800' }} />
+          <Typography variant="h5" sx={{ mt: 3, color: 'white', fontWeight: 'bold', textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
+            Loading kitchen tools...
+          </Typography>
+        </Container>
+      </div>
+    );
+  }
 
-      {/* Celebration */}
-      {gamePhase === 'celebration' && <Celebration />}
+  return (
+    <div style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundImage: `url(${kitchenBg})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+      backgroundAttachment: "fixed",
+    }}>
+      {/* Kitchen overlay for better text readability */}
+      <Box sx={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.3)",
+        zIndex: 1
+      }} />
+      
+      <Box sx={{ 
+        position: 'relative', 
+        zIndex: 2,
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        <Navbar />
+        
+        {/* Main content container - SCROLLABLE */}
+        <Box sx={{
+          flex: 1,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          padding: '15px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }}>
+          {/* Content wrapper */}
+          <Box sx={{
+            width: '100%',
+            maxWidth: '1000px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 2
+          }}>
+            {/* Header Section */}
+            <Box sx={{ textAlign: 'center', width: '100%', maxWidth: '800px' }}>
+              <Typography variant="h3" sx={{ 
+                fontWeight: 'bold', 
+                color: 'white', 
+                mb: 1,
+                textShadow: '3px 3px 6px rgba(0,0,0,0.8)'
+              }}>
+                🍴 Kitchen Tools
+              </Typography>
+              
+              <Chip 
+                label={`Level ${currentLevel} of ${maxLevel}`}
+                sx={{ 
+                  backgroundColor: 'rgba(255, 152, 0, 0.9)', 
+                  color: 'white', 
+                  fontWeight: 'bold',
+                  fontSize: '1rem',
+                  padding: '8px 12px',
+                  mb: 2,
+                  border: '2px solid rgba(255, 255, 255, 0.3)'
+                }}
+              />
+
+              {showTip && (
+                <Box sx={{ 
+                  backgroundColor: 'rgba(255, 152, 0, 0.9)',
+                  borderRadius: '12px',
+                  padding: '8px 16px',
+                  mb: 2,
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)'
+                }}>
+                  <Typography sx={{ 
+                    fontSize: '0.9rem', 
+                    color: 'white', 
+                    fontWeight: '500',
+                    textShadow: '1px 1px 2px rgba(0,0,0,0.5)'
+                  }}>
+                    {showTip}
+                  </Typography>
+                </Box>
+              )}
+              
+              {/* Controls Row */}
+              <Stack direction="row" spacing={2} justifyContent="center" alignItems="center" sx={{ mb: 2, flexWrap: 'wrap', gap: 2 }}>
+                {/* Audio Toggle */}
+                <Box sx={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  borderRadius: '20px',
+                  padding: '6px 15px',
+                  backdropFilter: 'blur(10px)'
+                }}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={autoPlayEnabled}
+                        onChange={(e) => setAutoPlayEnabled(e.target.checked)}
+                        color="primary"
+                        size="small"
+                      />
+                    }
+                    label={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        {autoPlayEnabled ? <VolumeUpIcon fontSize="small" /> : <VolumeOffIcon fontSize="small" />}
+                        <Typography variant="body2" fontWeight="bold">Sound</Typography>
+                      </Box>
+                    }
+                  />
+                </Box>
+
+                {/* Phase Toggle */}
+                <Button
+                  onClick={() => setGamePhase('introduction')}
+                  variant={gamePhase === 'introduction' ? 'contained' : 'outlined'}
+                  size="medium"
+                  sx={{
+                    borderRadius: '20px',
+                    minWidth: '100px',
+                    backgroundColor: gamePhase === 'introduction' ? 'rgba(255, 152, 0, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+                    borderColor: '#FF9800',
+                    color: gamePhase === 'introduction' ? 'white' : '#FF9800',
+                    backdropFilter: 'blur(10px)',
+                    border: '2px solid #FF9800',
+                    '&:hover': {
+                      backgroundColor: gamePhase === 'introduction' ? 'rgba(245, 124, 0, 0.9)' : 'rgba(255, 152, 0, 0.1)',
+                    }
+                  }}
+                >
+                  📚 Learn
+                </Button>
+                <Button
+                  onClick={() => setGamePhase('matching')}
+                  variant={gamePhase === 'matching' ? 'contained' : 'outlined'}
+                  size="medium"
+                  sx={{
+                    borderRadius: '20px',
+                    minWidth: '100px',
+                    backgroundColor: gamePhase === 'matching' ? 'rgba(255, 152, 0, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+                    borderColor: '#FF9800',
+                    color: gamePhase === 'matching' ? 'white' : '#FF9800',
+                    backdropFilter: 'blur(10px)',
+                    border: '2px solid #FF9800',
+                    '&:hover': {
+                      backgroundColor: gamePhase === 'matching' ? 'rgba(245, 124, 0, 0.9)' : 'rgba(255, 152, 0, 0.1)',
+                    }
+                  }}
+                >
+                  🎯 Practice
+                </Button>
+              </Stack>
+            </Box>
+
+            {/* Progress bar */}
+            <Box sx={{ width: '100%', maxWidth: '700px' }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
+                <Typography variant="body1" sx={{ 
+                  color: 'white', 
+                  fontWeight: 'bold',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
+                }}>
+                  {gamePhase === 'introduction' 
+                    ? `Tool ${currentToolIndex + 1} of ${kitchenTools.length}`
+                    : `Question ${currentQuestionIndex + 1} of ${matchingQuestions.length}`
+                  }
+                </Typography>
+                <Chip 
+                  label={`Score: ${score}/${matchingQuestions.length}`} 
+                  sx={{ 
+                    backgroundColor: 'rgba(33, 150, 243, 0.9)', 
+                    color: 'white', 
+                    fontWeight: 'bold',
+                    fontSize: '0.9rem',
+                    padding: '4px 8px',
+                    border: '2px solid rgba(255, 255, 255, 0.3)',
+                    backdropFilter: 'blur(10px)'
+                  }}
+                />
+              </Stack>
+              <LinearProgress 
+                variant="determinate" 
+                value={progressPercentage} 
+                sx={{ 
+                  height: 8, 
+                  borderRadius: '10px',
+                  backgroundColor: 'rgba(255,255,255,0.3)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  '& .MuiLinearProgress-bar': {
+                    backgroundColor: '#FF9800'
+                  }
+                }} 
+              />
+            </Box>
+
+            {gamePhase === 'introduction' ? (
+              /* Learn Mode - Tool Introduction */
+              <Box sx={{ 
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                width: '100%',
+                maxWidth: '600px',
+                pb: 4
+              }}>
+                {/* Tool Display Card */}
+                <Card sx={{
+                  backgroundColor: 'rgba(255, 250, 244, 0.95)',
+                  borderRadius: '20px',
+                  padding: '25px',
+                  mb: 3,
+                  border: '3px solid #FF9800',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                  textAlign: 'center',
+                  width: '100%',
+                  backdropFilter: 'blur(15px)'
+                }}>
+                  {/* Tool emoji display */}
+                  <Typography sx={{ 
+                    fontSize: '8rem', 
+                    mb: 2,
+                    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))',
+                    lineHeight: 1,
+                    transform: showToolAnimation ? 'scale(1.1)' : 'scale(1)',
+                    transition: 'transform 0.3s ease'
+                  }}>
+                    {currentTool.emoji}
+                  </Typography>
+                  
+                  <Typography variant="h4" sx={{ 
+                    fontWeight: 'bold', 
+                    color: '#E65100', 
+                    mb: 1,
+                    textShadow: '1px 1px 2px rgba(0,0,0,0.1)'
+                  }}>
+                    {currentTool.name}
+                  </Typography>
+                  <Typography variant="body1" sx={{ 
+                    color: '#5D4037', 
+                    lineHeight: 1.4,
+                    fontSize: '1.1rem',
+                    mb: 2
+                  }}>
+                    {currentTool.description}
+                  </Typography>
+                  
+                  {/* Safety Warning */}
+                  {currentTool.safety && (
+                    <Box sx={{
+                      backgroundColor: '#FFEBEE',
+                      border: '2px solid #F44336',
+                      borderRadius: '12px',
+                      padding: '12px',
+                      mb: 2,
+                      color: '#C62828'
+                    }}>
+                      <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                        ⚠️ Always ask an adult for help with knives!
+                      </Typography>
+                    </Box>
+                  )}
+                  
+                  {/* Examples box */}
+                  <Box sx={{
+                    backgroundColor: '#FFF8E1',
+                    border: '1px solid #FFE0B2',
+                    borderRadius: '12px',
+                    padding: '12px',
+                    fontStyle: 'italic',
+                    color: '#795548'
+                  }}>
+                    <Typography variant="body2">
+                      💡 We use this to: {currentTool.use}
+                    </Typography>
+                  </Box>
+                </Card>
+
+                {/* Control Buttons */}
+                <Stack direction="row" spacing={2} sx={{ mb: 3, flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <Button
+                    onClick={repeatToolInfo}
+                    variant="contained"
+                    size="medium"
+                    sx={{
+                      backgroundColor: '#2196F3',
+                      borderRadius: '15px',
+                      minWidth: '100px',
+                      '&:hover': { backgroundColor: '#1976D2' }
+                    }}
+                  >
+                    🔊 Say Name
+                  </Button>
+                  <Button
+                    onClick={() => speak(currentTool.description)}
+                    variant="contained"
+                    size="medium"
+                    sx={{
+                      backgroundColor: '#4CAF50',
+                      borderRadius: '15px',
+                      minWidth: '100px',
+                      '&:hover': { backgroundColor: '#45a049' }
+                    }}
+                  >
+                    📝 What It Does
+                  </Button>
+                </Stack>
+
+                {/* Navigation Buttons */}
+                <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <Button
+                    onClick={previousTool}
+                    disabled={currentToolIndex === 0}
+                    variant="contained"
+                    size="medium"
+                    sx={{
+                      backgroundColor: '#9C27B0',
+                      borderRadius: '15px',
+                      minWidth: '80px',
+                      opacity: currentToolIndex === 0 ? 0.5 : 1,
+                      '&:hover': { backgroundColor: '#7B1FA2' }
+                    }}
+                  >
+                    ⬅️ Back
+                  </Button>
+                  <Button
+                    onClick={nextTool}
+                    variant="contained"
+                    size="medium"
+                    sx={{
+                      backgroundColor: '#9C27B0',
+                      borderRadius: '15px',
+                      minWidth: '80px',
+                      '&:hover': { backgroundColor: '#7B1FA2' }
+                    }}
+                  >
+                    {currentToolIndex === kitchenTools.length - 1 ? '🎯 Practice' : '➡️ Next'}
+                  </Button>
+                  <Button
+                    onClick={goToHomepage}
+                    variant="contained"
+                    size="medium"
+                    sx={{
+                      backgroundColor: '#2196F3',
+                      borderRadius: '15px',
+                      minWidth: '80px',
+                      '&:hover': { backgroundColor: '#1976D2' }
+                    }}
+                  >
+                    🏠 Home
+                  </Button>
+                </Stack>
+              </Box>
+            ) : (
+              /* Practice Mode - Tool Matching */
+              <Box sx={{ 
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                width: '100%',
+                maxWidth: '600px',
+                pb: 4
+              }}>
+                {/* Question Display */}
+                <Card sx={{
+                  backgroundColor: 'rgba(255, 250, 244, 0.95)',
+                  borderRadius: '20px',
+                  padding: '25px',
+                  mb: 3,
+                  border: '3px solid #FF9800',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                  textAlign: 'center',
+                  width: '100%',
+                  backdropFilter: 'blur(15px)'
+                }}>
+                  <Typography sx={{ fontSize: '3rem', mb: 1 }}>🤔</Typography>
+                  <Typography variant="h5" sx={{ 
+                    fontWeight: 'bold', 
+                    color: '#E65100', 
+                    mb: 2
+                  }}>
+                    {currentQuestion.action}
+                  </Typography>
+                  {/* Action emoji for question */}
+                  <Typography sx={{ 
+                    fontSize: '6rem', 
+                    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))',
+                    lineHeight: 1,
+                    mb: 2
+                  }}>
+                    {currentQuestion.emoji}
+                  </Typography>
+                  <Typography variant="h6" sx={{ 
+                    fontWeight: 'bold', 
+                    color: '#5D4037'
+                  }}>
+                    What tool do we use?
+                  </Typography>
+                </Card>
+
+                {/* Answer Options */}
+                <Box sx={{ 
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                  gap: 2,
+                  width: '100%',
+                  maxWidth: '500px',
+                  mb: 3
+                }}>
+                  {currentQuestion.choices.map((toolId) => {
+                    const tool = kitchenTools.find(t => t.id === toolId);
+                    const isSelected = selectedAnswer === toolId;
+                    const isCorrect = toolId === currentQuestion.correctTool;
+                    const showResult = showFeedback && isSelected;
+                    
+                    return (
+                      <Card
+                        key={toolId}
+                        onClick={() => !showFeedback && handlePracticeAnswer(toolId)}
+                        sx={{
+                          padding: '15px',
+                          borderRadius: '15px',
+                          border: '2px solid',
+                          borderColor: showResult && isCorrect 
+                            ? '#4CAF50' 
+                            : showResult && !isCorrect 
+                            ? '#F44336'
+                            : '#E0E0E0',
+                          cursor: showFeedback ? 'not-allowed' : 'pointer',
+                          textAlign: 'center',
+                          backgroundColor: showResult && isCorrect 
+                            ? 'rgba(200, 230, 201, 0.95)'
+                            : showResult && !isCorrect 
+                            ? 'rgba(255, 205, 210, 0.95)'
+                            : 'rgba(255, 255, 255, 0.95)',
+                          transition: 'all 0.3s ease',
+                          transform: showResult && isCorrect 
+                            ? 'scale(1.05)' : 'scale(1)',
+                          backdropFilter: 'blur(10px)',
+                          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
+                          '&:hover': {
+                            transform: showFeedback ? 'scale(1)' : 'scale(1.02)',
+                            boxShadow: showFeedback ? '0 4px 20px rgba(0, 0, 0, 0.2)' : '0 6px 25px rgba(0,0,0,0.3)'
+                          }
+                        }}
+                      >
+                        {/* Tool emoji for options */}
+                        <Typography sx={{ 
+                          fontSize: '3rem', 
+                          mb: 1,
+                          filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
+                          lineHeight: 1
+                        }}>
+                          {tool.emoji}
+                        </Typography>
+                        <Typography variant="body1" sx={{ 
+                          fontWeight: 'bold', 
+                          color: '#E65100',
+                          fontSize: '0.8rem'
+                        }}>
+                          {tool.name}
+                        </Typography>
+                        {showResult && (
+                          <Typography sx={{ 
+                            fontSize: '2rem', 
+                            mt: 1,
+                            lineHeight: 1
+                          }}>
+                            {isCorrect ? '✅' : '❌'}
+                          </Typography>
+                        )}
+                      </Card>
+                    );
+                  })}
+                </Box>
+
+                {/* Feedback Section */}
+                {showFeedback && (
+                  <Card sx={{
+                    padding: '15px',
+                    borderRadius: '15px',
+                    textAlign: 'center',
+                    backgroundColor: selectedAnswer === currentQuestion.correctTool ? 'rgba(200, 230, 201, 0.95)' : 'rgba(255, 205, 210, 0.95)',
+                    border: '2px solid',
+                    borderColor: selectedAnswer === currentQuestion.correctTool ? '#4CAF50' : '#F44336',
+                    mb: 3,
+                    width: '100%',
+                    backdropFilter: 'blur(15px)',
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)'
+                  }}>
+                    <Typography variant="h6" sx={{ 
+                      fontWeight: 'bold',
+                      mb: 1 
+                    }}>
+                      {selectedAnswer === currentQuestion.correctTool ? '🎉 Perfect!' : '💪 Keep trying!'}
+                    </Typography>
+                    <Typography variant="body1">
+                      {selectedAnswer === currentQuestion.correctTool 
+                        ? currentQuestion.feedback
+                        : `Try again! Think about what tool we use to ${currentQuestion.action.toLowerCase()}.`
+                      }
+                    </Typography>
+                  </Card>
+                )}
+
+                {/* Control Buttons */}
+                <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <Button
+                    onClick={resetGame}
+                    variant="contained"
+                    size="medium"
+                    sx={{
+                      backgroundColor: '#4CAF50',
+                      borderRadius: '15px',
+                      minWidth: '100px',
+                      '&:hover': { backgroundColor: '#45a049' }
+                    }}
+                  >
+                    📚 Learn Again
+                  </Button>
+                  <Button
+                    onClick={() => speak(`${currentQuestion.action}. What tool do we use?`)}
+                    variant="contained"
+                    size="medium"
+                    sx={{
+                      backgroundColor: '#2196F3',
+                      borderRadius: '15px',
+                      minWidth: '100px',
+                      '&:hover': { backgroundColor: '#1976D2' }
+                    }}
+                  >
+                    🔊 Repeat
+                  </Button>
+                  <Button
+                    onClick={goToHomepage}
+                    variant="contained"
+                    size="medium"
+                    sx={{
+                      backgroundColor: '#9C27B0',
+                      borderRadius: '15px',
+                      minWidth: '100px',
+                      '&:hover': { backgroundColor: '#7B1FA2' }
+                    }}
+                  >
+                    🏠 Home
+                  </Button>
+                </Stack>
+              </Box>
+            )}
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Success Dialog */}
+      <Dialog
+        open={showCelebration}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: { 
+            borderRadius: '20px',
+            backgroundColor: 'rgba(255, 250, 244, 0.98)',
+            border: '4px solid #FF9800',
+            backdropFilter: 'blur(15px)'
+          }
+        }}
+      >
+        <DialogTitle sx={{ textAlign: 'center', py: 3 }}>
+          <EmojiEventsIcon sx={{ fontSize: 80, color: '#FF9800', mb: 2 }} />
+          <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#E65100' }}>
+            Kitchen Tool Master!
+          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+            {[...Array(getStarRating())].map((_, i) => (
+              <StarIcon key={i} sx={{ color: '#FFCA3A', fontSize: 40, mx: 0.5 }} />
+            ))}
+            {[...Array(3 - getStarRating())].map((_, i) => (
+              <StarIcon key={i} sx={{ color: '#E0E0E0', fontSize: 40, mx: 0.5 }} />
+            ))}
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ textAlign: 'center', py: 2 }}>
+          <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#E65100', mb: 1 }}>
+            You learned all {kitchenTools.length} kitchen tools!
+          </Typography>
+          <Typography variant="body1" sx={{ color: '#5D4037', lineHeight: 1.4, mb: 2 }}>
+            Final Level Complete! 
+            You're now a kitchen tool expert! 🍴
+          </Typography>
+          
+          {progressSaving && (
+            <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(255, 152, 0, 0.9)', borderRadius: '12px', color: 'white', backdropFilter: 'blur(10px)' }}>
+              <CircularProgress size={16} sx={{ mr: 1, color: 'white' }} />
+              <Typography variant="body2">
+                Saving your progress...
+              </Typography>
+            </Box>
+          )}
+          
+          {progressSaved && (
+            <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(76, 175, 80, 0.9)', borderRadius: '12px', color: 'white', backdropFilter: 'blur(10px)' }}>
+              <CheckCircleIcon sx={{ mr: 1, fontSize: 20 }} />
+              <Typography variant="body2">
+                Progress saved successfully!
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', pb: 3, gap: 2 }}>
+          <Button 
+            onClick={continueToNextLevel}
+            disabled={progressSaving}
+            variant="contained"
+            size="medium"
+            sx={{ 
+              backgroundColor: 'rgba(33, 150, 243, 0.9)',
+              borderRadius: '10px',
+              minWidth: '120px',
+              backdropFilter: 'blur(10px)',
+              '&:hover': { 
+                backgroundColor: 'rgba(25, 118, 210, 0.9)'
+              }
+            }}
+          >
+            {progressSaving ? 'Saving...' : '🏠 Go Home'}
+          </Button>
+          
+          <Button 
+            onClick={resetGame}
+            variant="outlined"
+            size="medium"
+            sx={{ 
+              borderColor: '#FF9800', 
+              color: '#E65100',
+              borderRadius: '10px',
+              minWidth: '120px',
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              backdropFilter: 'blur(10px)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 152, 0, 0.1)',
+              }
+            }}
+          >
+            🔄 Practice Again
+          </Button>
+          
+          <Button 
+            onClick={goToHomepage}
+            variant="contained"
+            size="medium"
+            sx={{ 
+              backgroundColor: 'rgba(156, 39, 176, 0.9)',
+              borderRadius: '10px',
+              minWidth: '120px',
+              backdropFilter: 'blur(10px)',
+              '&:hover': { backgroundColor: 'rgba(123, 31, 162, 0.9)' }
+            }}
+          >
+            🏠 Home
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
