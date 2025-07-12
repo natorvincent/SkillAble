@@ -4,7 +4,7 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import SchoolIcon from '@mui/icons-material/School';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
+
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import StarIcon from '@mui/icons-material/Star';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
@@ -258,7 +258,7 @@ function BadgesPage() {
       progress: `${totalStars}/500`
     });
 
-    // Module Legend Badge - FIXED: No more undefined
+    // Module Legend Badge 
     badges.push({
       id: 'module-legend',
       label: 'Module Legend',
@@ -326,28 +326,61 @@ function BadgesPage() {
         <Navbar />
         
         <Container maxWidth="xl" sx={{ paddingTop: 3, paddingBottom: 5 }}>
-          {/* Your Badges Section */}
+          {/* Enhanced Achievements Section */}
           <Box sx={{ mb: 6 }}>
-            <Typography variant="h5" sx={{ 
-              color: '#333', 
-              fontWeight: 600, 
-              mb: 4,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1
+            {/* Centered Header with Fun Design */}
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center', 
+              mb: 5,
+              textAlign: 'center'
             }}>
-              <Box sx={{
-                backgroundColor: '#ff6b6b',
-                borderRadius: '8px',
-                padding: '8px 16px',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: 600
+              {/* Main Title */}
+              <Typography variant="h3" sx={{ 
+                color: '#2c3e50', 
+                fontWeight: 700, 
+                mb: 2,
+                textShadow: '2px 2px 4px rgba(0,0,0,0.1)',
+                fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' }
               }}>
-               Achievements
-              </Box>
-            </Typography>
+                🏆 Your Amazing Achievements! 🏆
+              </Typography>
 
+              {/* Colorful Achievement Button */}
+              <Box sx={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                borderRadius: '25px',
+                padding: '12px 30px',
+                color: 'white',
+                fontSize: '18px',
+                fontWeight: 700,
+                boxShadow: '0 8px 20px rgba(102, 126, 234, 0.4)',
+                transform: 'translateY(-2px)',
+                transition: 'all 0.3s ease',
+                marginBottom: 3,
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 12px 30px rgba(102, 126, 234, 0.6)',
+                }
+              }}>
+                ✨ Achievements Unlocked: {earnedBadgesCount}/{totalBadgesCount} ✨
+              </Box>
+
+              {/* Motivational Message */}
+              <Typography variant="h6" sx={{
+                color: '#34495e',
+                fontWeight: 500,
+                maxWidth: '600px',
+                lineHeight: 1.6,
+                fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' }
+              }}>
+                🌟 Every achievement is a step forward on your learning journey! 
+                Keep up the fantastic work! 🌟
+              </Typography>
+            </Box>
+
+            {/* Badges Grid - Centered */}
             <Grid container spacing={4} sx={{ justifyContent: 'center' }}>
               {badges.map((badge, index) => {
                 // Additional safety check for each badge
@@ -361,46 +394,96 @@ function BadgesPage() {
                       width: '100%'
                     }}>
                       <Card sx={{
-                        height: '220px',
-                        width: '240px',
+                        height: '280px',
+                        width: '260px',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
-                        padding: '20px',
-                        backgroundColor: badge.earned ? 'rgba(255, 255, 255, 0.95)' : 'rgba(245, 245, 245, 0.95)',
-                        border: badge.earned ? '3px solid #4caf50' : '3px solid #e0e0e0',
-                        borderRadius: '16px',
-                        opacity: badge.earned ? 1 : 0.7,
-                        transition: 'all 0.3s ease',
+                        padding: '24px',
+                        background: badge.earned 
+                          ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                          : 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                        border: badge.earned ? '4px solid #ffd700' : '4px solid #dee2e6',
+                        borderRadius: '20px',
+                        opacity: badge.earned ? 1 : 0.8,
+                        transition: 'all 0.4s ease',
                         cursor: 'pointer',
                         position: 'relative',
+                        transform: badge.earned ? 'scale(1.02)' : 'scale(1)',
                         '&:hover': {
-                          transform: 'translateY(-4px)',
-                          boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-                          borderColor: badge.earned ? '#4caf50' : '#bbb'
+                          transform: badge.earned ? 'scale(1.08) translateY(-8px)' : 'scale(1.05) translateY(-4px)',
+                          boxShadow: badge.earned 
+                            ? '0 20px 40px rgba(102, 126, 234, 0.4)'
+                            : '0 12px 24px rgba(0,0,0,0.15)',
+                          borderColor: badge.earned ? '#ffd700' : '#adb5bd'
                         }
                       }}>
-                        {/* Enhanced Earned Badge Indicator - more visible for perfectionist */}
+                        {/* Super Enhanced Earned Badge Indicator */}
                         {badge.earned && (
-                          <Box sx={{
-                            position: 'absolute',
-                            top: -8,
-                            right: -8,
-                            backgroundColor: badge.id === 'perfectionist' ? '#2e7d32' : '#4caf50',
-                            borderRadius: '50%',
-                            width: 36,
-                            height: 36,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'white',
-                            fontSize: '16px',
-                            fontWeight: 700,
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                            border: badge.id === 'perfectionist' ? '2px solid white' : 'none'
-                          }}>
-                            ✓
-                          </Box>
+                          <>
+                            {/* Outer glow ring */}
+                            <Box sx={{
+                              position: 'absolute',
+                              top: -12,
+                              right: -12,
+                              background: 'radial-gradient(circle, #ffd700 0%, #ffed4e 100%)',
+                              borderRadius: '50%',
+                              width: 48,
+                              height: 48,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              boxShadow: '0 4px 20px rgba(255, 215, 0, 0.6)',
+                              animation: 'pulse 2s infinite',
+                              '@keyframes pulse': {
+                                '0%': { transform: 'scale(1)', opacity: 1 },
+                                '50%': { transform: 'scale(1.1)', opacity: 0.8 },
+                                '100%': { transform: 'scale(1)', opacity: 1 }
+                              }
+                            }}>
+                              <Box sx={{
+                                background: '#fff',
+                                borderRadius: '50%',
+                                width: 32,
+                                height: 32,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: '#ffd700',
+                                fontSize: '20px',
+                                fontWeight: 900,
+                                textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+                              }}>
+                                ✓
+                              </Box>
+                            </Box>
+                            
+                            {/* Sparkle effects */}
+                            <Box sx={{
+                              position: 'absolute',
+                              top: 5,
+                              left: 5,
+                              color: '#ffd700',
+                              fontSize: '16px',
+                              animation: 'twinkle 1.5s infinite',
+                              '@keyframes twinkle': {
+                                '0%, 100%': { opacity: 0.3 },
+                                '50%': { opacity: 1 }
+                              }
+                            }}>
+                              ✨
+                            </Box>
+                            <Box sx={{
+                              position: 'absolute',
+                              bottom: 5,
+                              right: 5,
+                              color: '#ffd700',
+                              fontSize: '12px',
+                              animation: 'twinkle 2s infinite 0.5s',
+                            }}>
+                              ⭐
+                            </Box>
+                          </>
                         )}
 
                         <CardContent sx={{ 
@@ -409,65 +492,82 @@ function BadgesPage() {
                           width: '100%',
                           '&:last-child': { paddingBottom: 0 }
                         }}>
-                          {/* Badge Icon */}
+                          {/* Badge Icon with Enhanced Styling */}
                           <Box sx={{
-                            width: 60,
-                            height: 60,
-                            backgroundColor: 'white',
+                            width: 80,
+                            height: 80,
+                            background: badge.earned 
+                              ? 'linear-gradient(135deg, #fff 0%, #f8f9fa 100%)'
+                              : 'linear-gradient(135deg, #fff 0%, #f1f3f4 100%)',
                             borderRadius: '50%',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            mb: 1.5,
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                            margin: '0 auto 12px auto'
+                            mb: 2,
+                            boxShadow: badge.earned 
+                              ? '0 8px 20px rgba(0,0,0,0.2)'
+                              : '0 4px 12px rgba(0,0,0,0.1)',
+                            margin: '0 auto 16px auto',
+                            border: badge.earned ? '3px solid #ffd700' : '3px solid #e9ecef',
+                            transition: 'all 0.3s ease'
                           }}>
-                            {badge.icon || <HelpOutlineIcon sx={{ fontSize: 32, color: '#ccc' }} />}
+                            {React.cloneElement(badge.icon || <HelpOutlineIcon />, {
+                              sx: { fontSize: 48, color: badge.earned ? badge.icon?.props?.sx?.color || '#4a6cf7' : '#adb5bd' }
+                            })}
                           </Box>
 
-                          {/* Badge Name */}
+                          {/* Badge Name with Enhanced Typography */}
                           <Typography variant="h6" sx={{
-                            color: '#333',
-                            fontWeight: 600,
-                            fontSize: '14px',
-                            mb: 0.5,
+                            color: badge.earned ? '#fff' : '#495057',
+                            fontWeight: 700,
+                            fontSize: '16px',
+                            mb: 1,
                             lineHeight: 1.2,
                             textAlign: 'center',
-                            minHeight: '40px',
+                            minHeight: '44px',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            textShadow: badge.earned ? '1px 1px 2px rgba(0,0,0,0.3)' : 'none'
                           }}>
                             {badge.label || 'Unknown Badge'}
                           </Typography>
 
-                          {/* Badge Description */}
+                          {/* Badge Description with Better Contrast */}
                           <Typography variant="body2" sx={{
-                            color: '#666',
-                            fontSize: '12px',
-                            mb: 1,
-                            lineHeight: 1.3,
+                            color: badge.earned ? 'rgba(255,255,255,0.9)' : '#6c757d',
+                            fontSize: '13px',
+                            mb: 1.5,
+                            lineHeight: 1.4,
                             textAlign: 'center',
                             minHeight: '40px',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            justifyContent: 'center',
+                            textShadow: badge.earned ? '1px 1px 2px rgba(0,0,0,0.2)' : 'none'
                           }}>
                             {badge.description || 'No description'}
                           </Typography>
 
-                          {/* Progress */}
-                          <Typography variant="caption" sx={{
-                            color: badge.earned ? '#4caf50' : '#999',
-                            fontSize: '12px',
-                            fontWeight: 600,
-                            backgroundColor: badge.earned ? '#e8f5e8' : '#f0f0f0',
-                            padding: '4px 8px',
-                            borderRadius: '12px',
-                            display: 'inline-block'
+                          {/* Enhanced Progress Display */}
+                          <Box sx={{
+                            background: badge.earned 
+                              ? 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)'
+                              : 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                            color: badge.earned ? '#2c3e50' : '#6c757d',
+                            fontSize: '14px',
+                            fontWeight: 700,
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            display: 'inline-block',
+                            boxShadow: badge.earned 
+                              ? '0 4px 12px rgba(255, 215, 0, 0.3)'
+                              : '0 2px 8px rgba(0,0,0,0.1)',
+                            border: badge.earned ? '2px solid #fff' : '2px solid #dee2e6',
+                            minWidth: '80px'
                           }}>
                             {badge.progress || '0/0'}
-                          </Typography>
+                          </Box>
                         </CardContent>
                       </Card>
                     </Box>
