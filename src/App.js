@@ -17,6 +17,7 @@ import SortingLevel1 from './components/lesson/SortingLevel1';
 import CookingLevel1 from './components/lesson/CookingLevel1';
 import CookingLevel2 from './components/lesson/CookingLevel2';
 import CookingLevel3 from './components/lesson/CookingLevel3';
+import CookingLevel4 from './components/lesson/CookingLevel4';
 import ManageStudents from './components/teacher/ManageStudents';
 import StudentProgress from './components/teacher/StudentProgress';
 import AchievementsPage from './components/AchievementsPage';
@@ -115,6 +116,10 @@ function App() {
 
           <Route path="/lesson/cooking/level-3/:lessonId" element={
             isLoggedIn ? <CookingLevel3 /> : <Navigate to="/login" replace /> 
+          } />
+
+          <Route path="/lesson/cooking/level-4/:lessonId" element={
+            isLoggedIn ? <CookingLevel4 /> : <Navigate to="/login" replace /> 
           } />
 
           <Route path="/lesson/cooking/:lessonId" element={

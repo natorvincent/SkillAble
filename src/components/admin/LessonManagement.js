@@ -96,11 +96,19 @@ const LessonManagement = () => {
     },
     {
       value: 'cooking-level-3',
-      label: 'Cooking Level 3 - Actions',
-      description: 'Learn basic cooking actions and techniques',
+      label: 'Cooking Level 3 - Tools & Actions',
+      description: 'Learn cooking tools and advanced techniques',
       component: 'CookingLevel3',
       path: '/lesson/cooking/level-3',
-      icon: '👨‍🍳'
+      icon: '🔪'
+    },
+    {
+      value: 'cooking-level-4',
+      label: 'Cooking Level 4 - Recipe Assembly',
+      description: 'Step-by-step recipe assembly and cooking sequences',
+      component: 'CookingLevel4',
+      path: '/lesson/cooking/level-4',
+      icon: '🍳'
     },
     {
       value: 'SortingLevel1',
