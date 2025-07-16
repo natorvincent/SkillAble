@@ -538,7 +538,7 @@ export default function CookingActionsLevel3() {
                 mb: 1,
                 textShadow: '3px 3px 6px rgba(0,0,0,0.8)'
               }}>
-                🍴 Kitchen Tools
+                Kitchen Tools
               </Typography>
               
               <Chip 

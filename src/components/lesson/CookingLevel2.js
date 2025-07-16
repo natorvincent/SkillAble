@@ -56,10 +56,12 @@ export default function CookingActionsLevel2() {
   const [progressSaving, setProgressSaving] = useState(false);
   const [progressSaved, setProgressSaved] = useState(false);
   const [showTip, setShowTip] = useState('');
+  const [showCorrectAnimation, setShowCorrectAnimation] = useState(false);
+  const [confettiPieces, setConfettiPieces] = useState([]);
   
   // Level progression props
   const [currentLevel] = useState(2); // Level 2
-  const [maxLevel] = useState(3);
+  const [maxLevel] = useState(5); // Updated to 5 total levels
   const [moduleIdentifier] = useState('cooking-basics');
   const [lessonIdentifier] = useState('cooking-actions');
 
@@ -221,6 +223,29 @@ export default function CookingActionsLevel2() {
     }
   };
 
+  // Confetti animation function
+  const triggerCorrectAnimation = () => {
+    setShowCorrectAnimation(true);
+    
+    // Generate confetti pieces
+    const pieces = [];
+    for (let i = 0; i < 50; i++) {
+      pieces.push({
+        id: i,
+        left: Math.random() * 100,
+        animationDelay: Math.random() * 3,
+        backgroundColor: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'][Math.floor(Math.random() * 6)]
+      });
+    }
+    setConfettiPieces(pieces);
+    
+    // Hide animation after 3 seconds
+    setTimeout(() => {
+      setShowCorrectAnimation(false);
+      setConfettiPieces([]);
+    }, 3000);
+  };
+
   const handlePracticeAnswer = (answerId) => {
     setSelectedAnswer(answerId);
     setShowFeedback(true);
@@ -228,6 +253,9 @@ export default function CookingActionsLevel2() {
     const isCorrect = answerId === currentItem.id;
     
     if (isCorrect) {
+      // Show confetti animation and "Correct!" popup
+      triggerCorrectAnimation();
+      
       setScore(prev => prev + 1);
       setCompleted(prev => [...prev, currentItem.id]);
       
@@ -439,7 +467,7 @@ export default function CookingActionsLevel2() {
                 mb: 1,
                 textShadow: '3px 3px 6px rgba(0,0,0,0.8)'
               }}>
-                 Cooking Actions
+                Cooking Actions
               </Typography>
               
               <Chip 
@@ -848,35 +876,6 @@ export default function CookingActionsLevel2() {
                   ))}
                 </Box>
 
-                {/* Feedback Section */}
-                {showFeedback && (
-                  <Card sx={{
-                    padding: '15px',
-                    borderRadius: '15px',
-                    textAlign: 'center',
-                    backgroundColor: selectedAnswer === currentItem.id ? 'rgba(200, 230, 201, 0.95)' : 'rgba(255, 205, 210, 0.95)',
-                    border: '2px solid',
-                    borderColor: selectedAnswer === currentItem.id ? '#4CAF50' : '#F44336',
-                    mb: 3,
-                    width: '100%',
-                    backdropFilter: 'blur(15px)',
-                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)'
-                  }}>
-                    <Typography variant="h6" sx={{ 
-                      fontWeight: 'bold',
-                      mb: 1 
-                    }}>
-                      {selectedAnswer === currentItem.id ? '🎉 Perfect!' : '💪 Keep trying!'}
-                    </Typography>
-                    <Typography variant="body1">
-                      {selectedAnswer === currentItem.id 
-                        ? currentItem.encouragement
-                        : `We ${currentItem.name} the item. ${currentItem.description}`
-                      }
-                    </Typography>
-                  </Card>
-                )}
-
                 {/* Control Buttons */}
                 <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', justifyContent: 'center' }}>
                   <Button
@@ -912,6 +911,96 @@ export default function CookingActionsLevel2() {
         </Box>
       </Box>
 
+      {/* Confetti Animation and "Correct!" Popup */}
+      {showCorrectAnimation && (
+        <>
+          {/* Confetti pieces */}
+          {confettiPieces.map((piece) => (
+            <Box
+              key={piece.id}
+              sx={{
+                position: 'fixed',
+                top: '-10px',
+                left: `${piece.left}%`,
+                width: '10px',
+                height: '10px',
+                backgroundColor: piece.backgroundColor,
+                zIndex: 9999,
+                borderRadius: '2px',
+                animation: 'confettiFall 3s linear forwards',
+                animationDelay: `${piece.animationDelay}s`,
+                '@keyframes confettiFall': {
+                  '0%': {
+                    transform: 'translateY(-10px) rotateZ(0deg)',
+                    opacity: 1,
+                  },
+                  '100%': {
+                    transform: 'translateY(100vh) rotateZ(720deg)',
+                    opacity: 0,
+                  },
+                },
+              }}
+            />
+          ))}
+          
+          {/* "Correct!" Popup */}
+          <Box
+            sx={{
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 10000,
+              animation: 'correctPop 3s ease-out forwards',
+              '@keyframes correctPop': {
+                '0%': {
+                  transform: 'translate(-50%, -50%) scale(0)',
+                  opacity: 0,
+                },
+                '20%': {
+                  transform: 'translate(-50%, -50%) scale(1.2)',
+                  opacity: 1,
+                },
+                '40%': {
+                  transform: 'translate(-50%, -50%) scale(1)',
+                  opacity: 1,
+                },
+                '100%': {
+                  transform: 'translate(-50%, -50%) scale(1)',
+                  opacity: 0,
+                },
+              },
+            }}
+          >
+            <Box
+              sx={{
+                backgroundColor: 'rgba(255, 152, 0, 0.95)',
+                color: 'white',
+                padding: '20px 40px',
+                borderRadius: '20px',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+                border: '4px solid #FF9800',
+                backdropFilter: 'blur(10px)',
+                textAlign: 'center',
+              }}
+            >
+              <Typography
+                variant="h2"
+                sx={{
+                  fontWeight: 'bold',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+                  fontSize: { xs: '2.5rem', sm: '3.5rem' },
+                  margin: 0,
+                  lineHeight: 1,
+                }}
+              >
+                🎉 Correct! 🎉
+              </Typography>
+            </Box>
+          </Box>
+        </>
+      )}
+
       {/* Success Dialog */}
       <Dialog
         open={showCelebration}
@@ -946,7 +1035,7 @@ export default function CookingActionsLevel2() {
           </Typography>
           <Typography variant="body1" sx={{ color: '#5D4037', lineHeight: 1.4, mb: 2 }}>
             Level {currentLevel} Complete! 
-            {hasNextLevel ? ` Ready to learn more cooking skills?` : ' You\'re becoming a great cook!'}
+            {hasNextLevel ? ` Ready for Level ${currentLevel + 1}?` : ' You\'re becoming a great cook!'}
           </Typography>
           
           {progressSaving && (
