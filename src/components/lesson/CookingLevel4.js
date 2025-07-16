@@ -41,7 +41,6 @@ import breadImg from "../../assets/cookingLevel4/sliceofbread.png";
 import butterImg from "../../assets/cookingLevel4/butter.png";
 import cheeseImg from "../../assets/cookingLevel4/cheeseslice.png";
 import lettuceImg from "../../assets/cookingLevel4/lettuceleaf.png";
-import sandwichImg from "../../assets/cookingLevel4/plate.png";
 import washImg from "../../assets/cookingLevel4/washfruit.png";
 import appleImg from "../../assets/cookingLevel4/apple.png";
 import bananaImg from "../../assets/cookingLevel4/banana.png";
@@ -57,6 +56,16 @@ import milkImg from "../../assets/cookingLevel4/milk.png";
 import spoonImg from "../../assets/cookingLevel4/spoon.png";
 import happyfaceImg from "../../assets/cookingLevel4/happyface.png";
 import saltImg from "../../assets/cookingLevel4/salt.png";
+
+// Import new uploaded images
+import fridgeImg from "../../assets/cookingLevel4/fridge.png";
+import microwaveImg from "../../assets/cookingLevel4/microwave.png";
+import cleanBowlImg from "../../assets/cookingLevel4/cleanbowl.png";
+import addCerealImg from "../../assets/cookingLevel4/addcereal.png";
+import ketchupImg from "../../assets/cookingLevel4/ketchup.png";
+import waterImg from "../../assets/cookingLevel4/water.png";
+import scrambledEggImg from "../../assets/cookingLevel4/scrambledegg.png";
+import sandwichImg from "../../assets/cookingLevel4/sandwhich.png";
 
 export default function CookingLevel4() {
   const navigate = useNavigate();
@@ -88,7 +97,7 @@ export default function CookingLevel4() {
   const recipes = {
     sandwich: {
       name: "Sandwich",
-      emoji: sandwichImg, // Changed from emoji to actual image
+      emoji: sandwichImg,
       steps: [
         { completed: "Step 1: We put the bread on the plate.", image: breadImg, description: "A slice of bread on a plate" },
         { completed: "Step 2: We spread butter on the bread.", image: butterImg, description: "Butter spread on bread" },
@@ -114,26 +123,26 @@ export default function CookingLevel4() {
         ],
         [
           { text: "Put top bread", image: breadImg, correct: true },
-          { text: "Add ketchup", image: plateImg, correct: false },
+          { text: "Add ketchup", image: ketchupImg, correct: false },
           { text: "Use fork", image: forkImg, correct: false }
         ]
       ]
     },
     fruitSalad: {
       name: "Fruit Salad",
-      emoji: bowlImg, // Changed from emoji to actual image
+      emoji: bowlImg,
       steps: [
         { completed: "Step 1: We wash the fruits.", image: washImg, description: "Clean fruits under running water" },
         { completed: "Step 2: We cut the apple into pieces.", image: appleImg, description: "Apple cut into small pieces" },
         { completed: "Step 3: We slice the banana.", image: bananaImg, description: "Banana sliced into rounds" },
-        { completed: "Step 4: We put everything in a bowl.", image: bowlImg, description: "All fruits in a mixing bowl" },
-        { completed: "Step 5: We mix gently with a spoon.", image: mixingImg, description: "Beautiful mixed fruit salad" }
+        { completed: "Step 4: We put everything in a bowl.", image: cleanBowlImg, description: "All fruits in a mixing bowl" },
+        { completed: "Step 5: We mix gently with a spoon.", image: spoonImg, description: "Beautiful mixed fruit salad" }
       ],
       choices: [
         [
           { text: "Cut apple", image: appleImg, correct: true },
           { text: "Mix with spoon", image: spoonImg, correct: false },
-          { text: "Add juice", image: milkImg, correct: false }
+          { text: "Add juice", image: waterImg, correct: false }
         ],
         [
           { text: "Slice banana", image: bananaImg, correct: true },
@@ -141,32 +150,32 @@ export default function CookingLevel4() {
           { text: "Get knife", image: forkImg, correct: false }
         ],
         [
-          { text: "Put in bowl", image: bowlImg, correct: true },
+          { text: "Put in bowl", image: cleanBowlImg, correct: true },
           { text: "Cut more apple", image: appleImg, correct: false },
-          { text: "Drink water", image: milkImg, correct: false }
+          { text: "Drink water", image: waterImg, correct: false }
         ],
         [
           { text: "Mix with spoon", image: spoonImg, correct: true },
           { text: "Add more fruit", image: appleImg, correct: false },
-          { text: "Put in fridge", image: plateImg, correct: false }
+          { text: "Put in fridge", image: fridgeImg, correct: false }
         ]
       ]
     },
     scrambledEggs: {
       name: "Scrambled Eggs",
-      emoji: fryingpanImg, // Changed from emoji to actual image
+      emoji: scrambledEggImg,
       steps: [
         { completed: "Step 1: We crack the eggs into a bowl.", image: eggImg, description: "Eggs cracked into mixing bowl" },
         { completed: "Step 2: We beat the eggs with a fork.", image: forkImg, description: "Eggs beaten until smooth" },
         { completed: "Step 3: We heat the pan on the stove.", image: stoveImg, description: "Pan heating on the stove" },
         { completed: "Step 4: We pour eggs into the hot pan.", image: fryingpanImg, description: "Beaten eggs poured into pan" },
-        { completed: "Step 5: We scramble and serve!", image: plateImg, description: "Perfect scrambled eggs on plate" }
+        { completed: "Step 5: We scramble and serve!", image: scrambledEggImg, description: "Perfect scrambled eggs on plate" }
       ],
       choices: [
         [
           { text: "Beat with fork", image: forkImg, correct: true },
-          { text: "Add cereal", image: cerealBowlImg, correct: false },
-          { text: "Get bowl", image: bowlImg, correct: false }
+          { text: "Add cereal", image: addCerealImg, correct: false },
+          { text: "Get bowl", image: cleanBowlImg, correct: false }
         ],
         [
           { text: "Heat the pan", image: stoveImg, correct: true },
@@ -179,42 +188,42 @@ export default function CookingLevel4() {
           { text: "Add salt", image: saltImg, correct: false }
         ],
         [
-          { text: "Scramble and serve", image: plateImg, correct: true },
+          { text: "Scramble and serve", image: scrambledEggImg, correct: true },
           { text: "Add more eggs", image: eggImg, correct: false },
-          { text: "Let it sit", image: stoveImg, correct: false }
+          { text: "Use microwave", image: microwaveImg, correct: false }
         ]
       ]
     },
     cereal: {
       name: "Cereal with Milk",
-      emoji: cerealBowlImg, // Changed from emoji to actual image
+      emoji: addCerealImg,
       steps: [
-        { completed: "Step 1: We get a clean bowl.", image: bowlImg, description: "Empty bowl ready for cereal" },
-        { completed: "Step 2: We pour cereal into the bowl.", image: cerealBowlImg, description: "Cereal in the bowl" },
+        { completed: "Step 1: We get a clean bowl.", image: cleanBowlImg, description: "Empty bowl ready for cereal" },
+        { completed: "Step 2: We pour cereal into the bowl.", image: addCerealImg, description: "Cereal in the bowl" },
         { completed: "Step 3: We pour milk over the cereal.", image: milkImg, description: "Milk poured over cereal" },
         { completed: "Step 4: We get a spoon to eat.", image: spoonImg, description: "Spoon ready for eating" },
         { completed: "Step 5: We enjoy our breakfast!", image: happyfaceImg, description: "Delicious cereal breakfast" }
       ],
       choices: [
         [
-          { text: "Pour cereal", image: cerealBowlImg, correct: true },
+          { text: "Pour cereal", image: addCerealImg, correct: true },
           { text: "Crack egg", image: eggImg, correct: false },
           { text: "Add fruit", image: bananaImg, correct: false }
         ],
         [
           { text: "Pour milk", image: milkImg, correct: true },
           { text: "Add sugar", image: spoonImg, correct: false },
-          { text: "Get another bowl", image: bowlImg, correct: false }
+          { text: "Get another bowl", image: cleanBowlImg, correct: false }
         ],
         [
           { text: "Get a spoon", image: spoonImg, correct: true },
-          { text: "Add more cereal", image: cerealBowlImg, correct: false },
-          { text: "Put in microwave", image: stoveImg, correct: false }
+          { text: "Add more cereal", image: addCerealImg, correct: false },
+          { text: "Put in microwave", image: microwaveImg, correct: false }
         ],
         [
           { text: "Enjoy breakfast", image: happyfaceImg, correct: true },
           { text: "Add more milk", image: milkImg, correct: false },
-          { text: "Put in fridge", image: plateImg, correct: false }
+          { text: "Put in fridge", image: fridgeImg, correct: false }
         ]
       ]
     }
@@ -646,7 +655,23 @@ export default function CookingLevel4() {
                           </Box>
                         )}
                         <CardContent sx={{ textAlign: 'center', p: 3 }}>
-                          <Typography sx={{ fontSize: '3rem', mb: 1 }}>{recipe.emoji}</Typography>
+                          <Box sx={{ 
+                            display: 'flex', 
+                            justifyContent: 'center', 
+                            mb: 1,
+                            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))'
+                          }}>
+                            <img 
+                              src={recipe.emoji} 
+                              alt={recipe.name}
+                              style={{
+                                width: '60px',
+                                height: '60px',
+                                objectFit: 'contain',
+                                borderRadius: '8px'
+                              }}
+                            />
+                          </Box>
                           <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>
                             {recipe.name}
                           </Typography>
@@ -714,7 +739,7 @@ export default function CookingLevel4() {
                     mb: 1,
                     textShadow: '3px 3px 6px rgba(0,0,0,0.8)'
                   }}>
-                    Making {currentRecipe.name} {currentRecipe.emoji}
+                    Making {currentRecipe.name}
                   </Typography>
                   
                   <Stack direction="row" spacing={2} justifyContent="center" sx={{ mb: 2 }}>
