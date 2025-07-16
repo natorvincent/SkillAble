@@ -30,8 +30,15 @@ import {
   updateModuleProgress
 } from '../../services/progressService';
 
-// Import kitchen background only (using online URLs for clipart)
+// Import kitchen background
 import kitchenBg from "../../assets/sortingLevel1/kitchen.jpg";
+
+// Import cooking action images
+import crackImg from "../../assets/cookingLevel2/crack.png";
+import pourImg from "../../assets/cookingLevel2/pour.png";
+import sliceImg from "../../assets/cookingLevel2/slice.png";
+import washImg from "../../assets/cookingLevel2/wash.png";
+import mixImg from "../../assets/cookingLevel2/mix.png";
 
 export default function CookingActionsLevel2() {
   const navigate = useNavigate();
@@ -61,7 +68,7 @@ export default function CookingActionsLevel2() {
     { 
       id: 1, 
       name: "CRACK", 
-      emoji: "🥚", 
+      image: crackImg, // Changed from emoji to image
       color: "#FFF3E0",
       sound: "crack",
       description: "We crack eggs by tapping them gently on a bowl",
@@ -71,7 +78,7 @@ export default function CookingActionsLevel2() {
     { 
       id: 2, 
       name: "POUR", 
-      emoji: "🥛", 
+      image: pourImg, // Changed from emoji to image
       color: "#E8F5E8",
       sound: "pour", 
       description: "We pour milk slowly into a cup or bowl",
@@ -81,7 +88,7 @@ export default function CookingActionsLevel2() {
     { 
       id: 3, 
       name: "SLICE", 
-      emoji: "🍞", 
+      image: sliceImg, // Changed from emoji to image
       color: "#FFF8E1",
       sound: "slice",
       description: "We slice bread carefully with a knife",
@@ -91,7 +98,7 @@ export default function CookingActionsLevel2() {
     { 
       id: 4, 
       name: "WASH", 
-      emoji: "🍎", 
+      image: washImg, // Changed from emoji to image
       color: "#FFEBEE",
       sound: "wash",
       description: "We wash apples with clean water before eating",
@@ -101,7 +108,7 @@ export default function CookingActionsLevel2() {
     { 
       id: 5, 
       name: "MIX", 
-      emoji: "🥣", 
+      image: mixImg, // Changed from emoji to image
       color: "#F3E5F5",
       sound: "mix",
       description: "We mix ingredients together with a spoon",
@@ -432,7 +439,7 @@ export default function CookingActionsLevel2() {
                 mb: 1,
                 textShadow: '3px 3px 6px rgba(0,0,0,0.8)'
               }}>
-                👨‍🍳 Cooking Actions
+                 Cooking Actions
               </Typography>
               
               <Chip 
@@ -597,15 +604,24 @@ export default function CookingActionsLevel2() {
                   width: '100%',
                   backdropFilter: 'blur(15px)'
                 }}>
-                  {/* Action emoji display */}
-                  <Typography sx={{ 
-                    fontSize: '8rem', 
+                  {/* Action image display */}
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
                     mb: 2,
-                    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))',
-                    lineHeight: 1
+                    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))'
                   }}>
-                    {currentItem.emoji}
-                  </Typography>
+                    <img 
+                      src={currentItem.image} 
+                      alt={currentItem.name}
+                      style={{
+                        width: '150px',
+                        height: '150px',
+                        objectFit: 'contain',
+                        borderRadius: '15px'
+                      }}
+                    />
+                  </Box>
                   
                   <Typography variant="h4" sx={{ 
                     fontWeight: 'bold', 
@@ -744,14 +760,23 @@ export default function CookingActionsLevel2() {
                   }}>
                     What do we do with this?
                   </Typography>
-                  {/* Action emoji for question */}
-                  <Typography sx={{ 
-                    fontSize: '6rem', 
-                    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))',
-                    lineHeight: 1
+                  {/* Action image for question */}
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'center',
+                    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))'
                   }}>
-                    {currentItem.emoji}
-                  </Typography>
+                    <img 
+                      src={currentItem.image} 
+                      alt="Guess this action"
+                      style={{
+                        width: '120px',
+                        height: '120px',
+                        objectFit: 'contain',
+                        borderRadius: '12px'
+                      }}
+                    />
+                  </Box>
                 </Card>
 
                 {/* Answer Options */}
@@ -794,15 +819,24 @@ export default function CookingActionsLevel2() {
                         }
                       }}
                     >
-                      {/* Action emoji for options */}
-                      <Typography sx={{ 
-                        fontSize: '3rem', 
+                      {/* Action image for options */}
+                      <Box sx={{ 
+                        display: 'flex', 
+                        justifyContent: 'center', 
                         mb: 1,
-                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
-                        lineHeight: 1
+                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
                       }}>
-                        {action.emoji}
-                      </Typography>
+                        <img 
+                          src={action.image} 
+                          alt={action.name}
+                          style={{
+                            width: '60px',
+                            height: '60px',
+                            objectFit: 'contain',
+                            borderRadius: '8px'
+                          }}
+                        />
+                      </Box>
                       <Typography variant="body1" sx={{ 
                         fontWeight: 'bold', 
                         color: '#E65100',
@@ -837,7 +871,7 @@ export default function CookingActionsLevel2() {
                     <Typography variant="body1">
                       {selectedAnswer === currentItem.id 
                         ? currentItem.encouragement
-                        : `We ${currentItem.name} the ${currentItem.emoji}. ${currentItem.description}`
+                        : `We ${currentItem.name} the item. ${currentItem.description}`
                       }
                     </Typography>
                   </Card>

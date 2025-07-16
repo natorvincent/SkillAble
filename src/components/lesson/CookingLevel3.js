@@ -30,8 +30,20 @@ import {
   updateModuleProgress
 } from '../../services/progressService';
 
-// Import kitchen background only (using online URLs for clipart)
+// Import kitchen background
 import kitchenBg from "../../assets/sortingLevel1/kitchen.jpg";
+
+// Import kitchen tool images
+import spoonImg from "../../assets/cookingLevel3/spoon.png";
+import forkImg from "../../assets/cookingLevel3/fork.png";
+import knifeImg from "../../assets/cookingLevel3/knife.png";
+import whiskImg from "../../assets/cookingLevel3/whisk.png";
+
+// Import food images for matching questions
+import eggImg from "../../assets/cookingLevel3/egg.png";
+import appleImg from "../../assets/cookingLevel3/apple.png";
+import soupImg from "../../assets/cookingLevel3/soup.png";
+import pastaImg from "../../assets/cookingLevel3/pasta.png";
 
 export default function CookingActionsLevel3() {
   const navigate = useNavigate();
@@ -52,10 +64,12 @@ export default function CookingActionsLevel3() {
   const [progressSaved, setProgressSaved] = useState(false);
   const [showTip, setShowTip] = useState('');
   const [showToolAnimation, setShowToolAnimation] = useState(false);
+  const [showCorrectAnimation, setShowCorrectAnimation] = useState(false);
+  const [confettiPieces, setConfettiPieces] = useState([]);
   
   // Level progression props
   const [currentLevel] = useState(3); // Level 3
-  const [maxLevel] = useState(3);
+  const [maxLevel] = useState(5); // Updated to 5 total levels
   const [moduleIdentifier] = useState('cooking-basics');
   const [lessonIdentifier] = useState('cooking-tools');
 
@@ -64,7 +78,7 @@ export default function CookingActionsLevel3() {
     {
       id: 'spoon',
       name: 'SPOON',
-      emoji: '🥄',
+      image: spoonImg, // Changed from emoji to image
       color: '#E3F2FD',
       borderColor: '#2196F3',
       description: 'We use a spoon to scoop and stir food',
@@ -77,7 +91,7 @@ export default function CookingActionsLevel3() {
     {
       id: 'fork',
       name: 'FORK',
-      emoji: '🍴',
+      image: forkImg, // Changed from emoji to image
       color: '#E8F5E8',
       borderColor: '#4CAF50',
       description: 'We use a fork to pick up and eat soft food',
@@ -90,7 +104,7 @@ export default function CookingActionsLevel3() {
     {
       id: 'knife',
       name: 'KNIFE',
-      emoji: '🔪',
+      image: knifeImg, // Changed from emoji to image
       color: '#FFF3E0',
       borderColor: '#FF9800',
       description: 'We use a knife to cut and slice food. Be careful!',
@@ -104,7 +118,7 @@ export default function CookingActionsLevel3() {
     {
       id: 'whisk',
       name: 'WHISK',
-      emoji: '🥢',
+      image: whiskImg, // Changed from emoji to image
       color: '#FCE4EC',
       borderColor: '#E91E63',
       description: 'We use a whisk to mix eggs and liquids',
@@ -113,28 +127,15 @@ export default function CookingActionsLevel3() {
       examples: ['eggs', 'batter', 'cream'],
       sound: 'This is a whisk. We use it to mix eggs and liquids.',
       encouragement: 'Amazing! Whisks make the best scrambled eggs!'
-    },
-    {
-      id: 'measuring-cup',
-      name: 'MEASURING CUP',
-      emoji: '🥛',
-      color: '#F3E5F5',
-      borderColor: '#9C27B0',
-      description: 'We use a measuring cup to pour and measure liquids',
-      use: 'pour and measure',
-      animation: 'pouring motion',
-      examples: ['milk', 'water', 'juice'],
-      sound: 'This is a measuring cup. We use it to pour and measure drinks like milk or water.',
-      encouragement: 'Wonderful! Measuring cups help us cook perfectly!'
     }
   ];
 
-  // Matching questions that use the tools
+  // Matching questions that use the tools (updated to match available tools)
   const matchingQuestions = [
     {
       id: 1,
       action: 'We mix the egg',
-      emoji: '🥚',
+      image: eggImg, // Changed from emoji to image
       correctTool: 'whisk',
       choices: ['knife', 'whisk', 'spoon'],
       feedback: 'Great! A whisk is perfect for mixing eggs!'
@@ -142,7 +143,7 @@ export default function CookingActionsLevel3() {
     {
       id: 2,
       action: 'We cut the apple',
-      emoji: '🍎',
+      image: appleImg, // Changed from emoji to image
       correctTool: 'knife',
       choices: ['fork', 'spoon', 'knife'],
       feedback: 'Excellent! A knife cuts the apple into pieces!'
@@ -150,23 +151,15 @@ export default function CookingActionsLevel3() {
     {
       id: 3,
       action: 'We scoop the soup',
-      emoji: '🍲',
+      image: soupImg, // Changed from emoji to image
       correctTool: 'spoon',
-      choices: ['spoon', 'whisk', 'measuring-cup'],
+      choices: ['spoon', 'whisk', 'fork'],
       feedback: 'Perfect! A spoon is great for scooping soup!'
     },
     {
       id: 4,
-      action: 'We pour the milk',
-      emoji: '🥛',
-      correctTool: 'measuring-cup',
-      choices: ['whisk', 'fork', 'measuring-cup'],
-      feedback: 'Wonderful! A measuring cup pours milk perfectly!'
-    },
-    {
-      id: 5,
       action: 'We pick up pasta',
-      emoji: '🍝',
+      image: pastaImg, // Changed from emoji to image
       correctTool: 'fork',
       choices: ['fork', 'knife', 'spoon'],
       feedback: 'Amazing! A fork picks up pasta easily!'
@@ -302,6 +295,9 @@ export default function CookingActionsLevel3() {
     const isCorrect = toolId === currentQuestion.correctTool;
     
     if (isCorrect) {
+      // Show confetti animation and "Correct!" popup
+      triggerCorrectAnimation();
+      
       // Only increment score if this answer hasn't been correct before
       if (!correctAnswers.includes(currentQuestion.id)) {
         setScore(prev => prev + 1);
@@ -335,6 +331,29 @@ export default function CookingActionsLevel3() {
         setShowFeedback(false);
       }, 2500);
     }
+  };
+
+  // Confetti animation function
+  const triggerCorrectAnimation = () => {
+    setShowCorrectAnimation(true);
+    
+    // Generate confetti pieces
+    const pieces = [];
+    for (let i = 0; i < 50; i++) {
+      pieces.push({
+        id: i,
+        left: Math.random() * 100,
+        animationDelay: Math.random() * 3,
+        backgroundColor: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'][Math.floor(Math.random() * 6)]
+      });
+    }
+    setConfettiPieces(pieces);
+    
+    // Hide animation after 3 seconds
+    setTimeout(() => {
+      setShowCorrectAnimation(false);
+      setConfettiPieces([]);
+    }, 3000);
   };
 
   // Save progress to database
@@ -409,12 +428,23 @@ export default function CookingActionsLevel3() {
       await saveProgress();
     }
     
+    const hasNextLevel = currentLevel < maxLevel;
+    
     setTimeout(() => {
-      goToHomepage(); // This is the final level
+      if (hasNextLevel) {
+        // Navigate to Level 4
+        if (navigate) {
+          navigate('/lesson/cooking/level-4');
+        } else {
+          window.location.href = '/lesson/cooking/level-4';
+        }
+      } else {
+        goToHomepage();
+      }
     }, 300);
   };
 
-  const hasNextLevel = false; // This is the final level
+  const hasNextLevel = currentLevel < maxLevel; // Now true since we have levels 4 and 5
 
   // Loading state
   if (loading) {
@@ -676,17 +706,26 @@ export default function CookingActionsLevel3() {
                   width: '100%',
                   backdropFilter: 'blur(15px)'
                 }}>
-                  {/* Tool emoji display */}
-                  <Typography sx={{ 
-                    fontSize: '8rem', 
+                  {/* Tool image display */}
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
                     mb: 2,
                     filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))',
-                    lineHeight: 1,
                     transform: showToolAnimation ? 'scale(1.1)' : 'scale(1)',
                     transition: 'transform 0.3s ease'
                   }}>
-                    {currentTool.emoji}
-                  </Typography>
+                    <img 
+                      src={currentTool.image} 
+                      alt={currentTool.name}
+                      style={{
+                        width: '150px',
+                        height: '150px',
+                        objectFit: 'contain',
+                        borderRadius: '15px'
+                      }}
+                    />
+                  </Box>
                   
                   <Typography variant="h4" sx={{ 
                     fontWeight: 'bold', 
@@ -841,15 +880,24 @@ export default function CookingActionsLevel3() {
                   }}>
                     {currentQuestion.action}
                   </Typography>
-                  {/* Action emoji for question */}
-                  <Typography sx={{ 
-                    fontSize: '6rem', 
+                  {/* Action image for question */}
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'center',
                     filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))',
-                    lineHeight: 1,
                     mb: 2
                   }}>
-                    {currentQuestion.emoji}
-                  </Typography>
+                    <img 
+                      src={currentQuestion.image} 
+                      alt={currentQuestion.action}
+                      style={{
+                        width: '120px',
+                        height: '120px',
+                        objectFit: 'contain',
+                        borderRadius: '12px'
+                      }}
+                    />
+                  </Box>
                   <Typography variant="h6" sx={{ 
                     fontWeight: 'bold', 
                     color: '#5D4037'
@@ -904,15 +952,24 @@ export default function CookingActionsLevel3() {
                           }
                         }}
                       >
-                        {/* Tool emoji for options */}
-                        <Typography sx={{ 
-                          fontSize: '3rem', 
+                        {/* Tool image for options */}
+                        <Box sx={{ 
+                          display: 'flex', 
+                          justifyContent: 'center', 
                           mb: 1,
-                          filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
-                          lineHeight: 1
+                          filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
                         }}>
-                          {tool.emoji}
-                        </Typography>
+                          <img 
+                            src={tool.image} 
+                            alt={tool.name}
+                            style={{
+                              width: '60px',
+                              height: '60px',
+                              objectFit: 'contain',
+                              borderRadius: '8px'
+                            }}
+                          />
+                        </Box>
                         <Typography variant="body1" sx={{ 
                           fontWeight: 'bold', 
                           color: '#E65100',
@@ -933,35 +990,6 @@ export default function CookingActionsLevel3() {
                     );
                   })}
                 </Box>
-
-                {/* Feedback Section */}
-                {showFeedback && (
-                  <Card sx={{
-                    padding: '15px',
-                    borderRadius: '15px',
-                    textAlign: 'center',
-                    backgroundColor: selectedAnswer === currentQuestion.correctTool ? 'rgba(200, 230, 201, 0.95)' : 'rgba(255, 205, 210, 0.95)',
-                    border: '2px solid',
-                    borderColor: selectedAnswer === currentQuestion.correctTool ? '#4CAF50' : '#F44336',
-                    mb: 3,
-                    width: '100%',
-                    backdropFilter: 'blur(15px)',
-                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)'
-                  }}>
-                    <Typography variant="h6" sx={{ 
-                      fontWeight: 'bold',
-                      mb: 1 
-                    }}>
-                      {selectedAnswer === currentQuestion.correctTool ? '🎉 Perfect!' : '💪 Keep trying!'}
-                    </Typography>
-                    <Typography variant="body1">
-                      {selectedAnswer === currentQuestion.correctTool 
-                        ? currentQuestion.feedback
-                        : `Try again! Think about what tool we use to ${currentQuestion.action.toLowerCase()}.`
-                      }
-                    </Typography>
-                  </Card>
-                )}
 
                 {/* Control Buttons */}
                 <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -1011,6 +1039,96 @@ export default function CookingActionsLevel3() {
         </Box>
       </Box>
 
+      {/* Confetti Animation and "Correct!" Popup */}
+      {showCorrectAnimation && (
+        <>
+          {/* Confetti pieces */}
+          {confettiPieces.map((piece) => (
+            <Box
+              key={piece.id}
+              sx={{
+                position: 'fixed',
+                top: '-10px',
+                left: `${piece.left}%`,
+                width: '10px',
+                height: '10px',
+                backgroundColor: piece.backgroundColor,
+                zIndex: 9999,
+                borderRadius: '2px',
+                animation: 'confettiFall 3s linear forwards',
+                animationDelay: `${piece.animationDelay}s`,
+                '@keyframes confettiFall': {
+                  '0%': {
+                    transform: 'translateY(-10px) rotateZ(0deg)',
+                    opacity: 1,
+                  },
+                  '100%': {
+                    transform: 'translateY(100vh) rotateZ(720deg)',
+                    opacity: 0,
+                  },
+                },
+              }}
+            />
+          ))}
+          
+          {/* "Correct!" Popup */}
+          <Box
+            sx={{
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: 10000,
+              animation: 'correctPop 3s ease-out forwards',
+              '@keyframes correctPop': {
+                '0%': {
+                  transform: 'translate(-50%, -50%) scale(0)',
+                  opacity: 0,
+                },
+                '20%': {
+                  transform: 'translate(-50%, -50%) scale(1.2)',
+                  opacity: 1,
+                },
+                '40%': {
+                  transform: 'translate(-50%, -50%) scale(1)',
+                  opacity: 1,
+                },
+                '100%': {
+                  transform: 'translate(-50%, -50%) scale(1)',
+                  opacity: 0,
+                },
+              },
+            }}
+          >
+            <Box
+              sx={{
+                backgroundColor: 'rgba(76, 175, 80, 0.95)',
+                color: 'white',
+                padding: '20px 40px',
+                borderRadius: '20px',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+                border: '4px solid #4CAF50',
+                backdropFilter: 'blur(10px)',
+                textAlign: 'center',
+              }}
+            >
+              <Typography
+                variant="h2"
+                sx={{
+                  fontWeight: 'bold',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+                  fontSize: { xs: '2.5rem', sm: '3.5rem' },
+                  margin: 0,
+                  lineHeight: 1,
+                }}
+              >
+                🎉 Correct! 🎉
+              </Typography>
+            </Box>
+          </Box>
+        </>
+      )}
+
       {/* Success Dialog */}
       <Dialog
         open={showCelebration}
@@ -1044,8 +1162,8 @@ export default function CookingActionsLevel3() {
             You learned all {kitchenTools.length} kitchen tools!
           </Typography>
           <Typography variant="body1" sx={{ color: '#5D4037', lineHeight: 1.4, mb: 2 }}>
-            Final Level Complete! 
-            You're now a kitchen tool expert! 🍴
+            Level {currentLevel} Complete! 
+            {hasNextLevel ? ` Ready for Level ${currentLevel + 1}?` : ' You\'re now a kitchen tool expert! 🍴'}
           </Typography>
           
           {progressSaving && (
@@ -1073,16 +1191,16 @@ export default function CookingActionsLevel3() {
             variant="contained"
             size="medium"
             sx={{ 
-              backgroundColor: 'rgba(33, 150, 243, 0.9)',
+              backgroundColor: hasNextLevel ? 'rgba(76, 175, 80, 0.9)' : 'rgba(33, 150, 243, 0.9)',
               borderRadius: '10px',
               minWidth: '120px',
               backdropFilter: 'blur(10px)',
               '&:hover': { 
-                backgroundColor: 'rgba(25, 118, 210, 0.9)'
+                backgroundColor: hasNextLevel ? 'rgba(69, 160, 73, 0.9)' : 'rgba(25, 118, 210, 0.9)'
               }
             }}
           >
-            {progressSaving ? 'Saving...' : '🏠 Go Home'}
+            {progressSaving ? 'Saving...' : (hasNextLevel ? '🚀 Next Level' : '🏠 Go Home')}
           </Button>
           
           <Button 

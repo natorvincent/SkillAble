@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
 import { Check, X, RotateCcw, Play, Star, Volume2, Home, ArrowLeft } from 'lucide-react';
+import { 
+  getStudentLessonProgress, 
+  saveStudentLessonProgress,
+  updateModuleProgress
+} from '../../services/progressService';
+
+// Import kitchen background only (using online URLs for clipart)
+import kitchenBg from "../../assets/sortingLevel1/kitchen.jpg";
 
 export default function CookingLevel4() {
   const [currentStep, setCurrentStep] = useState(0);

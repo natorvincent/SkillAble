@@ -30,8 +30,14 @@ import {
   updateModuleProgress
 } from '../../services/progressService';
 
-// Import kitchen background only
+// Import kitchen background
 import kitchenBg from "../../assets/sortingLevel1/kitchen.jpg";
+
+// Import ingredient images
+import eggImg from "../../assets/cookingLevel1/egg.png";
+import milkImg from "../../assets/cookingLevel1/milk.png";
+import breadImg from "../../assets/cookingLevel1/bread.png";
+import appleImg from "../../assets/cookingLevel1/apple.png";
 
 export default function CookingLevel1() {
   const navigate = useNavigate();
@@ -60,7 +66,7 @@ export default function CookingLevel1() {
     { 
       id: 1, 
       name: "EGG", 
-      emoji: "🥚", 
+      image: eggImg, // Changed from emoji to image
       color: "#FFF3E0",
       sound: "egg",
       description: "We crack eggs to cook them",
@@ -69,7 +75,7 @@ export default function CookingLevel1() {
     { 
       id: 2, 
       name: "MILK", 
-      emoji: "🥛", 
+      image: milkImg, // Changed from emoji to image
       color: "#E8F5E8",
       sound: "milk", 
       description: "Milk is white and good to drink",
@@ -78,7 +84,7 @@ export default function CookingLevel1() {
     { 
       id: 3, 
       name: "BREAD", 
-      emoji: "🍞", 
+      image: breadImg, // Changed from emoji to image
       color: "#FFF8E1",
       sound: "bread",
       description: "Bread is soft and we can make toast",
@@ -87,7 +93,7 @@ export default function CookingLevel1() {
     { 
       id: 4, 
       name: "APPLE", 
-      emoji: "🍎", 
+      image: appleImg, // Changed from emoji to image
       color: "#FFEBEE",
       sound: "apple",
       description: "Apples are red and crunchy",
@@ -417,7 +423,7 @@ export default function CookingLevel1() {
                 mb: 1,
                 textShadow: '3px 3px 6px rgba(0,0,0,0.8)'
               }}>
-                🍳 Learning Ingredients
+                 Learning Ingredients
               </Typography>
               
               <Chip 
@@ -582,15 +588,24 @@ export default function CookingLevel1() {
                   width: '100%',
                   backdropFilter: 'blur(15px)'
                 }}>
-                  {/* Ingredient emoji */}
-                  <Typography sx={{ 
-                    fontSize: '8rem', 
+                  {/* Ingredient image */}
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
                     mb: 2,
-                    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))',
-                    lineHeight: 1
+                    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))'
                   }}>
-                    {currentItem.emoji}
-                  </Typography>
+                    <img 
+                      src={currentItem.image} 
+                      alt={currentItem.name}
+                      style={{
+                        width: '150px',
+                        height: '150px',
+                        objectFit: 'contain',
+                        borderRadius: '15px'
+                      }}
+                    />
+                  </Box>
                   <Typography variant="h4" sx={{ 
                     fontWeight: 'bold', 
                     color: '#2E7D32', 
@@ -713,14 +728,23 @@ export default function CookingLevel1() {
                   }}>
                     Which ingredient is this?
                   </Typography>
-                  {/* Ingredient emoji for question */}
-                  <Typography sx={{ 
-                    fontSize: '6rem', 
-                    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))',
-                    lineHeight: 1
+                  {/* Ingredient image for question */}
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'center',
+                    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))'
                   }}>
-                    {currentItem.emoji}
-                  </Typography>
+                    <img 
+                      src={currentItem.image} 
+                      alt="Guess this ingredient"
+                      style={{
+                        width: '120px',
+                        height: '120px',
+                        objectFit: 'contain',
+                        borderRadius: '12px'
+                      }}
+                    />
+                  </Box>
                 </Card>
 
                 {/* Answer Options */}
@@ -763,15 +787,24 @@ export default function CookingLevel1() {
                         }
                       }}
                     >
-                      {/* Ingredient emoji for options */}
-                      <Typography sx={{ 
-                        fontSize: '3rem', 
+                      {/* Ingredient image for options */}
+                      <Box sx={{ 
+                        display: 'flex', 
+                        justifyContent: 'center', 
                         mb: 1,
-                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
-                        lineHeight: 1
+                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
                       }}>
-                        {ingredient.emoji}
-                      </Typography>
+                        <img 
+                          src={ingredient.image} 
+                          alt={ingredient.name}
+                          style={{
+                            width: '60px',
+                            height: '60px',
+                            objectFit: 'contain',
+                            borderRadius: '8px'
+                          }}
+                        />
+                      </Box>
                       <Typography variant="body1" sx={{ 
                         fontWeight: 'bold', 
                         color: '#2E7D32',
