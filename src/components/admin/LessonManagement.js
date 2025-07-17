@@ -114,8 +114,15 @@ const LessonManagement = () => {
       value: 'SortingLevel1',
       label: 'Food Sorting Level 1',
       description: 'Identify healthy vs. unhealthy food',
-      path: '/lesson/food-sorting',
+      path: '/lesson/food-sorting/level-1',
       icon: '🍎'
+    },
+    {
+      value: 'SortingLevel2',
+      label: 'Food Sorting Level 2',
+      description: 'Identify fruits, vegetables, or other foods',
+      path: '/lesson/food-sorting/level-2',
+      icon: '🥦'
     }
   ];
 
