@@ -47,7 +47,8 @@ const DemoteUsers = () => {
     try {
       const response = await fetch(`${API_BASE_URL}/admin/teachers`, {
         headers: {
-          'Authorization': `Bearer ${getAuthToken()}`
+          'Authorization': `Bearer ${getAuthToken()}`,
+          'Content-Type': 'application/json'
         }
       });
       
@@ -87,7 +88,8 @@ const DemoteUsers = () => {
           'Authorization': `Bearer ${getAuthToken()}`
         },
         body: JSON.stringify({
-          teacherId: selectedTeacher.id
+          teacherId: selectedTeacher.id,
+          email: selectedTeacher.email
         })
       });
 
@@ -99,8 +101,17 @@ const DemoteUsers = () => {
         // Check if current user is being demoted
         const currentUserEmail = localStorage.getItem('userEmail');
         if (currentUserEmail === selectedTeacher.email) {
+          // Update localStorage to reflect the user is now a student
           localStorage.setItem('userType', 'STUDENT');
+          localStorage.removeItem('isAdmin'); // Remove admin status if exists
+          
+          // Dispatch event to notify other components
           window.dispatchEvent(new Event('localStorageChange'));
+          
+          // Show message and redirect to homepage after delay
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 2000);
         }
         
         setSelectedTeacher(null);
@@ -108,7 +119,7 @@ const DemoteUsers = () => {
         fetchTeachers(); // Refresh the teachers list
       } else {
         // Handle error responses
-        setError(result);
+        setError(result || 'Failed to demote teacher');
         setSuccessMessage('');
       }
     } catch (err) {
@@ -137,7 +148,7 @@ const DemoteUsers = () => {
       </Typography>
       
       <Typography color="text.secondary" sx={{ mb: 3 }}>
-        Select any teacher to demote them back to student status.
+        Select any teacher to demote them back to student status. They will need to complete their profile information when they next log in.
       </Typography>
       
       {/* Search and refresh section */}
@@ -189,19 +200,20 @@ const DemoteUsers = () => {
               <TableCell width="60px"></TableCell>
               <TableCell>Name</TableCell>
               <TableCell>Email</TableCell>
+              <TableCell>ID</TableCell>
               <TableCell width="100px">Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={4} align="center" sx={{ py: 5 }}>
+                <TableCell colSpan={5} align="center" sx={{ py: 5 }}>
                   <CircularProgress size={30} />
                 </TableCell>
               </TableRow>
             ) : filteredTeachers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
+                <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
                   <Typography color="text.secondary">
                     {searchTerm ? 'No teachers matching your search' : 'No teachers available for demotion'}
                   </Typography>
@@ -234,6 +246,7 @@ const DemoteUsers = () => {
                     </Typography>
                   </TableCell>
                   <TableCell>{teacher.email}</TableCell>
+                  <TableCell>{teacher.id}</TableCell>
                   <TableCell>
                     <Button
                       size="small"
@@ -271,10 +284,18 @@ const DemoteUsers = () => {
               <Typography variant="body1" fontWeight="medium">
                 {selectedTeacher.name || 'Not specified'} ({selectedTeacher.email})
               </Typography>
+              <Typography variant="body2" color="text.secondary">
+                ID: {selectedTeacher.id}
+              </Typography>
             </Box>
             
             <Alert severity="warning" sx={{ mb: 3 }}>
-              This action will remove teacher privileges and convert the account back to student status.
+              This action will:
+              <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
+                <li>Remove teacher privileges and convert the account to student status</li>
+                <li>Unassign all students currently assigned to this teacher</li>
+                <li>Reset profile information - user will need to complete their profile on next login</li>
+              </ul>
             </Alert>
             
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
