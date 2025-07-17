@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Box, 
   Typography, 
@@ -14,278 +14,390 @@ import {
   DialogActions,
   Stack,
   LinearProgress,
-  CircularProgress,
   Chip,
-  Stepper,
-  Step,
-  StepLabel,
-  Divider
+  Fade,
+  Slide
 } from '@mui/material';
-import { useNavigate, useParams } from 'react-router-dom';
-import Navbar from '../Navbar';
-import Background from '../Background';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import StarIcon from '@mui/icons-material/Star';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import WbSunnyIcon from '@mui/icons-material/WbSunny';
-import NightsStayIcon from '@mui/icons-material/NightsStay';
-import RestaurantIcon from '@mui/icons-material/Restaurant';
-import BathtubIcon from '@mui/icons-material/Bathtub';
-import { 
-  getStudentLessonProgress, 
-  saveStudentLessonProgress,
-  updateModuleProgress
-} from '../../services/progressService';
+import { useNavigate } from 'react-router-dom';
+import BacgroundImageLevel2 from '../../assets/BacgroundImageLevel2.jpg';
+
+// Simple Navbar component matching Level 1
+const Navbar = () => (
+  <Box sx={{ 
+    p: 2, 
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backdropFilter: 'blur(10px)'
+  }}>
+    <Typography variant="h6" sx={{ 
+      color: 'white', 
+      fontWeight: 'bold',
+      fontFamily: 'Poppins, sans-serif'
+    }}>
+      Life Skills Learning
+    </Typography>
+  </Box>
+);
+
+// Enhanced Step Card Component with drag and drop
+const StepCard = ({ step, isSelected, isDragging, showNumber, number, onDragStart, onDragEnd }) => (
+  <Card
+    draggable={!isSelected}
+    onDragStart={onDragStart}
+    onDragEnd={onDragEnd}
+    sx={{
+      cursor: isSelected ? 'default' : 'grab',
+      background: isSelected 
+        ? 'linear-gradient(135deg, #90BE6D 0%, #7BA05B 100%)'
+        : 'linear-gradient(135deg, #FFFAF4 0%, #F8F9FA 100%)',
+      border: isSelected 
+        ? '3px solid #7BA05B' 
+        : '3px solid #E3F2FD',
+      borderRadius: '15px',
+      transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+      boxShadow: isSelected 
+        ? '0 8px 20px rgba(144, 190, 109, 0.4)' 
+        : '0 4px 15px rgba(0, 0, 0, 0.1)',
+      transform: isDragging ? 'rotate(3deg) scale(1.05)' : 'none',
+      opacity: isDragging ? 0.7 : 1,
+      '&:hover': !isSelected ? {
+        transform: 'translateY(-3px) scale(1.02)',
+        boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
+        border: '3px solid #90BE6D'
+      } : {},
+      '&:active': !isSelected ? {
+        cursor: 'grabbing'
+      } : {},
+      position: 'relative',
+      minHeight: '80px'
+    }}
+  >
+    {showNumber && (
+      <Box sx={{ 
+        position: 'absolute',
+        top: -8,
+        left: -8,
+        background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+        borderRadius: '50%',
+        width: 30,
+        height: 30,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'white',
+        fontWeight: 'bold',
+        fontSize: '1rem',
+        fontFamily: 'Poppins, sans-serif',
+        boxShadow: '0 3px 10px rgba(255, 89, 94, 0.4)',
+        zIndex: 2
+      }}>
+        {number}
+      </Box>
+    )}
+    
+    <CardContent sx={{ p: 2, textAlign: 'center' }}>
+      <Typography variant="h3" sx={{ 
+        fontSize: '1.8rem',
+        mb: 1,
+        filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1))'
+      }}>
+        {step.icon}
+      </Typography>
+      <Typography variant="body2" sx={{ 
+        fontWeight: 'bold',
+        color: isSelected ? 'white' : '#280B60',
+        fontFamily: 'Poppins, sans-serif',
+        textShadow: isSelected ? '0 1px 2px rgba(0, 0, 0, 0.3)' : 'none',
+        fontSize: '0.9rem'
+      }}>
+        {step.name}
+      </Typography>
+    </CardContent>
+  </Card>
+);
+
+// Drop Zone Component
+const DropZone = ({ position, step, onDrop, onDragOver, onDragLeave, isDragOver, onRemove }) => (
+  <Paper
+    onDrop={onDrop}
+    onDragOver={onDragOver}
+    onDragLeave={onDragLeave}
+    sx={{
+      border: step 
+        ? '2px solid #90BE6D' 
+        : isDragOver 
+          ? '2px solid #FF595E' 
+          : '2px dashed #90BE6D',
+      borderRadius: '10px',
+      minHeight: '80px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: step 
+        ? 'rgba(144, 190, 109, 0.1)' 
+        : isDragOver 
+          ? 'rgba(255, 89, 94, 0.1)' 
+          : 'rgba(144, 190, 109, 0.05)',
+      transition: 'all 0.3s ease',
+      position: 'relative',
+      cursor: step ? 'pointer' : 'default',
+      mb: 1
+    }}
+    onClick={step ? () => onRemove(step) : undefined}
+  >
+    {/* Position number */}
+    <Typography variant="caption" sx={{ 
+      position: 'absolute',
+      left: 8,
+      top: 4,
+      color: '#90BE6D',
+      fontWeight: 'bold',
+      fontFamily: 'Poppins, sans-serif'
+    }}>
+      {position + 1}
+    </Typography>
+    
+    {step ? (
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 2,
+        width: '100%',
+        justifyContent: 'center'
+      }}>
+        <Typography variant="h4" sx={{ 
+          fontSize: '1.5rem'
+        }}>
+          {step.icon}
+        </Typography>
+        <Typography variant="body2" sx={{ 
+          fontWeight: 'bold',
+          color: '#280B60',
+          fontFamily: 'Poppins, sans-serif'
+        }}>
+          {step.name}
+        </Typography>
+      </Box>
+    ) : (
+      <Typography variant="caption" sx={{ 
+        color: '#90BE6D',
+        fontStyle: 'italic',
+        fontFamily: 'Poppins, sans-serif',
+        textAlign: 'center'
+      }}>
+        {isDragOver ? 'Drop here!' : `Step ${position + 1}`}
+      </Typography>
+    )}
+  </Paper>
+);
 
 export default function PersonalHygieneLevel2() {
   const navigate = useNavigate();
-  const { moduleId, lessonId } = useParams();
-  const [lesson, setLesson] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [currentActivityIndex, setCurrentActivityIndex] = useState(0);
+  const [showStartScreen, setShowStartScreen] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
   const [selectedSequence, setSelectedSequence] = useState([]);
-  const [completedActivities, setCompletedActivities] = useState([]);
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackData, setFeedbackData] = useState(null);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [score, setScore] = useState(0);
   const [gameCompleted, setGameCompleted] = useState(false);
-  const [draggedItem, setDraggedItem] = useState(null);
-  const [dragOverIndex, setDragOverIndex] = useState(null);
-  const [progressSaving, setProgressSaving] = useState(false);
-  const [progressSaved, setProgressSaved] = useState(false);
-  const [showTip, setShowTip] = useState('');
+  const [availableSteps, setAvailableSteps] = useState([]);
+  const [audioPlaying, setAudioPlaying] = useState(false);
+  const [draggedStep, setDraggedStep] = useState(null);
+  const [dragOverPosition, setDragOverPosition] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const audioRef = useRef(null);
 
-  const getStudentId = () => {
-    const studentId = localStorage.getItem('studentId');
-    const userType = localStorage.getItem('userType');
-    
-    console.log("Getting student ID - Type:", userType, "ID:", studentId);
-    
-    if (userType !== 'STUDENT') {
-      console.error('User is not a student:', userType);
-      return null;
-    }
-    
-    if (!studentId || studentId === 'null') {
-      console.error('No student ID found in localStorage');
-      return null;
-    }
-    
-    const parsedId = parseInt(studentId, 10);
-    if (isNaN(parsedId)) {
-      console.error('Invalid student ID format:', studentId);
-      return null;
-    }
-    
-    return parsedId;
-  };
+  // Your imported background image
+  // const BacgroundImageLevel2 = "https://images.unsplash.com/photo-1584622781564-1d987ba6fe68?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1920&q=80";
 
-  const routineActivities = [
+  // 5 Game rounds with 6-7 steps each
+  const gameRounds = [
     {
       id: 1,
-      title: "Morning Hygiene Routine",
-      icon: <WbSunnyIcon sx={{ fontSize: 50, color: '#FFD700' }} />,
-      description: "Put these morning activities in the right order!",
-      color: '#FFF9C4',
-      borderColor: '#FBC02D',
+      title: "🌅 Complete Morning Routine",
+      description: "Drag these morning steps in the correct order!",
       correctSequence: [
-        { id: 1, name: "Wake up and stretch", icon: "🌅", hint: "First thing when you wake up" },
-        { id: 2, name: "Use the toilet", icon: "🚽", hint: "Take care of bathroom needs" },
-        { id: 3, name: "Wash hands", icon: "🧼", hint: "Clean hands after toilet" },
-        { id: 4, name: "Brush teeth", icon: "🦷", hint: "Clean your teeth" },
-        { id: 5, name: "Wash face", icon: "💧", hint: "Fresh, clean face" },
-        { id: 6, name: "Get dressed", icon: "👕", hint: "Put on clean clothes" }
+        { id: 1, name: "Wake up", icon: "🌅" },
+        { id: 2, name: "Stretch body", icon: "🤸" },
+        { id: 3, name: "Use toilet", icon: "🚽" },
+        { id: 4, name: "Brush teeth", icon: "🦷" },
+        { id: 5, name: "Wash face", icon: "💧" },
+        { id: 6, name: "Get dressed", icon: "👕" },
+        { id: 7, name: "Eat breakfast", icon: "🥞" }
       ]
     },
     {
       id: 2,
-      title: "Bath Time Routine",
-      icon: <BathtubIcon sx={{ fontSize: 50, color: '#4FC3F7' }} />,
-      description: "What's the best order for taking a bath?",
-      color: '#E3F2FD',
-      borderColor: '#1976D2',
+      title: "🛁 Complete Bath Time",
+      description: "Drag the bathing steps in the correct order!",
       correctSequence: [
-        { id: 1, name: "Remove clothes", icon: "👔", hint: "Take off dirty clothes first" },
-        { id: 2, name: "Turn on water", icon: "🚿", hint: "Get the water ready" },
-        { id: 3, name: "Check water temperature", icon: "🌡️", hint: "Make sure it's not too hot" },
-        { id: 4, name: "Wet your body", icon: "💦", hint: "Get yourself wet all over" },
-        { id: 5, name: "Apply soap/body wash", icon: "🧴", hint: "Put soap on your body" },
-        { id: 6, name: "Scrub and clean", icon: "🧽", hint: "Wash yourself thoroughly" },
-        { id: 7, name: "Rinse off soap", icon: "🚿", hint: "Wash all the soap away" },
-        { id: 8, name: "Dry with towel", icon: "🏖️", hint: "Get dry and warm" }
+        { id: 1, name: "Prepare towel", icon: "🏖️" },
+        { id: 2, name: "Turn on water", icon: "🚿" },
+        { id: 3, name: "Test water temperature", icon: "🌡️" },
+        { id: 4, name: "Get in bath", icon: "🛁" },
+        { id: 5, name: "Wet body", icon: "💦" },
+        { id: 6, name: "Apply soap", icon: "🧼" },
+        { id: 7, name: "Rinse and dry", icon: "🏖️" }
       ]
     },
     {
       id: 3,
-      title: "Before Bed Routine",
-      icon: <NightsStayIcon sx={{ fontSize: 50, color: '#9C27B0' }} />,
-      description: "Get ready for a good night's sleep!",
-      color: '#F3E5F5',
-      borderColor: '#7B1FA2',
+      title: "🦷 Teeth Brushing Routine",
+      description: "Drag these teeth cleaning steps in order!",
       correctSequence: [
-        { id: 1, name: "Brush teeth", icon: "🦷", hint: "Clean teeth before bed" },
-        { id: 2, name: "Wash face", icon: "💧", hint: "Remove dirt from the day" },
-        { id: 3, name: "Use the toilet", icon: "🚽", hint: "Last bathroom break" },
-        { id: 4, name: "Wash hands", icon: "🧼", hint: "Clean hands again" },
-        { id: 5, name: "Put on pajamas", icon: "🌙", hint: "Comfortable clothes for sleep" }
+        { id: 1, name: "Get toothbrush", icon: "🪥" },
+        { id: 2, name: "Wet toothbrush", icon: "💧" },
+        { id: 3, name: "Apply toothpaste", icon: "🧴" },
+        { id: 4, name: "Brush teeth", icon: "🦷" },
+        { id: 5, name: "Rinse mouth", icon: "🚰" },
+        { id: 6, name: "Clean toothbrush", icon: "🪥" }
       ]
     },
     {
       id: 4,
-      title: "After Eating Routine",
-      icon: <RestaurantIcon sx={{ fontSize: 50, color: '#FF6B35' }} />,
-      description: "What should you do after eating?",
-      color: '#FFF3E0',
-      borderColor: '#F57C00',
+      title: "🧼 Hand Washing Steps",
+      description: "Drag these hand washing steps in the right order!",
       correctSequence: [
-        { id: 1, name: "Clear your plate", icon: "🍽️", hint: "Put away your dishes" },
-        { id: 2, name: "Wipe your mouth", icon: "🧻", hint: "Clean your face" },
-        { id: 3, name: "Brush teeth or rinse", icon: "🦷", hint: "Clean your teeth" },
-        { id: 4, name: "Wash hands", icon: "🧼", hint: "Always wash after eating" }
+        { id: 1, name: "Turn on water", icon: "🚰" },
+        { id: 2, name: "Wet hands", icon: "💧" },
+        { id: 3, name: "Apply soap", icon: "🧼" },
+        { id: 4, name: "Scrub hands", icon: "👐" },
+        { id: 5, name: "Rinse hands", icon: "🚰" },
+        { id: 6, name: "Dry hands", icon: "🏖️" },
+        { id: 7, name: "Turn off water", icon: "🚿" }
+      ]
+    },
+    {
+      id: 5,
+      title: "🌙 Complete Bedtime Routine",
+      description: "Drag these bedtime steps in the correct order!",
+      correctSequence: [
+        { id: 1, name: "Put on pajamas", icon: "👔" },
+        { id: 2, name: "Brush teeth", icon: "🦷" },
+        { id: 3, name: "Wash face", icon: "💧" },
+        { id: 4, name: "Use toilet", icon: "🚽" },
+        { id: 5, name: "Get in bed", icon: "🛏️" },
+        { id: 6, name: "Turn off lights", icon: "💡" }
       ]
     }
   ];
 
-  const currentActivity = routineActivities[currentActivityIndex];
-  const progressPercentage = ((currentActivityIndex + (gameCompleted ? 1 : 0)) / routineActivities.length) * 100;
+  const currentRound = gameRounds[currentRoundIndex];
+  const progressPercentage = ((currentRoundIndex + (gameCompleted ? 1 : 0)) / gameRounds.length) * 100;
 
-  const shuffleArray = (array) => {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  useEffect(() => {
+    if (currentRound) {
+      // Shuffle available steps
+      const shuffled = [...currentRound.correctSequence].sort(() => Math.random() - 0.5);
+      setAvailableSteps(shuffled);
+      setSelectedSequence(Array(currentRound.correctSequence.length).fill(null));
     }
-    return shuffled;
+  }, [currentRoundIndex]);
+
+  useEffect(() => {
+    // Initialize background music
+    audioRef.current = new Audio('/path-to-your-background-music.mp3');
+    audioRef.current.loop = true;
+    audioRef.current.volume = 0.3;
+  }, []);
+
+  const handleStartGame = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setShowStartScreen(false);
+      setLoading(false);
+    }, 1500);
   };
 
-  const [shuffledItems, setShuffledItems] = useState([]);
+  const handleStartOver = () => {
+    setCurrentRoundIndex(0);
+    setSelectedSequence([]);
+    setShowFeedback(false);
+    setFeedbackData(null);
+    setScore(0);
+    setGameCompleted(false);
+    setShowStartScreen(true);
+  };
 
-  useEffect(() => {
-    const fetchUserProgress = async () => {
-      try {
-        const studentId = getStudentId();
-        if (!studentId || !lessonId) {
-          console.log('Missing studentId or lessonId:', { studentId, lessonId });
-          return;
-        }
-        
-        console.log('Fetching progress for student:', studentId, 'lesson:', lessonId);
-        const progressResponse = await getStudentLessonProgress(studentId, lessonId);
-        if (progressResponse) {
-          setScore(progressResponse.score || 0);
-          if (progressResponse.completed) {
-            setShowTip("Great job! You finished this before. Want to try again?");
-          }
-          console.log('Loaded existing progress:', progressResponse);
-        } else {
-          console.log('No existing progress found - starting fresh');
-        }
-      } catch (error) {
-        console.log('Error fetching progress, starting fresh:', error);
-      }
-    };
-    
-    fetchUserProgress();
-  }, [lessonId]);
+  const handleGoHome = () => {
+    navigate('/homepage');
+  };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setTimeout(() => {
-          setLesson({
-            id: lessonId || 2,
-            title: "Personal Hygiene Level 2",
-            description: "Learn the right order for daily hygiene routines!",
-            level: 2
-          });
-          setLoading(false);
-        }, 500);
-      } catch (err) {
-        setError('Something went wrong');
-        setLoading(false);
-      }
-    };
-    
-    fetchData();
-  }, [lessonId, moduleId]);
-
-  useEffect(() => {
-    if (currentActivity) {
-      setShuffledItems(shuffleArray(currentActivity.correctSequence));
-      setSelectedSequence([]);
-    }
-  }, [currentActivityIndex]);
-
-  const handleDragStart = (e, item) => {
-    setDraggedItem(item);
+  // Drag and Drop handlers
+  const handleDragStart = (e, step) => {
+    setDraggedStep(step);
+    setIsDragging(true);
     e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', step.id);
   };
 
-  const handleDragOver = (e, index) => {
+  const handleDragEnd = () => {
+    setDraggedStep(null);
+    setIsDragging(false);
+    setDragOverPosition(null);
+  };
+
+  const handleDragOver = (e, position) => {
     e.preventDefault();
-    setDragOverIndex(index);
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverPosition(position);
   };
 
-  const handleDragLeave = () => {
-    setDragOverIndex(null);
-  };
-
-  const handleDrop = (e, dropIndex) => {
+  const handleDragLeave = (e) => {
     e.preventDefault();
-    setDragOverIndex(null);
-    
-    if (!draggedItem) return;
-
-    const newSequence = [...selectedSequence];
-    
-    // Remove item from shuffled items
-    setShuffledItems(prev => prev.filter(item => item.id !== draggedItem.id));
-    
-    // Insert at the correct position
-    newSequence.splice(dropIndex, 0, draggedItem);
-    setSelectedSequence(newSequence);
-    setDraggedItem(null);
+    setDragOverPosition(null);
   };
 
-  const handleRemoveFromSequence = (item, index) => {
-    const newSequence = selectedSequence.filter((_, i) => i !== index);
+  const handleDrop = (e, position) => {
+    e.preventDefault();
+    setDragOverPosition(null);
+    
+    if (draggedStep && selectedSequence[position] === null) {
+      const newSequence = [...selectedSequence];
+      newSequence[position] = draggedStep;
+      setSelectedSequence(newSequence);
+      
+      // Remove from available steps
+      setAvailableSteps(prev => prev.filter(step => step.id !== draggedStep.id));
+    }
+    
+    setDraggedStep(null);
+    setIsDragging(false);
+  };
+
+  const handleRemoveStep = (stepToRemove) => {
+    const newSequence = selectedSequence.map(step => 
+      step && step.id === stepToRemove.id ? null : step
+    );
     setSelectedSequence(newSequence);
-    setShuffledItems(prev => [...prev, item]);
+    setAvailableSteps(prev => [...prev, stepToRemove].sort((a, b) => a.id - b.id));
   };
 
   const checkSequence = () => {
-    if (selectedSequence.length !== currentActivity.correctSequence.length) {
+    const filledSteps = selectedSequence.filter(step => step !== null);
+    
+    if (filledSteps.length !== currentRound.correctSequence.length) {
       setFeedbackData({
         isCorrect: false,
-        message: "Please arrange all items in the sequence!"
+        message: "Please drag all steps to the sequence first!"
       });
       setShowFeedback(true);
       return;
     }
 
-    let correctCount = 0;
-    const isCorrect = selectedSequence.every((item, index) => {
-      const isItemCorrect = item.id === currentActivity.correctSequence[index].id;
-      if (isItemCorrect) correctCount++;
-      return isItemCorrect;
-    });
+    const isCorrect = selectedSequence.every((step, index) => 
+      step && step.id === currentRound.correctSequence[index].id
+    );
 
     if (isCorrect) {
       setScore(prev => prev + 1);
-      setCompletedActivities(prev => [...prev, currentActivity.id]);
     }
 
     setFeedbackData({
       isCorrect,
-      correctCount,
-      totalCount: currentActivity.correctSequence.length,
       message: isCorrect 
-        ? "Perfect! You got the sequence exactly right!" 
-        : `Good try! You got ${correctCount} out of ${currentActivity.correctSequence.length} in the right position.`
+        ? "🎉 Perfect! You got the routine right!" 
+        : "Good try! Let's learn the correct order!"
     });
     setShowFeedback(true);
   };
@@ -294,806 +406,603 @@ export default function PersonalHygieneLevel2() {
     setShowFeedback(false);
     setFeedbackData(null);
     
-    if (currentActivityIndex < routineActivities.length - 1) {
-      setCurrentActivityIndex(prev => prev + 1);
+    if (currentRoundIndex < gameRounds.length - 1) {
+      setCurrentRoundIndex(prev => prev + 1);
     } else {
       setGameCompleted(true);
-      setTimeout(() => {
-        setShowSuccess(true);
-        saveProgress();
-      }, 300);
     }
   };
 
-  const saveProgress = async () => {
-    if (progressSaving || progressSaved) return;
-
-    try {
-      setProgressSaving(true);
-      const studentId = getStudentId();
-      
-      if (!studentId || !lessonId) {
-        console.error('Cannot save progress - missing data:', { studentId, lessonId });
-        return;
-      }
-      
-      const finalScore = score;
-      
-      const progressData = {
-        studentId: studentId,
-        lessonId: parseInt(lessonId, 10),
-        score: finalScore,
-        maxScore: routineActivities.length,
-        completed: true,
-        starsEarned: getStarRating()
-      };
-      
-      console.log('Saving progress for student:', studentId, progressData);
-      await saveStudentLessonProgress(studentId, lessonId, progressData);
-      
-      console.log('Progress saved successfully!');
-      setProgressSaved(true);
-      
-    } catch (error) {
-      console.error('Error saving progress:', error);
-    } finally {
-      setProgressSaving(false);
-    }
+  // Better background style to prevent stretching and pixelation
+  const backgroundStyle = {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    backgroundImage: `url(${BacgroundImageLevel2})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center center',
+    backgroundRepeat: 'no-repeat',
+    backgroundAttachment: 'fixed',
+    zIndex: -1
   };
 
-  const resetGame = () => {
-    setCurrentActivityIndex(0);
-    setSelectedSequence([]);
-    setCompletedActivities([]);
-    setShowFeedback(false);
-    setFeedbackData(null);
-    setShowSuccess(false);
-    setScore(0);
-    setGameCompleted(false);
-    setProgressSaved(false);
-    setProgressSaving(false);
-    setShuffledItems(shuffleArray(routineActivities[0].correctSequence));
-  };
+  // Start screen matching Level 1 exactly
+  if (showStartScreen) {
+    return (
+      <div style={{ minHeight: "100vh", position: 'relative' }}>
+        <div style={backgroundStyle}></div>
+        <Navbar />
+        <Box sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'linear-gradient(135deg, rgba(144, 190, 109, 0.8) 0%, rgba(25, 130, 196, 0.8) 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          zIndex: 1
+        }}>
+          <Typography variant="h1" sx={{ 
+            color: 'white', 
+            fontWeight: 'bold', 
+            mb: 2,
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: { xs: '3rem', md: '5rem' },
+            textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
+            textAlign: 'center'
+          }}>
+            🚿 Routine Builder 🚿
+          </Typography>
+          <Typography variant="h4" sx={{ 
+            color: 'rgba(255, 255, 255, 0.95)', 
+            mb: 6,
+            fontFamily: 'Inter, sans-serif',
+            lineHeight: 1.5,
+            textAlign: 'center',
+            textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+            maxWidth: '600px',
+            px: 2
+          }}>
+            Drag and drop the daily hygiene steps in the right order to build your perfect routine!
+          </Typography>
+          <Button 
+            variant="contained"
+            onClick={handleStartGame}
+            sx={{ 
+              background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+              color: 'white',
+              px: 10,
+              py: 4,
+              borderRadius: '30px',
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '700',
+              fontSize: '2rem',
+              textTransform: 'none',
+              boxShadow: '0 15px 30px rgba(255, 89, 94, 0.6)',
+              border: '4px solid rgba(255, 255, 255, 0.3)',
+              transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+              '&:hover': {
+                transform: 'scale(1.1) translateY(-8px)',
+                boxShadow: '0 20px 40px rgba(255, 89, 94, 0.8)',
+                background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)'
+              },
+              '&:active': {
+                transform: 'scale(1.05) translateY(-4px)'
+              }
+            }}
+          >
+            <span style={{ fontSize: '2.5rem', marginRight: '15px' }}>🎮</span>
+            Let's Build!
+          </Button>
+        </Box>
+      </div>
+    );
+  }
 
-  const getStarRating = () => {
-    const percentage = (score / routineActivities.length) * 100;
-    if (percentage >= 90) return 3;
-    if (percentage >= 70) return 2;
-    if (percentage >= 50) return 1;
-    return 0;
-  };
-
-  const handleContinue = async () => {
-    if (!progressSaved && !progressSaving) {
-      await saveProgress();
-    }
-    
-    setTimeout(() => {
-      navigate(-1);
-    }, 300);
-  };
-
-  const handleGoHome = () => {
-    navigate('/homepage');
-  };
-
+  // Loading screen matching Level 1
   if (loading) {
     return (
-      <div style={{
-        position: "relative",
-        overflow: "hidden",
-        minHeight: "100vh",
-        width: "100%",
-      }}>
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 0,
+      <div style={{ minHeight: "100vh", position: 'relative' }}>
+        <div style={backgroundStyle}></div>
+        <Navbar />
+        <Container sx={{ 
+          flexGrow: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh'
         }}>
-          <Background />
-        </div>
-        <div style={{ position: "relative", zIndex: 1 }}>
-          <Navbar />
-          <Container sx={{ py: 8, textAlign: 'center' }}>
-            <Paper sx={{ 
-              p: 6, 
-              borderRadius: '20px', 
-              backgroundColor: '#FFFAF4',
-              border: '2px solid #FFCA3A',
-              boxShadow: '0 6px 24px rgba(0, 0, 0, 0.1)'
-            }}>
-              <CircularProgress size={50} sx={{ color: '#FF595E' }} />
-              <Typography variant="h5" sx={{ 
-                mt: 3, 
-                color: '#280B60', 
-                fontWeight: 'bold',
-                fontFamily: 'Poppins, sans-serif'
-              }}>
-                Getting ready...
-              </Typography>
-            </Paper>
-          </Container>
-        </div>
+          <Paper sx={{ 
+            p: 6, 
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            boxShadow: 'none',
+            borderRadius: '20px'
+          }}>
+            <Typography variant="h5" sx={{ color: '#280B60', textAlign: 'center', fontWeight: 'bold' }}>
+              Getting ready...
+            </Typography>
+          </Paper>
+        </Container>
       </div>
     );
   }
 
-  if (error) {
+  // Game completed screen
+  if (gameCompleted) {
     return (
-      <div style={{
-        position: "relative",
-        overflow: "hidden",
-        minHeight: "100vh",
-        width: "100%",
-      }}>
-        <div style={{
-          position: "fixed",
+      <div style={{ minHeight: "100vh", position: 'relative' }}>
+        <div style={backgroundStyle}></div>
+        <Navbar />
+        <Box sx={{
+          position: 'absolute',
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
-          zIndex: 0,
+          background: 'linear-gradient(135deg, rgba(144, 190, 109, 0.8) 0%, rgba(25, 130, 196, 0.8) 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          zIndex: 1
         }}>
-          <Background />
-        </div>
-        <div style={{ position: "relative", zIndex: 1 }}>
-          <Navbar />
-          <Container sx={{ py: 8, textAlign: 'center' }}>
-            <Paper sx={{ 
-              p: 6, 
-              borderRadius: '20px', 
-              backgroundColor: '#FFFAF4',
-              border: '2px solid #FF595E'
+          <Typography variant="h1" sx={{ 
+            color: 'white', 
+            fontWeight: 'bold', 
+            mb: 2,
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: { xs: '3rem', md: '5rem' },
+            textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
+            textAlign: 'center'
+          }}>
+            🎉 Congratulations! 🎉
+          </Typography>
+          <Typography variant="h4" sx={{ 
+            color: 'rgba(255, 255, 255, 0.95)', 
+            mb: 4,
+            fontFamily: 'Inter, sans-serif',
+            textAlign: 'center',
+            textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+          }}>
+            You completed all 5 hygiene routines!
+          </Typography>
+          <Typography variant="h3" sx={{ 
+            color: 'white', 
+            mb: 6,
+            fontFamily: 'Poppins, sans-serif',
+            fontWeight: 'bold',
+            textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+          }}>
+            Final Score: {score}/{gameRounds.length}
+          </Typography>
+          <Stack direction="row" spacing={3}>
+            <Button 
+              variant="contained"
+              onClick={handleStartOver}
+              sx={{ 
+                background: 'linear-gradient(135deg, #90BE6D 0%, #7BA05B 100%)',
+                color: 'white',
+                px: 8,
+                py: 3,
+                borderRadius: '25px',
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: '600',
+                fontSize: '1.3rem',
+                textTransform: 'none',
+                boxShadow: '0 10px 25px rgba(144, 190, 109, 0.5)',
+                '&:hover': {
+                  transform: 'translateY(-3px)',
+                  boxShadow: '0 15px 35px rgba(144, 190, 109, 0.7)'
+                }
+              }}
+            >
+              🔄 Start Over
+            </Button>
+            <Button 
+              variant="contained"
+              onClick={handleGoHome}
+              sx={{ 
+                background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+                color: 'white',
+                px: 8,
+                py: 3,
+                borderRadius: '25px',
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: '600',
+                fontSize: '1.3rem',
+                textTransform: 'none',
+                boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
+                '&:hover': {
+                  transform: 'translateY(-3px)',
+                  boxShadow: '0 15px 35px rgba(255, 89, 94, 0.7)'
+                }
+              }}
+            >
+              🏠 Go Home
+            </Button>
+          </Stack>
+        </Box>
+      </div>
+    );
+  }
+
+  // Main game screen with drag and drop
+  return (
+    <div style={{ minHeight: "100vh", position: 'relative' }}>
+      <div style={backgroundStyle}></div>
+      <Navbar />
+      
+      <Container maxWidth="xl" sx={{ py: 2, position: 'relative', zIndex: 1 }}>
+        
+        {/* Progress header and controls */}
+        <Box mb={2}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1} sx={{ maxWidth: '1000px', mx: 'auto' }}>
+            <Typography variant="body1" sx={{ 
+              color: 'white', 
+              fontWeight: 'bold',
+              fontFamily: 'Poppins, sans-serif',
+              backgroundColor: 'rgba(0, 0, 0, 0.3)',
+              px: 2,
+              py: 1,
+              borderRadius: '10px'
             }}>
-              <Typography variant="h5" sx={{ 
-                color: '#280B60', 
-                fontWeight: 'bold', 
-                mb: 3,
-                fontFamily: 'Poppins, sans-serif'
-              }}>
-                Oops! Something went wrong.
-              </Typography>
-              <Button 
-                variant="contained" 
-                onClick={() => navigate('/homepage')}
-                sx={{ 
-                  backgroundColor: '#FF595E',
-                  fontSize: '1.2rem',
-                  px: 4,
-                  py: 2,
-                  borderRadius: '20px',
+              Round {currentRoundIndex + 1} of {gameRounds.length}
+            </Typography>
+            
+            {/* Control buttons */}
+            <Stack direction="row" spacing={2} alignItems="center">
+              <Button
+                variant="outlined"
+                onClick={handleStartOver}
+                sx={{
+                  color: 'white',
+                  borderColor: 'rgba(255, 255, 255, 0.7)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
                   fontFamily: 'Poppins, sans-serif',
                   fontWeight: '600',
-                  '&:hover': { backgroundColor: '#E04549' }
+                  fontSize: '0.9rem',
+                  px: 3,
+                  py: 1,
+                  borderRadius: '15px',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    borderColor: 'white'
+                  }
                 }}
               >
-                Go Home
+                🔄 Start Over
               </Button>
-            </Paper>
-          </Container>
-        </div>
-      </div>
-    );
-  }
+              
+              <Button
+                variant="outlined"
+                onClick={handleGoHome}
+                sx={{
+                  color: 'white',
+                  borderColor: 'rgba(255, 255, 255, 0.7)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  fontFamily: 'Poppins, sans-serif',
+                  fontWeight: '600',
+                  fontSize: '0.9rem',
+                  px: 3,
+                  py: 1,
+                  borderRadius: '15px',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    borderColor: 'white'
+                  }
+                }}
+              >
+                🏠 Home
+              </Button>
+              
+              <Chip 
+                label={`Score: ${score}/${gameRounds.length}`} 
+                sx={{
+                  backgroundColor: '#FF595E',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  fontSize: '0.9rem',
+                  fontFamily: 'Poppins, sans-serif',
+                  borderRadius: '15px'
+                }}
+              />
+              
+              {/* Audio button */}
+              <Button
+                onClick={() => {
+                  if (audioRef.current) {
+                    if (audioPlaying) {
+                      audioRef.current.pause();
+                      setAudioPlaying(false);
+                    } else {
+                      audioRef.current.play().then(() => {
+                        setAudioPlaying(true);
+                      }).catch(error => {
+                        console.log('Audio play failed:', error);
+                      });
+                    }
+                  }
+                }}
+                sx={{
+                  minWidth: '45px',
+                  width: '45px',
+                  height: '45px',
+                  borderRadius: '50%',
+                  background: audioPlaying 
+                    ? 'linear-gradient(135deg, #90BE6D 0%, #7BA05B 100%)'
+                    : 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+                  color: 'white',
+                  fontSize: '1.2rem',
+                  boxShadow: '0 3px 10px rgba(0,0,0,0.3)',
+                  '&:hover': {
+                    transform: 'scale(1.1)',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.4)'
+                  }
+                }}
+              >
+                {audioPlaying ? '🔊' : '🔇'}
+              </Button>
+            </Stack>
+          </Stack>
+          
+          <Box sx={{ maxWidth: '1000px', mx: 'auto' }}>
+            <LinearProgress 
+              variant="determinate" 
+              value={progressPercentage} 
+              sx={{ 
+                height: 8, 
+                borderRadius: '10px',
+                backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                '& .MuiLinearProgress-bar': {
+                  borderRadius: '10px',
+                  backgroundColor: '#90BE6D'
+                }
+              }} 
+            />
+          </Box>
+        </Box>
 
-  return (
-    <div style={{
-      position: "relative",
-      overflow: "hidden",
-      minHeight: "100vh",
-      width: "100%",
-    }}>
-      <div style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 0,
-      }}>
-        <Background />
-      </div>
-      <div style={{ position: "relative", zIndex: 1 }}>
-        <Navbar />
-        <Container maxWidth="lg" sx={{ py: 4 }}>
+        {/* Main game content */}
+        <Container maxWidth="lg" sx={{ py: 2 }}>
           <Paper sx={{ 
             p: 4, 
-            borderRadius: '20px', 
-            backgroundColor: '#FFFAF4',
-            boxShadow: '0 6px 24px rgba(0, 0, 0, 0.1)',
-            border: '2px solid #FFCA3A'
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            borderRadius: '20px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
           }}>
             
-            <Box textAlign="center" mb={4}>
-              <div style={{
-                display: "inline-block",
-                backgroundColor: "#540D6E",
-                borderRadius: "40px",
-                padding: "10px 30px",
-                boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
-                marginBottom: "20px",
+            {/* Current round title */}
+            <Box textAlign="center" mb={3}>
+              <Typography variant="h3" sx={{ 
+                color: '#280B60', 
+                fontWeight: 'bold',
+                fontFamily: 'Poppins, sans-serif',
+                mb: 1,
+                fontSize: { xs: '2rem', md: '2.5rem' }
               }}>
-                <Typography variant="h3" sx={{ 
-                  color: 'white', 
-                  fontWeight: '700',
-                  fontFamily: 'Poppins, sans-serif',
-                  fontSize: '2.5rem',
-                  margin: 0
-                }}>
-                  Personal Hygiene Level 2
-                </Typography>
-              </div>
-              <Typography variant="h6" sx={{ 
-                color: '#280B60',
-                mb: 3,
-                fontFamily: 'Inter, sans-serif',
-                fontSize: '1.2rem'
-              }}>
-                Learn the right order for daily hygiene routines!
+                {currentRound.title}
               </Typography>
-              
-              {showTip && (
-                <Paper sx={{ 
-                  p: 3, 
-                  mb: 3, 
-                  backgroundColor: '#FFCA3A',
-                  borderRadius: '20px',
-                  border: '2px solid #280B60'
-                }}>
-                  <Typography variant="body1" sx={{ 
-                    color: '#280B60', 
-                    fontWeight: 'bold',
-                    fontFamily: 'Poppins, sans-serif'
-                  }}>
-                    {showTip}
-                  </Typography>
-                </Paper>
-              )}
+              <Typography variant="h6" sx={{ 
+                color: '#666',
+                fontFamily: 'Inter, sans-serif',
+                mb: 2
+              }}>
+                {currentRound.description}
+              </Typography>
             </Box>
 
-            <Box mb={4}>
-              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+            {/* Static side-by-side layout */}
+            <Grid container spacing={3}>
+              
+              {/* Available steps for dragging */}
+              <Grid item xs={12} md={6}>
+                <Paper sx={{ 
+                  p: 3, 
+                  backgroundColor: '#FFFAF4',
+                  borderRadius: '15px',
+                  border: '2px solid #FF595E',
+                  height: '550px',
+                  overflow: 'auto'
+                }}>
+                  <Typography variant="h6" sx={{ 
+                    color: '#280B60', 
+                    fontWeight: 'bold', 
+                    mb: 3,
+                    fontFamily: 'Poppins, sans-serif',
+                    textAlign: 'center'
+                  }}>
+                    📋 Drag These Steps
+                  </Typography>
+                  <Grid container spacing={2}>
+                    {availableSteps.map((step) => (
+                      <Grid item xs={12} sm={6} key={step.id}>
+                        <StepCard
+                          step={step}
+                          isSelected={false}
+                          isDragging={isDragging && draggedStep?.id === step.id}
+                          onDragStart={(e) => handleDragStart(e, step)}
+                          onDragEnd={handleDragEnd}
+                        />
+                      </Grid>
+                    ))}
+                  </Grid>
+                </Paper>
+              </Grid>
+
+              {/* Drop zones for sequence */}
+              <Grid item xs={12} md={6}>
+                <Paper sx={{ 
+                  p: 3, 
+                  backgroundColor: '#FFFAF4',
+                  borderRadius: '15px',
+                  border: '2px solid #90BE6D',
+                  height: '550px',
+                  overflow: 'auto'
+                }}>
+                  <Typography variant="h6" sx={{ 
+                    color: '#280B60', 
+                    fontWeight: 'bold', 
+                    mb: 3,
+                    fontFamily: 'Poppins, sans-serif',
+                    textAlign: 'center'
+                  }}>
+                    🔄 Drop in Order
+                  </Typography>
+                  <Stack spacing={1}>
+                    {selectedSequence.map((step, index) => (
+                      <DropZone
+                        key={index}
+                        position={index}
+                        step={step}
+                        onDrop={(e) => handleDrop(e, index)}
+                        onDragOver={(e) => handleDragOver(e, index)}
+                        onDragLeave={handleDragLeave}
+                        isDragOver={dragOverPosition === index}
+                        onRemove={handleRemoveStep}
+                      />
+                    ))}
+                  </Stack>
+                </Paper>
+              </Grid>
+            </Grid>
+
+            {/* Check button */}
+            <Box sx={{ textAlign: 'center', mt: 4 }}>
+              <Button
+                variant="contained"
+                onClick={checkSequence}
+                disabled={selectedSequence.filter(step => step !== null).length === 0}
+                sx={{
+                  background: 'linear-gradient(135deg, #90BE6D 0%, #7BA05B 100%)',
+                  color: 'white',
+                  px: 8,
+                  py: 3,
+                  borderRadius: '25px',
+                  fontFamily: 'Poppins, sans-serif',
+                  fontWeight: '600',
+                  fontSize: '1.3rem',
+                  textTransform: 'none',
+                  boxShadow: '0 8px 25px rgba(144, 190, 109, 0.4)',
+                  '&:hover': {
+                    transform: 'translateY(-3px)',
+                    boxShadow: '0 12px 30px rgba(144, 190, 109, 0.6)'
+                  },
+                  '&:disabled': {
+                    backgroundColor: '#ccc',
+                    color: '#666'
+                  }
+                }}
+              >
+                Check My Routine! ✓
+              </Button>
+            </Box>
+          </Paper>
+        </Container>
+
+        {/* Feedback Dialog */}
+        <Dialog 
+          open={showFeedback} 
+          onClose={() => setShowFeedback(false)}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: '20px',
+              backgroundColor: '#FFFAF4',
+              border: '3px solid #90BE6D'
+            }
+          }}
+        >
+          <DialogTitle sx={{ 
+            textAlign: 'center',
+            py: 3,
+            fontSize: '2rem',
+            fontWeight: 'bold',
+            color: '#280B60',
+            fontFamily: 'Poppins, sans-serif'
+          }}>
+            {feedbackData?.isCorrect ? '🎉 Excellent!' : '🤔 Good Try!'}
+          </DialogTitle>
+          
+          <DialogContent sx={{ textAlign: 'center', pb: 2 }}>
+            <Typography variant="h5" sx={{ 
+              mb: 3,
+              color: '#280B60',
+              fontFamily: 'Poppins, sans-serif'
+            }}>
+              {feedbackData?.message}
+            </Typography>
+            
+            {feedbackData && !feedbackData.isCorrect && (
+              <Box sx={{ mt: 3 }}>
                 <Typography variant="h6" sx={{ 
-                  color: '#280B60', 
+                  mb: 2,
+                  color: '#280B60',
                   fontWeight: 'bold',
                   fontFamily: 'Poppins, sans-serif'
                 }}>
-                  Activity {currentActivityIndex + 1} of {routineActivities.length}
+                  The correct order is:
                 </Typography>
-                <Chip 
-                  label={`Score: ${score}/${routineActivities.length}`} 
-                  sx={{
-                    backgroundColor: '#FF595E',
-                    color: 'white',
-                    fontWeight: 'bold',
-                    fontSize: '1rem',
-                    fontFamily: 'Poppins, sans-serif',
-                    borderRadius: '20px',
-                    px: 2
-                  }}
-                />
-              </Stack>
-              <LinearProgress 
-                variant="determinate" 
-                value={progressPercentage} 
-                sx={{ 
-                  height: 12, 
-                  borderRadius: '20px',
-                  backgroundColor: '#E8E8E8',
-                  '& .MuiLinearProgress-bar': {
-                    borderRadius: '20px',
-                    backgroundColor: '#90BE6D'
-                  }
-                }} 
-              />
-            </Box>
-
-            {!gameCompleted && currentActivity && (
-              <>
-                <Paper sx={{ 
-                  p: 3, 
-                  mb: 4,
-                  backgroundColor: currentActivity.color,
-                  borderRadius: '20px',
-                  border: `2px solid ${currentActivity.borderColor}`
-                }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-                    {currentActivity.icon}
-                    <Typography variant="h5" sx={{ 
-                      color: '#280B60', 
-                      fontWeight: 'bold',
-                      ml: 2,
-                      fontFamily: 'Poppins, sans-serif'
-                    }}>
-                      {currentActivity.title}
-                    </Typography>
-                  </Box>
-                  <Typography variant="h6" sx={{ 
-                    color: '#280B60',
-                    textAlign: 'center',
-                    fontFamily: 'Inter, sans-serif'
-                  }}>
-                    {currentActivity.description}
-                  </Typography>
-                </Paper>
-
-                <Grid container spacing={4} mb={4}>
-                  
-                  {/* Available Items */}
-                  <Grid item xs={12} md={6}>
-                    <Paper sx={{ 
-                      p: 3, 
-                      backgroundColor: '#FFF3E0',
-                      borderRadius: '20px',
-                      border: '2px solid #FF9800',
-                      minHeight: '450px'
+                <Stack spacing={1}>
+                  {currentRound.correctSequence.map((step, index) => (
+                    <Box key={step.id} sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      gap: 2,
+                      py: 1
                     }}>
                       <Typography variant="h6" sx={{ 
-                        color: '#E65100', 
+                        color: '#FF595E',
                         fontWeight: 'bold',
-                        mb: 3,
-                        textAlign: 'center',
                         fontFamily: 'Poppins, sans-serif'
                       }}>
-                        Available Steps
+                        {index + 1}.
                       </Typography>
-                      
-                      <Stack spacing={2}>
-                        {shuffledItems.map((item) => (
-                          <Card
-                            key={item.id}
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, item)}
-                            sx={{
-                              cursor: 'grab',
-                              backgroundColor: '#FFFFFF',
-                              border: '2px solid #FF9800',
-                              borderRadius: '15px',
-                              transition: 'all 0.3s ease',
-                              '&:hover': {
-                                transform: 'scale(1.02)',
-                                boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-                                cursor: 'grab'
-                              },
-                              '&:active': {
-                                cursor: 'grabbing'
-                              }
-                            }}
-                          >
-                            <CardContent sx={{ p: 2 }}>
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <Typography variant="h4" sx={{ mr: 2 }}>
-                                  {item.icon}
-                                </Typography>
-                                <Box>
-                                  <Typography variant="subtitle1" sx={{ 
-                                    fontWeight: 'bold',
-                                    color: '#280B60',
-                                    fontFamily: 'Poppins, sans-serif'
-                                  }}>
-                                    {item.name}
-                                  </Typography>
-                                  <Typography variant="caption" sx={{ 
-                                    color: '#666',
-                                    fontStyle: 'italic',
-                                    fontFamily: 'Inter, sans-serif'
-                                  }}>
-                                    {item.hint}
-                                  </Typography>
-                                </Box>
-                              </Box>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </Stack>
-                    </Paper>
-                  </Grid>
-
-                  {/* Sequence Area */}
-                  <Grid item xs={12} md={6}>
-                    <Paper sx={{ 
-                      p: 3, 
-                      backgroundColor: '#E8F5E8',
-                      borderRadius: '20px',
-                      border: '2px solid #4CAF50',
-                      minHeight: '450px'
-                    }}>
                       <Typography variant="h6" sx={{ 
-                        color: '#2E7D32', 
-                        fontWeight: 'bold',
-                        mb: 3,
-                        textAlign: 'center',
+                        color: '#280B60',
                         fontFamily: 'Poppins, sans-serif'
                       }}>
-                        Put Steps in Order (1st to Last)
+                        {step.icon} {step.name}
                       </Typography>
-                      
-                      <Stack spacing={1}>
-                        {Array.from({ length: Math.max(6, currentActivity.correctSequence.length) }).map((_, index) => (
-                          <Box
-                            key={index}
-                            onDragOver={(e) => handleDragOver(e, index)}
-                            onDragLeave={handleDragLeave}
-                            onDrop={(e) => handleDrop(e, index)}
-                            sx={{
-                              minHeight: '60px',
-                              p: 2,
-                              border: dragOverIndex === index ? '3px dashed #4CAF50' : '2px dashed #ccc',
-                              borderRadius: '10px',
-                              backgroundColor: dragOverIndex === index ? 'rgba(76, 175, 80, 0.1)' : 'transparent',
-                              display: 'flex',
-                              alignItems: 'center',
-                              transition: 'all 0.3s ease'
-                            }}
-                          >
-                            <Chip 
-                              label={index + 1} 
-                              sx={{ 
-                                mr: 2,
-                                backgroundColor: '#4CAF50',
-                                color: 'white',
-                                fontWeight: 'bold',
-                                width: '32px',
-                                height: '32px'
-                              }} 
-                            />
-                            
-                            {selectedSequence[index] ? (
-                              <Card sx={{ 
-                                flex: 1,
-                                backgroundColor: '#FFFFFF',
-                                border: '2px solid #4CAF50',
-                                borderRadius: '10px',
-                                cursor: 'pointer'
-                              }}
-                              onClick={() => handleRemoveFromSequence(selectedSequence[index], index)}
-                              >
-                                <CardContent sx={{ p: 1, '&:last-child': { pb: 1 } }}>
-                                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <Typography variant="h6" sx={{ mr: 2 }}>
-                                      {selectedSequence[index].icon}
-                                    </Typography>
-                                    <Typography variant="body2" sx={{ 
-                                      fontWeight: 'bold',
-                                      color: '#280B60',
-                                      fontFamily: 'Poppins, sans-serif'
-                                    }}>
-                                      {selectedSequence[index].name}
-                                    </Typography>
-                                  </Box>
-                                </CardContent>
-                              </Card>
-                            ) : (
-                              <Typography variant="body2" sx={{ 
-                                color: '#999',
-                                fontStyle: 'italic',
-                                fontFamily: 'Inter, sans-serif'
-                              }}>
-                                Drop step {index + 1} here
-                              </Typography>
-                            )}
-                          </Box>
-                        ))}
-                      </Stack>
-                    </Paper>
-                  </Grid>
-                </Grid>
-
-                <Box textAlign="center" mb={4}>
-                  <Button 
-                    variant="contained"
-                    onClick={checkSequence}
-                    disabled={selectedSequence.length === 0}
-                    sx={{ 
-                      backgroundColor: '#FF595E',
-                      px: 6,
-                      py: 3,
-                      borderRadius: '20px',
-                      fontSize: '1.3rem',
-                      fontFamily: 'Poppins, sans-serif',
-                      fontWeight: '600',
-                      '&:hover': { backgroundColor: '#E04549' },
-                      '&:disabled': { backgroundColor: '#ccc' }
-                    }}
-                  >
-                    Check My Sequence!
-                  </Button>
-                </Box>
-              </>
-            )}
-
-            <Stack direction="row" spacing={3} justifyContent="center">
-              <Button 
-                variant="outlined"
-                onClick={resetGame}
-                sx={{ 
-                  borderColor: '#FF595E',
-                  color: '#FF595E',
-                  px: 4,
-                  py: 2,
-                  borderRadius: '20px',
-                  fontFamily: 'Poppins, sans-serif',
-                  fontWeight: '600',
-                  fontSize: '1.1rem',
-                  borderWidth: '2px',
-                  '&:hover': {
-                    borderColor: '#E04549',
-                    backgroundColor: 'rgba(255, 89, 94, 0.1)',
-                    borderWidth: '2px'
-                  }
-                }}
-              >
-                Start Over
-              </Button>
-              <Button 
-                variant="outlined"
-                onClick={handleGoHome}
-                sx={{ 
-                  borderColor: '#1982C4',
-                  color: '#1982C4',
-                  px: 4,
-                  py: 2,
-                  borderRadius: '20px',
-                  fontFamily: 'Poppins, sans-serif',
-                  fontWeight: '600',
-                  fontSize: '1.1rem',
-                  borderWidth: '2px',
-                  '&:hover': {
-                    borderColor: '#1568A0',
-                    backgroundColor: 'rgba(25, 130, 196, 0.1)',
-                    borderWidth: '2px'
-                  }
-                }}
-              >
-                Go Home
-              </Button>
-            </Stack>
-          </Paper>
-          
-          {/* Feedback Dialog */}
-          <Dialog
-            open={showFeedback}
-            maxWidth="md"
-            fullWidth
-            PaperProps={{
-              sx: { 
-                borderRadius: '20px',
-                backgroundColor: '#FFFAF4',
-                border: `4px solid ${feedbackData?.isCorrect ? '#90BE6D' : '#FFCA3A'}`
-              }
-            }}
-          >
-            <DialogTitle sx={{ textAlign: 'center', pb: 2 }}>
-              <CheckCircleIcon sx={{ 
-                fontSize: 80,
-                color: feedbackData?.isCorrect ? '#90BE6D' : '#FFCA3A',
-                mb: 2
-              }} />
-              <Typography variant="h4" sx={{ 
-                fontWeight: 'bold',
-                color: '#280B60',
-                fontFamily: 'Poppins, sans-serif'
-              }}>
-                {feedbackData?.isCorrect ? 'Perfect!' : 'Good Try!'}
-              </Typography>
-            </DialogTitle>
-            <DialogContent sx={{ textAlign: 'center', py: 2 }}>
-              <Typography variant="h6" sx={{ 
-                color: '#280B60',
-                fontFamily: 'Inter, sans-serif',
-                mb: 3
-              }}>
-                {feedbackData?.message}
-              </Typography>
-              
-              {!feedbackData?.isCorrect && (
-                <Paper sx={{ 
-                  p: 3, 
-                  backgroundColor: '#FFF3E0',
-                  borderRadius: '15px',
-                  border: '2px solid #FF9800'
-                }}>
-                  <Typography variant="subtitle1" sx={{ 
-                    fontWeight: 'bold',
-                    color: '#E65100',
-                    mb: 2,
-                    fontFamily: 'Poppins, sans-serif'
-                  }}>
-                    Correct Order:
-                  </Typography>
-                  <Stepper orientation="vertical">
-                    {currentActivity?.correctSequence.map((step, index) => (
-                      <Step key={step.id} active={true} completed={true}>
-                        <StepLabel>
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Typography variant="h6" sx={{ mr: 1 }}>
-                              {step.icon}
-                            </Typography>
-                            <Typography variant="body1" sx={{ 
-                              fontFamily: 'Poppins, sans-serif',
-                              color: '#280B60'
-                            }}>
-                              {step.name}
-                            </Typography>
-                          </Box>
-                        </StepLabel>
-                      </Step>
-                    ))}
-                  </Stepper>
-                </Paper>
-              )}
-            </DialogContent>
-            <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
-              <Button 
-                onClick={handleNext} 
-                variant="contained"
-                sx={{ 
-                  backgroundColor: '#FF595E',
-                  px: 5,
-                  py: 2,
-                  borderRadius: '20px',
-                  fontSize: '1.2rem',
-                  fontFamily: 'Poppins, sans-serif',
-                  fontWeight: '600',
-                  '&:hover': { backgroundColor: '#E04549' }
-                }}
-              >
-                {currentActivityIndex < routineActivities.length - 1 ? 'Next Activity' : 'Finish Game'}
-              </Button>
-            </DialogActions>
-          </Dialog>
-          
-          {/* Success Dialog */}
-          <Dialog
-            open={showSuccess}
-            maxWidth="sm"
-            fullWidth
-            PaperProps={{
-              sx: { 
-                borderRadius: '20px',
-                backgroundColor: '#FFFAF4',
-                border: '4px solid #FFCA3A'
-              }
-            }}
-          >
-            <DialogTitle sx={{ textAlign: 'center', py: 4 }}>
-              <EmojiEventsIcon sx={{ 
-                fontSize: 100,
-                color: '#FFCA3A',
-                mb: 2
-              }} />
-              <div style={{
-                display: "inline-block",
-                backgroundColor: "#540D6E",
-                borderRadius: "40px",
-                padding: "10px 25px",
-                boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
-                marginBottom: "20px",
-              }}>
-                <Typography variant="h3" sx={{ 
-                  fontWeight: 'bold',
-                  color: 'white',
-                  fontFamily: 'Poppins, sans-serif',
-                  fontSize: '2rem',
-                  margin: 0
-                }}>
-                  Level 2 Complete!
-                </Typography>
-              </div>
-              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-                {[...Array(getStarRating())].map((_, i) => (
-                  <StarIcon key={i} sx={{ 
-                    color: '#FFCA3A', 
-                    fontSize: 50,
-                    mx: 0.5
-                  }} />
-                ))}
-                {[...Array(3 - getStarRating())].map((_, i) => (
-                  <StarIcon key={i} sx={{ 
-                    color: '#E0E0E0', 
-                    fontSize: 50,
-                    mx: 0.5
-                  }} />
-                ))}
+                    </Box>
+                  ))}
+                </Stack>
               </Box>
-            </DialogTitle>
-            <DialogContent sx={{ textAlign: 'center', py: 2 }}>
-              <Typography variant="h5" sx={{ 
-                fontWeight: 'bold',
-                color: '#FF595E',
-                mb: 2,
-                fontFamily: 'Poppins, sans-serif'
-              }}>
-                Score: {score}/{routineActivities.length}
-              </Typography>
-              <Typography variant="h6" sx={{ 
-                color: '#280B60',
-                fontFamily: 'Inter, sans-serif',
-                lineHeight: 1.6
-              }}>
-                Excellent work! You've mastered daily hygiene routines and learned the proper sequence for staying clean and healthy. You're ready for even more advanced hygiene challenges!
-              </Typography>
-              
-              {progressSaving && (
-                <Box sx={{ 
-                  mt: 3, 
-                  p: 3, 
-                  backgroundColor: '#1982C4', 
-                  borderRadius: '15px',
-                  color: 'white'
-                }}>
-                  <CircularProgress size={20} sx={{ mr: 1, color: 'white' }} />
-                  <Typography variant="body2" sx={{ fontFamily: 'Poppins, sans-serif' }}>
-                    Saving your progress...
-                  </Typography>
-                </Box>
-              )}
-              
-              {progressSaved && (
-                <Box sx={{ 
-                  mt: 3, 
-                  p: 3, 
-                  backgroundColor: '#90BE6D', 
-                  borderRadius: '15px',
-                  color: 'white'
-                }}>
-                  <CheckCircleIcon sx={{ mr: 1, fontSize: 24 }} />
-                  <Typography variant="body2" sx={{ fontFamily: 'Poppins, sans-serif' }}>
-                    Progress saved successfully!
-                  </Typography>
-                </Box>
-              )}
-            </DialogContent>
-            <DialogActions sx={{ justifyContent: 'center', pb: 4, gap: 3 }}>
-              <Button 
-                onClick={() => {
-                  setShowSuccess(false);
-                  resetGame();
-                }} 
-                variant="outlined"
-                sx={{ 
-                  borderColor: '#FFCA3A',
-                  color: '#280B60',
-                  px: 4,
-                  py: 2,
-                  borderRadius: '20px',
-                  fontFamily: 'Poppins, sans-serif',
-                  fontWeight: '600',
-                  fontSize: '1.1rem',
-                  borderWidth: '2px',
-                  '&:hover': {
-                    borderColor: '#E6B800',
-                    backgroundColor: 'rgba(255, 202, 58, 0.1)',
-                    borderWidth: '2px'
-                  }
-                }}
-              >
-                Play Again
-              </Button>
-              <Button 
-                variant="contained"
-                onClick={handleContinue}
-                disabled={progressSaving}
-                sx={{ 
-                  backgroundColor: '#FF595E',
-                  px: 5,
-                  py: 2,
-                  borderRadius: '20px',
-                  fontFamily: 'Poppins, sans-serif',
-                  fontWeight: '600',
-                  fontSize: '1.1rem',
-                  '&:hover': { backgroundColor: '#E04549' }
-                }}
-              >
-                {progressSaving ? 'Saving...' : 'Continue'}
-              </Button>
-            </DialogActions>
-          </Dialog>
-        </Container>
-      </div>
+            )}
+          </DialogContent>
+          
+          <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
+            <Button 
+              onClick={feedbackData?.isCorrect ? handleNext : () => setShowFeedback(false)}
+              variant="contained"
+              sx={{ 
+                background: 'linear-gradient(135deg, #90BE6D 0%, #7BA05B 100%)',
+                color: 'white',
+                px: 6,
+                py: 2,
+                borderRadius: '20px',
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: '600',
+                fontSize: '1.1rem',
+                textTransform: 'none',
+                boxShadow: '0 8px 20px rgba(144, 190, 109, 0.4)',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 12px 25px rgba(144, 190, 109, 0.6)'
+                }
+              }}
+            >
+              {feedbackData?.isCorrect ? 'Next Round! 🚀' : 'Try Again! 💪'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Container>
     </div>
   );
 }

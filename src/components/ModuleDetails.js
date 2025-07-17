@@ -209,7 +209,14 @@ function ModuleDetails() {
       const navigationPath = `${lesson.activityPath}/${moduleId}/${lesson.id}`;
       console.log("📍 Navigating to hygiene level 2:", navigationPath);
       navigate(navigationPath);
-    } else {
+    } 
+    // ADD THIS: Special handling for hygiene Level 3 that also needs moduleId
+    else if (lesson.activityPath === '/lesson/hygiene/level-3') {
+      const navigationPath = `${lesson.activityPath}/${moduleId}/${lesson.id}`;
+      console.log("📍 Navigating to hygiene level 3:", navigationPath);
+      navigate(navigationPath);
+    }
+    else {
       // All other lessons (including hygiene level 1) use original format
       const navigationPath = `${lesson.activityPath}/${lesson.id}`;
       console.log("📍 Navigating to other lesson:", navigationPath);
@@ -221,7 +228,6 @@ function ModuleDetails() {
     navigate(`/lessons/${lesson.id}`);
   }
 };
-
   const getLessonIcon = (activityType) => {
     switch (activityType) {
       case 'MULTIPLE_CHOICE':
