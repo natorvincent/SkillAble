@@ -12,11 +12,13 @@ import AdminRoute from './components/admin/AdminRoute';
 import ModuleDetails from './components/ModuleDetails';
 import PersonalHygieneLevel1 from './components/lesson/PersonalHygieneLevel1';
 import PersonalHygieneLevel2 from './components/lesson/PersonalHygieneLevel2';
+import PersonalHygieneLevel3 from './components/lesson/PersonalHygieneLevel3';
 import SortingLevel1 from './components/lesson/SortingLevel1'; 
 import CookingLevel1 from './components/lesson/CookingLevel1';
 import CookingLevel2 from './components/lesson/CookingLevel2';
 import CookingLevel3 from './components/lesson/CookingLevel3';
 import CookingLevel4 from './components/lesson/CookingLevel4';
+import HouseholdLevel1 from './components/lesson/HouseholdLevel1';
 import ManageStudents from './components/teacher/ManageStudents';
 import StudentProgress from './components/teacher/StudentProgress';
 import AchievementsPage from './components/AchievementsPage';
@@ -160,6 +162,26 @@ function App() {
 
           <Route path="/lesson/hygiene/level-2/:moduleId/:lessonId" element={
             isLoggedIn ? <PersonalHygieneLevel2 /> : <Navigate to="/login" replace />
+          } />
+
+          {/* Personal Hygiene Level 3 Route */}
+          <Route path="/lesson/hygiene/level-3/:moduleId/:lessonId" element={
+            isLoggedIn ? <PersonalHygieneLevel3 /> : <Navigate to="/login" replace />
+          } />
+
+          {/* Household Chores Routes */}
+          <Route path="/lesson/household-chores/level-1/:lessonId" element={
+            isLoggedIn ? <HouseholdLevel1 /> : <Navigate to="/login" replace />
+          } />
+
+          {/* Generic household chores route (backwards compatibility) */}
+          <Route path="/lesson/household-chores/:lessonId" element={
+            isLoggedIn ? <HouseholdLevel1 /> : <Navigate to="/login" replace />
+          } />
+
+          {/* Generic hygiene route (backwards compatibility) */}
+          <Route path="/lesson/hygiene/:lessonId" element={
+            isLoggedIn ? <PersonalHygieneLevel1 /> : <Navigate to="/login" replace />
           } />
 
           {/* New Food Sorting Route */}
