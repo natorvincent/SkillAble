@@ -32,14 +32,20 @@ function Login() {
     // Check for any existing login state
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     const isAdmin = localStorage.getItem('isAdmin') === 'true';
+    const userType = localStorage.getItem('userType');
     
     if (isLoggedIn) {
-      console.log("User already logged in, checking admin status:", isAdmin);
+      console.log("User already logged in, checking user type:", userType, "admin status:", isAdmin);
       
       // If already logged in, redirect to appropriate page
       if (isAdmin) {
         navigate('/admin', { replace: true });
+      } else if (userType === 'STUDENT') {
+        navigate('/studentdashboard', { replace: true });
+      } else if (userType === 'TEACHER') {
+        navigate('/teacherdashboard', { replace: true });
       } else {
+        // Fallback to homepage if userType is unclear
         navigate('/homepage', { replace: true });
       }
     } else {
@@ -48,9 +54,9 @@ function Login() {
       localStorage.removeItem('userEmail');
       localStorage.removeItem('isAdmin');
       localStorage.removeItem('userType');
-      localStorage.removeItem('studentId');  // Add this
-      localStorage.removeItem('teacherId');  // Add this
-      localStorage.removeItem('userId');     // Add this
+      localStorage.removeItem('studentId');
+      localStorage.removeItem('teacherId');
+      localStorage.removeItem('userId');
       localStorage.removeItem('isLoggedIn');
     }
   }, [navigate]);
@@ -135,7 +141,7 @@ function Login() {
       
       // Check if user is admin based on role from token
       const isAdmin = userRole === "ADMIN";
-      console.log("Is admin user:", isAdmin);
+      console.log("Is admin user:", isAdmin, "User role:", userRole);
       
       // CLEAR ALL PREVIOUS USER DATA FIRST
       localStorage.removeItem('studentId');
@@ -186,14 +192,29 @@ function Login() {
           if (isAdmin) {
             console.log("Navigating to admin dashboard...");
             navigate("/admin", { replace: true });
+          } else if (userRole === "STUDENT") {
+            console.log("Navigating to student dashboard...");
+            navigate("/studentdashboard", { replace: true });
+          } else if (userRole === "TEACHER") {
+            console.log("Navigating to teacher dashboard...");
+            navigate("/teacherdashboard", { replace: true });
           } else {
-            console.log("Navigating to homepage...");
+            // Fallback to homepage if role is unclear
+            console.log("Unknown role, navigating to homepage...");
             navigate("/homepage", { replace: true });
           }
         } catch (navError) {
           console.error("Navigation error:", navError);
           // If navigation fails, try a more direct approach
-          window.location.href = isAdmin ? "/admin" : "/homepage";
+          if (isAdmin) {
+            window.location.href = "/admin";
+          } else if (userRole === "STUDENT") {
+            window.location.href = "/studentdashboard";
+          } else if (userRole === "TEACHER") {
+            window.location.href = "/teacherdashboard";
+          } else {
+            window.location.href = "/homepage";
+          }
         }
       }, 800);
       
