@@ -526,79 +526,202 @@ const LessonManagement = () => {
         </Table>
       </TableContainer>
 
-      <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-        <DialogTitle sx={{ 
-          backgroundColor: '#f8f9fa', 
-          borderBottom: '1px solid #e9ecef',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1
-        }}>
-          <LessonIcon sx={{ color: '#4a6cf7' }} />
-          <Typography variant="h6" fontWeight={600}>
-            {editingLesson ? 'Edit Lesson' : 'Add New Lesson'}
-          </Typography>
+      {/* Updated Dialog to match Module styling */}
+      <Dialog 
+        open={dialogOpen} 
+        onClose={handleCloseDialog} 
+        maxWidth="md" 
+        fullWidth
+        sx={{
+          '& .MuiDialog-paper': {
+            borderRadius: '16px',
+            padding: '8px',
+            backgroundColor: '#f8f9ff',
+            border: '3px solid #4CAF50'
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            fontSize: '28px',
+            fontWeight: 'bold',
+            color: '#2E7D32',
+            textAlign: 'center',
+            padding: '24px',
+            backgroundColor: '#E8F5E8',
+            borderRadius: '12px',
+            margin: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '12px'
+          }}
+        >
+          <Box
+            component="span"
+            sx={{
+              fontSize: '32px',
+              color: '#4CAF50'
+            }}
+          >
+            📖
+          </Box>
+          {editingLesson ? 'Edit Learning Lesson' : 'Create New Learning Lesson'}
         </DialogTitle>
-        <DialogContent sx={{ mt: 2 }}>
+
+        <DialogContent sx={{ padding: '24px' }}>
           <Grid container spacing={3} sx={{ mt: 1 }}>
+            {/* Lesson Title - Full Width */}
             <Grid item xs={12}>
-              <Box sx={{ 
-                p: 2, 
-                backgroundColor: '#f0f7ff', 
-                borderRadius: '8px', 
-                border: '1px solid #bde0ff',
-                mb: 2
-              }}>
-                <Typography variant="body2" color="#1565c0" fontWeight={500}>
-                  💡 Tip: Select a module first to automatically assign the next level and display order
+              <Box sx={{ mb: 2 }}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    fontSize: '20px', 
+                    fontWeight: 'bold', 
+                    color: '#1976D2',
+                    mb: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <span>✏️</span> Lesson Title
                 </Typography>
+                <TextField
+                  fullWidth
+                  placeholder="Enter a clear, engaging title for your lesson"
+                  value={formData.title}
+                  onChange={(e) => handleInputChange('title', e.target.value)}
+                  required
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      fontSize: '18px',
+                      backgroundColor: '#ffffff',
+                      borderRadius: '12px',
+                      '& fieldset': {
+                        borderColor: '#4CAF50',
+                        borderWidth: '2px'
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#2E7D32',
+                        borderWidth: '3px'
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#1976D2',
+                        borderWidth: '3px'
+                      }
+                    },
+                    '& .MuiInputBase-input': {
+                      padding: '16px'
+                    }
+                  }}
+                />
               </Box>
-              <TextField
-                fullWidth
-                label="Lesson Title"
-                value={formData.title}
-                onChange={(e) => handleInputChange('title', e.target.value)}
-                required
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '8px'
-                  }
-                }}
-              />
-            </Grid>
-            
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Description"
-                value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                multiline
-                rows={3}
-                placeholder="Describe what students will learn in this lesson..."
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '8px'
-                  }
-                }}
-              />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required>
-                <InputLabel>Module</InputLabel>
-                <Select
-                  value={formData.moduleId}
-                  onChange={(e) => handleModuleChange(e.target.value)}
-                  label="Module"
-                  sx={{ borderRadius: '8px' }}
+            {/* Description - Full Width */}
+            <Grid item xs={12}>
+              <Box sx={{ mb: 2 }}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    fontSize: '20px', 
+                    fontWeight: 'bold', 
+                    color: '#1976D2',
+                    mb: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
                 >
-                  {modules.length === 0 ? (
-                    <MenuItem disabled>
-                      <em>No modules available</em>
+                  <span>📝</span> Lesson Description
+                </Typography>
+                <TextField
+                  fullWidth
+                  placeholder="Describe what students will learn in this lesson"
+                  value={formData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  multiline
+                  rows={3}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      fontSize: '18px',
+                      backgroundColor: '#ffffff',
+                      borderRadius: '12px',
+                      minHeight: '100px',
+                      '& fieldset': {
+                        borderColor: '#4CAF50',
+                        borderWidth: '2px'
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#2E7D32',
+                        borderWidth: '3px'
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#1976D2',
+                        borderWidth: '3px'
+                      }
+                    },
+                    '& .MuiInputBase-input': {
+                      padding: '16px'
+                    },
+                    '& .MuiInputBase-inputMultiline': {
+                      padding: '16px',
+                      lineHeight: '1.5'
+                    }
+                  }}
+                />
+              </Box>
+            </Grid>
+
+            {/* Module Selection - Half Width */}
+            <Grid item xs={12} md={6}>
+              <Box sx={{ mb: 2 }}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    fontSize: '20px', 
+                    fontWeight: 'bold', 
+                    color: '#1976D2',
+                    mb: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <span>📚</span> Select Module
+                </Typography>
+                <FormControl fullWidth required>
+                  <Select
+                    value={formData.moduleId}
+                    onChange={(e) => handleModuleChange(e.target.value)}
+                    displayEmpty
+                    sx={{
+                      fontSize: '18px',
+                      backgroundColor: '#ffffff',
+                      borderRadius: '12px',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#4CAF50',
+                        borderWidth: '2px'
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#2E7D32',
+                        borderWidth: '3px'
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976D2',
+                        borderWidth: '3px'
+                      },
+                      '& .MuiSelect-select': {
+                        padding: '16px'
+                      }
+                    }}
+                  >
+                    <MenuItem value="" disabled>
+                      <em>Choose a module...</em>
                     </MenuItem>
-                  ) : (
-                    modules.map((module) => (
+                    {modules.map((module) => (
                       <MenuItem key={module.id} value={module.id}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Box sx={{ 
@@ -610,186 +733,361 @@ const LessonManagement = () => {
                           {module.name || module.title || `Module ${module.id}`}
                         </Box>
                       </MenuItem>
-                    ))
-                  )}
-                </Select>
-              </FormControl>
-              {modules.length === 0 && (
-                <Typography variant="caption" color="error" sx={{ mt: 1, display: 'block' }}>
-                  ⚠️ No modules found. Please create a module first.
-                </Typography>
-              )}
-              {formData.moduleId && !editingLesson && (
-                <Typography variant="caption" color="success.main" sx={{ mt: 1, display: 'block', fontWeight: 500 }}>
-                  ✓ Level and order will be auto-assigned
-                </Typography>
-              )}
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
             </Grid>
 
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Lesson Type</InputLabel>
-                <Select
-                  value={formData.type}
-                  onChange={(e) => handleTypeChange(e.target.value)}
-                  label="Lesson Type"
-                  sx={{ borderRadius: '8px' }}
+            {/* Lesson Type - Half Width */}
+            <Grid item xs={12} md={6}>
+              <Box sx={{ mb: 2 }}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    fontSize: '20px', 
+                    fontWeight: 'bold', 
+                    color: '#1976D2',
+                    mb: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
                 >
-                  {lessonTypes.map((type) => (
-                    <MenuItem key={type.value} value={type.value}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Box sx={{ 
-                          minWidth: 20, 
-                          fontSize: '14px',
-                          opacity: 0.7
-                        }}>
-                          {type.value === 'multiple_choice' && '🔘'}
-                          {type.value === 'drag_drop' && '🎯'}
-                          {type.value === 'matching' && '🔗'}
-                          {type.value === 'fill_blanks' && '📝'}
-                          {type.value === 'true_false' && '✅'}
+                  <span>🎯</span> Lesson Type
+                </Typography>
+                <FormControl fullWidth>
+                  <Select
+                    value={formData.type}
+                    onChange={(e) => handleTypeChange(e.target.value)}
+                    sx={{
+                      fontSize: '18px',
+                      backgroundColor: '#ffffff',
+                      borderRadius: '12px',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#4CAF50',
+                        borderWidth: '2px'
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#2E7D32',
+                        borderWidth: '3px'
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976D2',
+                        borderWidth: '3px'
+                      },
+                      '& .MuiSelect-select': {
+                        padding: '16px'
+                      }
+                    }}
+                  >
+                    {lessonTypes.map((type) => (
+                      <MenuItem key={type.value} value={type.value}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Box sx={{ 
+                            minWidth: 20, 
+                            fontSize: '14px',
+                            opacity: 0.7
+                          }}>
+                            {type.value === 'multiple_choice' && '🔘'}
+                            {type.value === 'drag_drop' && '🎯'}
+                            {type.value === 'matching' && '🔗'}
+                            {type.value === 'fill_blanks' && '📝'}
+                            {type.value === 'true_false' && '✅'}
+                          </Box>
+                          {type.label}
                         </Box>
-                        {type.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
+            </Grid>
+
+            {/* Activity Selection - Full Width */}
+            <Grid item xs={12}>
+              <Box sx={{ mb: 2 }}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    fontSize: '20px', 
+                    fontWeight: 'bold', 
+                    color: '#1976D2',
+                    mb: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <span>🎮</span> Interactive Activity (Optional)
+                </Typography>
+                <FormControl fullWidth>
+                  <Select
+                    value={formData.activity}
+                    onChange={(e) => handleInputChange('activity', e.target.value)}
+                    sx={{
+                      fontSize: '18px',
+                      backgroundColor: '#ffffff',
+                      borderRadius: '12px',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#4CAF50',
+                        borderWidth: '2px'
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#2E7D32',
+                        borderWidth: '3px'
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#1976D2',
+                        borderWidth: '3px'
+                      },
+                      '& .MuiSelect-select': {
+                        padding: '16px'
+                      }
+                    }}
+                  >
+                    <MenuItem value="">
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, fontStyle: 'italic', opacity: 0.7 }}>
+                        <span>📄</span>
+                        No Interactive Activity
                       </Box>
                     </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
-                <InputLabel>Activity (Optional)</InputLabel>
-                <Select
-                  value={formData.activity}
-                  onChange={(e) => handleInputChange('activity', e.target.value)}
-                  label="Activity (Optional)"
-                  sx={{ borderRadius: '8px' }}
-                >
-                  <MenuItem value="">
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, fontStyle: 'italic', opacity: 0.7 }}>
-                      <span>📄</span>
-                      No Interactive Activity
-                    </Box>
-                  </MenuItem>
-                  {activityOptions.map((activity) => (
-                    <MenuItem key={activity.value} value={activity.value}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <span style={{ fontSize: '18px' }}>{activity.icon}</span>
-                        <Box>
-                          <Typography variant="body2" fontWeight={500}>
-                            {activity.label}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {activity.description}
-                          </Typography>
+                    {activityOptions.map((activity) => (
+                      <MenuItem key={activity.value} value={activity.value}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <span style={{ fontSize: '18px' }}>{activity.icon}</span>
+                          <Box>
+                            <Typography variant="body2" fontWeight={500}>
+                              {activity.label}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {activity.description}
+                            </Typography>
+                          </Box>
                         </Box>
-                      </Box>
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                🎮 Interactive activities provide hands-on learning experiences
-              </Typography>
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
             </Grid>
 
-            <Grid item xs={12} sm={4}>
-              <TextField
-                fullWidth
-                label="Level"
-                type="number"
-                value={formData.level}
-                onChange={(e) => handleInputChange('level', parseInt(e.target.value) || 1)}
-                inputProps={{ min: 1, max: 10 }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '8px',
-                    backgroundColor: !editingLesson && formData.moduleId ? '#f0f7ff' : 'inherit'
-                  }
+            {/* Level, Order, and Status - Three columns */}
+            <Grid item xs={12} md={4}>
+              <Box sx={{ mb: 2 }}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    fontSize: '20px', 
+                    fontWeight: 'bold', 
+                    color: '#1976D2',
+                    mb: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <span>📊</span> Level
+                </Typography>
+                <TextField
+                  fullWidth
+                  type="number"
+                  value={formData.level}
+                  onChange={(e) => handleInputChange('level', parseInt(e.target.value) || 1)}
+                  inputProps={{ min: 1, max: 10 }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      fontSize: '18px',
+                      backgroundColor: '#ffffff',
+                      borderRadius: '12px',
+                      '& fieldset': {
+                        borderColor: '#4CAF50',
+                        borderWidth: '2px'
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#2E7D32',
+                        borderWidth: '3px'
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#1976D2',
+                        borderWidth: '3px'
+                      }
+                    },
+                    '& .MuiInputBase-input': {
+                      padding: '16px'
+                    }
+                  }}
+                />
+              </Box>
+            </Grid>
+
+            <Grid item xs={12} md={4}>
+              <Box sx={{ mb: 2 }}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    fontSize: '20px', 
+                    fontWeight: 'bold', 
+                    color: '#1976D2',
+                    mb: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <span>🔢</span> Display Order
+                </Typography>
+                <TextField
+                  fullWidth
+                  type="number"
+                  value={formData.displayOrder}
+                  onChange={(e) => handleInputChange('displayOrder', parseInt(e.target.value) || 1)}
+                  inputProps={{ min: 1 }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      fontSize: '18px',
+                      backgroundColor: '#ffffff',
+                      borderRadius: '12px',
+                      '& fieldset': {
+                        borderColor: '#4CAF50',
+                        borderWidth: '2px'
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#2E7D32',
+                        borderWidth: '3px'
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#1976D2',
+                        borderWidth: '3px'
+                      }
+                    },
+                    '& .MuiInputBase-input': {
+                      padding: '16px'
+                    }
+                  }}
+                />
+              </Box>
+            </Grid>
+
+            <Grid item xs={12} md={4}>
+              <Box 
+                sx={{ 
+                  mb: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  justifyContent: 'flex-start',
+                  minHeight: '96px',
+                  backgroundColor: '#fff3e0',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  border: '2px solid #FF9800'
                 }}
-                helperText={!editingLesson && formData.moduleId ? 
-                  `🎯 Auto-assigned: Level ${getNextLevelAndOrder(formData.moduleId).nextLevel}` : 
-                  'Difficulty level (1-10)'
-                }
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={4}>
-              <TextField
-                fullWidth
-                label="Display Order"
-                type="number"
-                value={formData.displayOrder}
-                onChange={(e) => handleInputChange('displayOrder', parseInt(e.target.value) || 1)}
-                inputProps={{ min: 1 }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '8px',
-                    backgroundColor: !editingLesson && formData.moduleId ? '#f0f7ff' : 'inherit'
-                  }
-                }}
-                helperText={!editingLesson && formData.moduleId ? 
-                  `📋 Auto-assigned: Order ${getNextLevelAndOrder(formData.moduleId).nextOrder}` : 
-                  'Order in module sequence'
-                }
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={4}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'center' }}>
+              >
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    fontSize: '20px', 
+                    fontWeight: 'bold', 
+                    color: '#F57C00',
+                    mb: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <span>🔄</span> Lesson Status
+                </Typography>
                 <FormControlLabel
                   control={
                     <Switch
                       checked={formData.active}
                       onChange={(e) => handleInputChange('active', e.target.checked)}
-                      color="primary"
+                      size="large"
+                      sx={{
+                        '& .MuiSwitch-switchBase': {
+                          '&.Mui-checked': {
+                            color: '#4CAF50',
+                            '& + .MuiSwitch-track': {
+                              backgroundColor: '#4CAF50',
+                            },
+                          },
+                        },
+                        '& .MuiSwitch-track': {
+                          backgroundColor: '#ccc',
+                        },
+                      }}
                     />
                   }
                   label={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <span>{formData.active ? '✅' : '⏸️'}</span>
-                      {formData.active ? 'Active' : 'Inactive'}
-                    </Box>
+                    <Typography sx={{ 
+                      fontSize: '18px', 
+                      fontWeight: 'bold',
+                      color: formData.active ? '#4CAF50' : '#666'
+                    }}>
+                      {formData.active ? '✅ Active' : '❌ Inactive'}
+                    </Typography>
                   }
                 />
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
-                  {formData.active ? 'Students can access this lesson' : 'Hidden from students'}
-                </Typography>
               </Box>
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions sx={{ 
-          px: 3, 
-          py: 2, 
-          backgroundColor: '#f8f9fa', 
-          borderTop: '1px solid #e9ecef',
-          gap: 1
-        }}>
+
+        <DialogActions 
+          sx={{ 
+            padding: '24px',
+            backgroundColor: '#f5f5f5',
+            borderRadius: '0 0 12px 12px',
+            gap: '16px',
+            justifyContent: 'center'
+          }}
+        >
           <Button 
             onClick={handleCloseDialog}
-            sx={{ 
-              color: '#6c757d',
-              '&:hover': {
-                backgroundColor: '#e9ecef'
-              }
-            }}
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSubmit} 
-            variant="contained"
-            startIcon={editingLesson ? <EditIcon /> : <AddIcon />}
+            size="large"
             sx={{
-              backgroundColor: '#4a6cf7',
-              '&:hover': { backgroundColor: '#3a5ce5' },
-              borderRadius: '8px',
-              px: 3
+              fontSize: '18px',
+              fontWeight: 'bold',
+              padding: '12px 24px',
+              borderRadius: '25px',
+              backgroundColor: '#f44336',
+              color: 'white',
+              minWidth: '120px',
+              '&:hover': {
+                backgroundColor: '#d32f2f',
+                transform: 'scale(1.05)'
+              },
+              transition: 'all 0.2s ease'
             }}
           >
-            {editingLesson ? 'Update Lesson' : 'Create Lesson'}
+            ❌ Cancel
+          </Button>
+          
+          <Button 
+            variant="contained" 
+            onClick={handleSubmit}
+            disabled={!formData.title || !formData.moduleId}
+            size="large"
+            sx={{
+              fontSize: '18px',
+              fontWeight: 'bold',
+              padding: '12px 24px',
+              borderRadius: '25px',
+              backgroundColor: '#4CAF50',
+              minWidth: '120px',
+              '&:hover': {
+                backgroundColor: '#45a049',
+                transform: 'scale(1.05)'
+              },
+              '&:disabled': {
+                backgroundColor: '#cccccc',
+                color: '#666666'
+              },
+              transition: 'all 0.2s ease'
+            }}
+          >
+            {editingLesson ? '💾 Update Lesson' : '✅ Create Lesson'}
           </Button>
         </DialogActions>
       </Dialog>

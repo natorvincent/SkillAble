@@ -318,75 +318,330 @@ function ModuleManagement() {
       
       {/* Create/Edit Module Dialog */}
       <Dialog 
-        open={openDialog} 
-        onClose={handleCloseDialog} 
-        fullWidth 
-        maxWidth="md"
-      >
-        <DialogTitle>
-          {dialogAction === 'create' ? 'Create New Module' : 'Edit Module'}
-        </DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Module Name"
-                name="name"
-                value={formData.name}
-                onChange={handleFormChange}
-                required
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Description"
-                name="description"
-                value={formData.description}
-                onChange={handleFormChange}
-                multiline
-                rows={3}
-                required
-              />
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                fullWidth
-                label="Display Order"
-                name="displayOrder"
-                type="number"
-                value={formData.displayOrder}
-                onChange={handleFormChange}
-                required
-              />
-            </Grid>
-            <Grid item xs={6}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={formData.active}
-                    onChange={handleFormChange}
-                    name="active"
-                    color="primary"
-                  />
-                }
-                label="Active"
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button 
-            variant="contained" 
-            onClick={handleSubmit}
-            disabled={!formData.name || !formData.description}
+  open={openDialog} 
+  onClose={handleCloseDialog} 
+  fullWidth 
+  maxWidth="md"
+  sx={{
+    '& .MuiDialog-paper': {
+      borderRadius: '16px',
+      padding: '8px',
+      backgroundColor: '#f8f9ff',
+      border: '3px solid #4CAF50'
+    }
+  }}
+>
+  <DialogTitle
+    sx={{
+      fontSize: '28px',
+      fontWeight: 'bold',
+      color: '#2E7D32',
+      textAlign: 'center',
+      padding: '24px',
+      backgroundColor: '#E8F5E8',
+      borderRadius: '12px',
+      margin: '8px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '12px'
+    }}
+  >
+    <Box
+      component="span"
+      sx={{
+        fontSize: '32px',
+        color: '#4CAF50'
+      }}
+    >
+      📚
+    </Box>
+    {dialogAction === 'create' ? 'Create New Learning Module' : 'Edit Learning Module'}
+  </DialogTitle>
+  
+  <DialogContent sx={{ padding: '24px' }}>
+    <Grid container spacing={3} sx={{ mt: 1 }}>
+      {/* Module Name - Full Width */}
+      <Grid item xs={12}>
+        <Box sx={{ mb: 2 }}>
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              fontSize: '20px', 
+              fontWeight: 'bold', 
+              color: '#1976D2',
+              mb: 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
           >
-            {dialogAction === 'create' ? 'Create' : 'Save'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+            <span>✏️</span> Module Name
+          </Typography>
+          <TextField
+            fullWidth
+            placeholder="Enter a clear, simple name for your module"
+            name="name"
+            value={formData.name}
+            onChange={handleFormChange}
+            required
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                fontSize: '18px',
+                backgroundColor: '#ffffff',
+                borderRadius: '12px',
+                '& fieldset': {
+                  borderColor: '#4CAF50',
+                  borderWidth: '2px'
+                },
+                '&:hover fieldset': {
+                  borderColor: '#2E7D32',
+                  borderWidth: '3px'
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#1976D2',
+                  borderWidth: '3px'
+                }
+              },
+              '& .MuiInputBase-input': {
+                padding: '16px'
+              }
+            }}
+          />
+        </Box>
+      </Grid>
+      
+      {/* Description - Full Width */}
+      <Grid item xs={12}>
+        <Box sx={{ mb: 2 }}>
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              fontSize: '20px', 
+              fontWeight: 'bold', 
+              color: '#1976D2',
+              mb: 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <span>📝</span> Description
+          </Typography>
+          <TextField
+            fullWidth
+            placeholder="Describe what students will learn in this module"
+            name="description"
+            value={formData.description}
+            onChange={handleFormChange}
+            multiline
+            rows={4}
+            required
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                fontSize: '18px',
+                backgroundColor: '#ffffff',
+                borderRadius: '12px',
+                minHeight: '120px',
+                '& fieldset': {
+                  borderColor: '#4CAF50',
+                  borderWidth: '2px'
+                },
+                '&:hover fieldset': {
+                  borderColor: '#2E7D32',
+                  borderWidth: '3px'
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#1976D2',
+                  borderWidth: '3px'
+                }
+              },
+              '& .MuiInputBase-input': {
+                padding: '16px'
+              },
+              '& .MuiInputBase-inputMultiline': {
+                padding: '16px',
+                lineHeight: '1.5'
+              }
+            }}
+          />
+        </Box>
+      </Grid>
+      
+      {/* Order Number and Status - Side by Side */}
+      <Grid item xs={12} md={6}>
+        <Box sx={{ mb: 2 }}>
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              fontSize: '20px', 
+              fontWeight: 'bold', 
+              color: '#1976D2',
+              mb: 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <span>🔢</span> Order Number
+          </Typography>
+          <TextField
+            fullWidth
+            placeholder="1, 2, 3..."
+            name="displayOrder"
+            type="number"
+            value={formData.displayOrder}
+            onChange={handleFormChange}
+            required
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                fontSize: '18px',
+                backgroundColor: '#ffffff',
+                borderRadius: '12px',
+                '& fieldset': {
+                  borderColor: '#4CAF50',
+                  borderWidth: '2px'
+                },
+                '&:hover fieldset': {
+                  borderColor: '#2E7D32',
+                  borderWidth: '3px'
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#1976D2',
+                  borderWidth: '3px'
+                }
+              },
+              '& .MuiInputBase-input': {
+                padding: '16px'
+              }
+            }}
+          />
+        </Box>
+      </Grid>
+      
+      <Grid item xs={12} md={6}>
+        <Box 
+          sx={{ 
+            mb: 2,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            justifyContent: 'flex-start',
+            minHeight: '96px',
+            backgroundColor: '#fff3e0',
+            borderRadius: '12px',
+            padding: '16px',
+            border: '2px solid #FF9800'
+          }}
+        >
+          <Typography 
+            variant="h6" 
+            sx={{ 
+              fontSize: '20px', 
+              fontWeight: 'bold', 
+              color: '#F57C00',
+              mb: 2,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <span>🔄</span> Module Status
+          </Typography>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={formData.active}
+                onChange={handleFormChange}
+                name="active"
+                size="large"
+                sx={{
+                  '& .MuiSwitch-switchBase': {
+                    '&.Mui-checked': {
+                      color: '#4CAF50',
+                      '& + .MuiSwitch-track': {
+                        backgroundColor: '#4CAF50',
+                      },
+                    },
+                  },
+                  '& .MuiSwitch-track': {
+                    backgroundColor: '#ccc',
+                  },
+                }}
+              />
+            }
+            label={
+              <Typography sx={{ 
+                fontSize: '18px', 
+                fontWeight: 'bold',
+                color: formData.active ? '#4CAF50' : '#666'
+              }}>
+                {formData.active ? '✅ Active' : '❌ Inactive'}
+              </Typography>
+            }
+          />
+        </Box>
+      </Grid>
+    </Grid>
+  </DialogContent>
+  
+  <DialogActions 
+    sx={{ 
+      padding: '24px',
+      backgroundColor: '#f5f5f5',
+      borderRadius: '0 0 12px 12px',
+      gap: '16px',
+      justifyContent: 'center'
+    }}
+  >
+    <Button 
+      onClick={handleCloseDialog}
+      size="large"
+      sx={{
+        fontSize: '18px',
+        fontWeight: 'bold',
+        padding: '12px 24px',
+        borderRadius: '25px',
+        backgroundColor: '#f44336',
+        color: 'white',
+        minWidth: '120px',
+        '&:hover': {
+          backgroundColor: '#d32f2f',
+          transform: 'scale(1.05)'
+        },
+        transition: 'all 0.2s ease'
+      }}
+    >
+      ❌ Cancel
+    </Button>
+    
+    <Button 
+      variant="contained" 
+      onClick={handleSubmit}
+      disabled={!formData.name || !formData.description}
+      size="large"
+      sx={{
+        fontSize: '18px',
+        fontWeight: 'bold',
+        padding: '12px 24px',
+        borderRadius: '25px',
+        backgroundColor: '#4CAF50',
+        minWidth: '120px',
+        '&:hover': {
+          backgroundColor: '#45a049',
+          transform: 'scale(1.05)'
+        },
+        '&:disabled': {
+          backgroundColor: '#cccccc',
+          color: '#666666'
+        },
+        transition: 'all 0.2s ease'
+      }}
+    >
+      {dialogAction === 'create' ? '✅ Create Module' : '💾 Save Changes'}
+    </Button>
+  </DialogActions>
+</Dialog>
       
       {/* Delete Confirmation Dialog */}
       <Dialog

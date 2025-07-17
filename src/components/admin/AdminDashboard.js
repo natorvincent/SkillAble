@@ -2,14 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography, Button, Paper, Tabs, Tab, Container } from '@mui/material';
 import ShieldIcon from '@mui/icons-material/Shield';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import GroupIcon from '@mui/icons-material/Group';
+import PeopleIcon from '@mui/icons-material/People';
 import HomeIcon from '@mui/icons-material/Home';
 import SchoolIcon from '@mui/icons-material/School';
-import MenuBookIcon from '@mui/icons-material/MenuBook'; // Import for Lesson tab
-import AdminInterface from './AdminInterface';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 import TeachersList from './TeachersList';
 import ModuleManagement from './ModuleManagement';
-import LessonManagement from './LessonManagement'; // New import
+import LessonManagement from './LessonManagement';
+import StudentsList from './StudentsList';
+import PromoteUsers from './PromoteUsers';
+import DemoteUsers from './DemoteUsers';
 import Background from '../Background';
 import Navbar from '../Navbar';
 
@@ -97,14 +101,15 @@ const AdminDashboard = () => {
                 borderColor: 'divider',
                 '& .MuiTab-root': {
                   py: 2,
-                  fontWeight: 500
+                  fontWeight: 500,
+                  minWidth: 120
                 }
               }}
             >
               <Tab 
-                icon={<PersonAddIcon />} 
+                icon={<PeopleIcon />} 
                 iconPosition="start" 
-                label="Promote Users" 
+                label="Students List" 
               />
               <Tab 
                 icon={<GroupIcon />} 
@@ -121,13 +126,26 @@ const AdminDashboard = () => {
                 iconPosition="start" 
                 label="Lessons" 
               />
+              <Tab 
+                icon={<PersonAddIcon />} 
+                iconPosition="start" 
+                label="Promote User" 
+              />
+              <Tab 
+                icon={<PersonRemoveIcon />} 
+                iconPosition="start" 
+                label="Demote User" 
+              />
             </Tabs>
             
             <Box sx={{ p: 3 }}>
-              {activeTab === 0 && <AdminInterface />}
+              {/* Updated content rendering to match new tab order */}
+              {activeTab === 0 && <StudentsList />}
               {activeTab === 1 && <TeachersList />}
               {activeTab === 2 && <ModuleManagement />}
               {activeTab === 3 && <LessonManagement />}
+              {activeTab === 4 && <PromoteUsers />}
+              {activeTab === 5 && <DemoteUsers />}
             </Box>
           </Paper>
         </Container>

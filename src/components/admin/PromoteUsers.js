@@ -17,28 +17,20 @@ import {
   Alert,
   Divider,
   Card,
-  CardContent,
-  Tabs,
-  Tab
+  CardContent
 } from '@mui/material';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import SearchIcon from '@mui/icons-material/Search';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
-import SchoolIcon from '@mui/icons-material/School';
 
-const AdminInterface = () => {
+const PromoteUsers = () => {
   const [students, setStudents] = useState([]);
-  const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStudent, setSelectedStudent] = useState(null);
-  const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [teacherName, setTeacherName] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [activeTab, setActiveTab] = useState(0);
 
   // Base URL for API
   const API_BASE_URL = 'http://localhost:8080/api';
@@ -47,22 +39,8 @@ const AdminInterface = () => {
   const getAuthToken = () => localStorage.getItem('token');
 
   useEffect(() => {
-    if (activeTab === 0) {
-      fetchStudents();
-    } else if (activeTab === 1) {
-      fetchTeachers();
-    }
-  }, [activeTab]);
-
-  const handleTabChange = (event, newValue) => {
-    setActiveTab(newValue);
-    setSelectedStudent(null);
-    setSelectedTeacher(null);
-    setTeacherName('');
-    setError(null);
-    setSuccessMessage('');
-    setSearchTerm('');
-  };
+    fetchStudents();
+  }, []);
 
   const fetchStudents = async () => {
     setLoading(true);
@@ -87,40 +65,12 @@ const AdminInterface = () => {
     }
   };
 
-  const fetchTeachers = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`${API_BASE_URL}/admin/teachers`, {
-        headers: {
-          'Authorization': `Bearer ${getAuthToken()}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch teachers');
-      }
-      
-      const data = await response.json();
-      setTeachers(data);
-      setError(null);
-    } catch (err) {
-      setError('Error fetching teachers: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleStudentSelect = (student) => {
     setSelectedStudent(student);
-    setSelectedTeacher(null);
     const nameToUse = student.firstName ? student.firstName : student.email.split('@')[0];
     setTeacherName(nameToUse);
-  };
-
-  const handleTeacherSelect = (teacher) => {
-    setSelectedTeacher(teacher);
-    setSelectedStudent(null);
-    setTeacherName('');
+    setError(null);
+    setSuccessMessage('');
   };
 
   const handlePromoteStudent = async () => {
@@ -157,47 +107,11 @@ const AdminInterface = () => {
       
       setSelectedStudent(null);
       setTeacherName('');
+      setError(null);
       fetchStudents();
     } catch (err) {
       setError('Error promoting student: ' + err.message);
-    }
-  };
-
-  const handleDemoteTeacher = async () => {
-    if (!selectedTeacher) {
-      setError('Please select a teacher to demote');
-      return;
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/admin/demote-teacher`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${getAuthToken()}`
-        },
-        body: JSON.stringify({
-          teacherId: selectedTeacher.id
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to demote teacher');
-      }
-
-      const result = await response.text();
-      setSuccessMessage(result);
-      
-      const currentUserEmail = localStorage.getItem('userEmail');
-      if (currentUserEmail === selectedTeacher.email) {
-        localStorage.setItem('userType', 'STUDENT');
-        window.dispatchEvent(new Event('localStorageChange'));
-      }
-      
-      setSelectedTeacher(null);
-      fetchTeachers();
-    } catch (err) {
-      setError('Error demoting teacher: ' + err.message);
+      setSuccessMessage('');
     }
   };
 
@@ -207,43 +121,20 @@ const AdminInterface = () => {
     (student.lastName && student.lastName.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const filteredTeachers = teachers.filter(teacher => 
-    teacher.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (teacher.name && teacher.name.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
-
-  const currentData = activeTab === 0 ? filteredStudents : filteredTeachers;
-
   return (
     <Box>
-      <Tabs value={activeTab} onChange={handleTabChange} sx={{ mb: 3 }}>
-        <Tab 
-          icon={<PersonAddIcon fontSize="small" />} 
-          label="Promote to Teacher" 
-          iconPosition="start"
-        />
-        <Tab 
-          icon={<PersonRemoveIcon fontSize="small" />} 
-          label="Demote Teacher" 
-          iconPosition="start"
-        />
-      </Tabs>
-
       <Typography variant="h6" gutterBottom>
-        {activeTab === 0 ? 'Promote Students to Teachers' : 'Demote Teachers to Students'}
+        Promote Students to Teachers
       </Typography>
       
       <Typography color="text.secondary" sx={{ mb: 3 }}>
-        {activeTab === 0 
-          ? 'Select any student to promote them to teacher status.'
-          : 'Select any teacher to demote them back to student status.'
-        }
+        Select any student to promote them to teacher status.
       </Typography>
       
       {/* Search and refresh section */}
       <Box sx={{ display: 'flex', mb: 3, gap: 2 }}>
         <TextField
-          placeholder={activeTab === 0 ? "Search students by name or email..." : "Search teachers by name or email..."}
+          placeholder="Search students by name or email..."
           variant="outlined"
           size="small"
           fullWidth
@@ -261,7 +152,7 @@ const AdminInterface = () => {
         <Button
           variant="outlined"
           startIcon={<RefreshIcon fontSize="small" />}
-          onClick={activeTab === 0 ? fetchStudents : fetchTeachers}
+          onClick={fetchStudents}
         >
           Refresh
         </Button>
@@ -280,7 +171,7 @@ const AdminInterface = () => {
         </Alert>
       )}
       
-      {/* Data table */}
+      {/* Students table */}
       <TableContainer component={Paper} sx={{ mb: 4, borderRadius: "10px" }}>
         <Table>
           <TableHead sx={{ bgcolor: '#f5f5f5' }}>
@@ -298,25 +189,19 @@ const AdminInterface = () => {
                   <CircularProgress size={30} />
                 </TableCell>
               </TableRow>
-            ) : currentData.length === 0 ? (
+            ) : filteredStudents.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
                   <Typography color="text.secondary">
-                    {searchTerm 
-                      ? `No ${activeTab === 0 ? 'students' : 'teachers'} matching your search`
-                      : `No ${activeTab === 0 ? 'students' : 'teachers'} available`
-                    }
+                    {searchTerm ? 'No students matching your search' : 'No students available for promotion'}
                   </Typography>
                 </TableCell>
               </TableRow>
             ) : (
-              currentData.map(item => (
+              filteredStudents.map(student => (
                 <TableRow 
-                  key={item.id}
-                  selected={
-                    (activeTab === 0 && selectedStudent && selectedStudent.id === item.id) ||
-                    (activeTab === 1 && selectedTeacher && selectedTeacher.id === item.id)
-                  }
+                  key={student.id}
+                  selected={selectedStudent && selectedStudent.id === student.id}
                   sx={{ 
                     '&.Mui-selected': {
                       backgroundColor: 'rgba(74, 108, 247, 0.08)',
@@ -328,25 +213,17 @@ const AdminInterface = () => {
                 >
                   <TableCell padding="checkbox">
                     <Radio
-                      checked={
-                        (activeTab === 0 && selectedStudent && selectedStudent.id === item.id) ||
-                        (activeTab === 1 && selectedTeacher && selectedTeacher.id === item.id)
-                      }
-                      onChange={() => activeTab === 0 ? handleStudentSelect(item) : handleTeacherSelect(item)}
+                      checked={selectedStudent && selectedStudent.id === student.id}
+                      onChange={() => handleStudentSelect(student)}
                     />
                   </TableCell>
-                  <TableCell>
-                    {activeTab === 0 
-                      ? `${item.firstName} ${item.lastName}`
-                      : item.name || 'Not specified'
-                    }
-                  </TableCell>
-                  <TableCell>{item.email}</TableCell>
+                  <TableCell>{student.firstName} {student.lastName}</TableCell>
+                  <TableCell>{student.email}</TableCell>
                   <TableCell>
                     <Button
                       size="small"
                       color="primary"
-                      onClick={() => activeTab === 0 ? handleStudentSelect(item) : handleTeacherSelect(item)}
+                      onClick={() => handleStudentSelect(student)}
                     >
                       Select
                     </Button>
@@ -358,18 +235,14 @@ const AdminInterface = () => {
         </Table>
       </TableContainer>
       
-      {/* Action form */}
-      {((activeTab === 0 && selectedStudent) || (activeTab === 1 && selectedTeacher)) && (
+      {/* Promotion form */}
+      {selectedStudent && (
         <Card sx={{ borderRadius: "10px", bgcolor: '#f8f9fa', mb: 2 }}>
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              {activeTab === 0 ? (
-                <PersonAddIcon fontSize="small" sx={{ mr: 1, color: '#4a6cf7' }} />
-              ) : (
-                <PersonRemoveIcon fontSize="small" sx={{ mr: 1, color: '#f44336' }} />
-              )}
+              <PersonAddIcon fontSize="small" sx={{ mr: 1, color: '#4a6cf7' }} />
               <Typography variant="h6">
-                {activeTab === 0 ? 'Promote to Teacher' : 'Demote to Student'}
+                Promote to Teacher
               </Typography>
             </Box>
             
@@ -377,57 +250,53 @@ const AdminInterface = () => {
             
             <Box sx={{ mb: 3 }}>
               <Typography variant="subtitle2" color="text.secondary">
-                Selected {activeTab === 0 ? 'Student' : 'Teacher'}:
+                Selected Student:
               </Typography>
               <Typography variant="body1" fontWeight="medium">
-                {activeTab === 0 
-                  ? `${selectedStudent.firstName} ${selectedStudent.lastName} (${selectedStudent.email})`
-                  : `${selectedTeacher.name} (${selectedTeacher.email})`
-                }
+                {selectedStudent.firstName} {selectedStudent.lastName} ({selectedStudent.email})
               </Typography>
             </Box>
             
-            {activeTab === 0 && (
-              <TextField
-                label="Teacher Name"
-                value={teacherName}
-                onChange={(e) => setTeacherName(e.target.value)}
-                fullWidth
-                margin="normal"
-                variant="outlined"
-                required
-                sx={{ 
-                  mb: 3,
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "10px",
-                  }
-                }}
-              />
-            )}
+            <TextField
+              label="Teacher Name"
+              value={teacherName}
+              onChange={(e) => setTeacherName(e.target.value)}
+              fullWidth
+              margin="normal"
+              variant="outlined"
+              required
+              sx={{ 
+                mb: 3,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "10px",
+                }
+              }}
+            />
             
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
               <Button
                 variant="outlined"
                 onClick={() => {
                   setSelectedStudent(null);
-                  setSelectedTeacher(null);
                   setTeacherName('');
+                  setError(null);
+                  setSuccessMessage('');
                 }}
               >
                 Cancel
               </Button>
               <Button
                 variant="contained"
-                startIcon={activeTab === 0 ? <PersonAddIcon fontSize="small" /> : <PersonRemoveIcon fontSize="small" />}
-                onClick={activeTab === 0 ? handlePromoteStudent : handleDemoteTeacher}
+                startIcon={<PersonAddIcon fontSize="small" />}
+                onClick={handlePromoteStudent}
                 sx={{ 
-                  backgroundColor: activeTab === 0 ? "#4a6cf7" : "#f44336",
+                  backgroundColor: "#4a6cf7",
                   "&:hover": {
-                    backgroundColor: activeTab === 0 ? "#3a5ce5" : "#d32f2f"
+                    backgroundColor: "#3a5ce5"
                   }
                 }}
               >
-                {activeTab === 0 ? 'Promote to Teacher' : 'Demote to Student'}
+                Promote to Teacher
               </Button>
             </Box>
           </CardContent>
@@ -437,4 +306,4 @@ const AdminInterface = () => {
   );
 };
 
-export default AdminInterface;
+export default PromoteUsers;
