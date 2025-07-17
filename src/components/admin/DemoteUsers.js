@@ -200,7 +200,7 @@ const DemoteUsers = () => {
               <TableCell width="60px"></TableCell>
               <TableCell>Name</TableCell>
               <TableCell>Email</TableCell>
-              <TableCell>ID</TableCell>
+             
               <TableCell width="100px">Action</TableCell>
             </TableRow>
           </TableHead>
@@ -246,7 +246,7 @@ const DemoteUsers = () => {
                     </Typography>
                   </TableCell>
                   <TableCell>{teacher.email}</TableCell>
-                  <TableCell>{teacher.id}</TableCell>
+              
                   <TableCell>
                     <Button
                       size="small"
@@ -284,9 +284,7 @@ const DemoteUsers = () => {
               <Typography variant="body1" fontWeight="medium">
                 {selectedTeacher.name || 'Not specified'} ({selectedTeacher.email})
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                ID: {selectedTeacher.id}
-              </Typography>
+             
             </Box>
             
             <Alert severity="warning" sx={{ mb: 3 }}>
