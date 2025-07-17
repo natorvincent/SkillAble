@@ -5,7 +5,6 @@ import './App.css';
 import Login from './components/login-register/Login';
 import Register from './components/login-register/Register';
 import LandingPage from './components/LandingPage';
-import Homepage from './components/Homepage';
 import AccountPage from './components/AccountPage';
 import BadgesPage from './components/AchievementsPage';
 import AdminDashboard from './components/admin/AdminDashboard';
@@ -23,6 +22,8 @@ import StudentProgress from './components/teacher/StudentProgress';
 import AchievementsPage from './components/AchievementsPage';
 import AboutUsPage from './components/AboutUsPage';
 import ContactPage from './components/ContactPage';
+import StudentDashboard from './components/StudentDashboard';
+import TeacherDashboard from './components/TeacherDashboard';
 
 function useLocalStorage(key, defaultValue) {
   const [value, setValue] = useState(() => {
@@ -63,6 +64,19 @@ function App() {
   if (!isLoaded) {
     return null;
   }
+  // Helper function to get appropriate dashboard redirect
+  const getDashboardRedirect = () => {
+    if (isAdmin) return "/admin";
+    
+    const userType = localStorage.getItem('userType');
+    if (userType === 'STUDENT') return "/studentdashboard";
+    if (userType === 'TEACHER') return "/teacherdashboard";
+    
+  };
+
+  if (!isLoaded) {
+    return null;
+  }
 
   return (
     <Router>
@@ -74,16 +88,29 @@ function App() {
         <Route path="/contact" element={<ContactPage />} />
         
         <Route path="/login" element={
-          isLoggedIn ? (isAdmin ? <Navigate to="/admin" replace /> : <Navigate to="/homepage" replace />) : <Login />
+          isLoggedIn ? (isAdmin ? <Navigate to="/admin" replace /> : <Navigate to={getDashboardRedirect()} replace />) : <Login />
         } />
         <Route path="/register" element={
-          isLoggedIn ? <Navigate to="/homepage" replace /> : <Register />
+          isLoggedIn ? <Navigate to={getDashboardRedirect()} replace /> : <Register />
         } />
         
-        {/* Protected routes (require login) */}
+        {/* Dashboard routes (require login and specific user type) */}
+        <Route path="/studentdashboard" element={
+          !isLoggedIn ? <Navigate to="/login" replace /> : 
+            (localStorage.getItem('userType') === 'STUDENT' ? <StudentDashboard /> : 
+             <Navigate to={getDashboardRedirect()} replace />)
+        } />
+        
+        <Route path="/teacherdashboard" element={
+          !isLoggedIn ? <Navigate to="/login" replace /> : 
+            (localStorage.getItem('userType') === 'TEACHER' ? <TeacherDashboard /> : 
+             <Navigate to={getDashboardRedirect()} replace />)
+        } />
+        
+        {/* Legacy homepage route - redirect to appropriate dashboard */}
         <Route path="/homepage" element={
           !isLoggedIn ? <Navigate to="/login" replace /> : 
-            (isAdmin ? <Navigate to="/admin" replace /> : <Homepage />)
+            <Navigate to={getDashboardRedirect()} replace />
         } />
         <Route path="/account" element={
           isLoggedIn ? <AccountPage /> : <Navigate to="/login" replace />
@@ -127,17 +154,12 @@ function App() {
           } />
 
           {/* Personal Hygiene Level Routes */}
-          <Route path="/lesson/hygiene/level-1/:moduleId/:lessonId" element={
+          <Route path="/lesson/hygiene/level-1/:lessonId" element={
             isLoggedIn ? <PersonalHygieneLevel1 /> : <Navigate to="/login" replace />
           } />
 
           <Route path="/lesson/hygiene/level-2/:moduleId/:lessonId" element={
             isLoggedIn ? <PersonalHygieneLevel2 /> : <Navigate to="/login" replace />
-          } />
-
-          {/* Generic hygiene route (backwards compatibility) */}
-          <Route path="/lesson/hygiene/:lessonId" element={
-            isLoggedIn ? <PersonalHygieneLevel1 /> : <Navigate to="/login" replace />
           } />
 
           {/* New Food Sorting Route */}
