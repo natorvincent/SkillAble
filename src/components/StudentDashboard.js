@@ -30,6 +30,7 @@ import Navbar from "./Navbar";
 import Background from "./Background";
 import module1 from "../assets/hygiene.png"
 import module2 from "../assets/culinary-skills.jpg"
+import module3 from "../assets/chores.jpg"
 import { 
   getStudentModuleProgress,
 } from '../services/progressService';
@@ -55,7 +56,8 @@ function StudentDashboard() {
 
   const moduleImages = [
     module1,
-    module2 
+    module2,
+    module3
   ];
 
   useEffect(() => {
@@ -285,7 +287,7 @@ function StudentDashboard() {
         <Container maxWidth="lg" sx={{ paddingTop: 5, paddingBottom: 5 }}> 
           <Paper 
             sx={{ 
-              padding: 4, 
+              padding: 2, 
               backgroundColor: "transparent",
               mb: 4,
               boxShadow: "none"
@@ -295,9 +297,6 @@ function StudentDashboard() {
             <Box sx={{ mb: 3 }}>
               <Typography variant="h5" color="#2d3748" fontWeight={600} gutterBottom>
                 Your Learning Modules
-              </Typography>
-              <Typography variant="body1" color="#4a5568">
-                Continue your learning journey with these assigned modules.
               </Typography>
             </Box>
             
@@ -312,11 +311,11 @@ function StudentDashboard() {
                   const progressPercentage = getProgressPercentage(module.id);
                   
                   return (
-                    <Grid item xs={12} sm={12} md={6} key={module.id}>
+                    <Grid item xs={12} sm={6} md={4} key={module.id}>
                       <Card 
                         sx={{ 
-                          height: '550px', 
-                          width: '450px',
+                          height: '535px', 
+                          width: '339px',
                           display: 'flex', 
                           flexDirection: 'column',
                           borderRadius: '15px',
@@ -327,18 +326,68 @@ function StudentDashboard() {
                           border: '1px solid #e0e0e0'
                         }}
                       >
-                        <CardMedia
-                          component="img"
-                          sx={{
-                            height: 180,
-                            objectFit: 'cover'
-                          }}
-                          image={getModuleImage(index)}
-                          alt={`${module.name || 'Module'} cover`}
-                        />
+                        <Box sx={{ position: 'relative', overflow: 'hidden' }}>
+                          <CardMedia
+                            component="img"
+                            sx={{
+                              height: 200,
+                              objectFit: 'cover',
+                              transition: 'transform 0.6s ease',
+                              '&:hover': {
+                                transform: 'scale(1.1)'
+                              }
+                            }}
+                            image={getModuleImage(index)}
+                            alt={`${module.name || 'Module'} cover`}
+                          />
+                          
+                          {/* Progress badge */}
+                          {progress && (
+                            <Chip
+                              label={`${progressPercentage}%`}
+                              sx={{
+                                position: 'absolute',
+                                top: 16,
+                                right: 16,
+                                backgroundColor: progress.completed ? '#4caf50' : '#4a6cf7',
+                                color: 'white',
+                                fontWeight: 700,
+                                fontSize: '0.8rem',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                '& .MuiChip-label': {
+                                  px: 1.5
+                                }
+                              }}
+                            />
+                          )}
+                          
+                          {/* Completion badge */}
+                          {progress?.completed && (
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                top: 16,
+                                left: 16,
+                                backgroundColor: '#4caf50',
+                                color: 'white',
+                                borderRadius: '12px',
+                                padding: '4px 12px',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 0.5
+                              }}
+                            >
+                              ✓ Completed
+                            </Box>
+                          )}
+                        </Box>
+
                         <CardContent sx={{ flexGrow: 1, pb: 1, px: 3, pt: 3 }}>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                            <Typography variant="subtitle2" color="text.secondary">
+                            <Typography variant="h6">
                               {module.name || "Module"}
                             </Typography>
                           </Box>

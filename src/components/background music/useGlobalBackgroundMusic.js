@@ -13,19 +13,13 @@ export const useGlobalBackgroundMusic = (musicFile, pageId = null) => {
     // Initialize audio
     globalAudioManager.initialize(musicFile);
     
-    // Register this page immediately
     globalAudioManager.registerPage(currentPageId);
     
-    // Set initial state
     setAudioPlaying(globalAudioManager.getIsPlaying());
 
-    // Subscribe to audio state changes
     const unsubscribe = globalAudioManager.subscribe((isPlaying) => {
       setAudioPlaying(isPlaying);
     });
-
-    // Only attempt to start music if this is the first initialization
-    // and music isn't already playing
     if (!hasInitialized.current && !globalAudioManager.getIsPlaying()) {
       const timer = setTimeout(() => {
         globalAudioManager.autoPlay();
@@ -33,7 +27,6 @@ export const useGlobalBackgroundMusic = (musicFile, pageId = null) => {
       
       hasInitialized.current = true;
       
-      // Clean up timer on unmount
       return () => {
         clearTimeout(timer);
         unsubscribe();
@@ -41,7 +34,6 @@ export const useGlobalBackgroundMusic = (musicFile, pageId = null) => {
       };
     }
 
-    // Cleanup function for subsequent runs (no music start attempt)
     return () => {
       unsubscribe();
       globalAudioManager.unregisterPage(currentPageId);

@@ -44,8 +44,9 @@ import {
   getStudentModuleProgressStats,
   getStudentLessonProgress 
 } from '../services/progressService';
-import module1 from "../assets/hygiene.png";
-import module2 from "../assets/culinary-skills.jpg";
+import module2 from "../assets/hygiene.png";
+import module1 from "../assets/culinary-skills.jpg";
+import module3 from "../assets/chores.jpg";
 import { useGlobalBackgroundMusic } from "./background music/useGlobalBackgroundMusic";
 import AudioToggleButton from "../components/background music/AudioToggleButton";
 import backgroundMusic from '../assets/background-music.mp3';
@@ -67,7 +68,8 @@ function ModuleDetails() {
 
   const moduleImages = [
   module1,
-  module2
+  module2,
+  module3
 ];
 
 
