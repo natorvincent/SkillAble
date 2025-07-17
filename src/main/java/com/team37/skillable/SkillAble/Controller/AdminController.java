@@ -6,6 +6,7 @@ import com.team37.skillable.SkillAble.Repository.AdminRepository;
 import com.team37.skillable.SkillAble.Service.StudentService;
 import com.team37.skillable.SkillAble.Service.TeacherService;
 import com.team37.skillable.SkillAble.dto.PromoteToTeacherRequest;
+import com.team37.skillable.SkillAble.dto.DemoteToStudentRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -39,6 +40,12 @@ public class AdminController {
     @PostMapping("/promote-to-teacher")
     public ResponseEntity<String> promoteToTeacher(@RequestBody PromoteToTeacherRequest request) {
         String result = teacherService.promoteToTeacher(request);
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/demote-teacher")
+    public ResponseEntity<String> demoteToStudent(@RequestBody DemoteToStudentRequest request) {
+        String result = teacherService.demoteToStudent(request);
         return ResponseEntity.ok(result);
     }
 

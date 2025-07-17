@@ -4,6 +4,7 @@ import com.team37.skillable.SkillAble.Entity.Student;
 import com.team37.skillable.SkillAble.Entity.Teacher;
 import com.team37.skillable.SkillAble.Repository.StudentRepository;
 import com.team37.skillable.SkillAble.Repository.TeacherRepository;
+import com.team37.skillable.SkillAble.dto.DemoteToStudentRequest;
 import com.team37.skillable.SkillAble.dto.EnrollStudentRequest;
 import com.team37.skillable.SkillAble.dto.PromoteToTeacherRequest;
 import com.team37.skillable.SkillAble.dto.TeacherProfileUpdateRequest;
@@ -92,6 +93,57 @@ public class TeacherService {
         studentRepository.delete(student);
 
         return "User promoted to teacher successfully";
+    }
+
+    @Transactional
+    public String demoteToStudent(DemoteToStudentRequest request) {
+        Teacher teacher = null;
+
+        // Find teacher by ID or email
+        if (request.getTeacherId() != null) {
+            Optional<Teacher> teacherOpt = teacherRepository.findById(request.getTeacherId());
+            if (teacherOpt.isEmpty()) {
+                return "Teacher not found";
+            }
+            teacher = teacherOpt.get();
+        } else if (request.getEmail() != null && !request.getEmail().isEmpty()) {
+            Optional<Teacher> teacherOpt = teacherRepository.findByEmail(request.getEmail());
+            if (teacherOpt.isEmpty()) {
+                return "Teacher not found";
+            }
+            teacher = teacherOpt.get();
+        } else {
+            return "Teacher ID or email is required";
+        }
+
+        String email = teacher.getEmail();
+
+        // Check if user is already a student
+        if (studentRepository.findByEmail(email).isPresent()) {
+            return "User is already a student";
+        }
+
+        // Check if teacher has assigned students and unassign them
+        List<Student> assignedStudents = teacher.getStudents();
+        if (assignedStudents != null && !assignedStudents.isEmpty()) {
+            for (Student student : assignedStudents) {
+                student.setTeacher(null);
+                studentRepository.save(student);
+            }
+        }
+
+        // Create new student with minimal information (they'll need to complete profile)
+        Student student = new Student();
+        student.setEmail(email);
+        student.setPassword(teacher.getPassword());
+        student.setCreatedAt(LocalDateTime.now());
+        student.setUpdatedAt(LocalDateTime.now());
+        // Leave firstName, lastName, and dateOfBirth as null so they need to complete profile
+
+        studentRepository.save(student);
+        teacherRepository.delete(teacher);
+
+        return "Teacher demoted to student successfully";
     }
 
     public List<Student> getTeacherStudents(String teacherEmail) {
