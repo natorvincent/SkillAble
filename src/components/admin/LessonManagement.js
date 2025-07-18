@@ -79,6 +79,14 @@ const LessonManagement = () => {
     icon: '🗓️'
     },
     {
+      value: 'PersonalHygieneLevel3',
+      label: 'Personal Hygiene Level 3 - Scenarios',
+      description: 'Apply hygiene knowledge to real-life situations',
+      component: 'PersonalHygieneLevel3',
+      path: '/lesson/hygiene/level-3',
+      icon: '🎭'
+    },
+    {
       value: 'cooking-level-1',
       label: 'Cooking Level 1 - Ingredients',
       description: 'Learn basic cooking ingredients identification',
@@ -94,7 +102,8 @@ const LessonManagement = () => {
       path: '/lesson/cooking/level-2',
       icon: '👨‍🍳'
     },
-    {
+    
+      {
       value: 'cooking-level-3',
       label: 'Cooking Level 3 - Tools & Actions',
       description: 'Learn cooking tools and advanced techniques',
@@ -111,19 +120,18 @@ const LessonManagement = () => {
       icon: '🍳'
     },
     {
-      value: 'cooking-level-5',
-      label: 'Cooking Level 5 - Independent Cooking',
-      description: 'Complete recipes independently with all skills combined',
-      component: 'CookingLevel5',
-      path: '/lesson/cooking/level-5',
-      icon: '🥪'
-    },
-    {
       value: 'SortingLevel1',
       label: 'Food Sorting Level 1',
       description: 'Identify healthy vs. unhealthy food',
-      path: '/lesson/food-sorting',
+      path: '/lesson/food-sorting/level-1',
       icon: '🍎'
+    },
+    {
+      value: 'SortingLevel2',
+      label: 'Food Sorting Level 2',
+      description: 'Identify fruits, vegetables, or other foods',
+      path: '/lesson/food-sorting/level-2',
+      icon: '🥦'
     }
   ];
 

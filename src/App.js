@@ -18,6 +18,7 @@ import CookingLevel2 from './components/lesson/CookingLevel2';
 import CookingLevel3 from './components/lesson/CookingLevel3';
 import CookingLevel4 from './components/lesson/CookingLevel4';
 import CookingLevel5 from './components/lesson/CookingLevel5';
+import HouseholdLevel1 from './components/lesson/HouseholdLevel1';
 import ManageStudents from './components/teacher/ManageStudents';
 import StudentProgress from './components/teacher/StudentProgress';
 import AchievementsPage from './components/AchievementsPage';
