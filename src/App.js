@@ -17,6 +17,7 @@ import CookingLevel1 from './components/lesson/CookingLevel1';
 import CookingLevel2 from './components/lesson/CookingLevel2';
 import CookingLevel3 from './components/lesson/CookingLevel3';
 import CookingLevel4 from './components/lesson/CookingLevel4';
+import CookingLevel5 from './components/lesson/CookingLevel5';
 import ManageStudents from './components/teacher/ManageStudents';
 import StudentProgress from './components/teacher/StudentProgress';
 import AchievementsPage from './components/AchievementsPage';
@@ -147,6 +148,10 @@ function App() {
 
           <Route path="/lesson/cooking/level-4/:lessonId" element={
             isLoggedIn ? <CookingLevel4 /> : <Navigate to="/login" replace /> 
+          } />
+
+          <Route path="/lesson/cooking/level-5/:lessonId" element={
+            isLoggedIn ? <CookingLevel5 /> : <Navigate to="/login" replace /> 
           } />
 
           <Route path="/lesson/cooking/:lessonId" element={
