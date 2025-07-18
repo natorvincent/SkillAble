@@ -120,6 +120,14 @@ const LessonManagement = () => {
       icon: '🍳'
     },
     {
+      value: 'cooking-level-5',
+      label: 'Cooking Level 5 - Complete Cooking Adventure',
+      description: 'Full recipe experience with ingredients, tools, actions, and sequencing',
+      component: 'CookingLevel5',
+      path: '/lesson/cooking/level-5',
+      icon: '🍽️'
+    },
+    {
       value: 'SortingLevel1',
       label: 'Food Sorting Level 1',
       description: 'Identify healthy vs. unhealthy food',
