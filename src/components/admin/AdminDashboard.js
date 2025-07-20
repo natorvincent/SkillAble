@@ -76,14 +76,14 @@ const AdminDashboard = () => {
             </Typography>
           </Box>
           
-          <Button
+          {/* <Button
             variant="outlined"
             startIcon={<HomeIcon />}
             sx={{ mb: 3 }}
             onClick={() => window.location.href = '/homepage'}
           >
             Back to Home
-          </Button>
+          </Button> */}
           
           <Paper sx={{ 
             borderRadius: "15px", 
