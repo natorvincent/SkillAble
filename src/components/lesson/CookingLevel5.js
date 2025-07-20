@@ -38,54 +38,54 @@ import sandwichRecipeImg from "../../assets/cookingLevel4/sandwhich.png";
 import fruitSaladRecipeImg from "../../assets/cookingLevel4/fruitsalad.png";
 import scrambledEggRecipeImg from "../../assets/cookingLevel4/scrambledegg.png";
 
-// Import ingredient images (using existing images as placeholders)
-import appleImg from "../../assets/cookingLevel4/apple.png";
-import bananaImg from "../../assets/cookingLevel4/banana.png";
-import bowlImg from "../../assets/cookingLevel4/cleanbowl.png";
-import breadImg from "../../assets/cookingLevel4/sliceofbread.png";
-import butterImg from "../../assets/cookingLevel4/butter.png";
-import cheeseImg from "../../assets/cookingLevel4/cheeseslice.png";
-import chocolateImg from "../../assets/cookingLevel4/apple.png"; // placeholder
-import eggImg from "../../assets/cookingLevel4/egg.png";
-import lettuceImg from "../../assets/cookingLevel4/lettuceleaf.png";
-import milkImg from "../../assets/cookingLevel4/milk.png";
-import orangeImg from "../../assets/cookingLevel4/apple.png"; // placeholder
-import saltImg from "../../assets/cookingLevel4/salt.png";
-import tomatoImg from "../../assets/cookingLevel4/apple.png"; // placeholder
-import watermelonImg from "../../assets/cookingLevel4/apple.png"; // placeholder
+// Import ingredient images from cookingLevel5_ingredients folder
+import appleImg from "../../assets/cookingLevel5_ingredients/apple.png";
+import bananaImg from "../../assets/cookingLevel5_ingredients/banana.png";
+import bowlImg from "../../assets/cookingLevel5_ingredients/bowl.png";
+import breadImg from "../../assets/cookingLevel5_ingredients/bread.png";
+import butterImg from "../../assets/cookingLevel5_ingredients/butter.png";
+import cheeseImg from "../../assets/cookingLevel5_ingredients/cheese.png";
+import chocolateImg from "../../assets/cookingLevel5_ingredients/chocolate.png";
+import eggImg from "../../assets/cookingLevel5_ingredients/egg.png";
+import lettuceImg from "../../assets/cookingLevel5_ingredients/lettuce.png";
+import milkImg from "../../assets/cookingLevel5_ingredients/milk.png";
+import orangeImg from "../../assets/cookingLevel5_ingredients/orange.png";
+import saltImg from "../../assets/cookingLevel5_ingredients/salt.png";
+import tomatoImg from "../../assets/cookingLevel5_ingredients/tomato.png";
+import watermelonImg from "../../assets/cookingLevel5_ingredients/watermelon.png";
 
-// Import tool images (using existing images as placeholders)
-import forkImg from "../../assets/cookingLevel4/fork.png";
-import graterImg from "../../assets/cookingLevel4/spoon.png"; // placeholder
-import knifeImg from "../../assets/cookingLevel4/fork.png"; // placeholder
-import peelerImg from "../../assets/cookingLevel4/spoon.png"; // placeholder
-import spatulaImg from "../../assets/cookingLevel4/spoon.png";
-import tongsImg from "../../assets/cookingLevel4/fork.png"; // placeholder
-import whiskImg from "../../assets/cookingLevel4/spoon.png"; // placeholder
+// Import tool images from cookingLevel5_tools folder
+import forkImg from "../../assets/cookingLevel5_tools/fork.png";
+import graterImg from "../../assets/cookingLevel5_tools/grater.png";
+import knifeImg from "../../assets/cookingLevel5_tools/knife.png";
+import peelerImg from "../../assets/cookingLevel5_tools/peeler.png";
+import spatulaImg from "../../assets/cookingLevel5_tools/spatula.png";
+import tongsImg from "../../assets/cookingLevel5_tools/tongs.png";
+import whiskImg from "../../assets/cookingLevel5_tools/whisk.png";
 
-// Import action images (using existing images as placeholders)
-import crackImg from "../../assets/cookingLevel4/egg.png"; // placeholder
-import cutImg from "../../assets/cookingLevel4/fork.png"; // placeholder
-import fryImg from "../../assets/cookingLevel4/fryingpan.png"; // placeholder
-import grillImg from "../../assets/cookingLevel4/stove.png"; // placeholder
-import mixImg from "../../assets/cookingLevel4/spoon.png";
-import spreadImg from "../../assets/cookingLevel4/butter.png";
-import squeezeImg from "../../assets/cookingLevel4/spoon.png"; // placeholder
-import stirImg from "../../assets/cookingLevel4/spoon.png";
+// Import action images from cookingLevel5_actions folder
+import crackImg from "../../assets/cookingLevel5_actions/crack.png";
+import cutImg from "../../assets/cookingLevel5_actions/cut.png";
+import fryImg from "../../assets/cookingLevel5_actions/fry.png";
+import grillImg from "../../assets/cookingLevel5_actions/grill.png";
+import mixImg from "../../assets/cookingLevel5_actions/mix.png";
+import spreadImg from "../../assets/cookingLevel5_actions/spread.png";
+import squeezeImg from "../../assets/cookingLevel5_actions/squeeze.png";
+import stirImg from "../../assets/cookingLevel5_actions/stir.png";
 
-// Import step images (using existing images as placeholders)
-import addLettuceAndCheeseImg from "../../assets/cookingLevel4/lettuceleaf.png";
-import beatEggsWithForkImg from "../../assets/cookingLevel4/fork.png";
-import cookAndStirEggsImg from "../../assets/cookingLevel4/scrambledegg.png";
-import crackEggsInBowlImg from "../../assets/cookingLevel4/egg.png";
-import cutAppleIntoPiecesImg from "../../assets/cookingLevel4/apple.png";
-import heatPanWithButterImg from "../../assets/cookingLevel4/fryingpan.png";
-import mixInABowlImg from "../../assets/cookingLevel4/cleanbowl.png";
-import putBreadOnPlateImg from "../../assets/cookingLevel4/sliceofbread.png";
-import putTopSliceOfBreadImg from "../../assets/cookingLevel4/sliceofbread.png";
-import sliceTheBananaImg from "../../assets/cookingLevel4/banana.png";
-import spreadButterOnBreadImg from "../../assets/cookingLevel4/butter.png";
-import washTheFruitImg from "../../assets/cookingLevel4/washfruit.png";
+// Import step images from cookingLevel5_steps folder
+import addLettuceAndCheeseImg from "../../assets/cookingLevel5_steps/addlettuceandcheese.png";
+import beatEggsWithForkImg from "../../assets/cookingLevel5_steps/beateggswithfork.png";
+import cookAndStirEggsImg from "../../assets/cookingLevel5_steps/cookandstireggs.png";
+import crackEggsInBowlImg from "../../assets/cookingLevel5_steps/crackeggsinbowl.png";
+import cutAppleIntoPiecesImg from "../../assets/cookingLevel5_steps/cutappleintopieces.png";
+import heatPanWithButterImg from "../../assets/cookingLevel5_steps/heatpanwithbutter.png";
+import mixInABowlImg from "../../assets/cookingLevel5_steps/mixinabowl.png";
+import putBreadOnPlateImg from "../../assets/cookingLevel5_steps/putbreadonaplate.png";
+import putTopSliceOfBreadImg from "../../assets/cookingLevel5_steps/puttopsliceofbread.png";
+import sliceTheBananaImg from "../../assets/cookingLevel5_steps/slicethebanana.png";
+import spreadButterOnBreadImg from "../../assets/cookingLevel5_steps/spreadbutteronbread.png";
+import washTheFruitImg from "../../assets/cookingLevel5_steps/washthefruit.png";
 
 const CookingLevel5 = () => {
   const navigate = useNavigate();
@@ -795,101 +795,215 @@ const CookingLevel5 = () => {
                   Choose Your Recipe!
                 </Typography>
                 
-                {/* FIXED Recipe Selection - Perfect Alignment and Consistent Dimensions */}
+                {/* MODERNIZED Recipe Selection - Responsive Grid Layout */}
                 <Box sx={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  justifyContent: 'center',
-                  alignItems: 'stretch',
-                  gap: 3,
+                  display: 'grid',
+                  gridTemplateColumns: { 
+                    xs: '1fr', 
+                    sm: 'repeat(2, 1fr)', 
+                    lg: 'repeat(3, 1fr)' 
+                  },
+                  gap: { xs: 2, sm: 2.5, lg: 3 },
                   width: '100%',
-                  maxWidth: '900px'
+                  maxWidth: '900px',
+                  px: { xs: 1, sm: 0 }
                 }}>
                   {Object.entries(recipes).map(([key, recipe]) => (
-                    <Box key={key} sx={{ 
-                      flex: '0 0 auto',
-                      width: { xs: '100%', sm: '280px', md: '280px' },
-                      maxWidth: '280px',
-                      display: 'flex'
-                    }}>
-                      <Card
-                        onClick={() => selectRecipe(key)}
-                        sx={{
-                          backgroundColor: 'rgba(255, 250, 244, 0.95)',
-                          borderRadius: '20px',
-                          padding: '20px',
-                          border: '3px solid #FF9800',
-                          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-                          cursor: 'pointer',
-                          textAlign: 'center',
-                          backdropFilter: 'blur(15px)',
-                          transition: 'transform 0.3s ease',
-                          width: '100%',
-                          height: '320px', // Fixed height for consistency
-                          display: 'flex',
-                          flexDirection: 'column',
-                          justifyContent: 'space-between',
-                          '&:hover': {
-                            transform: 'scale(1.05)'
+                    <Card
+                      key={key}
+                      onClick={() => selectRecipe(key)}
+                      sx={{
+                        position: 'relative',
+                        backgroundColor: 'rgba(255, 255, 255, 0.97)',
+                        borderRadius: '16px',
+                        padding: '20px',
+                        border: '1px solid rgba(255, 152, 0, 0.2)',
+                        cursor: 'pointer',
+                        textAlign: 'center',
+                        backdropFilter: 'blur(20px)',
+                        transition: 'all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                        height: '280px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        overflow: 'hidden',
+                        boxShadow: '0 4px 20px rgba(255, 152, 0, 0.15)',
+                        
+                        // Gradient border effect
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          borderRadius: '16px',
+                          padding: '2px',
+                          background: 'linear-gradient(135deg, #FF9800, #FFC107, #FF9800)',
+                          mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                          maskComposite: 'xor',
+                          opacity: 0,
+                          transition: 'opacity 0.4s ease',
+                          zIndex: -1
+                        },
+                        
+                        '&:hover': {
+                          transform: 'translateY(-8px) scale(1.02)',
+                          boxShadow: '0 20px 40px rgba(255, 152, 0, 0.25)',
+                          backgroundColor: 'rgba(255, 255, 255, 1)',
+                          
+                          '&::before': {
+                            opacity: 1
+                          },
+                          
+                          // Image zoom effect
+                          '& .recipe-image': {
+                            transform: 'scale(1.1)'
+                          },
+                          
+                          // Badge hover effects
+                          '& .difficulty-badge': {
+                            transform: 'scale(1.05)',
+                            boxShadow: '0 4px 12px rgba(33, 150, 243, 0.3)'
+                          },
+                          
+                          '& .time-badge': {
+                            transform: 'scale(1.05)',
+                            boxShadow: '0 4px 12px rgba(46, 125, 50, 0.3)'
                           }
-                        }}
+                        }
+                      }}
+                    >
+                      {/* Recipe Image with Container */}
+                      <Box sx={{ 
+                        position: 'relative',
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        mb: 2,
+                        overflow: 'hidden',
+                        borderRadius: '12px',
+                        backgroundColor: 'rgba(255, 248, 225, 0.8)',
+                        padding: '12px',
+                        height: '90px'
+                      }}>
+                        <img 
+                          src={recipe.image} 
+                          alt={recipe.name}
+                          className="recipe-image"
+                          style={{
+                            width: '70px',
+                            height: '70px',
+                            objectFit: 'contain',
+                            borderRadius: '8px',
+                            transition: 'transform 0.4s ease',
+                            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.1))'
+                          }}
+                        />
+                      </Box>
+
+                      {/* Recipe Title */}
+                      <Typography variant="h6" sx={{ 
+                        fontWeight: '700', 
+                        color: '#D84315',
+                        mb: 1.5,
+                        fontSize: { xs: '1.1rem', sm: '1.2rem' },
+                        lineHeight: 1.2,
+                        fontFamily: '"Inter", "Roboto", sans-serif',
+                        letterSpacing: '-0.025em'
+                      }}>
+                        {recipe.name}
+                      </Typography>
+
+                      {/* Badges Container */}
+                      <Stack 
+                        direction="row" 
+                        spacing={1} 
+                        justifyContent="center" 
+                        sx={{ mb: 2 }}
                       >
-                        <Box>
-                          <Box sx={{ 
-                            display: 'flex', 
-                            justifyContent: 'center', 
-                            mb: 2,
-                            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))'
-                          }}>
-                            <img 
-                              src={recipe.image} 
-                              alt={recipe.name}
-                              style={{
-                                width: '100px',
-                                height: '100px',
-                                objectFit: 'contain',
-                                borderRadius: '15px'
-                              }}
-                            />
-                          </Box>
-                          <Typography variant="h5" sx={{ 
-                            fontWeight: 'bold', 
-                            color: '#E65100', 
-                            mb: 2,
-                            fontSize: '1.3rem'
-                          }}>
-                            {recipe.name}
-                          </Typography>
-                          <Stack direction="row" spacing={1} justifyContent="center" sx={{ mb: 2 }}>
-                            <Chip
-                              label={recipe.difficulty}
-                              sx={{
-                                backgroundColor: '#e3f2fd',
-                                color: '#1976d2',
-                                fontSize: '0.75rem',
-                                height: '24px'
-                              }}
-                            />
-                            <Chip
-                              label={recipe.time}
-                              sx={{
-                                backgroundColor: '#e8f5e8',
-                                color: '#2e7d32',
-                                fontSize: '0.75rem',
-                                height: '24px'
-                              }}
-                            />
-                          </Stack>
-                        </Box>
-                        <Typography variant="body1" sx={{ 
-                          color: '#5D4037', 
-                          lineHeight: 1.4,
-                          fontSize: '0.95rem'
-                        }}>
+                        <Chip
+                          label={recipe.difficulty}
+                          className="difficulty-badge"
+                          size="small"
+                          sx={{
+                            backgroundColor: '#E3F2FD',
+                            color: '#1565C0',
+                            fontWeight: '600',
+                            fontSize: '0.75rem',
+                            height: '24px',
+                            borderRadius: '12px',
+                            border: '1px solid rgba(21, 101, 192, 0.2)',
+                            transition: 'all 0.3s ease',
+                            '& .MuiChip-label': {
+                              padding: '0 8px'
+                            }
+                          }}
+                        />
+                        <Chip
+                          label={recipe.time}
+                          className="time-badge"
+                          size="small"
+                          sx={{
+                            backgroundColor: '#E8F5E8',
+                            color: '#2E7D32',
+                            fontWeight: '600',
+                            fontSize: '0.75rem',
+                            height: '24px',
+                            borderRadius: '12px',
+                            border: '1px solid rgba(46, 125, 50, 0.2)',
+                            transition: 'all 0.3s ease',
+                            '& .MuiChip-label': {
+                              padding: '0 8px'
+                            }
+                          }}
+                        />
+                      </Stack>
+
+                      {/* Description with Better Text Handling */}
+                      <Box sx={{ 
+                        flex: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            color: '#6D4C41',
+                            lineHeight: 1.4,
+                            fontSize: '0.875rem',
+                            fontWeight: '400',
+                            textAlign: 'center',
+                            overflow: 'hidden',
+                            display: '-webkit-box',
+                            WebkitBoxOrient: 'vertical',
+                            WebkitLineClamp: 3,
+                            fontFamily: '"Inter", "Roboto", sans-serif',
+                            letterSpacing: '0.01em'
+                          }}
+                        >
                           {recipe.description}
                         </Typography>
-                      </Card>
-                    </Box>
+                      </Box>
+
+                      {/* Subtle Call-to-Action */}
+                      <Box sx={{
+                        mt: 'auto',
+                        pt: 1.5,
+                        borderTop: '1px solid rgba(255, 152, 0, 0.1)',
+                        opacity: 0.7,
+                        transition: 'opacity 0.3s ease'
+                      }}>
+                        <Typography variant="caption" sx={{
+                          color: '#FF9800',
+                          fontWeight: '600',
+                          fontSize: '0.75rem',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px'
+                        }}>
+                          Click to Cook →
+                        </Typography>
+                      </Box>
+                    </Card>
                   ))}
                 </Box>
               </Box>
@@ -907,7 +1021,7 @@ const CookingLevel5 = () => {
                   backgroundColor: 'rgba(255, 250, 244, 0.95)',
                   borderRadius: '20px',
                   padding: '20px',
-                  mb: 3,
+                  mb: 2.5,
                   border: '3px solid #FF9800',
                   boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
                   textAlign: 'center',
@@ -918,37 +1032,39 @@ const CookingLevel5 = () => {
                   <Typography variant="h4" sx={{ 
                     fontWeight: 'bold', 
                     color: '#E65100', 
-                    mb: 2
+                    mb: 1.5,
+                    fontSize: '1.5rem'
                   }}>
                     📋 Put the Steps in Order
                   </Typography>
                   <Box sx={{ 
                     display: 'flex', 
                     justifyContent: 'center', 
-                    mb: 2,
+                    mb: 1.5,
                     filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))'
                   }}>
                     <img 
                       src={selectedRecipe.image} 
                       alt={selectedRecipe.name}
                       style={{
-                        width: '100px',
-                        height: '100px',
+                        width: '80px',
+                        height: '80px',
                         objectFit: 'contain',
-                        borderRadius: '15px'
+                        borderRadius: '12px'
                       }}
                     />
                   </Box>
                   <Typography variant="h5" sx={{ 
                     fontWeight: 'bold', 
                     color: '#5D4037', 
-                    mb: 1
+                    mb: 1,
+                    fontSize: '1.1rem'
                   }}>
                     {selectedRecipe.name}
                   </Typography>
                   <Typography variant="body1" sx={{ 
                     color: '#5D4037',
-                    fontSize: '1.1rem'
+                    fontSize: '1rem'
                   }}>
                     Drag the steps to arrange them in the correct cooking order:
                   </Typography>
@@ -957,14 +1073,14 @@ const CookingLevel5 = () => {
                 <Box sx={{
                   display: 'grid',
                   gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
-                  gap: 3,
+                  gap: 2.5,
                   width: '100%'
                 }}>
                   {/* Available Steps */}
                   <Card sx={{
                     backgroundColor: 'rgba(255, 250, 244, 0.95)',
                     borderRadius: '20px',
-                    padding: '20px',
+                    padding: '15px',
                     border: '3px solid #2196F3',
                     boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
                     backdropFilter: 'blur(15px)'
@@ -972,12 +1088,13 @@ const CookingLevel5 = () => {
                     <Typography variant="h6" sx={{ 
                       fontWeight: 'bold', 
                       color: '#1976D2', 
-                      mb: 2,
-                      textAlign: 'center'
+                      mb: 1.5,
+                      textAlign: 'center',
+                      fontSize: '1.1rem'
                     }}>
                       📝 Available Steps
                     </Typography>
-                    <Stack spacing={2}>
+                    <Stack spacing={1.5}>
                       {sequenceSteps.filter(step => !draggedSteps.find(d => d.id === step.id)).map(step => (
                         <Box
                           key={step.id}
@@ -985,14 +1102,15 @@ const CookingLevel5 = () => {
                           onDragStart={(e) => e.dataTransfer.setData('text/plain', step.id.toString())}
                           sx={{
                             backgroundColor: '#f3f4f6',
-                            padding: '15px',
+                            padding: '12px',
                             borderRadius: '12px',
                             border: '2px solid #2196F3',
                             cursor: 'move',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: 2,
+                            gap: 1.5,
                             transition: 'transform 0.2s ease',
+                            minHeight: '60px',
                             '&:hover': {
                               transform: 'scale(1.02)'
                             }
@@ -1001,23 +1119,26 @@ const CookingLevel5 = () => {
                           <Box sx={{ 
                             display: 'flex', 
                             justifyContent: 'center',
-                            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
+                            flexShrink: 0
                           }}>
                             <img 
                               src={step.image} 
                               alt={step.text}
                               style={{
-                                width: '50px',
-                                height: '50px',
+                                width: '40px',
+                                height: '40px',
                                 objectFit: 'contain',
-                                borderRadius: '8px'
+                                borderRadius: '6px'
                               }}
                             />
                           </Box>
                           <Typography variant="body1" sx={{ 
                             fontWeight: 'bold', 
                             color: '#1976D2',
-                            flex: 1
+                            flex: 1,
+                            fontSize: '0.9rem',
+                            lineHeight: 1.2
                           }}>
                             {step.text}
                           </Typography>
@@ -1030,7 +1151,7 @@ const CookingLevel5 = () => {
                   <Card sx={{
                     backgroundColor: 'rgba(255, 250, 244, 0.95)',
                     borderRadius: '20px',
-                    padding: '20px',
+                    padding: '15px',
                     border: '3px solid #9C27B0',
                     boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
                     backdropFilter: 'blur(15px)'
@@ -1038,8 +1159,9 @@ const CookingLevel5 = () => {
                     <Typography variant="h6" sx={{ 
                       fontWeight: 'bold', 
                       color: '#7B1FA2', 
-                      mb: 2,
-                      textAlign: 'center'
+                      mb: 1.5,
+                      textAlign: 'center',
+                      fontSize: '1.1rem'
                     }}>
                       🎯 Cooking Order
                     </Typography>
@@ -1047,59 +1169,65 @@ const CookingLevel5 = () => {
                       onDrop={handleDrop}
                       onDragOver={(e) => e.preventDefault()}
                       sx={{
-                        minHeight: '300px',
+                        minHeight: '250px',
                         backgroundColor: '#f3f4f6',
                         border: '2px dashed #9C27B0',
                         borderRadius: '12px',
-                        padding: '15px',
+                        padding: '12px',
                         display: 'flex',
                         flexDirection: 'column',
-                        gap: 2
+                        gap: 1.5
                       }}
                     >
                       {draggedSteps.map((step, index) => (
                         <Box key={step.id} sx={{
                           backgroundColor: '#e1bee7',
-                          padding: '15px',
+                          padding: '12px',
                           borderRadius: '12px',
                           border: '2px solid #9C27B0',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: 2
+                          gap: 1.5,
+                          minHeight: '60px'
                         }}>
                           <Box sx={{
                             backgroundColor: '#9C27B0',
                             color: 'white',
                             borderRadius: '50%',
-                            width: '30px',
-                            height: '30px',
+                            width: '25px',
+                            height: '25px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontWeight: 'bold'
+                            fontWeight: 'bold',
+                            fontSize: '0.8rem',
+                            flexShrink: 0
                           }}>
                             {index + 1}
                           </Box>
                           <Box sx={{ 
                             display: 'flex', 
                             justifyContent: 'center',
-                            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
+                            flexShrink: 0
                           }}>
                             <img 
                               src={step.image} 
                               alt={step.text}
                               style={{
-                                width: '50px',
-                                height: '50px',
+                                width: '40px',
+                                height: '40px',
                                 objectFit: 'contain',
-                                borderRadius: '8px'
+                                borderRadius: '6px'
                               }}
                             />
                           </Box>
                           <Typography variant="body1" sx={{ 
                             fontWeight: 'bold', 
                             color: '#7B1FA2',
-                            flex: 1
+                            flex: 1,
+                            fontSize: '0.9rem',
+                            lineHeight: 1.2
                           }}>
                             {step.text}
                           </Typography>
@@ -1109,11 +1237,13 @@ const CookingLevel5 = () => {
                         <Box sx={{
                           textAlign: 'center',
                           color: '#9C27B0',
-                          padding: '40px',
-                          fontSize: '1.2rem'
+                          padding: '30px',
+                          fontSize: '1rem'
                         }}>
-                          <Typography sx={{ fontSize: '3rem', mb: 2 }}>👆</Typography>
-                          Drop steps here in the correct order
+                          <Typography sx={{ fontSize: '2.5rem', mb: 1 }}>👆</Typography>
+                          <Typography sx={{ fontSize: '0.9rem', fontWeight: 'bold' }}>
+                            Drop steps here in the correct order
+                          </Typography>
                         </Box>
                       )}
                     </Box>
@@ -1233,8 +1363,8 @@ const CookingLevel5 = () => {
                 <Card sx={{
                   backgroundColor: 'rgba(255, 250, 244, 0.95)',
                   borderRadius: '20px',
-                  padding: '25px',
-                  mb: 3,
+                  padding: '20px',
+                  mb: 2.5,
                   border: '3px solid #FF9800',
                   boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
                   textAlign: 'center',
@@ -1245,7 +1375,8 @@ const CookingLevel5 = () => {
                   <Typography variant="h4" sx={{ 
                     fontWeight: 'bold', 
                     color: '#E65100', 
-                    mb: 2
+                    mb: 1.5,
+                    fontSize: '1.5rem'
                   }}>
                     {currentPhase === 'ingredients' && '🥕 Choose the Ingredients'}
                     {currentPhase === 'tools' && '🔪 Pick the Right Tool'}
@@ -1254,30 +1385,32 @@ const CookingLevel5 = () => {
                   <Box sx={{ 
                     display: 'flex', 
                     justifyContent: 'center', 
-                    mb: 2,
+                    mb: 1.5,
                     filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))'
                   }}>
                     <img 
                       src={selectedRecipe.image} 
                       alt={selectedRecipe.name}
                       style={{
-                        width: '100px',
-                        height: '100px',
+                        width: '80px',
+                        height: '80px',
                         objectFit: 'contain',
-                        borderRadius: '15px'
+                        borderRadius: '12px'
                       }}
                     />
                   </Box>
                   <Typography variant="h5" sx={{ 
                     fontWeight: 'bold', 
                     color: '#5D4037', 
-                    mb: 2
+                    mb: 0.5,
+                    fontSize: '1.1rem'
                   }}>
                     {selectedRecipe.name}
                   </Typography>
                   <Typography variant="body1" sx={{ 
                     color: '#5D4037',
-                    fontSize: '1.2rem'
+                    fontSize: '1rem',
+                    lineHeight: 1.4
                   }}>
                     {currentPhase === 'ingredients' && `Select the ingredients needed for ${selectedRecipe.name}:`}
                     {currentPhase === 'tools' && 'Which tool do you need?'}
@@ -1285,65 +1418,82 @@ const CookingLevel5 = () => {
                   </Typography>
                 </Card>
 
+                {/* FIXED Choice Items - Single Row Layout */}
                 <Box sx={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'stretch',
                   gap: 2,
                   width: '100%',
-                  maxWidth: '700px'
+                  maxWidth: '800px',
+                  overflowX: 'auto',
+                  pb: 1
                 }}>
                   {selectedRecipe[currentPhase]?.map(item => (
-                    <Card
-                      key={item.id}
-                      onClick={() => handleItemSelect(item)}
-                      sx={{
-                        padding: '20px',
-                        borderRadius: '15px',
-                        border: '3px solid',
-                        borderColor: selectedItems.includes(item.id) ? '#4CAF50' : '#E0E0E0',
-                        cursor: 'pointer',
-                        textAlign: 'center',
-                        backgroundColor: selectedItems.includes(item.id) 
-                          ? 'rgba(200, 230, 201, 0.95)'
-                          : 'rgba(255, 255, 255, 0.95)',
-                        transition: 'all 0.3s ease',
-                        transform: selectedItems.includes(item.id) ? 'scale(1.05)' : 'scale(1)',
-                        backdropFilter: 'blur(10px)',
-                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
-                        '&:hover': {
-                          transform: 'scale(1.05)',
-                          boxShadow: '0 6px 25px rgba(0,0,0,0.3)'
-                        }
-                      }}
-                    >
-                      <Box sx={{ 
-                        display: 'flex', 
-                        justifyContent: 'center', 
-                        mb: 1,
-                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
-                      }}>
-                        <img 
-                          src={item.image} 
-                          alt={item.name}
-                          style={{
-                            width: '60px',
-                            height: '60px',
-                            objectFit: 'contain',
-                            borderRadius: '8px'
-                          }}
-                        />
-                      </Box>
-                      <Typography variant="body1" sx={{ 
-                        fontWeight: 'bold', 
-                        color: '#E65100',
-                        fontSize: '0.9rem'
-                      }}>
-                        {item.name}
-                      </Typography>
-                      {selectedItems.includes(item.id) && (
-                        <CheckCircleIcon sx={{ color: '#4CAF50', fontSize: 24, mt: 1 }} />
-                      )}
-                    </Card>
+                    <Box key={item.id} sx={{ 
+                      flex: '0 0 140px',
+                      minWidth: '140px',
+                      display: 'flex'
+                    }}>
+                      <Card
+                        onClick={() => handleItemSelect(item)}
+                        sx={{
+                          padding: '15px',
+                          borderRadius: '15px',
+                          border: '3px solid',
+                          borderColor: selectedItems.includes(item.id) ? '#4CAF50' : '#E0E0E0',
+                          cursor: 'pointer',
+                          textAlign: 'center',
+                          backgroundColor: selectedItems.includes(item.id) 
+                            ? 'rgba(200, 230, 201, 0.95)'
+                            : 'rgba(255, 255, 255, 0.95)',
+                          transition: 'all 0.3s ease',
+                          transform: selectedItems.includes(item.id) ? 'scale(1.05)' : 'scale(1)',
+                          backdropFilter: 'blur(10px)',
+                          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
+                          width: '100%',
+                          height: '120px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          '&:hover': {
+                            transform: 'scale(1.05)',
+                            boxShadow: '0 6px 25px rgba(0,0,0,0.3)'
+                          }
+                        }}
+                      >
+                        <Box sx={{ 
+                          display: 'flex', 
+                          justifyContent: 'center', 
+                          mb: 1,
+                          filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                        }}>
+                          <img 
+                            src={item.image} 
+                            alt={item.name}
+                            style={{
+                              width: '50px',
+                              height: '50px',
+                              objectFit: 'contain',
+                              borderRadius: '8px'
+                            }}
+                          />
+                        </Box>
+                        <Typography variant="body1" sx={{ 
+                          fontWeight: 'bold', 
+                          color: '#E65100',
+                          fontSize: '0.8rem',
+                          lineHeight: 1.2,
+                          textAlign: 'center'
+                        }}>
+                          {item.name}
+                        </Typography>
+                        {selectedItems.includes(item.id) && (
+                          <CheckCircleIcon sx={{ color: '#4CAF50', fontSize: 18, mt: 0.5 }} />
+                        )}
+                      </Card>
+                    </Box>
                   ))}
                 </Box>
               </Box>
