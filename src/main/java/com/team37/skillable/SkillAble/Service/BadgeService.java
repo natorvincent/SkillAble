@@ -2,6 +2,8 @@ package com.team37.skillable.SkillAble.Service;
 
 import com.team37.skillable.SkillAble.Entity.Badge;
 import com.team37.skillable.SkillAble.Repository.BadgeRepository;
+import com.team37.skillable.SkillAble.Repository.LessonRepository;
+import com.team37.skillable.SkillAble.Repository.ModuleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +17,12 @@ public class BadgeService {
 
     @Autowired
     private ProgressService progressService;
+
+    @Autowired
+    private LessonRepository lessonRepository;
+
+    @Autowired
+    private ModuleRepository moduleRepository;
 
     public List<Badge> getAllBadges() {
         return badgeRepository.findAll();
@@ -50,7 +58,7 @@ public class BadgeService {
         List<Map<String, Object>> badges = new ArrayList<>();
 
         try {
-            System.out.println("Calculating badges for student: " + studentId); // Debug log
+            System.out.println("Calculating badges for student: " + studentId);
 
             // Get student progress stats with null safety
             Map<String, Object> progressStats = progressService.getStudentModuleProgressStats(studentId, 1);
@@ -59,6 +67,10 @@ public class BadgeService {
                 progressStats = new HashMap<>();
             }
 
+            // Get admin-created content counts
+            int totalAdminLessons = getTotalAdminCreatedLessons();
+            int totalAdminModules = getTotalAdminCreatedModules();
+
             // Safely extract values with proper null checking and type safety
             int completedLessons = extractIntValue(progressStats, "completedLessons", 0);
             int totalStars = extractIntValue(progressStats, "totalStars", 0);
@@ -66,28 +78,27 @@ public class BadgeService {
             int currentStreak = extractIntValue(progressStats, "currentStreak", 0);
             double totalProgress = extractDoubleValue(progressStats, "totalProgress", 0.0);
 
-            System.out.println("Extracted values - Lessons: " + completedLessons +
-                    ", Stars: " + totalStars +
-                    ", Modules: " + completedModules +
-                    ", Progress: " + totalProgress); // Debug log
+            // Limit completed counts to admin-created content only
+            int validCompletedLessons = Math.min(completedLessons, totalAdminLessons);
+            int validCompletedModules = Math.min(completedModules, totalAdminModules);
 
-            // Calculate lesson badges
-            badges.addAll(calculateLessonBadges(completedLessons));
+            // Calculate progress percentage based on admin-created content
+            double validProgressPercentage = 0.0;
+            if (totalAdminLessons > 0) {
+                validProgressPercentage = (double) validCompletedLessons / totalAdminLessons * 100.0;
+            }
 
-            // Calculate star badges
+            System.out.println("Admin content - Lessons: " + totalAdminLessons + ", Modules: " + totalAdminModules);
+            System.out.println("Valid completed - Lessons: " + validCompletedLessons + ", Modules: " + validCompletedModules);
+            System.out.println("Valid progress: " + validProgressPercentage + "%");
+
+            // Calculate badges using filtered counts
+            badges.addAll(calculateLessonBadges(validCompletedLessons, totalAdminLessons));
             badges.addAll(calculateStarBadges(totalStars));
-
-            // Calculate module badges
-            badges.addAll(calculateModuleBadges(completedModules));
-
-            // Calculate major achievement badges (always visible)
-            badges.addAll(calculateMajorAchievementBadges(completedLessons, totalStars, completedModules));
-
-            // Calculate streak badges
+            badges.addAll(calculateModuleBadges(validCompletedModules, totalAdminModules));
+            badges.addAll(calculateMajorAchievementBadges(validCompletedLessons, totalStars, validCompletedModules, totalAdminLessons, totalAdminModules));
             badges.addAll(calculateStreakBadges(currentStreak));
-
-            // Calculate progress badges
-            badges.addAll(calculateProgressBadges(totalProgress));
+            badges.addAll(calculateProgressBadges(validProgressPercentage));
 
             // Calculate earned count
             int earnedCount = (int) badges.stream()
@@ -97,8 +108,10 @@ public class BadgeService {
             result.put("badges", badges);
             result.put("earnedCount", earnedCount);
             result.put("totalCount", badges.size());
+            result.put("adminCreatedLessons", totalAdminLessons);
+            result.put("adminCreatedModules", totalAdminModules);
 
-            System.out.println("Total badges calculated: " + badges.size() + ", Earned: " + earnedCount); // Debug log
+            System.out.println("Total badges calculated: " + badges.size() + ", Earned: " + earnedCount);
 
         } catch (Exception e) {
             System.err.println("Error calculating student badges: " + e.getMessage());
@@ -108,9 +121,41 @@ public class BadgeService {
             result.put("badges", new ArrayList<>());
             result.put("earnedCount", 0);
             result.put("totalCount", 0);
+            result.put("adminCreatedLessons", 0);
+            result.put("adminCreatedModules", 0);
         }
 
         return result;
+    }
+
+    // New method to get total admin-created lessons
+    private int getTotalAdminCreatedLessons() {
+        try {
+            // Count all lessons using the built-in count() method
+            return (int) lessonRepository.count();
+
+            // Alternative: Count only active lessons with activities
+            // List<Lesson> activeLessons = lessonRepository.findByActivityIsNotNullAndActiveTrue();
+            // return activeLessons.size();
+        } catch (Exception e) {
+            System.err.println("Error getting admin-created lessons count: " + e.getMessage());
+            return 0;
+        }
+    }
+
+    // New method to get total admin-created modules
+    private int getTotalAdminCreatedModules() {
+        try {
+            // Count all modules using the built-in count() method
+            return (int) moduleRepository.count();
+
+            // Alternative: Count only active modules
+            // List<Module> activeModules = moduleRepository.findByActiveTrue();
+            // return activeModules.size();
+        } catch (Exception e) {
+            System.err.println("Error getting admin-created modules count: " + e.getMessage());
+            return 0;
+        }
     }
 
     // Helper method to safely extract integer values
@@ -159,18 +204,27 @@ public class BadgeService {
         }
     }
 
-    private List<Map<String, Object>> calculateLessonBadges(int completedLessons) {
+    private List<Map<String, Object>> calculateLessonBadges(int completedLessons, int totalAdminLessons) {
         List<Map<String, Object>> badges = new ArrayList<>();
 
-        if (completedLessons >= 50) {
-            badges.add(createBadge("lesson-master", "Lesson Master", "Completed 50+ lessons",
-                    "Lessons", true, completedLessons + "/50", "#4a6cf7"));
-        } else if (completedLessons >= 25) {
-            badges.add(createBadge("lesson-expert", "Lesson Expert", "Completed 25+ lessons",
-                    "Lessons", true, completedLessons + "/25", "#4a6cf7"));
-        } else if (completedLessons >= 10) {
-            badges.add(createBadge("lesson-achiever", "Achiever", "Completed 10+ lessons",
-                    "Lessons", true, completedLessons + "/10", "#4a6cf7"));
+        // Only create badges if there are admin-created lessons
+        if (totalAdminLessons == 0) {
+            return badges;
+        }
+
+        int threshold50 = Math.min(50, totalAdminLessons);
+        int threshold25 = Math.min(25, totalAdminLessons);
+        int threshold10 = Math.min(10, totalAdminLessons);
+
+        if (completedLessons >= threshold50 && threshold50 > 0) {
+            badges.add(createBadge("lesson-master", "Lesson Master", "Completed " + threshold50 + "+ lessons",
+                    "Lessons", true, completedLessons + "/" + threshold50, "#4a6cf7"));
+        } else if (completedLessons >= threshold25 && threshold25 > 0) {
+            badges.add(createBadge("lesson-expert", "Lesson Expert", "Completed " + threshold25 + "+ lessons",
+                    "Lessons", true, completedLessons + "/" + threshold25, "#4a6cf7"));
+        } else if (completedLessons >= threshold10 && threshold10 > 0) {
+            badges.add(createBadge("lesson-achiever", "Achiever", "Completed " + threshold10 + "+ lessons",
+                    "Lessons", true, completedLessons + "/" + threshold10, "#4a6cf7"));
         }
 
         return badges;
@@ -190,38 +244,52 @@ public class BadgeService {
         return badges;
     }
 
-    private List<Map<String, Object>> calculateModuleBadges(int completedModules) {
+    private List<Map<String, Object>> calculateModuleBadges(int completedModules, int totalAdminModules) {
         List<Map<String, Object>> badges = new ArrayList<>();
 
-        if (completedModules >= 10) {
-            badges.add(createBadge("module-champion", "Champion", "Completed 10+ modules",
-                    "Modules", true, completedModules + "/10", "#28a745"));
-        } else if (completedModules >= 5) {
-            badges.add(createBadge("module-warrior", "Warrior", "Completed 5+ modules",
-                    "Modules", true, completedModules + "/5", "#48bb78"));
+        // Only create badges if there are admin-created modules
+        if (totalAdminModules == 0) {
+            return badges;
+        }
+
+        int threshold10 = Math.min(10, totalAdminModules);
+        int threshold5 = Math.min(5, totalAdminModules);
+
+        if (completedModules >= threshold10 && threshold10 > 0) {
+            badges.add(createBadge("module-champion", "Champion", "Completed " + threshold10 + "+ modules",
+                    "Modules", true, completedModules + "/" + threshold10, "#28a745"));
+        } else if (completedModules >= threshold5 && threshold5 > 0) {
+            badges.add(createBadge("module-warrior", "Warrior", "Completed " + threshold5 + "+ modules",
+                    "Modules", true, completedModules + "/" + threshold5, "#48bb78"));
         }
 
         return badges;
     }
 
-    private List<Map<String, Object>> calculateMajorAchievementBadges(int completedLessons, int totalStars, int completedModules) {
+    private List<Map<String, Object>> calculateMajorAchievementBadges(int completedLessons, int totalStars, int completedModules, int totalAdminLessons, int totalAdminModules) {
         List<Map<String, Object>> badges = new ArrayList<>();
 
-        // Super Learner Badge (always visible)
-        badges.add(createBadge("super-learner", "Super Learner", "Complete 100 lessons",
-                "Lessons", completedLessons >= 100, completedLessons + "/100",
-                completedLessons >= 100 ? "#4a6cf7" : "#ccc"));
+        // Only show major achievement badges if admin content exists
+        if (totalAdminLessons > 0) {
+            int superLearnerThreshold = Math.min(100, totalAdminLessons);
+            badges.add(createBadge("super-learner", "Super Learner", "Complete " + superLearnerThreshold + " lessons",
+                    "Lessons", completedLessons >= superLearnerThreshold, completedLessons + "/" + superLearnerThreshold,
+                    completedLessons >= superLearnerThreshold ? "#4a6cf7" : "#ccc"));
+        }
 
-        // Star Master Badge (always visible)
+        // Star Master Badge (can remain as is since stars aren't limited by admin content)
         badges.add(createBadge("star-master", "Star Master", "Earn 500 stars",
                 "Stars", totalStars >= 500, totalStars + "/500",
                 totalStars >= 500 ? "#ffc107" : "#ccc"));
 
-        // Module Legend Badge (always visible) - Fixed the undefined issue
-        String moduleProgress = completedModules + "/25";
-        badges.add(createBadge("module-legend", "Module Legend", "Complete 25 modules",
-                "Modules", completedModules >= 25, moduleProgress,
-                completedModules >= 25 ? "#28a745" : "#ccc"));
+        // Module Legend Badge
+        if (totalAdminModules > 0) {
+            int moduleLegendThreshold = Math.min(25, totalAdminModules);
+            String moduleProgress = completedModules + "/" + moduleLegendThreshold;
+            badges.add(createBadge("module-legend", "Module Legend", "Complete " + moduleLegendThreshold + " modules",
+                    "Modules", completedModules >= moduleLegendThreshold, moduleProgress,
+                    completedModules >= moduleLegendThreshold ? "#28a745" : "#ccc"));
+        }
 
         return badges;
     }
@@ -299,6 +367,8 @@ public class BadgeService {
         summary.put("earnedBadges", badgeData.get("earnedCount"));
         summary.put("categoryBreakdown", categoryCount);
         summary.put("earnedByCategory", earnedByCategory);
+        summary.put("adminCreatedLessons", badgeData.get("adminCreatedLessons"));
+        summary.put("adminCreatedModules", badgeData.get("adminCreatedModules"));
 
         return summary;
     }

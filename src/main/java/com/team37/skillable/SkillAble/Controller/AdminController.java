@@ -1,5 +1,6 @@
 package com.team37.skillable.SkillAble.Controller;
 
+import com.team37.skillable.SkillAble.Entity.Admin;
 import com.team37.skillable.SkillAble.Entity.Student;
 import com.team37.skillable.SkillAble.Entity.Teacher;
 import com.team37.skillable.SkillAble.Repository.AdminRepository;
@@ -11,7 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -26,6 +30,31 @@ public class AdminController {
 
     @Autowired
     private AdminRepository adminRepository;
+
+    @GetMapping("/profile")
+    public ResponseEntity<Map<String, Object>> getAdminProfile(@RequestParam String email) {
+        try {
+            Optional<Admin> admin = adminRepository.findByEmail(email);
+
+            if (admin.isPresent()) {
+                Map<String, Object> profile = new HashMap<>();
+                Admin adminUser = admin.get();
+
+                profile.put("id", adminUser.getId());
+                profile.put("email", adminUser.getEmail());
+                profile.put("firstName", "Admin");  // Always "Admin"
+                profile.put("lastName", "");        // Empty or you can use "User"
+                profile.put("role", "ADMIN");
+
+                return ResponseEntity.ok(profile);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
 
     @GetMapping("/students")
     public ResponseEntity<List<Student>> getAllStudents() {
