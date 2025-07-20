@@ -87,6 +87,7 @@ export default function CookingLevel4() {
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [showCorrectAnimation, setShowCorrectAnimation] = useState(false);
   const [confettiPieces, setConfettiPieces] = useState([]);
+  const [shuffledChoices, setShuffledChoices] = useState({});
   
   // Level progression props
   const [currentLevel] = useState(4); // Level 4
@@ -231,6 +232,33 @@ export default function CookingLevel4() {
 
   const currentRecipe = recipes[selectedRecipe];
 
+  // Randomize choice order function - prevents predictable answer positions
+  const shuffleArray = (array) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
+  // Initialize shuffled choices for current recipe to improve learning engagement
+  const getShuffledChoices = (recipeKey) => {
+    if (!shuffledChoices[recipeKey]) {
+      const recipe = recipes[recipeKey];
+      const newShuffledChoices = recipe.choices.map(choiceSet => shuffleArray(choiceSet));
+      setShuffledChoices(prev => ({
+        ...prev,
+        [recipeKey]: newShuffledChoices
+      }));
+      return newShuffledChoices;
+    }
+    return shuffledChoices[recipeKey];
+  };
+
+  // Get current shuffled choices for the selected recipe
+  const currentShuffledChoices = getShuffledChoices(selectedRecipe);
+
   // Get student ID from localStorage
   const getStudentId = () => {
     const studentId = localStorage.getItem('studentId');
@@ -282,6 +310,18 @@ export default function CookingLevel4() {
     fetchUserProgress();
   }, [lessonId]);
 
+  // Regenerate shuffled choices when recipe selection changes
+  useEffect(() => {
+    if (selectedRecipe && recipes[selectedRecipe]) {
+      const recipe = recipes[selectedRecipe];
+      const newShuffledChoices = recipe.choices.map(choiceSet => shuffleArray(choiceSet));
+      setShuffledChoices(prev => ({
+        ...prev,
+        [selectedRecipe]: newShuffledChoices
+      }));
+    }
+  }, [selectedRecipe]);
+
   // Speech synthesis
   const speak = (text) => {
     if ('speechSynthesis' in window && autoPlayEnabled) {
@@ -316,6 +356,76 @@ export default function CookingLevel4() {
     }, 3000);
   };
 
+  // Get the next lesson ID for Level 5
+  const getNextLessonId = async () => {
+    try {
+      const studentId = getStudentId();
+      if (!studentId || !moduleId) return null;
+      
+      // Fetch all lessons for this module
+      const response = await fetch(`http://localhost:8080/api/modules/${moduleId}/lessons`);
+      if (response.ok) {
+        const lessons = await response.json();
+        
+        // Find the lesson for Level 5
+        const level5Lesson = lessons.find(lesson => 
+          lesson.level === 5 || 
+          lesson.activity === 'cooking-level-5' ||
+          lesson.title.toLowerCase().includes('level 5') ||
+          lesson.title.toLowerCase().includes('adventure')
+        );
+        
+        console.log('Found Level 5 lesson:', level5Lesson);
+        return level5Lesson ? level5Lesson.id : null;
+      }
+    } catch (error) {
+      console.error('Error fetching next lesson:', error);
+    }
+    return null;
+  };
+
+  // Mark level as completed with proper database updates
+  const markLevelAsCompleted = async () => {
+    try {
+      const studentId = getStudentId();
+      if (!studentId || !moduleId || !lessonId) return;
+      
+      // Mark this specific lesson as completed
+      const lessonCompletionData = {
+        studentId: studentId,
+        lessonId: parseInt(lessonId, 10),
+        moduleId: parseInt(moduleId, 10),
+        completed: true,
+        completedAt: new Date().toISOString(),
+        score: score,
+        maxScore: Object.keys(recipes).length,
+        starsEarned: getStarRating()
+      };
+      
+      // Save lesson completion
+      await saveStudentLessonProgress(studentId, lessonId, lessonCompletionData);
+      
+      // Update module progress to unlock next level
+      const moduleUpdateData = {
+        studentId: parseInt(studentId, 10),
+        moduleId: parseInt(moduleId, 10),
+        currentLevel: currentLevel + 1, // Unlock next level
+        levelsCompleted: currentLevel, // Mark current level as completed
+        lastCompletedLevel: currentLevel,
+        progress: Math.round((currentLevel / maxLevel) * 100),
+        completed: currentLevel >= maxLevel
+      };
+      
+      await updateModuleProgress(studentId, moduleId, moduleUpdateData);
+      
+      console.log('Level completion saved successfully');
+      return true;
+    } catch (error) {
+      console.error('Error marking level as completed:', error);
+      return false;
+    }
+  };
+
   const handleChoice = (choice) => {
     setSelectedAnswer(choice);
     setShowFeedback(true);
@@ -333,13 +443,33 @@ export default function CookingLevel4() {
         if (currentStep < currentRecipe.choices.length - 1) {
           setCurrentStep(currentStep + 1);
         } else {
+          // Recipe completed!
           if (!completedRecipes.includes(selectedRecipe)) {
             setScore(prev => prev + 1);
-            setCompletedRecipes(prev => [...prev, selectedRecipe]);
+            setCompletedRecipes(prev => {
+              const newCompleted = [...prev, selectedRecipe];
+              
+              // Check if ALL recipes are now completed
+              if (newCompleted.length >= Object.keys(recipes).length) {
+                console.log('All recipes completed! Marking level as completed...');
+                // Mark the entire level as completed
+                setTimeout(() => {
+                  markLevelAsCompleted();
+                }, 1000);
+              }
+              
+              return newCompleted;
+            });
           }
+          
           setGamePhase('complete');
           setShowCelebration(true);
-          saveProgress();
+          
+          // Save progress after each recipe completion
+          setTimeout(() => {
+            saveProgress();
+          }, 500);
+          
           speak(`Wonderful! You finished making ${currentRecipe.name}!`);
         }
       }, 3000);
@@ -352,7 +482,16 @@ export default function CookingLevel4() {
     }
   };
 
-  // Save progress to database
+  // Calculate star rating based on score
+  const getStarRating = (finalScore = score) => {
+    const percentage = (finalScore / Object.keys(recipes).length) * 100;
+    if (percentage >= 90) return 3;
+    if (percentage >= 70) return 2;
+    if (percentage >= 50) return 1;
+    return 0;
+  };
+
+  // Save progress to database - COMPLETE FIXED VERSION
   const saveProgress = async () => {
     if (progressSaving || progressSaved) return;
 
@@ -365,35 +504,80 @@ export default function CookingLevel4() {
         return;
       }
       
+      const isLevelCompleted = completedRecipes.length >= Object.keys(recipes).length;
+      
+      console.log('Saving progress:', {
+        studentId,
+        lessonId,
+        moduleId,
+        isLevelCompleted,
+        completedRecipes: completedRecipes.length,
+        totalRecipes: Object.keys(recipes).length,
+        currentLevel,
+        score
+      });
+      
       const progressData = {
         studentId: studentId,
         lessonId: parseInt(lessonId, 10),
         score: score,
         maxScore: Object.keys(recipes).length,
-        completed: completedRecipes.length >= Object.keys(recipes).length,
+        completed: isLevelCompleted, // This marks the lesson as completed
         starsEarned: getStarRating()
       };
       
+      // Save the lesson progress first
       await saveStudentLessonProgress(studentId, lessonId, progressData);
+      console.log('Lesson progress saved successfully');
+      
+      // Update module progress if level is completed to unlock next level
+      if (isLevelCompleted && moduleId) {
+        try {
+          const moduleProgressData = {
+            currentLevel: currentLevel + 1, // This unlocks Level 5
+            levelsCompleted: currentLevel, // This marks Level 4 as completed
+            lastCompletedLevel: currentLevel,
+            totalScore: score,
+            completed: currentLevel >= maxLevel, // Mark entire module as completed if this was the last level
+            progress: Math.round((currentLevel / maxLevel) * 100) // Calculate percentage
+          };
+          
+          console.log('Updating module progress:', moduleProgressData);
+          
+          await updateModuleProgress(studentId, moduleId, moduleProgressData);
+          console.log('Module progress updated successfully - Level 5 should now be unlocked');
+        } catch (moduleError) {
+          console.error('Error updating module progress:', moduleError);
+          // Don't fail the entire save if module update fails, but show error
+          throw new Error(`Module progress update failed: ${moduleError.message}`);
+        }
+      }
+      
       setProgressSaved(true);
+      
+      // Also trigger a custom event to notify other components about the progress update
+      window.dispatchEvent(new CustomEvent('progressUpdated', {
+        detail: {
+          studentId,
+          moduleId,
+          lessonId,
+          completed: isLevelCompleted,
+          level: currentLevel
+        }
+      }));
       
     } catch (error) {
       console.error('Error saving progress:', error);
+      // Show a more specific error message
+      alert(`Failed to save progress: ${error.message}. Please try again.`);
     } finally {
       setProgressSaving(false);
     }
   };
 
-  // Calculate star rating based on score
-  const getStarRating = (finalScore = score) => {
-    const percentage = (finalScore / Object.keys(recipes).length) * 100;
-    if (percentage >= 90) return 3;
-    if (percentage >= 70) return 2;
-    if (percentage >= 50) return 1;
-    return 0;
-  };
-
   const resetGame = () => {
+    // Clear shuffled choices when resetting to allow new randomization
+    setShuffledChoices({});
     setCurrentStep(0);
     setGamePhase('intro');
     setShowFeedback(false);
@@ -402,6 +586,14 @@ export default function CookingLevel4() {
   };
 
   const startGame = () => {
+    // Generate new shuffled choices for the selected recipe when starting
+    const recipe = recipes[selectedRecipe];
+    const newShuffledChoices = recipe.choices.map(choiceSet => shuffleArray(choiceSet));
+    setShuffledChoices(prev => ({
+      ...prev,
+      [selectedRecipe]: newShuffledChoices
+    }));
+    
     setCurrentStep(0);
     setGamePhase('game');
     setShowFeedback(false);
@@ -417,24 +609,63 @@ export default function CookingLevel4() {
     }
   };
 
+  // Updated continueToNextLevel function
   const continueToNextLevel = async () => {
+    // Ensure progress is saved first
     if (!progressSaved && !progressSaving) {
       await saveProgress();
+      // Wait a bit for the progress to be fully saved
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
     
     const hasNextLevel = currentLevel < maxLevel;
     
-    setTimeout(() => {
-      if (hasNextLevel) {
-        if (navigate) {
-          navigate('/lesson/cooking/level-5');
+    if (hasNextLevel) {
+      try {
+        // Try to get the actual lessonId for Level 5
+        const nextLessonId = await getNextLessonId();
+        
+        let navigationUrl;
+        if (nextLessonId && moduleId) {
+          // Use the correct lessonId for Level 5
+          navigationUrl = `/lesson/cooking/level-5/${moduleId}/${nextLessonId}`;
+        } else if (moduleId && lessonId) {
+          // Fallback: try incrementing the current lessonId
+          const fallbackLessonId = parseInt(lessonId) + 1;
+          navigationUrl = `/lesson/cooking/level-5/${moduleId}/${fallbackLessonId}`;
         } else {
-          window.location.href = '/lesson/cooking/level-5';
+          // Last resort: use default values
+          navigationUrl = `/lesson/cooking/level-5/1/5`;
         }
-      } else {
-        goToHomepage();
+        
+        console.log('Navigating to Level 5:', navigationUrl);
+        
+        setTimeout(() => {
+          if (navigate) {
+            navigate(navigationUrl);
+          } else {
+            window.location.href = navigationUrl;
+          }
+        }, 300);
+        
+      } catch (error) {
+        console.error('Error during navigation:', error);
+        // Fallback navigation
+        const fallbackUrl = `/lesson/cooking/level-5/${moduleId || 1}/${parseInt(lessonId) + 1 || 5}`;
+        setTimeout(() => {
+          if (navigate) {
+            navigate(fallbackUrl);
+          } else {
+            window.location.href = fallbackUrl;
+          }
+        }, 300);
       }
-    }, 300);
+    } else {
+      // No more levels, go to dashboard
+      setTimeout(() => {
+        goToHomepage();
+      }, 300);
+    }
   };
 
   const hasNextLevel = currentLevel < maxLevel;
@@ -611,10 +842,10 @@ export default function CookingLevel4() {
                   </Box>
                 </Box>
 
-                {/* Recipe Selection */}
-                <Grid container spacing={3} sx={{ maxWidth: '800px', mb: 3 }}>
+                {/* FIXED Recipe Selection - Perfect Alignment and Consistent Dimensions */}
+                <Grid container spacing={2.5} sx={{ maxWidth: '800px', mb: 3, justifyContent: 'center' }}>
                   {Object.entries(recipes).map(([key, recipe]) => (
-                    <Grid item xs={12} sm={6} md={3} key={key}>
+                    <Grid item xs={12} sm={6} md={3} key={key} sx={{ display: 'flex' }}>
                       <Card
                         onClick={() => setSelectedRecipe(key)}
                         sx={{
@@ -628,64 +859,79 @@ export default function CookingLevel4() {
                           transition: 'all 0.3s ease',
                           backdropFilter: 'blur(10px)',
                           position: 'relative',
+                          // FIXED: Set consistent width AND height for perfect alignment
+                          width: '100%',
+                          height: '180px',
+                          minWidth: '160px',
+                          maxWidth: '180px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          margin: '0 auto',
                           '&:hover': {
                             transform: 'scale(1.05)',
                             boxShadow: '0 8px 25px rgba(0,0,0,0.2)'
                           }
                         }}
                       >
+                        {/* FIXED: Completion badge moved OUTSIDE content to avoid height issues */}
                         {completedRecipes.includes(key) && (
                           <Box sx={{
                             position: 'absolute',
-                            top: -10,
-                            right: -10,
+                            top: -8,
+                            right: -8,
                             backgroundColor: '#4CAF50',
                             color: 'white',
                             borderRadius: '50%',
-                            width: 30,
-                            height: 30,
+                            width: 28,
+                            height: 28,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontSize: '1rem',
+                            fontSize: '0.9rem',
                             fontWeight: 'bold',
-                            zIndex: 1
+                            zIndex: 10,
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
                           }}>
                             ✓
                           </Box>
                         )}
-                        <CardContent sx={{ textAlign: 'center', p: 3 }}>
+                        
+                        <CardContent sx={{ 
+                          textAlign: 'center', 
+                          p: 2.5,
+                          flex: 1,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'center',
+                          alignItems: 'center'
+                        }}>
                           <Box sx={{ 
                             display: 'flex', 
                             justifyContent: 'center', 
-                            mb: 1,
+                            mb: 1.5,
                             filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))'
                           }}>
                             <img 
                               src={recipe.emoji} 
                               alt={recipe.name}
                               style={{
-                                width: '60px',
-                                height: '60px',
+                                width: '55px',
+                                height: '55px',
                                 objectFit: 'contain',
                                 borderRadius: '8px'
                               }}
                             />
                           </Box>
-                          <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>
+                          <Typography variant="h6" sx={{ 
+                            fontWeight: 'bold', 
+                            mb: 1,
+                            fontSize: '1rem',
+                            lineHeight: 1.2
+                          }}>
                             {recipe.name}
                           </Typography>
-                          {completedRecipes.includes(key) && (
-                            <Chip 
-                              label="Completed! ✨" 
-                              size="small"
-                              sx={{ 
-                                backgroundColor: '#d1fae5', 
-                                color: '#059669',
-                                fontWeight: 'bold'
-                              }} 
-                            />
-                          )}
+                          
+                          {/* FIXED: Removed the internal "Completed!" chip that was causing height inconsistency */}
                         </CardContent>
                       </Card>
                     </Grid>
@@ -816,11 +1062,11 @@ export default function CookingLevel4() {
                   </Typography>
                 </Card>
 
-                {/* Answer Choices */}
-                {currentRecipe.choices[currentStep] && (
-                  <Grid container spacing={2} sx={{ maxWidth: '600px', mb: 3 }}>
-                    {currentRecipe.choices[currentStep].map((choice, idx) => (
-                      <Grid item xs={12} sm={4} key={idx}>
+                {/* FIXED Answer Choices - Perfect Alignment and Consistent Dimensions with Randomized Order */}
+                {currentShuffledChoices && currentShuffledChoices[currentStep] && (
+                  <Grid container spacing={2.5} sx={{ maxWidth: '600px', mb: 3, justifyContent: 'center' }}>
+                    {currentShuffledChoices[currentStep].map((choice, idx) => (
+                      <Grid item xs={12} sm={4} key={idx} sx={{ display: 'flex' }}>
                         <Card
                           onClick={() => !showFeedback && handleChoice(choice)}
                           sx={{
@@ -841,13 +1087,29 @@ export default function CookingLevel4() {
                             transform: showFeedback && selectedAnswer === choice && choice.correct
                               ? 'scale(1.05)' : 'scale(1)',
                             backdropFilter: 'blur(10px)',
+                            // FIXED: Set consistent width AND height for perfect alignment
+                            width: '100%',
+                            height: '140px',
+                            minWidth: '140px',
+                            maxWidth: '160px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            margin: '0 auto',
                             '&:hover': {
                               transform: showFeedback ? 'scale(1)' : 'scale(1.02)',
                               boxShadow: '0 6px 20px rgba(0,0,0,0.2)'
                             }
                           }}
                         >
-                          <CardContent sx={{ textAlign: 'center', p: 2 }}>
+                          <CardContent sx={{ 
+                            textAlign: 'center', 
+                            p: 2,
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'center',
+                            alignItems: 'center'
+                          }}>
                             <Box sx={{ 
                               display: 'flex', 
                               justifyContent: 'center', 
@@ -858,8 +1120,8 @@ export default function CookingLevel4() {
                                 src={choice.image} 
                                 alt={choice.text}
                                 style={{
-                                  width: '60px',
-                                  height: '60px',
+                                  width: '50px',
+                                  height: '50px',
                                   objectFit: 'contain',
                                   borderRadius: '8px'
                                 }}
@@ -868,7 +1130,9 @@ export default function CookingLevel4() {
                             <Typography variant="body1" sx={{ 
                               fontWeight: 'bold', 
                               color: '#E65100',
-                              fontSize: '0.9rem'
+                              fontSize: '0.85rem',
+                              lineHeight: 1.2,
+                              textAlign: 'center'
                             }}>
                               {choice.text}
                             </Typography>
@@ -1083,6 +1347,8 @@ export default function CookingLevel4() {
             // Still recipes to complete - show continue cooking option
             <Button 
               onClick={() => {
+                // Clear shuffled choices to allow new randomization
+                setShuffledChoices({});
                 setGamePhase('intro');
                 setShowCelebration(false);
                 setCurrentStep(0);

@@ -24,6 +24,8 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import StarIcon from '@mui/icons-material/Star';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import VolumeOffIcon from '@mui/icons-material/VolumeOff';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { 
   getStudentLessonProgress, 
   saveStudentLessonProgress,
@@ -59,6 +61,9 @@ export default function CookingActionsLevel2() {
   const [showCorrectAnimation, setShowCorrectAnimation] = useState(false);
   const [confettiPieces, setConfettiPieces] = useState([]);
   
+  // NEW: Practice mode pagination for reduced choices
+  const [practiceChoiceSet, setPracticeChoiceSet] = useState(0);
+  
   // Level progression props
   const [currentLevel] = useState(2); // Level 2
   const [maxLevel] = useState(5); // Updated to 5 total levels
@@ -70,7 +75,7 @@ export default function CookingActionsLevel2() {
     { 
       id: 1, 
       name: "CRACK", 
-      image: crackImg, // Changed from emoji to image
+      image: crackImg,
       color: "#FFF3E0",
       sound: "crack",
       description: "We crack eggs by tapping them gently on a bowl",
@@ -80,7 +85,7 @@ export default function CookingActionsLevel2() {
     { 
       id: 2, 
       name: "POUR", 
-      image: pourImg, // Changed from emoji to image
+      image: pourImg,
       color: "#E8F5E8",
       sound: "pour", 
       description: "We pour milk slowly into a cup or bowl",
@@ -90,7 +95,7 @@ export default function CookingActionsLevel2() {
     { 
       id: 3, 
       name: "SLICE", 
-      image: sliceImg, // Changed from emoji to image
+      image: sliceImg,
       color: "#FFF8E1",
       sound: "slice",
       description: "We slice bread carefully with a knife",
@@ -100,7 +105,7 @@ export default function CookingActionsLevel2() {
     { 
       id: 4, 
       name: "WASH", 
-      image: washImg, // Changed from emoji to image
+      image: washImg,
       color: "#FFEBEE",
       sound: "wash",
       description: "We wash apples with clean water before eating",
@@ -110,7 +115,7 @@ export default function CookingActionsLevel2() {
     { 
       id: 5, 
       name: "MIX", 
-      image: mixImg, // Changed from emoji to image
+      image: mixImg,
       color: "#F3E5F5",
       sound: "mix",
       description: "We mix ingredients together with a spoon",
@@ -121,6 +126,51 @@ export default function CookingActionsLevel2() {
 
   const currentItem = cookingActions[currentAction];
   const progressPercentage = ((currentAction + 1) / cookingActions.length) * 100;
+
+  // Create practice choice sets (2-3 choices at a time) - ALWAYS SHOW CHOICES
+  const createPracticeChoices = (correctAction) => {
+    if (!correctAction) return [cookingActions.slice(0, 3)]; // Fallback
+    
+    const allActions = [...cookingActions];
+    const otherActions = allActions.filter(action => action.id !== correctAction.id);
+    const numChoicesPerSet = 3;
+    
+    // Always create at least one choice set
+    const choiceSets = [];
+    
+    // First set: correct answer + 2 random wrong answers
+    const firstWrongChoices = otherActions.slice(0, numChoicesPerSet - 1);
+    const firstChoiceSet = [correctAction, ...firstWrongChoices];
+    
+    // Shuffle the first choice set
+    for (let j = firstChoiceSet.length - 1; j > 0; j--) {
+      const k = Math.floor(Math.random() * (j + 1));
+      [firstChoiceSet[j], firstChoiceSet[k]] = [firstChoiceSet[k], firstChoiceSet[j]];
+    }
+    choiceSets.push(firstChoiceSet);
+    
+    // Create additional sets if there are enough wrong answers
+    if (otherActions.length > numChoicesPerSet - 1) {
+      for (let i = numChoicesPerSet - 1; i < otherActions.length; i += numChoicesPerSet - 1) {
+        const wrongChoices = otherActions.slice(i, i + numChoicesPerSet - 1);
+        if (wrongChoices.length > 0) {
+          const choiceSet = [correctAction, ...wrongChoices];
+          
+          // Shuffle the choice set
+          for (let j = choiceSet.length - 1; j > 0; j--) {
+            const k = Math.floor(Math.random() * (j + 1));
+            [choiceSet[j], choiceSet[k]] = [choiceSet[k], choiceSet[j]];
+          }
+          choiceSets.push(choiceSet);
+        }
+      }
+    }
+    
+    return choiceSets;
+  };
+
+  const practiceChoiceSets = createPracticeChoices(currentItem);
+  const currentPracticeChoices = practiceChoiceSets[Math.min(practiceChoiceSet, practiceChoiceSets.length - 1)];
 
   // Get student ID from localStorage
   const getStudentId = () => {
@@ -179,6 +229,13 @@ export default function CookingActionsLevel2() {
     fetchUserProgress();
   }, [lessonId]);
 
+  // Reset practice choice set when action changes
+  useEffect(() => {
+    setPracticeChoiceSet(0);
+    setSelectedAnswer(null);
+    setShowFeedback(false);
+  }, [currentAction]);
+
   // Gentle audio feedback for cooking instructions
   const speak = (text) => {
     if ('speechSynthesis' in window) {
@@ -218,6 +275,23 @@ export default function CookingActionsLevel2() {
   const previousAction = () => {
     if (currentAction > 0) {
       setCurrentAction(prev => prev - 1);
+      setSelectedAnswer(null);
+      setShowFeedback(false);
+    }
+  };
+
+  // NEW: Handle practice choice navigation
+  const nextChoiceSet = () => {
+    if (practiceChoiceSet < practiceChoiceSets.length - 1) {
+      setPracticeChoiceSet(prev => prev + 1);
+      setSelectedAnswer(null);
+      setShowFeedback(false);
+    }
+  };
+
+  const previousChoiceSet = () => {
+    if (practiceChoiceSet > 0) {
+      setPracticeChoiceSet(prev => prev - 1);
       setSelectedAnswer(null);
       setShowFeedback(false);
     }
@@ -341,6 +415,7 @@ export default function CookingActionsLevel2() {
     setShowCelebration(false);
     setProgressSaved(false);
     setProgressSaving(false);
+    setPracticeChoiceSet(0);
   };
 
   const goToHomepage = () => {
@@ -759,7 +834,7 @@ export default function CookingActionsLevel2() {
                 </Stack>
               </Box>
             ) : (
-              /* Practice Mode */
+              /* Practice Mode - IMPROVED */
               <Box sx={{ 
                 display: 'flex',
                 flexDirection: 'column',
@@ -768,38 +843,57 @@ export default function CookingActionsLevel2() {
                 maxWidth: '600px',
                 pb: 4
               }}>
-                {/* Question Display */}
+                {/* Question Display - IMPROVED SEPARATION */}
                 <Card sx={{
                   backgroundColor: 'rgba(255, 250, 244, 0.95)',
                   borderRadius: '20px',
-                  padding: '25px',
-                  mb: 3,
-                  border: '3px solid #FF9800',
-                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                  padding: '30px',
+                  mb: 4,                                    // Increased margin for better separation
+                  border: '4px solid #FF9800',             // Thicker border
+                  boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4)', // Enhanced shadow
                   textAlign: 'center',
                   width: '100%',
                   backdropFilter: 'blur(15px)'
                 }}>
-                  <Typography sx={{ fontSize: '3rem', mb: 1 }}>🤔</Typography>
-                  <Typography variant="h5" sx={{ 
+                  <Typography sx={{ fontSize: '3rem', mb: 2 }}>🤔</Typography>
+                  
+                  {/* SIMPLIFIED QUESTION TEXT */}
+                  <Typography variant="h4" sx={{ 
                     fontWeight: 'bold', 
                     color: '#E65100', 
-                    mb: 2
+                    mb: 2,
+                    fontSize: { xs: '1.5rem', sm: '2rem' },
+                    letterSpacing: '0.5px'
                   }}>
-                    What do we do with this?
+                    What do we do?
                   </Typography>
-                  {/* Action image for question */}
+                  
+                  {/* Helpful subtitle */}
+                  <Typography variant="h6" sx={{ 
+                    color: '#5D4037', 
+                    mb: 3,
+                    fontSize: '1.1rem',
+                    fontWeight: '500'
+                  }}>
+                    Pick the right cooking action!
+                  </Typography>
+                  
+                  {/* VISUALLY SEPARATED Action image */}
                   <Box sx={{ 
                     display: 'flex', 
                     justifyContent: 'center',
+                    backgroundColor: 'rgba(255, 255, 255, 0.8)',  // Background separation
+                    borderRadius: '16px',
+                    padding: '20px',
+                    border: '2px solid #FFE0B2',                   // Light border around image
                     filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))'
                   }}>
                     <img 
                       src={currentItem.image} 
                       alt="Guess this action"
                       style={{
-                        width: '120px',
-                        height: '120px',
+                        width: '140px',                             // Slightly larger
+                        height: '140px',
                         objectFit: 'contain',
                         borderRadius: '12px'
                       }}
@@ -807,68 +901,101 @@ export default function CookingActionsLevel2() {
                   </Box>
                 </Card>
 
-                {/* Answer Options */}
+                {/* Answer Options - WHITE BACKGROUND, ONE ROW */}
                 <Box sx={{ 
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-                  gap: 2,
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                  gap: 4,                                         // Increased gap between cards
                   width: '100%',
-                  maxWidth: '500px',
-                  mb: 3
+                  maxWidth: '600px',
+                  mb: 4,
+                  flexWrap: 'nowrap'                              // Keep in one row, no wrapping
                 }}>
-                  {cookingActions.map((action) => (
+                  {(currentPracticeChoices || cookingActions.slice(0, 3)).map((action) => (
                     <Card
                       key={action.id}
                       onClick={() => !showFeedback && handlePracticeAnswer(action.id)}
                       sx={{
-                        padding: '15px',
-                        borderRadius: '15px',
-                        border: '2px solid',
+                        position: 'relative',
+                        padding: '25px',                          // Increased padding
+                        borderRadius: '20px',                     // More rounded
+                        border: '5px solid',                      // Thicker border for high contrast
                         borderColor: showFeedback && selectedAnswer === action.id && action.id === currentItem.id 
-                          ? '#4CAF50' 
+                          ? '#4CAF50'                             // Bright green for correct
                           : showFeedback && selectedAnswer === action.id && action.id !== currentItem.id 
-                          ? '#F44336'
-                          : '#E0E0E0',
+                          ? '#F44336'                             // Bright red for incorrect
+                          : '#FF9800',                            // Orange default instead of gray
                         cursor: showFeedback ? 'not-allowed' : 'pointer',
                         textAlign: 'center',
-                        backgroundColor: showFeedback && selectedAnswer === action.id && action.id === currentItem.id 
-                          ? 'rgba(200, 230, 201, 0.95)'
-                          : showFeedback && selectedAnswer === action.id && action.id !== currentItem.id 
-                          ? 'rgba(255, 205, 210, 0.95)'
-                          : 'rgba(255, 255, 255, 0.95)',
+                        backgroundColor: 'white',                 // SOLID WHITE BACKGROUND - NO BLENDING
                         transition: 'all 0.3s ease',
                         transform: showFeedback && selectedAnswer === action.id && action.id === currentItem.id 
-                          ? 'scale(1.05)' : 'scale(1)',
-                        backdropFilter: 'blur(10px)',
-                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
+                          ? 'scale(1.1)' : 'scale(1)',           // Bigger scale for correct
+                        boxShadow: showFeedback && selectedAnswer === action.id && action.id === currentItem.id
+                          ? '0 12px 45px rgba(76, 175, 80, 0.5)'
+                          : showFeedback && selectedAnswer === action.id && action.id !== currentItem.id
+                          ? '0 12px 45px rgba(244, 67, 54, 0.5)'
+                          : '0 8px 30px rgba(255, 152, 0, 0.4)', // Enhanced shadows
+                        filter: showFeedback && selectedAnswer === action.id && action.id === currentItem.id
+                          ? 'drop-shadow(0 0 20px rgba(76, 175, 80, 0.7))'
+                          : showFeedback && selectedAnswer === action.id && action.id !== currentItem.id
+                          ? 'drop-shadow(0 0 20px rgba(244, 67, 54, 0.7))'
+                          : 'drop-shadow(0 6px 12px rgba(0,0,0,0.2))',
+                        minWidth: '140px',                        // Ensure consistent width
+                        flex: '1',                                // Equal width distribution in row
+                        maxWidth: '160px',                        // Prevent cards from getting too wide
                         '&:hover': {
-                          transform: showFeedback ? 'scale(1)' : 'scale(1.02)',
-                          boxShadow: showFeedback ? '0 4px 20px rgba(0, 0, 0, 0.2)' : '0 6px 25px rgba(0,0,0,0.3)'
+                          transform: showFeedback ? (selectedAnswer === action.id && action.id === currentItem.id ? 'scale(1.1)' : 'scale(1)') : 'scale(1.08)',
+                          boxShadow: showFeedback ? 'inherit' : '0 10px 35px rgba(255, 152, 0, 0.6)',
+                          borderColor: showFeedback ? 'inherit' : '#F57C00'
                         }
                       }}
                     >
-                      {/* Action image for options */}
+                      {/* Status Icon - Visual feedback beyond color */}
+                      {showFeedback && selectedAnswer === action.id && (
+                        <Box sx={{
+                          position: 'absolute',
+                          top: '10px',
+                          right: '10px',
+                          fontSize: '2rem',                       // Larger icons
+                          animation: 'bounce 0.6s ease-in-out',
+                          '@keyframes bounce': {
+                            '0%, 100%': { transform: 'scale(1)' },
+                            '50%': { transform: 'scale(1.3)' }    // Bigger bounce
+                          }
+                        }}>
+                          {action.id === currentItem.id ? '✅' : '❌'}
+                        </Box>
+                      )}
+
+                      {/* ENHANCED Action image for options */}
                       <Box sx={{ 
                         display: 'flex', 
                         justifyContent: 'center', 
-                        mb: 1,
-                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                        mb: 2,
+                        filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.2))'
                       }}>
                         <img 
                           src={action.image} 
                           alt={action.name}
                           style={{
-                            width: '60px',
-                            height: '60px',
+                            width: '85px',                       // Larger images
+                            height: '85px',
                             objectFit: 'contain',
-                            borderRadius: '8px'
+                            borderRadius: '12px'
                           }}
                         />
                       </Box>
+                      
+                      {/* IMPROVED TEXT STYLING */}
                       <Typography variant="body1" sx={{ 
                         fontWeight: 'bold', 
                         color: '#E65100',
-                        fontSize: '0.8rem'
+                        fontSize: '1.2rem',                      // Larger text
+                        letterSpacing: '0.5px',
+                        textShadow: '1px 1px 3px rgba(0,0,0,0.2)', // Better contrast
+                        lineHeight: 1.2
                       }}>
                         {action.name}
                       </Typography>
