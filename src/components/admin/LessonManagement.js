@@ -44,6 +44,10 @@ const LessonManagement = () => {
   const [editingLesson, setEditingLesson] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   
+  // Add delete confirmation dialog state
+  const [confirmDeleteDialog, setConfirmDeleteDialog] = useState(false);
+  const [selectedLesson, setSelectedLesson] = useState(null);
+  
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -354,19 +358,22 @@ const LessonManagement = () => {
     }
   };
 
-  const handleDelete = async (lessonId) => {
-    if (!window.confirm('Are you sure you want to delete this lesson? This action cannot be undone.')) {
-      return;
-    }
+  // Updated delete functions to use dialog
+  const handleConfirmDelete = (lesson) => {
+    setSelectedLesson(lesson);
+    setConfirmDeleteDialog(true);
+  };
 
+  const handleDelete = async () => {
     try {
-      const response = await fetch(`http://localhost:8080/api/lessons/${lessonId}`, {
+      const response = await fetch(`http://localhost:8080/api/lessons/${selectedLesson.id}`, {
         method: 'DELETE'
       });
 
       if (response.ok) {
         showSnackbar('Lesson deleted successfully!', 'success');
         fetchLessons();
+        setConfirmDeleteDialog(false);
       } else {
         showSnackbar('Failed to delete lesson', 'error');
       }
@@ -536,7 +543,7 @@ const LessonManagement = () => {
                       <EditIcon />
                     </IconButton>
                     <IconButton
-                      onClick={() => handleDelete(lesson.id)}
+                      onClick={() => handleConfirmDelete(lesson)}
                       color="error"
                       size="small"
                     >
@@ -549,6 +556,145 @@ const LessonManagement = () => {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Minimalist Kid-Friendly Delete Confirmation Dialog */}
+      <Dialog
+        open={confirmDeleteDialog}
+        onClose={() => setConfirmDeleteDialog(false)}
+        maxWidth="sm"
+        fullWidth
+        sx={{
+          '& .MuiDialog-paper': {
+            borderRadius: '16px',
+            padding: '16px'
+          }
+        }}
+      >
+        <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
+          <Typography
+            variant="h5"
+            sx={{
+              color: '#ff6b35',
+              fontWeight: 'bold',
+              fontSize: '24px',
+              mb: 1
+            }}
+          >
+            ⚠️ Delete Lesson?
+          </Typography>
+        </DialogTitle>
+        
+        <DialogContent sx={{ textAlign: 'center', py: 2 }}>
+          <Typography
+            variant="h6"
+            sx={{
+              color: '#333',
+              fontSize: '18px',
+              mb: 2
+            }}
+          >
+            You want to delete:
+          </Typography>
+          
+          <Box
+            sx={{
+              backgroundColor: '#f5f5f5',
+              borderRadius: '12px',
+              padding: '16px',
+              border: '2px solid #ff6b35',
+              mb: 3
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{
+                color: '#ff6b35',
+                fontWeight: 'bold',
+                fontSize: '20px'
+              }}
+            >
+              📖 {selectedLesson?.title}
+            </Typography>
+          </Box>
+          
+          <Box
+            sx={{
+              backgroundColor: '#fff3e0',
+              borderRadius: '12px',
+              padding: '16px',
+              border: '1px solid #ff9800',
+              mb: 2
+            }}
+          >
+            <Typography
+              sx={{
+                color: '#e65100',
+                fontSize: '16px',
+                fontWeight: 600
+              }}
+            >
+              🚨 Warning: This action cannot be undone!
+            </Typography>
+          </Box>
+          
+          <Typography
+            sx={{
+              color: '#666',
+              fontSize: '16px',
+              fontWeight: 500
+            }}
+          >
+            All lesson content will be permanently removed.
+          </Typography>
+        </DialogContent>
+        
+        <DialogActions
+          sx={{
+            padding: '16px',
+            gap: '12px',
+            justifyContent: 'center'
+          }}
+        >
+          <Button
+            onClick={() => setConfirmDeleteDialog(false)}
+            size="large"
+            sx={{
+              fontSize: '16px',
+              fontWeight: 'bold',
+              padding: '12px 24px',
+              borderRadius: '12px',
+              backgroundColor: '#4caf50',
+              color: 'white',
+              minWidth: '120px',
+              '&:hover': {
+                backgroundColor: '#45a049'
+              }
+            }}
+          >
+            ✅ Keep It
+          </Button>
+          
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleDelete}
+            size="large"
+            sx={{
+              fontSize: '16px',
+              fontWeight: 'bold',
+              padding: '12px 24px',
+              borderRadius: '12px',
+              backgroundColor: '#f44336',
+              minWidth: '120px',
+              '&:hover': {
+                backgroundColor: '#d32f2f'
+              }
+            }}
+          >
+            🗑️ Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Updated Dialog to match Module styling */}
       <Dialog 
