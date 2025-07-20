@@ -52,19 +52,40 @@ function Navbar() {
     };
   }, []);
 
-  const fetchUserProfile = async () => {
-    try {
-      const userEmail = localStorage.getItem("userEmail");
-      if (!userEmail) return;
+const fetchUserProfile = async () => {
+  try {
+    const userEmail = localStorage.getItem("userEmail");
+    const userType = localStorage.getItem("userType");
+    const isAdmin = localStorage.getItem("isAdmin") === "true";
+    
+    if (!userEmail) return;
 
-      let response = await fetch(`http://localhost:8080/api/students/profile?email=${userEmail}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json"
-        }
-      });
+    let response;
+    let apiEndpoint;
 
-      if (!response.ok) {
+    // Check user role and call appropriate endpoint
+    if (isAdmin || userType === "ADMIN") {
+      apiEndpoint = `http://localhost:8080/api/admin/profile?email=${userEmail}`;
+    } else if (userType === "TEACHER") {
+      apiEndpoint = `http://localhost:8080/api/teachers/profile?email=${userEmail}`;
+    } else {
+      // Default to student or try student first for backward compatibility
+      apiEndpoint = `http://localhost:8080/api/students/profile?email=${userEmail}`;
+    }
+
+    console.log("Fetching profile from:", apiEndpoint); // Debug log
+
+    response = await fetch(apiEndpoint, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+
+    if (!response.ok) {
+      // If the primary endpoint fails and we don't know the user type, try fallbacks
+      if (!userType || userType === "STUDENT") {
+        console.log("Primary endpoint failed, trying teacher endpoint...");
         response = await fetch(`http://localhost:8080/api/teachers/profile?email=${userEmail}`, {
           method: "GET",
           headers: {
@@ -72,20 +93,46 @@ function Navbar() {
           }
         });
         
-        if (!response.ok) return;
+        if (!response.ok) {
+          console.log("Teacher endpoint failed, trying admin endpoint...");
+          response = await fetch(`http://localhost:8080/api/admin/profile?email=${userEmail}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json"
+            }
+          });
+        }
       }
-
-      const profileData = await response.json();
-      setUserProfile(profileData);
       
-      if (profileData.userType === "STUDENT") {
-        fetchProgressStats(profileData.id);
+      if (!response.ok) {
+        console.error("All profile endpoints failed");
+        return;
       }
-    } catch (err) {
-      console.error("Error fetching profile:", err);
     }
-  };
 
+    const profileData = await response.json();
+    // console.log("Profile data received:", profileData); // Debug log
+    
+    // Ensure userType is set properly
+    if (!profileData.userType) {
+      if (isAdmin) {
+        profileData.userType = "ADMIN";
+      } else if (userType) {
+        profileData.userType = userType;
+      }
+    }
+    
+    setUserProfile(profileData);
+    
+    // Only fetch progress stats for students
+    if (profileData.userType === "STUDENT") {
+      fetchProgressStats(profileData.id);
+    }
+  } catch (err) {
+    console.error("Error fetching profile:", err);
+  }
+};
+//
   const fetchProgressStats = async (studentId) => {
     try {
       const storedStudentId = localStorage.getItem('studentId') || studentId;
