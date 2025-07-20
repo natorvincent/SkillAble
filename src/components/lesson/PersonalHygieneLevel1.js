@@ -45,7 +45,7 @@ import noobGif from "../../assets/hygieneLevel1/cat.jpg"
 import bathroomBg from "../../assets/hygieneLevel1/bathroom.jpg"
 import loofah from "../../assets/hygieneLevel1/loofah.png"
 import licecomb from "../../assets/hygieneLevel1/headlicecomb.png"
-import lipbalm from "../../assets/hygieneLevel1/lipbalm.png"
+import razor from "../../assets/hygieneLevel1/razor.png"
 import conditioner from "../../assets/hygieneLevel1/conditioner.png"
 
 // Body parts images
@@ -91,13 +91,13 @@ export default function PersonalHygieneLevel1() {
   const [showStartScreen, setShowStartScreen] = useState(true);
   const [starAnimationStage, setStarAnimationStage] = useState(0);
   const [confettiPieces, setConfettiPieces] = useState([]);
-  
+  const [triedIncorrectItems, setTriedIncorrectItems] = useState([]);
   const [difficulty, setDifficulty] = useState('easy');
-  const [showDifficultySelect, setShowDifficultySelect] = useState(true);
+  const [difficultyLoading, setDifficultyLoading] = useState(true);
+
 
   const handleStartGame = () => {
     setShowStartScreen(false);
-    setShowDifficultySelect(false);
   };
 
   const getActivityData = () => {
@@ -119,9 +119,9 @@ export default function PersonalHygieneLevel1() {
         imageUrl: hairImage,
         hint: "What makes your hair clean and tidy?",
         correctItems: {
-          easy: [5, 9], // shampoo, comb
-          intermediate: [5, 9, 12],
-          difficult: [5, 9, 12] 
+          easy: [5, 9, 11], 
+          intermediate: [5, 9, 12, 11],
+          difficult: [5, 9, 12, 11] 
         }
       },
       { 
@@ -130,8 +130,8 @@ export default function PersonalHygieneLevel1() {
         imageUrl: nailsImage,
         hint: "What keeps these short and neat?",
         correctItems: {
-          easy: [7], // nail cutter
-          intermediate: [7], // nail cutter
+          easy: [7], 
+          intermediate: [7],
         }
       },
       { 
@@ -140,9 +140,9 @@ export default function PersonalHygieneLevel1() {
         imageUrl: handsImage,
         hint: "What do you use to wash these?",
         correctItems: {
-          easy: [3], // soap
-          intermediate: [3, 8], // + hand sanitizer
-          difficult: [3, 8] // hand sanitizer
+          easy: [3], 
+          intermediate: [3, 8],
+          difficult: [3, 8] 
         }
       },
       { 
@@ -151,7 +151,7 @@ export default function PersonalHygieneLevel1() {
         imageUrl: earImage,
         hint: "What gently cleans inside these?",
         correctItems: {
-          easy: [6], // cotton buds
+          easy: [6], 
         }
       },
       { 
@@ -161,13 +161,12 @@ export default function PersonalHygieneLevel1() {
         hint: "What cleans our body?",
         correctItems: {
           easy: [3,4], 
-          intermediate: [3,4,14],
-          difficult: [3,4,14] 
+          intermediate: [3,4,,13,14],
+          difficult: [3,4,13,14] 
         }
       }
     ];
 
-    // Add additional body parts for intermediate/difficult
     if (difficulty === 'intermediate' || difficulty === 'difficult') {
       baseBodyParts.push({
         id: 7,
@@ -209,7 +208,7 @@ export default function PersonalHygieneLevel1() {
       { id: 10, name: "Deodorant", imageUrl: deodorant, hint: "I clean your face gently!", level: "intermediate" }, 
       { id: 11, name: "Conditioner", imageUrl: conditioner, hint: "I make hair soft after shampoo!", level: "intermediate" }, 
       { id: 12, name: "Head Lice Comb", imageUrl: licecomb, hint: "I kill germs on hands!", level: "intermediate" }, 
-      { id: 13, name: "Lip Balm", imageUrl: lipbalm, hint: "I protect and soften lips!", level: "intermediate" }, 
+      { id: 13, name: "Razor", imageUrl: razor, hint: "I protect and soften lips!", level: "intermediate" }, 
       { id: 14, name: "Loofah", imageUrl: loofah, hint: "I protect skin from sun!", level: "intermediate" },
       
       // Difficult level items
@@ -260,6 +259,38 @@ export default function PersonalHygieneLevel1() {
         };
     }
   };
+
+  const fetchAssignedDifficulty = async () => {
+  try {
+    const studentId = getStudentId();
+    if (!studentId || !lessonId) {
+      console.log('Missing studentId or lessonId for difficulty fetch');
+      setDifficultyLoading(false);
+      return;
+    }
+
+    const response = await fetch(`http://localhost:8080/api/difficulty/student-difficulty/${studentId}/${lessonId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      setDifficulty(data.difficulty || 'easy');
+      console.log('Fetched assigned difficulty:', data.difficulty);
+    } else {
+      console.log('No assigned difficulty found, using default: easy');
+      setDifficulty('easy');
+    }
+  } catch (error) {
+    console.error('Error fetching assigned difficulty:', error);
+    setDifficulty('easy'); // Default to easy on error
+  } finally {
+    setDifficultyLoading(false);
+  }
+};
 
   const getStudentId = () => {
     const studentId = localStorage.getItem('studentId');
@@ -375,32 +406,36 @@ export default function PersonalHygieneLevel1() {
 
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        setLoading(true);
-        setTimeout(() => {
-          setLesson({
-            id: lessonId || 1,
-            title: "Personal Hygiene",
-            description: "Learn about keeping clean and healthy!",
-            level: 1
-          });
-          setLoading(false);
-        }, 500);
-      } catch (err) {
-        setError('Something went wrong');
+    try {
+      setLoading(true);
+      
+      // Fetch assigned difficulty first
+      await fetchAssignedDifficulty();
+      
+      setTimeout(() => {
+        setLesson({
+          id: lessonId || 1,
+          title: "Personal Hygiene",
+          description: "Learn about keeping clean and healthy!",
+          level: 1
+        });
         setLoading(false);
-      }
-    };
-    
-    fetchData();
-  }, [lessonId, moduleId]);
-
-  // Generate game rounds when difficulty changes
-  useEffect(() => {
-    if (!showDifficultySelect && !showStartScreen) {
-      setGameRounds(generateGameRounds());
+      }, 1000);
+    } catch (err) {
+      setError('Something went wrong');
+      setLoading(false);
     }
-  }, [difficulty, showDifficultySelect, showStartScreen]);
+  };
+  
+  fetchData();
+}, [lessonId, moduleId]);
+
+  // Generate game rounds when difficulty is loaded
+useEffect(() => {
+  if (!difficultyLoading && !showStartScreen && difficulty) {
+    setGameRounds(generateGameRounds());
+  }
+}, [difficulty, difficultyLoading, showStartScreen]);
 
   const handleDragStart = (e, item) => {
     setDraggedItem(item);
@@ -425,27 +460,29 @@ export default function PersonalHygieneLevel1() {
   };
 
   const handleDrop = (e) => {
-    e.preventDefault();
-    setDropZoneActive(false);
-    
-    if (!draggedItem || !currentRound) return;
-    
-    const settings = getDifficultySettings();
-    let isCorrect;
-    
-    if (settings.multipleCorrectAnswers) {
-      isCorrect = currentRound.allCorrectItems.includes(draggedItem.id);
-    } else {
-      isCorrect = draggedItem.id === currentRound.correctItemId;
-    }
-    
+  e.preventDefault();
+  setDropZoneActive(false);
+  
+  if (!draggedItem || !currentRound) return;
+  
+  const settings = getDifficultySettings();
+  let isCorrect;
+  
+  if (settings.multipleCorrectAnswers) {
+    isCorrect = currentRound.allCorrectItems.includes(draggedItem.id);
+  } else {
+    isCorrect = draggedItem.id === currentRound.correctItemId;
+  }
+  
+  if (isCorrect) {
+    // Correct answer - proceed as normal
     const newAnswer = {
       roundId: currentRound.id,
       bodyPartId: currentRound.bodyPart.id,
       selectedItemId: draggedItem.id,
       correctItemId: currentRound.correctItemId,
       allCorrectItems: currentRound.allCorrectItems,
-      isCorrect
+      isCorrect: true
     };
     
     setAnswers(prev => [...prev, newAnswer]);
@@ -454,7 +491,7 @@ export default function PersonalHygieneLevel1() {
     const allAnswers = [...answers, newAnswer];
     const correctCount = allAnswers.filter(answer => answer.isCorrect).length;
     setScore(correctCount);
-    playSoundEffect(isCorrect ? 'correct' : 'incorrect');
+    playSoundEffect('correct');
 
     const activityData = getActivityData();
     setFeedbackData({
@@ -464,32 +501,39 @@ export default function PersonalHygieneLevel1() {
       allCorrectItems: currentRound.allCorrectItems.map(id => 
         activityData.items.find(item => item.id === id)
       ),
-      isCorrect,
+      isCorrect: true,
       multipleCorrectAnswers: settings.multipleCorrectAnswers
     });
     
     setShowFeedback(true);
-    setDraggedItem(null);
-  };
-
+    setTriedIncorrectItems([]); // Reset for next round
+  } else {
+    // Incorrect answer - just remove the item and let them try again
+    playSoundEffect('incorrect');
+    setTriedIncorrectItems(prev => [...prev, draggedItem.id]);
+  }
+  
+  setDraggedItem(null);
+};
   const handleNext = () => {
-    setShowFeedback(false);
-    setFeedbackData(null);
-    
-    if (currentRoundIndex < gameRounds.length - 1) {
-      setCurrentRoundIndex(prev => prev + 1);
-    } else {
-      setGameCompleted(true);
-      if (audioRef) {
-        audioRef.pause();
-        setAudioPlaying(false);
-      }
-      setTimeout(() => {
-        playSoundEffect('success');
-        setShowSuccess(true);
-      }, 300);
+  setShowFeedback(false);
+  setFeedbackData(null);
+  setTriedIncorrectItems([]); // Reset for next round
+  
+  if (currentRoundIndex < gameRounds.length - 1) {
+    setCurrentRoundIndex(prev => prev + 1);
+  } else {
+    setGameCompleted(true);
+    if (audioRef) {
+      audioRef.pause();
+      setAudioPlaying(false);
     }
-  };
+    setTimeout(() => {
+      playSoundEffect('success');
+      setShowSuccess(true);
+    }, 300);
+  }
+};
 
   const saveProgress = async () => {
     if (progressSaving || progressSaved) return;
@@ -529,24 +573,25 @@ export default function PersonalHygieneLevel1() {
   };
 
   const resetGame = () => {
-    setCurrentRoundIndex(0);
-    setAnswers([]);
-    setShowFeedback(false);
-    setFeedbackData(null);
-    setShowSuccess(false);
-    setScore(0);
-    setGameCompleted(false);
-    setProgressSaved(false);
-    setProgressSaving(false);
-    setGameRounds(generateGameRounds());
-    if (audioRef && !audioPlaying) {
-      audioRef.play().then(() => {
-        setAudioPlaying(true);
-      }).catch(error => {
-        console.log('Audio play failed:', error);
-      });
-    }
-  };
+  setCurrentRoundIndex(0);
+  setAnswers([]);
+  setShowFeedback(false);
+  setFeedbackData(null);
+  setShowSuccess(false);
+  setScore(0);
+  setGameCompleted(false);
+  setProgressSaved(false);
+  setProgressSaving(false);
+  setTriedIncorrectItems([]); // Reset tried incorrect items
+  setGameRounds(generateGameRounds());
+  if (audioRef && !audioPlaying) {
+    audioRef.play().then(() => {
+      setAudioPlaying(true);
+    }).catch(error => {
+      console.log('Audio play failed:', error);
+    });
+  }
+};
 
   const getStarRating = () => {
     const percentage = (score / gameRounds.length) * 100;
@@ -578,18 +623,6 @@ export default function PersonalHygieneLevel1() {
     }
     navigate('/homepage');
   };
-
-  const handleDifficultyChange = (newDifficulty) => {
-  setDifficulty(newDifficulty);
-  setShowDifficultySelect(false);
-  setShowSuccess(false);
-  setCurrentRoundIndex(0);
-  setAnswers([]);
-  setScore(0);
-  setGameCompleted(false);
-  setProgressSaved(false);
-  setProgressSaving(false);
-};
 
   useEffect(() => {
     if (showSuccess) {
@@ -676,238 +709,7 @@ export default function PersonalHygieneLevel1() {
     }
   }, [showSuccess]);
 
-  // Enhanced difficulty selection screen with modern design improvements
-if (showDifficultySelect) {
-  return (
-    <div style={{
-      minHeight: "100vh",
-      width: "100%",
-      backgroundImage: `url(${bathroomBg})`,
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      backgroundRepeat: "no-repeat",
-      display: "flex",
-      flexDirection: "column",
-      position: "relative"
-    }}>
-      <Navbar />
-      
-      {/* Enhanced overlay with animated gradient */}
-      <Box sx={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'linear-gradient(135deg, rgba(144, 190, 109, 0.95) 0%, rgba(25, 130, 196, 0.95) 50%, rgba(186, 85, 211, 0.9) 100%)',
-        backgroundSize: '200% 200%',
-        animation: 'gradientShift 8s ease infinite',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'column',
-        zIndex: 1,
-        '@keyframes gradientShift': {
-          '0%': { backgroundPosition: '0% 50%' },
-          '50%': { backgroundPosition: '100% 50%' },
-          '100%': { backgroundPosition: '0% 50%' }
-        }
-      }}>
-        
-        {/* Floating particles effect */}
-        <Box sx={{
-          position: 'absolute',
-          width: '100%',
-          height: '100%',
-          overflow: 'hidden',
-          zIndex: 0,
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            width: '200px',
-            height: '200px',
-            background: 'radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%)',
-            borderRadius: '50%',
-            top: '10%',
-            left: '5%',
-            animation: 'float 6s ease-in-out infinite'
-          },
-          '&::after': {
-            content: '""',
-            position: 'absolute',
-            width: '150px',
-            height: '150px',
-            background: 'radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)',
-            borderRadius: '50%',
-            top: '60%',
-            right: '8%',
-            animation: 'float 8s ease-in-out infinite reverse'
-          },
-          '@keyframes float': {
-            '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
-            '50%': { transform: 'translateY(-20px) rotate(180deg)' }
-          }
-        }} />
-
-        {/* Main title with enhanced typography */}
-        <Box sx={{ 
-          textAlign: 'center', 
-          mb: 6, 
-          position: 'relative',
-          zIndex: 2
-        }}>
-          <Typography variant="h1" sx={{ 
-            color: 'white', 
-            fontWeight: 800, 
-            mb: 2,
-            fontFamily: 'Poppins, sans-serif',
-            fontSize: { xs: '2.8rem', md: '4.5rem' },
-            textShadow: '4px 4px 8px rgba(0,0,0,0.6)',
-            letterSpacing: '-0.02em',
-            lineHeight: 1.1,
-          }}>
-            Choose Your Challenge
-          </Typography>
-        </Box>
-
-        {/* Enhanced difficulty cards grid */}
-        <Grid container spacing={2} sx={{ 
-          maxWidth: '1000px', 
-          px: 2,
-          position: 'relative',
-          zIndex: 2,
-          justifyContent: 'center'
-        }}>
-          {[
-            {
-              level: 'easy',
-              title: '🌟 Easy Mode',
-              subtitle: 'Perfect Start',
-              gradient: 'linear-gradient(135deg, #90BE6D 0%, #7BA05B 100%)',
-              shadowColor: 'rgba(144, 190, 109, 0.4)',
-              icon: '🎯'
-            },
-            {
-              level: 'intermediate',
-              title: '⭐ Intermediate',
-              subtitle: 'Level Up',
-              gradient: 'linear-gradient(135deg, #FFCA3A 0%, #E6B429 100%)',
-              shadowColor: 'rgba(255, 202, 58, 0.4)',
-              icon: '🚀'
-            },
-            {
-              level: 'difficult',
-              title: '🏆 Expert Mode',
-              subtitle: 'Ultimate Test',
-              gradient: 'linear-gradient(135deg, #FF595E 0%, #E54B50 100%)',
-              shadowColor: 'rgba(255, 89, 94, 0.4)',
-              icon: '💪'
-            }
-          ].map((levelInfo) => (
-            <Grid item xs={12} md={4} key={levelInfo.level}>
-              <Card
-                onClick={() => handleDifficultyChange(levelInfo.level)}
-                sx={{
-                  height: '150px',
-                  width: '300px',
-                  mx: 'auto',
-                  cursor: 'pointer',
-                  transition: 'all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                  background: levelInfo.gradient,
-                  color: 'white',
-                  border: '2px solid rgba(255,255,255,0.2)',
-                  borderRadius: '25px',
-                  overflow: 'hidden',
-                  position: 'relative',
-                  backdropFilter: 'blur(10px)',
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(255,255,255,0.05) 100%)',
-                    zIndex: 1
-                  },
-                  '&:hover': {
-                    transform: 'translateY(-12px) scale(1.03)',
-                    transition: 'all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
-                    border: '2px solid rgba(255,255,255,0.5)',
-                    '&::before': {
-                      background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%, rgba(255,255,255,0.1) 100%)'
-                    }
-                  },
-                  '&:active': {
-                    transform: 'translateY(-8px) scale(1.01)'
-                  }
-                }}
-              >
-                <CardContent sx={{ 
-                  p: 2.5, 
-                  textAlign: 'center',
-                  position: 'relative',
-                  zIndex: 2,
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column'
-                }}>
-                  
-                  {/* Level icon */}
-                  <Box sx={{
-                    fontSize: '2rem',
-                    mb: 1,
-                    animation: 'bounce 2s infinite'
-                  }}>
-                    {levelInfo.icon}
-                  </Box>
-
-                  {/* Title and subtitle */}
-                  <Typography variant="h5" sx={{ 
-                    fontFamily: 'Poppins, sans-serif',
-                    fontWeight: 700,
-                    mb: 0.5,
-                    textShadow: '3px 3px 6px rgba(0,0,0,0.4)',
-                    fontSize: { xs: '1.3rem', md: '1.5rem' }
-                  }}>
-                    {levelInfo.title}
-                  </Typography>
-
-                  <Typography variant="subtitle2" sx={{
-                    fontFamily: 'Inter, sans-serif',
-                    fontWeight: 500,
-                    mb: 1.5,
-                    opacity: 0.9,
-                    fontSize: '0.8rem',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.1em'
-                  }}>
-                    {levelInfo.subtitle}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
-
-      {/* Additional CSS animations */}
-      <style jsx>{`
-        @keyframes titleGlow {
-          0% { filter: drop-shadow(0 0 10px rgba(255,255,255,0.3)); }
-          100% { filter: drop-shadow(0 0 20px rgba(255,255,255,0.6)); }
-        }
-        
-        @keyframes bounce {
-          0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-          40% { transform: translateY(-10px); }
-          60% { transform: translateY(-5px); }
-        }
-      `}</style>
-    </div>
-  );
-}
-
+  // Simple start screen - only shows title and play button
   if (showStartScreen) {
     return (
       <div style={{
@@ -946,20 +748,6 @@ if (showDifficultySelect) {
             🧼 Hygiene Match-Up 🧼
           </Typography>
           
-          <Chip 
-            label={`${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Level`}
-            sx={{
-              backgroundColor: difficulty === 'easy' ? '#90BE6D' : difficulty === 'intermediate' ? '#FFCA3A' : '#FF595E',
-              color: 'white',
-              fontWeight: 'bold',
-              fontSize: '1.2rem',
-              fontFamily: 'Poppins, sans-serif',
-              mb: 4,
-              px: 3,
-              py: 1
-            }}
-          />
-          
           <Typography variant="h4" sx={{ 
             color: 'rgba(255, 255, 255, 0.95)', 
             mb: 6,
@@ -974,29 +762,6 @@ if (showDifficultySelect) {
           </Typography>
           
           <Stack direction="row" spacing={3}>
-            <Button 
-              variant="outlined"
-              onClick={() => setShowDifficultySelect(true)}
-              sx={{ 
-                borderColor: 'white',
-                color: 'white',
-                px: 6,
-                py: 2,
-                borderRadius: '25px',
-                fontFamily: 'Poppins, sans-serif',
-                fontWeight: '600',
-                fontSize: '1.2rem',
-                borderWidth: '2px',
-                textTransform: 'none',
-                '&:hover': {
-                  borderColor: 'white',
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  borderWidth: '2px'
-                }
-              }}
-            >
-              Change Level
-            </Button>
             <Button 
               variant="contained"
               onClick={handleStartGame}
@@ -1026,7 +791,7 @@ if (showDifficultySelect) {
     );
   }
 
-  if (loading) {
+  if (loading || difficultyLoading) {
     return (
       <div style={{
         minHeight: "100vh",
@@ -1127,18 +892,6 @@ if (showDifficultySelect) {
             }}>
               Round {currentRoundIndex + 1} of {gameRounds.length}
             </Typography>
-            
-            <Chip 
-              label={`${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Level`}
-              sx={{
-                backgroundColor: difficulty === 'easy' ? '#90BE6D' : difficulty === 'intermediate' ? '#FFCA3A' : '#FF595E',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '0.9rem',
-                fontFamily: 'Poppins, sans-serif',
-                borderRadius: '15px'
-              }}
-            />
             
             <Chip 
               label={`Score: ${score}/${gameRounds.length}`} 
@@ -1296,7 +1049,9 @@ if (showDifficultySelect) {
             {/* Bottom - Hygiene items */}
             <Box sx={{ maxWidth: '1500px', width: '100%' }}>
               <Grid container spacing={3} justifyContent="center">
-                {currentRound.items.map((item, index) => (
+                {currentRound.items
+                  .filter(item => !triedIncorrectItems.includes(item.id)) // Filter out tried incorrect items
+                  .map((item, index) => (
                   <Grid item xs={6} sm={4} md={3} key={item.id}>
                     <div 
                       draggable
@@ -1354,173 +1109,137 @@ if (showDifficultySelect) {
         )}
 
         <Stack direction="row" spacing={4} justifyContent="center" sx={{ mt: 8, mb: 8 }}>
-          <Button 
-            variant="contained"
-            onClick={resetGame}
-            sx={{ 
-              background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
-              color: 'white',
-              px: 4,
-              py: 1.5,
-              borderRadius: '25px',
-              fontFamily: 'Poppins, sans-serif',
-              fontWeight: '600',
-              fontSize: '1rem',
-              textTransform: 'none',
-              boxShadow: '0 8px 20px rgba(255, 89, 94, 0.4)',
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: '0 10px 25px rgba(255, 89, 94, 0.6)'
-              }
-            }}
-          >
-            <span style={{ fontSize: '1.5rem', marginRight: '8px' }}>🔄</span>
-            Start Over
-          </Button>
-          <Button 
-            variant="outlined"
-            onClick={() => setShowDifficultySelect(true)}
-            sx={{ 
-              borderColor: 'white',
-              color: 'white',
-              px: 4,
-              py: 1.5,
-              borderRadius: '25px',
-              fontFamily: 'Poppins, sans-serif',
-              fontWeight: '600',
-              fontSize: '1rem',
-              textTransform: 'none',
-              '&:hover': {
-                borderColor: 'white',
-                backgroundColor: 'rgba(255, 255, 255, 0.1)'
-              }
-            }}
-          >
-            <span style={{ fontSize: '1.5rem', marginRight: '8px' }}>⚙️</span>
-            Change Level
-          </Button>
-          <Button 
-            variant="contained"
-            onClick={handleGoHome}
-            sx={{ 
-              background: 'linear-gradient(135deg, #1982C4 0%, #1568A0 100%)',
-              color: 'white',
-              px: 4,
-              py: 1.5,
-              borderRadius: '25px',
-              fontFamily: 'Poppins, sans-serif',
-              fontWeight: '600',
-              fontSize: '1rem',
-              textTransform: 'none',
-              boxShadow: '0 8px 20px rgba(25, 130, 196, 0.4)',
-              '&:hover': {
-                transform: 'translateY(-2px)',
-                boxShadow: '0 10px 25px rgba(25, 130, 196, 0.6)'
-              }
-            }}
-          >
-            <span style={{ fontSize: '1.5rem', marginRight: '8px' }}>🏠</span>
-            Go Home
-          </Button>
-        </Stack>
+  <Button 
+    variant="contained"
+    onClick={resetGame}
+    sx={{ 
+      background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+      color: 'white',
+      px: 6,
+      py: 2,
+      borderRadius: '25px',
+      fontFamily: 'Poppins, sans-serif',
+      fontWeight: '700',
+      fontSize: '1.3rem',
+      textTransform: 'none',
+      boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
+      '&:hover': {
+        background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
+        transform: 'translateY(-2px)',
+        boxShadow: '0 12px 30px rgba(255, 89, 94, 0.7)'
+      }
+    }}
+  >
+    <span style={{ fontSize: '1.8rem', marginRight: '8px' }}>🔄</span>
+    Start Over
+  </Button>
+  
+  <Button 
+    variant="contained"
+    onClick={handleGoHome}
+    sx={{ 
+      background: 'linear-gradient(135deg, #1982C4 0%, #1568A0 100%)',
+      color: 'white',
+      px: 6,
+      py: 2,
+      borderRadius: '25px',
+      fontFamily: 'Poppins, sans-serif',
+      fontWeight: '700',
+      fontSize: '1.3rem',
+      textTransform: 'none',
+      boxShadow: '0 10px 25px rgba(25, 130, 196, 0.5)',
+      '&:hover': {
+        background: 'linear-gradient(135deg, #42A5F5 0%, #1982C4 100%)',
+        transform: 'translateY(-2px)',
+        boxShadow: '0 12px 30px rgba(25, 130, 196, 0.7)'
+      }
+    }}
+  >
+    <span style={{ fontSize: '1.8rem', marginRight: '8px' }}>🏠</span>
+    Go Home
+  </Button>
+</Stack>
         
-        {/* Feedback Dialog */}
-        <Dialog
-          open={showFeedback}
-          fullScreen
-          PaperProps={{
-            sx: { 
-              background: feedbackData?.isCorrect 
-                ? 'linear-gradient(135deg, rgba(144, 190, 109, 0.95) 0%, rgba(123, 160, 91, 0.95) 100%)'
-                : 'linear-gradient(135deg, rgba(255, 89, 94, 0.95) 0%, rgba(224, 69, 73, 0.95) 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'column'
-            }
-          }}
-        >
-          <Box sx={{
-            textAlign: 'center',
-            color: 'white'
-          }}>
-            {feedbackData?.isCorrect ? (
-              <Box sx={{ mb: 4 }}>
-                <img 
-                  src={successGif}
-                  alt="Success celebration"
-                  style={{
-                    width: '300px',
-                    height: '300px',
-                    objectFit: 'contain'
-                  }}
-                />
-              </Box>
-            ) : (
-              <Box sx={{ mb: 4 }}>
-                <img 
-                  src={noobGif}
-                  alt="good try"
-                  style={{
-                    width: '300px',
-                    height: '300px',
-                    objectFit: 'contain'
-                  }}
-                />
-              </Box>
-            )}
-            <Typography variant="h1" sx={{ 
-              fontWeight: 'bold',
-              color: 'white',
-              fontFamily: 'Poppins, sans-serif',
-              fontSize: { xs: '3rem', md: '5rem' },
-              textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
-              mb: 4
-            }}>
-              {feedbackData?.isCorrect ? 'Perfect match!' : 'Good try!'}
-            </Typography>
-            <Typography variant="h3" sx={{ 
-              color: 'white',
-              fontFamily: 'Inter, sans-serif',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-              mb: 6,
-              maxWidth: '800px',
-              lineHeight: 1.4
-            }}>
-              {feedbackData?.isCorrect 
-                ? `Yes! ${feedbackData.draggedItem?.name} is perfect for ${feedbackData.bodyPart?.name.toLowerCase()}!`
-                : feedbackData?.multipleCorrectAnswers 
-                  ? `${feedbackData?.draggedItem?.name} doesn't match ${feedbackData?.bodyPart?.name.toLowerCase()}.`
-                  : `${feedbackData?.draggedItem?.name} doesn't match ${feedbackData?.bodyPart?.name.toLowerCase()}. The correct answer is ${feedbackData?.correctItem?.name}.`
-              }
-            </Typography>
-            <Button 
-              onClick={handleNext} 
-              variant="contained"
-              sx={{ 
-                background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
-                color: 'white',
-                px: 8,
-                py: 3,
-                borderRadius: '25px',
-                fontSize: '1.8rem',
-                fontFamily: 'Poppins, sans-serif',
-                fontWeight: '700',
-                textTransform: 'none',
-                boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
-                '&:hover': {
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 15px 35px rgba(255, 89, 94, 0.7)'
-                }
-              }}
-            >
-              <span style={{ fontSize: '2rem', marginRight: '12px' }}>
-                {currentRoundIndex < gameRounds.length - 1 ? '➡️' : '🏁'}
-              </span>
-              {currentRoundIndex < gameRounds.length - 1 ? 'Next Round' : 'Finish'}
-            </Button>
-          </Box>
-        </Dialog>
+        {/* Feedback Dialog - Only for Correct Answers */}
+<Dialog
+  open={showFeedback}
+  fullScreen
+  PaperProps={{
+    sx: { 
+      background: 'linear-gradient(135deg, rgba(144, 190, 109, 0.95) 0%, rgba(123, 160, 91, 0.95) 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'column'
+    }
+  }}
+>
+  <Box sx={{
+    textAlign: 'center',
+    color: 'white'
+  }}>
+    <Box sx={{ mb: 4 }}>
+      <img 
+        src={successGif}
+        alt="Success celebration"
+        style={{
+          width: '300px',
+          height: '300px',
+          objectFit: 'contain'
+        }}
+      />
+    </Box>
+    
+    <Typography variant="h1" sx={{ 
+      fontWeight: 'bold',
+      color: 'white',
+      fontFamily: 'Poppins, sans-serif',
+      fontSize: { xs: '3rem', md: '5rem' },
+      textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
+      mb: 4
+    }}>
+      Perfect match!
+    </Typography>
+    
+    <Typography variant="h3" sx={{ 
+      color: 'white',
+      fontFamily: 'Inter, sans-serif',
+      textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+      mb: 6,
+      maxWidth: '800px',
+      lineHeight: 1.4
+    }}>
+      Yes! {feedbackData?.draggedItem?.name} is perfect for {feedbackData?.bodyPart?.name.toLowerCase()}!
+    </Typography>
+    
+    <Button 
+      onClick={handleNext} 
+      variant="contained"
+      sx={{ 
+        background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+        color: 'white',
+        px: 8,
+        py: 3,
+        borderRadius: '25px',
+        fontSize: '1.8rem',
+        fontFamily: 'Poppins, sans-serif',
+        fontWeight: '700',
+        textTransform: 'none',
+        boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
+        '&:hover': {
+          background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
+          transform: 'translateY(-2px)',
+          boxShadow: '0 15px 35px rgba(255, 89, 94, 0.7)'
+        }
+      }}
+    >
+      <span style={{ fontSize: '2rem', marginRight: '12px' }}>
+        {currentRoundIndex < gameRounds.length - 1 ? '➡️' : '🏁'}
+      </span>
+      {currentRoundIndex < gameRounds.length - 1 ? 'Next Round' : 'Finish'}
+    </Button>
+  </Box>
+</Dialog>
 
         {/* Success Dialog */}
         <Dialog
@@ -1704,33 +1423,7 @@ if (showDifficultySelect) {
             )}
             
             <Box sx={{ display: 'flex', gap: 3, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Button 
-                onClick={() => {
-                  setShowSuccess(false);
-                  setShowDifficultySelect(true);
-                }} 
-                variant="outlined"
-                sx={{ 
-                  borderColor: 'white',
-                  color: 'white',
-                  px: 4,
-                  py: 2,
-                  borderRadius: '25px',
-                  fontFamily: 'Poppins, sans-serif',
-                  fontWeight: '600',
-                  fontSize: '1.2rem',
-                  borderWidth: '2px',
-                  textTransform: 'none',
-                  '&:hover': {
-                    borderColor: 'white',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    borderWidth: '2px'
-                  }
-                }}
-              >
-                <span style={{ fontSize: '1.5rem', marginRight: '8px' }}>⚙️</span>
-                Try Different Level
-              </Button>
+
               <Button 
                 onClick={() => {
                   setShowSuccess(false);
