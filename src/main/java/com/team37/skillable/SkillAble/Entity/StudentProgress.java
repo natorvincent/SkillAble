@@ -30,6 +30,10 @@ public class StudentProgress {
     private int maxScore = 0;
     private boolean completed = false;
     private int starsEarned = 0;
+
+    @Column(name = "difficulty", nullable = false, columnDefinition = "varchar(20) default 'easy'")
+    private String difficulty = "easy";
+
     private LocalDateTime completedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -38,6 +42,9 @@ public class StudentProgress {
     public void prePersist() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (difficulty == null) {
+            difficulty = "easy";
+        }
     }
 
     @PreUpdate
