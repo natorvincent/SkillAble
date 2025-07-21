@@ -132,6 +132,14 @@ const LessonManagement = () => {
       icon: '🍽️'
     },
     {
+      value: 'HouseholdLevel2',
+      label: 'Household Chores Level 2 - Sweeping & Cleaning',
+      description: 'Master basic cleaning tools and techniques through interactive sweeping and wiping practice',
+      component: 'HouseholdLevel2',
+      path: '/lesson/household-chores/level-2',
+      icon: '🧹'
+    },  
+    {
       value: 'SortingLevel1',
       label: 'Food Sorting Level 1',
       description: 'Identify healthy vs. unhealthy food',
