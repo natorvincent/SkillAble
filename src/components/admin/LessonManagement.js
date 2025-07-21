@@ -135,6 +135,7 @@ const LessonManagement = () => {
       value: 'SortingLevel1',
       label: 'Food Sorting Level 1',
       description: 'Identify healthy vs. unhealthy food',
+      component: 'SortingLevel1',
       path: '/lesson/food-sorting/level-1',
       icon: '🍎'
     },
@@ -142,8 +143,33 @@ const LessonManagement = () => {
       value: 'SortingLevel2',
       label: 'Food Sorting Level 2',
       description: 'Identify fruits, vegetables, or other foods',
+      component: 'SortingLevel2',
       path: '/lesson/food-sorting/level-2',
       icon: '🥦'
+    },
+    {
+      value: 'SortingLevel3',
+      label: 'Food Sorting Level 3 - Pyramid Builder',
+      description: 'Classify foods into 5 main groups and build balanced meals',
+      component: 'SortingLevel3',
+      path: '/lesson/food-sorting/level-3',
+      icon: '🏗️'
+    },
+    {
+      value: 'SortingLevel4',
+      label: 'Food Sorting Level 4 - Plate Arrangement',
+      description: 'Teach portion control and meal composition',
+      component: 'SortingLevel4',
+      path: '/lesson/food-sorting/level-4',
+      icon: '🏗️'
+    },
+    {
+      value: 'SortingLevel5',
+      label: 'Food Sorting Level 5 - The Nutrition Detective',
+      description: 'Combine all prior learning into one detective-themed game.',
+      component: 'SortingLevel5',
+      path: '/lesson/food-sorting/level-5',
+      icon: '🏗️'
     }
   ];
 
