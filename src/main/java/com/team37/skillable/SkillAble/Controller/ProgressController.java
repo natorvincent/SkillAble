@@ -56,6 +56,39 @@ public class ProgressController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    //added//
+// Replace your existing stats endpoint with this improved version:
+
+    @GetMapping("/stats/{studentId}/{moduleId}")
+    public ResponseEntity<Map<String, Object>> getStudentModuleProgressStats(
+            @PathVariable Long studentId,
+            @PathVariable int moduleId) {
+        try {
+            System.out.println("Stats endpoint called with studentId: " + studentId + ", moduleId: " + moduleId);
+
+            Map<String, Object> stats = progressService.getStudentModuleProgressStats(studentId, moduleId);
+
+            System.out.println("Stats result: " + stats);
+
+            return ResponseEntity.ok(stats);
+        } catch (Exception e) {
+            System.err.println("Error in stats endpoint: " + e.getMessage());
+            e.printStackTrace();
+
+            // Return default stats on error instead of failing
+            Map<String, Object> defaultStats = Map.of(
+                    "completedLessons", 0,
+                    "totalStars", 0,
+                    "completedModules", 0,
+                    "currentStreak", 0,
+                    "totalProgress", 0.0
+            );
+
+            return ResponseEntity.ok(defaultStats);
+        }
+    }
+    //new added above
+
     @GetMapping("/module/{studentId}/{moduleId}")
     public ResponseEntity<ModuleProgressDTO> getStudentModuleProgress(
             @PathVariable int studentId,

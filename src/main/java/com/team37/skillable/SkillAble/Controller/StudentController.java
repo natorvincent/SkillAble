@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/students")
 @CrossOrigin(origins = "*")
@@ -26,6 +28,25 @@ public class StudentController {
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(null);
+        }
+    }
+    @PostMapping("/change-password")
+    public ResponseEntity<String> changeStudentPassword(
+            @RequestParam String email,
+            @RequestBody Map<String, String> request) {
+        try {
+            String newPassword = request.get("newPassword");
+
+            if (newPassword == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("New password is required");
+            }
+
+            studentService.changePassword(email, newPassword);
+            return ResponseEntity.ok("Password changed successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
         }
     }
 

@@ -11,6 +11,7 @@ import com.team37.skillable.SkillAble.dto.TeacherProfileUpdateRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -185,6 +186,27 @@ public class TeacherService {
 
         student.setTeacher(teacher);
         studentRepository.save(student);
+    }
+
+
+    public void changePassword(String email, String newPassword) {
+        Optional<Teacher> teacherOpt = teacherRepository.findByEmail(email);
+
+        if (teacherOpt.isEmpty()) {
+            throw new RuntimeException("Teacher not found");
+        }
+
+        Teacher teacher = teacherOpt.get();
+
+        // Validate new password
+        if (newPassword == null || newPassword.trim().length() < 6) {
+            throw new RuntimeException("New password must be at least 6 characters long");
+        }
+
+        // Update password with BCrypt encoding
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        teacher.setPassword(encoder.encode(newPassword));
+        teacherRepository.save(teacher);
     }
 
     @Transactional

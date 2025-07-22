@@ -46,6 +46,27 @@ public class TeacherController {
         }
     }
 
+
+    @PostMapping("/change-password")
+    public ResponseEntity<String> changeTeacherPassword(
+            @RequestParam String email,
+            @RequestBody Map<String, String> request) {
+        try {
+            String newPassword = request.get("newPassword");
+
+            if (newPassword == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("New password is required");
+            }
+
+            teacherService.changePassword(email, newPassword);
+            return ResponseEntity.ok("Password changed successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+        }
+    }
+
     @DeleteMapping("/delete")
     public ResponseEntity<String> deleteTeacher(@RequestParam String email) {
         try {

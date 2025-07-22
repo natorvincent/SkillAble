@@ -12,6 +12,7 @@ import com.team37.skillable.SkillAble.dto.RegisterRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
@@ -41,11 +42,13 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginRequest request) {
         String email = request.getEmail();
+        String password = request.getPassword();
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
         // First check if it's an admin
         Optional<Admin> admin = adminRepository.findByEmail(email);
         if (admin.isPresent()) {
-            if (admin.get().getPassword().equals(request.getPassword())) {
+            if (verifyPassword(password, admin.get().getPassword(), encoder)) {
                 return ResponseEntity.ok(generateTokenWithRole(admin.get().getId(), email, "ADMIN"));
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid password");
@@ -55,7 +58,7 @@ public class AuthController {
         // Try in student repository
         Optional<Student> student = studentRepository.findByEmail(email);
         if (student.isPresent()) {
-            if (student.get().getPassword().equals(request.getPassword())) {
+            if (verifyPassword(password, student.get().getPassword(), encoder)) {
                 return ResponseEntity.ok(generateTokenWithRole(student.get().getId(), email, "STUDENT"));
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid password");
@@ -65,7 +68,7 @@ public class AuthController {
         // Try in teacher repository
         Optional<Teacher> teacher = teacherRepository.findByEmail(email);
         if (teacher.isPresent()) {
-            if (teacher.get().getPassword().equals(request.getPassword())) {
+            if (verifyPassword(password, teacher.get().getPassword(), encoder)) {
                 return ResponseEntity.ok(generateTokenWithRole(teacher.get().getId(), email, "TEACHER"));
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid password");
@@ -73,6 +76,17 @@ public class AuthController {
         }
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+    }
+
+    private boolean verifyPassword(String rawPassword, String storedPassword, BCryptPasswordEncoder encoder) {
+        // Check if stored password is a BCrypt hash (starts with $2a$, $2b$, or $2y$)
+        if (storedPassword.startsWith("$2a$") || storedPassword.startsWith("$2b$") || storedPassword.startsWith("$2y$")) {
+            // Use BCrypt verification for hashed passwords
+            return encoder.matches(rawPassword, storedPassword);
+        } else {
+            // Legacy plain text comparison for old passwords
+            return rawPassword.equals(storedPassword);
+        }
     }
 
     private String generateTokenWithRole(int userId, String email, String role) {

@@ -7,6 +7,7 @@ import com.team37.skillable.SkillAble.Repository.TeacherRepository;
 import com.team37.skillable.SkillAble.dto.StudentProfileUpdateRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +37,8 @@ public class StudentService {
         studentRepository.save(student);
     }
 
+
+
     public Student getStudentProfile(String email) {
         Optional<Student> studentOpt = studentRepository.findByEmail(email);
 
@@ -58,6 +61,26 @@ public class StudentService {
         }
 
         studentRepository.delete(studentOpt.get());
+    }
+
+    public void changePassword(String email, String newPassword) {
+        Optional<Student> studentOpt = studentRepository.findByEmail(email);
+
+        if (studentOpt.isEmpty()) {
+            throw new RuntimeException("Student not found");
+        }
+
+        Student student = studentOpt.get();
+
+        // Validate new password
+        if (newPassword == null || newPassword.trim().length() < 6) {
+            throw new RuntimeException("New password must be at least 6 characters long");
+        }
+
+        // Update password with BCrypt encoding
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        student.setPassword(encoder.encode(newPassword));
+        studentRepository.save(student);
     }
 
     public List<Student> getStudentsNotTeachers() {
