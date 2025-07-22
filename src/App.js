@@ -6,7 +6,6 @@ import Login from './components/login-register/Login';
 import Register from './components/login-register/Register';
 import LandingPage from './components/LandingPage';
 import AccountPage from './components/AccountPage';
-import BadgesPage from './components/AchievementsPage';
 import AdminDashboard from './components/admin/AdminDashboard';
 import AdminRoute from './components/admin/AdminRoute';
 import ModuleDetails from './components/ModuleDetails';

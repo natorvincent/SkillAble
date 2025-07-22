@@ -19,7 +19,8 @@ import {
   DialogActions,
   DialogContent,
   DialogContentText,
-  DialogTitle
+  DialogTitle,
+  InputAdornment
 } from "@mui/material";
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
@@ -27,6 +28,9 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SecurityIcon from '@mui/icons-material/Security';
+import LockIcon from '@mui/icons-material/Lock';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import Navbar from "./Navbar";
 import Background from "./Background";
 
@@ -53,6 +57,21 @@ function AccountPage() {
   const [verificationError, setVerificationError] = useState("");
   const [pendingFormData, setPendingFormData] = useState(null);
   const [pendingFormType, setPendingFormType] = useState("");
+  
+  // New states for password change
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // Individual error states for each password field
+  const [currentPasswordError, setCurrentPasswordError] = useState("");
+  const [newPasswordError, setNewPasswordError] = useState("");
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
   
   const navigate = useNavigate();
 
@@ -255,6 +274,92 @@ function AccountPage() {
     }
   };
 
+  const handlePasswordChange = async () => {
+    // Clear previous errors
+    setCurrentPasswordError("");
+    setNewPasswordError("");
+    setConfirmPasswordError("");
+    setPasswordError("");
+
+    // Validation with specific field errors
+    let hasError = false;
+
+    if (!currentPassword) {
+      setCurrentPasswordError("Current password is required");
+      hasError = true;
+    }
+
+    if (!newPassword) {
+      setNewPasswordError("New password is required");
+      hasError = true;
+    } else if (newPassword.length < 6) {
+      setNewPasswordError("New password must be at least 6 characters long");
+      hasError = true;
+    }
+
+    if (!confirmNewPassword) {
+      setConfirmPasswordError("Please confirm your new password");
+      hasError = true;
+    } else if (newPassword && confirmNewPassword && newPassword !== confirmNewPassword) {
+      setConfirmPasswordError("New passwords do not match");
+      hasError = true;
+    }
+
+    if (currentPassword && newPassword && currentPassword === newPassword) {
+      setNewPasswordError("New password must be different from current password");
+      hasError = true;
+    }
+
+    if (hasError) return;
+
+    try {
+      // First verify the current password by calling login
+      const loginResponse = await fetch("http://localhost:8080/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          email: email, 
+          password: currentPassword 
+        }),
+      });
+
+      if (!loginResponse.ok) {
+        setCurrentPasswordError("Current password is incorrect");
+        return;
+      }
+
+      // If current password is correct, change the password
+      const endpoint = userType === "TEACHER" 
+        ? `http://localhost:8080/api/teachers/change-password?email=${encodeURIComponent(email)}`
+        : `http://localhost:8080/api/students/change-password?email=${encodeURIComponent(email)}`;
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          newPassword: newPassword
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(errorData || "Failed to change password");
+      }
+
+      setSuccess("Password changed successfully!");
+      setOpenSnackbar(true);
+      setPasswordDialogOpen(false);
+      resetPasswordFields();
+    } catch (err) {
+      console.error("Error changing password:", err);
+      setPasswordError(err.message || "Failed to change password");
+    }
+  };
+
   const handleDeleteAccount = async () => {
     if (confirmEmail !== email) {
       setDeleteError("Email does not match your account email");
@@ -316,6 +421,29 @@ function AccountPage() {
     setVerificationError("");
     setPendingFormData(null);
     setPendingFormType("");
+  };
+
+  const handleOpenPasswordDialog = () => {
+    setPasswordDialogOpen(true);
+    resetPasswordFields();
+  };
+
+  const handleClosePasswordDialog = () => {
+    setPasswordDialogOpen(false);
+    resetPasswordFields();
+  };
+
+  const resetPasswordFields = () => {
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmNewPassword("");
+    setPasswordError("");
+    setCurrentPasswordError("");
+    setNewPasswordError("");
+    setConfirmPasswordError("");
+    setShowCurrentPassword(false);
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
   };
 
   const handleCloseSnackbar = () => {
@@ -642,7 +770,8 @@ function AccountPage() {
                   <Button 
                     variant="outlined" 
                     color="primary"
-                    onClick={() => navigate("/change-password")}
+                    startIcon={<LockIcon />}
+                    onClick={handleOpenPasswordDialog}
                   >
                     Change
                   </Button>
@@ -682,6 +811,358 @@ function AccountPage() {
           </Paper>
         </Container>
       </div>
+
+      {/* Password Change Dialog - Selective Error Highlighting */}
+      <Dialog
+        open={passwordDialogOpen}
+        onClose={handleClosePasswordDialog}
+        maxWidth="sm"
+        fullWidth
+        aria-labelledby="password-dialog-title"
+        aria-describedby="password-dialog-description"
+        PaperProps={{
+          sx: {
+            borderRadius: "24px",
+            background: "rgba(255, 255, 255, 0.85)",
+            backdropFilter: "blur(15px)",
+            border: "1px solid rgba(255, 255, 255, 0.9)",
+            color: "#333",
+            overflow: "visible",
+            position: "relative",
+            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.08)",
+            "&::before": {
+              content: '""',
+              position: "absolute",
+              top: "-8px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: "50px",
+              height: "4px",
+              backgroundColor: "rgba(255, 165, 0, 0.6)",
+              borderRadius: "2px",
+            }
+          }
+        }}
+      >
+        <DialogTitle 
+          id="password-dialog-title" 
+          sx={{ 
+            textAlign: "center",
+            pt: 4,
+            pb: 2,
+            color: "#333"
+          }}
+        >
+          <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+            <Box
+              sx={{
+                background: "rgba(255, 255, 255, 0.9)",
+                borderRadius: "50%",
+                padding: "16px",
+                backdropFilter: "blur(10px)",
+                border: "2px solid rgba(255, 165, 0, 0.3)",
+                boxShadow: "0 4px 16px rgba(255, 165, 0, 0.1)",
+              }}
+            >
+              <LockIcon sx={{ fontSize: 32, color: "#FF8C00" }} />
+            </Box>
+            <Typography variant="h5" sx={{ fontWeight: "600", mt: 1, color: "#333" }}>
+              🔐 Change Password
+            </Typography>
+            <Typography variant="body2" sx={{ opacity: 0.7, fontSize: "14px", color: "#666" }}>
+              Keep your account super safe! 
+            </Typography>
+          </Box>
+        </DialogTitle>
+        
+        <DialogContent sx={{ px: 4, pb: 2 }}>
+          <Box
+            sx={{
+              background: "rgba(255, 255, 255, 0.95)",
+              borderRadius: "20px",
+              padding: "24px",
+              backdropFilter: "blur(10px)",
+              border: "1px solid rgba(255, 255, 255, 0.8)",
+              color: "#333",
+              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.05)",
+            }}
+          >
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                mb: 3, 
+                textAlign: "center",
+                color: "#666",
+                fontSize: "15px",
+                lineHeight: 1.6
+              }}
+            >
+              🛡️ Create a strong password with at least 6 characters!
+            </Typography>
+            
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <TextField
+                fullWidth
+                label="🔑 Current Password"
+                type={showCurrentPassword ? "text" : "password"}
+                value={currentPassword}
+                onChange={(e) => {
+                  setCurrentPassword(e.target.value);
+                  setCurrentPasswordError("");
+                  setPasswordError("");
+                }}
+                error={!!currentPasswordError}
+                helperText={currentPasswordError}
+                sx={{ 
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "16px",
+                    backgroundColor: "rgba(255, 255, 255, 0.98)",
+                    backdropFilter: "blur(5px)",
+                    border: currentPasswordError ? "1px solid #d32f2f" : "1px solid rgba(255, 165, 0, 0.2)",
+                    transition: "all 0.2s ease",
+                    "&:hover": {
+                      backgroundColor: "rgba(255, 255, 255, 1)",
+                      transform: "translateY(-1px)",
+                      boxShadow: currentPasswordError ? "0 4px 12px rgba(211, 47, 47, 0.15)" : "0 4px 12px rgba(255, 165, 0, 0.15)",
+                      border: currentPasswordError ? "1px solid #d32f2f" : "1px solid rgba(255, 165, 0, 0.4)"
+                    },
+                    "&.Mui-focused": {
+                      backgroundColor: "rgba(255, 255, 255, 1)",
+                      transform: "translateY(-1px)",
+                      boxShadow: currentPasswordError ? "0 6px 20px rgba(211, 47, 47, 0.25)" : "0 6px 20px rgba(255, 165, 0, 0.25)",
+                      border: currentPasswordError ? "2px solid #d32f2f" : "2px solid rgba(255, 165, 0, 0.6)"
+                    }
+                  },
+                  "& .MuiInputLabel-root": {
+                    color: "#666",
+                    fontSize: "14px",
+                    "&.Mui-focused": {
+                      color: currentPasswordError ? "#d32f2f" : "#FF8C00"
+                    }
+                  },
+                  "& .MuiFormHelperText-root": {
+                    backgroundColor: "rgba(255, 255, 255, 0.95)",
+                    borderRadius: "8px",
+                    padding: "4px 8px",
+                    margin: "4px 0",
+                    fontWeight: "500"
+                  }
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        edge="end"
+                        sx={{
+                          color: currentPasswordError ? "#d32f2f" : "#FF8C00",
+                          "&:hover": {
+                            backgroundColor: currentPasswordError ? "rgba(211, 47, 47, 0.1)" : "rgba(255, 140, 0, 0.1)",
+                            transform: "scale(1.1)"
+                          }
+                        }}
+                      >
+                        {showCurrentPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              
+              <TextField
+                fullWidth
+                label="✨ New Password"
+                type={showNewPassword ? "text" : "password"}
+                value={newPassword}
+                onChange={(e) => {
+                  setNewPassword(e.target.value);
+                  setNewPasswordError("");
+                  setPasswordError("");
+                }}
+                error={!!newPasswordError}
+                helperText={newPasswordError}
+                sx={{ 
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "16px",
+                    backgroundColor: "rgba(255, 255, 255, 0.98)",
+                    backdropFilter: "blur(5px)",
+                    border: newPasswordError ? "1px solid #d32f2f" : "1px solid rgba(255, 165, 0, 0.2)",
+                    transition: "all 0.2s ease",
+                    "&:hover": {
+                      backgroundColor: "rgba(255, 255, 255, 1)",
+                      transform: "translateY(-1px)",
+                      boxShadow: newPasswordError ? "0 4px 12px rgba(211, 47, 47, 0.15)" : "0 4px 12px rgba(255, 165, 0, 0.15)",
+                      border: newPasswordError ? "1px solid #d32f2f" : "1px solid rgba(255, 165, 0, 0.4)"
+                    },
+                    "&.Mui-focused": {
+                      backgroundColor: "rgba(255, 255, 255, 1)",
+                      transform: "translateY(-1px)",
+                      boxShadow: newPasswordError ? "0 6px 20px rgba(211, 47, 47, 0.25)" : "0 6px 20px rgba(255, 165, 0, 0.25)",
+                      border: newPasswordError ? "2px solid #d32f2f" : "2px solid rgba(255, 165, 0, 0.6)"
+                    }
+                  },
+                  "& .MuiInputLabel-root": {
+                    color: "#666",
+                    fontSize: "14px",
+                    "&.Mui-focused": {
+                      color: newPasswordError ? "#d32f2f" : "#FF8C00"
+                    }
+                  },
+                  "& .MuiFormHelperText-root": {
+                    backgroundColor: "rgba(255, 255, 255, 0.95)",
+                    borderRadius: "8px",
+                    padding: "4px 8px",
+                    margin: "4px 0",
+                    fontWeight: "500"
+                  }
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        edge="end"
+                        sx={{
+                          color: newPasswordError ? "#d32f2f" : "#FF8C00",
+                          "&:hover": {
+                            backgroundColor: newPasswordError ? "rgba(211, 47, 47, 0.1)" : "rgba(255, 140, 0, 0.1)",
+                            transform: "scale(1.1)"
+                          }
+                        }}
+                      >
+                        {showNewPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              
+              <TextField
+                fullWidth
+                label="🔒 Confirm New Password"
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmNewPassword}
+                onChange={(e) => {
+                  setConfirmNewPassword(e.target.value);
+                  setConfirmPasswordError("");
+                  setPasswordError("");
+                }}
+                error={!!confirmPasswordError}
+                helperText={confirmPasswordError}
+                sx={{ 
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "16px",
+                    backgroundColor: "rgba(255, 255, 255, 0.98)",
+                    backdropFilter: "blur(5px)",
+                    border: confirmPasswordError ? "1px solid #d32f2f" : "1px solid rgba(255, 165, 0, 0.2)",
+                    transition: "all 0.2s ease",
+                    "&:hover": {
+                      backgroundColor: "rgba(255, 255, 255, 1)",
+                      transform: "translateY(-1px)",
+                      boxShadow: confirmPasswordError ? "0 4px 12px rgba(211, 47, 47, 0.15)" : "0 4px 12px rgba(255, 165, 0, 0.15)",
+                      border: confirmPasswordError ? "1px solid #d32f2f" : "1px solid rgba(255, 165, 0, 0.4)"
+                    },
+                    "&.Mui-focused": {
+                      backgroundColor: "rgba(255, 255, 255, 1)",
+                      transform: "translateY(-1px)",
+                      boxShadow: confirmPasswordError ? "0 6px 20px rgba(211, 47, 47, 0.25)" : "0 6px 20px rgba(255, 165, 0, 0.25)",
+                      border: confirmPasswordError ? "2px solid #d32f2f" : "2px solid rgba(255, 165, 0, 0.6)"
+                    }
+                  },
+                  "& .MuiInputLabel-root": {
+                    color: "#666",
+                    fontSize: "14px",
+                    "&.Mui-focused": {
+                      color: confirmPasswordError ? "#d32f2f" : "#FF8C00"
+                    }
+                  },
+                  "& .MuiFormHelperText-root": {
+                    backgroundColor: "rgba(255, 255, 255, 0.95)",
+                    borderRadius: "8px",
+                    padding: "4px 8px",
+                    margin: "4px 0",
+                    fontWeight: "500"
+                  }
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        edge="end"
+                        sx={{
+                          color: confirmPasswordError ? "#d32f2f" : "#FF8C00",
+                          "&:hover": {
+                            backgroundColor: confirmPasswordError ? "rgba(211, 47, 47, 0.1)" : "rgba(255, 140, 0, 0.1)",
+                            transform: "scale(1.1)"
+                          }
+                        }}
+                      >
+                        {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Box>
+          </Box>
+        </DialogContent>
+        
+        <DialogActions sx={{ px: 4, pb: 4, pt: 2, justifyContent: "center", gap: 2 }}>
+          <Button 
+            onClick={handleClosePasswordDialog}
+            variant="outlined"
+            sx={{
+              borderRadius: "20px",
+              px: 3,
+              py: 1.5,
+              color: "#666",
+              borderColor: "rgba(255, 165, 0, 0.4)",
+              backgroundColor: "rgba(255, 255, 255, 0.9)",
+              fontSize: "14px",
+              fontWeight: "600",
+              textTransform: "none",
+              transition: "all 0.2s ease",
+              "&:hover": {
+                borderColor: "rgba(255, 140, 0, 0.6)",
+                backgroundColor: "rgba(255, 255, 255, 1)",
+                color: "#FF8C00",
+                transform: "translateY(-1px)",
+                boxShadow: "0 4px 12px rgba(255, 165, 0, 0.2)"
+              }
+            }}
+          >
+            ❌ Cancel
+          </Button>
+          <Button 
+            onClick={handlePasswordChange}
+            variant="contained"
+            sx={{
+              borderRadius: "20px",
+              px: 4,
+              py: 1.5,
+              background: "linear-gradient(135deg, #FF8C00, #FFA500, #FFD700)",
+              color: "white",
+              fontSize: "14px",
+              fontWeight: "600",
+              textTransform: "none",
+              border: "none",
+              boxShadow: "0 4px 15px rgba(255, 140, 0, 0.3)",
+              transition: "all 0.2s ease",
+              "&:hover": {
+                background: "linear-gradient(135deg, #FF7F00, #FF8C00, #FFA500)",
+                transform: "translateY(-2px)",
+                boxShadow: "0 6px 20px rgba(255, 140, 0, 0.4)"
+              },
+              "&:active": {
+                transform: "translateY(0px)"
+              }
+            }}
+          >
+            🚀 Update Password
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Profile Update Verification Dialog */}
       <Dialog
@@ -738,51 +1219,212 @@ function AccountPage() {
         </DialogActions>
       </Dialog>
 
-      {/* Delete Account Confirmation Dialog */}
+      {/* Delete Account Confirmation Dialog - Unified Design */}
       <Dialog
         open={deleteDialogOpen}
         onClose={handleCloseDeleteDialog}
+        maxWidth="sm"
+        fullWidth
         aria-labelledby="delete-account-title"
         aria-describedby="delete-account-description"
+        PaperProps={{
+          sx: {
+            borderRadius: "24px",
+            background: "rgba(255, 255, 255, 0.85)",
+            backdropFilter: "blur(15px)",
+            border: "1px solid rgba(255, 255, 255, 0.9)",
+            color: "#333",
+            overflow: "visible",
+            position: "relative",
+            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.08)",
+            "&::before": {
+              content: '""',
+              position: "absolute",
+              top: "-8px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: "50px",
+              height: "4px",
+              backgroundColor: "rgba(244, 67, 54, 0.6)",
+              borderRadius: "2px",
+            }
+          }
+        }}
       >
-        <DialogTitle id="delete-account-title" color="error">
-          Delete Account
+        <DialogTitle 
+          id="delete-account-title"
+          sx={{ 
+            textAlign: "center",
+            pt: 4,
+            pb: 2,
+            color: "#333"
+          }}
+        >
+          <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+            <Box
+              sx={{
+                background: "rgba(255, 255, 255, 0.9)",
+                borderRadius: "50%",
+                padding: "16px",
+                backdropFilter: "blur(10px)",
+                border: "2px solid rgba(244, 67, 54, 0.3)",
+                boxShadow: "0 4px 16px rgba(244, 67, 54, 0.1)",
+              }}
+            >
+              <DeleteIcon sx={{ fontSize: 32, color: "#f44336" }} />
+            </Box>
+            <Typography variant="h5" sx={{ fontWeight: "600", mt: 1, color: "#333" }}>
+              ⚠️ Delete Account
+            </Typography>
+            <Typography variant="body2" sx={{ opacity: 0.7, fontSize: "14px", color: "#666" }}>
+              This action cannot be undone!
+            </Typography>
+          </Box>
         </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="delete-account-description" sx={{ mb: 3 }}>
-            This action cannot be undone. All your data will be permanently deleted.
-            To confirm, please enter your email address: <strong>{email}</strong>
-          </DialogContentText>
-          <TextField
-            autoFocus
-            fullWidth
-            label="Enter your email to confirm"
-            type="email"
-            value={confirmEmail}
-            onChange={(e) => setConfirmEmail(e.target.value)}
-            error={!!deleteError}
-            helperText={deleteError}
-            sx={{ 
-              "& .MuiOutlinedInput-root": {
-                borderRadius: "10px",
-              },
+        
+        <DialogContent sx={{ px: 4, pb: 2 }}>
+          <Box
+            sx={{
+              background: "rgba(255, 255, 255, 0.95)",
+              borderRadius: "20px",
+              padding: "24px",
+              backdropFilter: "blur(10px)",
+              border: "1px solid rgba(255, 255, 255, 0.8)",
+              color: "#333",
+              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.05)",
             }}
-          />
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button 
-            onClick={handleCloseDeleteDialog} 
-            variant="outlined"
           >
-            Cancel
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                mb: 3, 
+                textAlign: "center",
+                color: "#666",
+                fontSize: "15px",
+                lineHeight: 1.6
+              }}
+            >
+              🚨 All your data will be permanently deleted. This includes your profile, progress, and all associated information.
+            </Typography>
+            
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                mb: 3, 
+                textAlign: "center",
+                color: "#888",
+                fontSize: "14px",
+                fontWeight: "500"
+              }}
+            >
+              To confirm, please enter your email address: <strong style={{ color: "#f44336" }}>{email}</strong>
+            </Typography>
+            
+            <TextField
+              autoFocus
+              fullWidth
+              label="📧 Enter your email to confirm"
+              type="email"
+              value={confirmEmail}
+              onChange={(e) => {
+                setConfirmEmail(e.target.value);
+                setDeleteError("");
+              }}
+              error={!!deleteError}
+              helperText={deleteError}
+              sx={{ 
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "16px",
+                  backgroundColor: "rgba(255, 255, 255, 0.98)",
+                  backdropFilter: "blur(5px)",
+                  border: deleteError ? "1px solid #f44336" : "1px solid rgba(244, 67, 54, 0.2)",
+                  transition: "all 0.2s ease",
+                  "&:hover": {
+                    backgroundColor: "rgba(255, 255, 255, 1)",
+                    transform: "translateY(-1px)",
+                    boxShadow: deleteError ? "0 4px 12px rgba(244, 67, 54, 0.15)" : "0 4px 12px rgba(244, 67, 54, 0.15)",
+                    border: deleteError ? "1px solid #f44336" : "1px solid rgba(244, 67, 54, 0.4)"
+                  },
+                  "&.Mui-focused": {
+                    backgroundColor: "rgba(255, 255, 255, 1)",
+                    transform: "translateY(-1px)",
+                    boxShadow: deleteError ? "0 6px 20px rgba(244, 67, 54, 0.25)" : "0 6px 20px rgba(244, 67, 54, 0.25)",
+                    border: deleteError ? "2px solid #f44336" : "2px solid rgba(244, 67, 54, 0.6)"
+                  }
+                },
+                "& .MuiInputLabel-root": {
+                  color: "#666",
+                  fontSize: "14px",
+                  "&.Mui-focused": {
+                    color: deleteError ? "#f44336" : "#f44336"
+                  }
+                },
+                "& .MuiFormHelperText-root": {
+                  backgroundColor: "rgba(255, 255, 255, 0.95)",
+                  borderRadius: "8px",
+                  padding: "4px 8px",
+                  margin: "4px 0",
+                  fontWeight: "500",
+                  color: "#f44336",
+                  border: "1px solid rgba(244, 67, 54, 0.1)"
+                }
+              }}
+            />
+          </Box>
+        </DialogContent>
+        
+        <DialogActions sx={{ px: 4, pb: 4, pt: 2, justifyContent: "center", gap: 2 }}>
+          <Button 
+            onClick={handleCloseDeleteDialog}
+            variant="outlined"
+            sx={{
+              borderRadius: "20px",
+              px: 3,
+              py: 1.5,
+              color: "#666",
+              borderColor: "rgba(255, 165, 0, 0.4)",
+              backgroundColor: "rgba(255, 255, 255, 0.9)",
+              fontSize: "14px",
+              fontWeight: "600",
+              textTransform: "none",
+              transition: "all 0.2s ease",
+              "&:hover": {
+                borderColor: "rgba(255, 140, 0, 0.6)",
+                backgroundColor: "rgba(255, 255, 255, 1)",
+                color: "#FF8C00",
+                transform: "translateY(-1px)",
+                boxShadow: "0 4px 12px rgba(255, 165, 0, 0.2)"
+              }
+            }}
+          >
+            ✅ Cancel
           </Button>
           <Button 
-            onClick={handleDeleteAccount} 
-            color="error" 
+            onClick={handleDeleteAccount}
             variant="contained"
-            startIcon={<DeleteIcon />}
+            sx={{
+              borderRadius: "20px",
+              px: 4,
+              py: 1.5,
+              background: "linear-gradient(135deg, #f44336, #e57373, #ffab91)",
+              color: "white",
+              fontSize: "14px",
+              fontWeight: "600",
+              textTransform: "none",
+              border: "none",
+              boxShadow: "0 4px 15px rgba(244, 67, 54, 0.3)",
+              transition: "all 0.2s ease",
+              "&:hover": {
+                background: "linear-gradient(135deg, #d32f2f, #f44336, #e57373)",
+                transform: "translateY(-2px)",
+                boxShadow: "0 6px 20px rgba(244, 67, 54, 0.4)"
+              },
+              "&:active": {
+                transform: "translateY(0px)"
+              }
+            }}
           >
-            Delete Account
+            🗑️ Delete Account
           </Button>
         </DialogActions>
       </Dialog>
