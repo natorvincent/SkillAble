@@ -26,7 +26,8 @@ import {
   Collapse,
   useTheme,
   useMediaQuery,
-  Tooltip
+  Tooltip,
+  CircularProgress
 } from '@mui/material';
 import {
   VolumeUp,
@@ -42,9 +43,88 @@ import {
   School,
   LocalLaundryService,
   AutoAwesome,
-  Celebration
+  Celebration,
+  Lock,
+  StarBorder,
+  CloudUpload,
+  CloudDone
 } from '@mui/icons-material';
 import { createTheme, ThemeProvider, keyframes } from '@mui/material/styles';
+
+// Progress API functions
+const API_BASE_URL = 'http://localhost:8080/api/progress';
+
+const saveStudentLessonProgress = async (studentId, lessonId, progressData) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/lesson`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        studentId: studentId,
+        lessonId: lessonId,
+        score: progressData.score,
+        maxScore: progressData.maxScore,
+        completed: progressData.completed,
+        starsEarned: progressData.starsEarned
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to save progress');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error saving lesson progress:', error);
+    throw error;
+  }
+};
+
+const getStudentLessonProgress = async (studentId, lessonId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/lesson/${studentId}/${lessonId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.status === 404) {
+      return null;
+    }
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch lesson progress');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching lesson progress:', error);
+    throw error;
+  }
+};
+
+const updateModuleProgress = async (studentId, moduleId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/module/${studentId}/${moduleId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update module progress');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating module progress:', error);
+    throw error;
+  }
+};
 
 const theme = createTheme({
   palette: {
@@ -142,10 +222,18 @@ const float = keyframes`
   }
 `;
 
-const HouseholdLevel1 = () => {
+const HouseholdLevel1 = ({ studentId = "student123", lessonId = "household-level-1", moduleId = "household-chores" }) => {
   const navigate = useNavigate();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
+  // Progress tracking state
+  const [nextLevelAvailable, setNextLevelAvailable] = useState(true);
+  const [previousProgress, setPreviousProgress] = useState(null);
+  const [isSavingProgress, setIsSavingProgress] = useState(false);
+  const [progressSaved, setProgressSaved] = useState(false);
+  const [starsEarned, setStarsEarned] = useState(0);
+  
+  // Game state
   const [draggedItem, setDraggedItem] = useState(null);
   const [dragOverBin, setDragOverBin] = useState(null);
   const [bins, setBins] = useState({
@@ -154,7 +242,6 @@ const HouseholdLevel1 = () => {
     delicates: []
   });
   const [score, setScore] = useState(0);
-  const [feedback, setFeedback] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [showInstructions, setShowInstructions] = useState(true);
@@ -164,6 +251,7 @@ const HouseholdLevel1 = () => {
   const [correctStreaks, setCorrectStreaks] = useState(0);
   const [lastCorrectBin, setLastCorrectBin] = useState(null);
   const [shakeWrongBin, setShakeWrongBin] = useState(null);
+  const [startTime, setStartTime] = useState(Date.now());
 
   const laundryItems = [
     { id: 1, name: 'White T-Shirt', type: 'whites', emoji: '👕', color: '#ffffff', difficulty: 'easy' },
@@ -209,7 +297,103 @@ const HouseholdLevel1 = () => {
     }
   };
 
-  // Enhanced drag handlers
+  // Calculate maximum possible score
+  const calculateMaxScore = () => {
+    let maxScore = 0;
+    laundryItems.forEach((item, index) => {
+      const baseScore = 10;
+      const difficultyBonus = item.difficulty === 'hard' ? 5 : item.difficulty === 'medium' ? 3 : 0;
+      const streakBonus = index * 2; // Maximum possible streak bonus
+      maxScore += baseScore + difficultyBonus + streakBonus;
+    });
+    return maxScore;
+  };
+
+  // Calculate stars based on performance
+  const calculateStars = (finalScore, totalAttempts, timeTaken) => {
+    const maxScore = calculateMaxScore();
+    const accuracy = (laundryItems.length / totalAttempts) * 100;
+    const scorePercentage = (finalScore / maxScore) * 100;
+    const timeBonus = timeTaken < 120000 ? 1 : 0; // Bonus for completing under 2 minutes
+
+    let stars = 0;
+    
+    // Basic completion = 1 star
+    stars = 1;
+    
+    // Good performance = 2 stars (70%+ accuracy or 60%+ score)
+    if (accuracy >= 70 || scorePercentage >= 60) {
+      stars = 2;
+    }
+    
+    // Excellent performance = 3 stars (90%+ accuracy and 80%+ score, or time bonus)
+    if ((accuracy >= 90 && scorePercentage >= 80) || (accuracy >= 85 && timeBonus)) {
+      stars = 3;
+    }
+
+    return stars;
+  };
+
+  // Load previous progress on component mount
+  useEffect(() => {
+    const loadProgress = async () => {
+      try {
+        const progress = await getStudentLessonProgress(studentId, lessonId);
+        if (progress) {
+          setPreviousProgress(progress);
+          setStarsEarned(progress.starsEarned || 0);
+        }
+      } catch (error) {
+        console.error('Failed to load previous progress:', error);
+      }
+    };
+
+    loadProgress();
+    setStartTime(Date.now());
+  }, [studentId, lessonId]);
+
+  // Save progress when game is completed
+  const saveProgress = async (finalScore, totalAttempts, timeTaken) => {
+    setIsSavingProgress(true);
+    try {
+      const maxScore = calculateMaxScore();
+      const stars = calculateStars(finalScore, totalAttempts, timeTaken);
+      
+      const progressData = {
+        score: finalScore,
+        maxScore: maxScore,
+        completed: true,
+        starsEarned: stars,
+        accuracy: (laundryItems.length / totalAttempts) * 100,
+        timeTaken: timeTaken,
+        attempts: totalAttempts
+      };
+
+      await saveStudentLessonProgress(studentId, lessonId, progressData);
+      
+      // Update module progress
+      await updateModuleProgress(studentId, moduleId);
+      
+      setStarsEarned(stars);
+      setProgressSaved(true);
+      
+      setSnackbar({
+        open: true,
+        message: `Progress saved! You earned ${stars} star${stars !== 1 ? 's' : ''}! ⭐`,
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Failed to save progress:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to save progress. Please try again.',
+        severity: 'error'
+      });
+    } finally {
+      setIsSavingProgress(false);
+    }
+  };
+
   const handleDragStart = (e, item) => {
     setDraggedItem(item);
     e.dataTransfer.effectAllowed = 'move';
@@ -232,13 +416,12 @@ const HouseholdLevel1 = () => {
   };
 
   const handleDragLeave = (e) => {
-    // Only clear if we're leaving the drop zone entirely
     if (!e.currentTarget.contains(e.relatedTarget)) {
       setDragOverBin(null);
     }
   };
 
-  const createCelebrationEffect = (binType) => {
+  const createCelebrationEffect = () => {
     const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3'];
     const newItems = Array.from({ length: 8 }, (_, i) => ({
       id: Date.now() + i,
@@ -278,10 +461,8 @@ const HouseholdLevel1 = () => {
       setCorrectStreaks(prev => prev + 1);
       setLastCorrectBin(binType);
       
-      // Create celebration effect
-      createCelebrationEffect(binType);
+      createCelebrationEffect();
       
-      // Enhanced feedback messages
       const streakMessages = [
         'Great job! ✨',
         'Perfect! You\'re on a roll! 🎯',
@@ -298,12 +479,25 @@ const HouseholdLevel1 = () => {
         severity: 'success'
       });
       
-      // Play success sound
       playSuccessSound();
       
       // Check if all items are sorted
       if (availableItems.length === 1) {
-        setTimeout(() => setShowSuccess(true), 800);
+        setTimeout(() => {
+          const timeTaken = Date.now() - startTime;
+          saveProgress(score + totalScore, attempts + 1, timeTaken);
+          setShowSuccess(true);
+          
+          if (!nextLevelAvailable) {
+            setTimeout(() => {
+              setSnackbar({
+                open: true,
+                message: '🎓 Great job! Ask your teacher to create Level 2 to continue learning!',
+                severity: 'info'
+              });
+            }, 2000);
+          }
+        }, 800);
       }
     } else {
       setCorrectStreaks(0);
@@ -316,7 +510,6 @@ const HouseholdLevel1 = () => {
         severity: 'warning'
       });
       
-      // Play error sound
       playErrorSound();
     }
 
@@ -351,8 +544,9 @@ const HouseholdLevel1 = () => {
     setAttempts(0);
     setCorrectStreaks(0);
     setLastCorrectBin(null);
-    setFeedback('');
     setCelebrationItems([]);
+    setProgressSaved(false);
+    setStartTime(Date.now());
   };
 
   const playAudio = (text) => {
@@ -383,6 +577,21 @@ const HouseholdLevel1 = () => {
       case 'hard': return '#F44336';
       default: return '#9E9E9E';
     }
+  };
+
+  const renderStars = (stars, size = 'medium') => {
+    const starSize = size === 'small' ? 16 : size === 'large' ? 32 : 24;
+    return (
+      <Box sx={{ display: 'flex', gap: 0.5 }}>
+        {[1, 2, 3].map((star) => (
+          star <= stars ? (
+            <Star key={star} sx={{ color: '#FFD700', fontSize: starSize }} />
+          ) : (
+            <StarBorder key={star} sx={{ color: '#E0E0E0', fontSize: starSize }} />
+          )
+        ))}
+      </Box>
+    );
   };
 
   return (
@@ -449,6 +658,19 @@ const HouseholdLevel1 = () => {
                   <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 1, fontSize: '1.1rem' }}>
                     Drag each item into the correct laundry bin and become a sorting champion! 🏆
                   </Typography>
+                  
+                  {/* Previous Progress Display */}
+                  {previousProgress && (
+                    <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Previous Best:
+                      </Typography>
+                      {renderStars(previousProgress.starsEarned, 'small')}
+                      <Typography variant="body2" color="text.secondary">
+                        {previousProgress.score}/{previousProgress.maxScore} points
+                      </Typography>
+                    </Box>
+                  )}
                 </Box>
                 
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -535,6 +757,24 @@ const HouseholdLevel1 = () => {
                       variant="outlined"
                       sx={{ fontWeight: 600 }}
                     />
+                    {isSavingProgress && (
+                      <Chip 
+                        icon={<CircularProgress size={16} />}
+                        label="Saving..." 
+                        color="info" 
+                        variant="filled"
+                        sx={{ fontWeight: 600 }}
+                      />
+                    )}
+                    {progressSaved && (
+                      <Chip 
+                        icon={<CloudDone />}
+                        label="Saved!" 
+                        color="success" 
+                        variant="filled"
+                        sx={{ fontWeight: 600 }}
+                      />
+                    )}
                   </Box>
                 </Box>
                 <LinearProgress 
@@ -793,7 +1033,7 @@ const HouseholdLevel1 = () => {
             </Grid>
           </Grid>
 
-          {/* Enhanced Reset Button */}
+          {/* Enhanced Reset Button with Demo Toggle */}
           <Box sx={{ mt: 4, textAlign: 'center' }}>
             <Button
               variant="contained"
@@ -806,6 +1046,7 @@ const HouseholdLevel1 = () => {
                 px: 4,
                 py: 1.5,
                 fontSize: '1.1rem',
+                mr: 2,
                 '&:hover': {
                   background: 'linear-gradient(45deg, #5a6fd8, #6a4190)',
                   transform: 'translateY(-2px)',
@@ -814,6 +1055,27 @@ const HouseholdLevel1 = () => {
               }}
             >
               Start Over
+            </Button>
+            
+            {/* Demo button to toggle next level availability */}
+            <Button
+              variant="outlined"
+              onClick={() => setNextLevelAvailable(!nextLevelAvailable)}
+              size="large"
+              sx={{
+                borderColor: 'white',
+                color: 'white',
+                px: 3,
+                py: 1.5,
+                fontSize: '1rem',
+                '&:hover': {
+                  borderColor: 'white',
+                  backgroundColor: 'rgba(255,255,255,0.1)',
+                  transform: 'translateY(-2px)'
+                }
+              }}
+            >
+              {nextLevelAvailable ? '🔒 Disable Level 2' : '🔓 Enable Level 2'} (Demo)
             </Button>
           </Box>
 
@@ -857,14 +1119,26 @@ const HouseholdLevel1 = () => {
                 <Typography variant="h6" sx={{ opacity: 0.9, mt: 1 }}>
                   Laundry Sorting Champion!
                 </Typography>
+                
+                {/* Stars Display */}
+                <Box sx={{ mt: 2 }}>
+                  {renderStars(starsEarned, 'large')}
+                  <Typography variant="body1" sx={{ mt: 1, fontWeight: 600 }}>
+                    You earned {starsEarned} star{starsEarned !== 1 ? 's' : ''}!
+                  </Typography>
+                </Box>
               </Box>
             </DialogTitle>
             <DialogContent sx={{ textAlign: 'center' }}>
               <Typography variant="body1" sx={{ mb: 3, fontSize: '1.1rem' }}>
-                You've successfully sorted all the laundry! You're ready for the next level!
+                You've successfully sorted all the laundry! 
+                {nextLevelAvailable 
+                  ? " You're ready for the next level!" 
+                  : " You've completed all available levels!"
+                }
               </Typography>
               <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid item xs={6}>
+                <Grid item xs={4}>
                   <Paper sx={{ p: 2, bgcolor: 'rgba(255,255,255,0.2)' }}>
                     <Typography variant="h4" sx={{ color: '#FFD700', fontWeight: 700 }}>
                       {score}
@@ -872,7 +1146,7 @@ const HouseholdLevel1 = () => {
                     <Typography variant="body2">Final Score</Typography>
                   </Paper>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={4}>
                   <Paper sx={{ p: 2, bgcolor: 'rgba(255,255,255,0.2)' }}>
                     <Typography variant="h4" sx={{ color: '#81C784', fontWeight: 700 }}>
                       {attempts}
@@ -880,11 +1154,31 @@ const HouseholdLevel1 = () => {
                     <Typography variant="body2">Total Attempts</Typography>
                   </Paper>
                 </Grid>
+                <Grid item xs={4}>
+                  <Paper sx={{ p: 2, bgcolor: 'rgba(255,255,255,0.2)' }}>
+                    <Typography variant="h4" sx={{ color: '#64B5F6', fontWeight: 700 }}>
+                      {Math.round((laundryItems.length / attempts) * 100)}%
+                    </Typography>
+                    <Typography variant="body2">Accuracy</Typography>
+                  </Paper>
+                </Grid>
               </Grid>
               <Typography variant="body2" sx={{ opacity: 0.8 }}>
                 You've mastered the basics of laundry sorting! 
-                Time to learn about sweeping and cleaning!
+                {nextLevelAvailable 
+                  ? " Time to learn about sweeping and cleaning!"
+                  : " Ask your teacher to unlock the next level!"
+                }
               </Typography>
+              
+              {progressSaved && (
+                <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                  <CloudDone sx={{ color: '#81C784' }} />
+                  <Typography variant="body2" sx={{ color: '#81C784', fontWeight: 600 }}>
+                    Progress saved successfully!
+                  </Typography>
+                </Box>
+              )}
             </DialogContent>
             <DialogActions sx={{ justifyContent: 'center', gap: 2, pb: 3 }}>
               <Button
@@ -905,20 +1199,44 @@ const HouseholdLevel1 = () => {
               >
                 Play Again
               </Button>
-              <Button
-                variant="contained"
-                startIcon={<PlayArrow />}
-                onClick={() => navigate('/household-level-2')}
-                sx={{
-                  bgcolor: 'white',
-                  color: '#667eea',
-                  '&:hover': {
-                    bgcolor: '#f5f5f5'
-                  }
-                }}
-              >
-                Next Level
-              </Button>
+              
+              {nextLevelAvailable ? (
+                <Button
+                  variant="contained"
+                  startIcon={<PlayArrow />}
+                  onClick={() => navigate('/household-level-2')}
+                  sx={{
+                    bgcolor: 'white',
+                    color: '#667eea',
+                    '&:hover': {
+                      bgcolor: '#f5f5f5'
+                    }
+                  }}
+                >
+                  Next Level
+                </Button>
+              ) : (
+                <Tooltip title="The next level hasn't been created by your teacher yet. Great job completing this level!" arrow>
+                  <span>
+                    <Button
+                      variant="outlined"
+                      disabled
+                      startIcon={<Lock />}
+                      sx={{
+                        color: 'rgba(255,255,255,0.6)',
+                        borderColor: 'rgba(255,255,255,0.3)',
+                        '&.Mui-disabled': {
+                          color: 'rgba(255,255,255,0.6)',
+                          borderColor: 'rgba(255,255,255,0.3)'
+                        }
+                      }}
+                    >
+                      🔒 Level 2 Coming Soon
+                    </Button>
+                  </span>
+                </Tooltip>
+              )}
+              
               <Button
                 variant="outlined"
                 startIcon={<Home />}
@@ -994,7 +1312,7 @@ const HouseholdLevel1 = () => {
                 ))}
               </Grid>
               
-              <Paper sx={{ p: 3, bgcolor: 'rgba(102, 126, 234, 0.05)', borderRadius: 3 }}>
+              <Paper sx={{ p: 3, bgcolor: 'rgba(102, 126, 234, 0.05)', borderRadius: 3, mb: 3 }}>
                 <Typography variant="h6" gutterBottom sx={{ color: '#667eea', fontWeight: 700 }}>
                   📝 How to Play:
                 </Typography>
@@ -1026,6 +1344,27 @@ const HouseholdLevel1 = () => {
                     💡 Pro Tip: Build streaks for bonus points! Harder items give more points!
                   </Typography>
                 </Box>
+              </Paper>
+              
+              {/* Star Rating System */}
+              <Paper sx={{ p: 3, bgcolor: 'rgba(255, 193, 7, 0.05)', borderRadius: 3 }}>
+                <Typography variant="h6" gutterBottom sx={{ color: '#F57C00', fontWeight: 700 }}>
+                  ⭐ Star Rating System:
+                </Typography>
+                <Stack spacing={2}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    {renderStars(1, 'small')}
+                    <Typography variant="body2">Complete the level</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    {renderStars(2, 'small')}
+                    <Typography variant="body2">70%+ accuracy OR 60%+ score</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    {renderStars(3, 'small')}
+                    <Typography variant="body2">90%+ accuracy AND 80%+ score OR speed bonus</Typography>
+                  </Box>
+                </Stack>
               </Paper>
             </DialogContent>
           </Dialog>
