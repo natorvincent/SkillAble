@@ -11,6 +11,7 @@ import AdminRoute from './components/admin/AdminRoute';
 import ModuleDetails from './components/ModuleDetails';
 import PersonalHygieneLevel1 from './components/lesson/PersonalHygieneLevel1';
 import PersonalHygieneLevel2 from './components/lesson/PersonalHygieneLevel2';
+import PersonalHygieneLevel3 from './components/lesson/PersonalHygieneLevel3'; // Added this missing import
 import SortingLevel1 from './components/lesson/SortingLevel1'; 
 import SortingLevel2 from './components/lesson/SortingLevel2'; 
 import SortingLevel3 from './components/lesson/SortingLevel3'; 

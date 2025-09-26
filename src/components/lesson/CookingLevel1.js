@@ -5,8 +5,7 @@ import {
   Typography, 
   Container, 
   Button, 
-  Card, 
-  CardContent,
+  Card,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -26,29 +25,23 @@ import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import { 
   getStudentLessonProgress, 
-  saveStudentLessonProgress,
-  updateModuleProgress
+  saveStudentLessonProgress
 } from '../../services/progressService';
 
 // Import kitchen background
 import kitchenBg from "../../assets/sortingLevel1/kitchen.jpg";
 
-// Import ingredient images
+// Import ingredient images (using placeholders if needed)
 import eggImg from "../../assets/cookingLevel1/egg.png";
-import milkImg from "../../assets/cookingLevel1/milk.png";
-import breadImg from "../../assets/cookingLevel1/bread.png";
-import appleImg from "../../assets/cookingLevel1/apple.png";
+import oilImg from "../../assets/cookingLevel1/oil.png"; // placeholder
+import saltImg from "../../assets/cookingLevel1/salt.png"; // placeholder
+import butterImg from "../../assets/cookingLevel1/butter.png"; // placeholder
 
-export default function CookingLevel1() {
+export default function FriedEggLevel1() {
   const navigate = useNavigate();
   const { moduleId, lessonId } = useParams();
   
-  const [currentIngredient, setCurrentIngredient] = useState(0);
-  const [gameMode, setGameMode] = useState('learn'); // 'learn' or 'practice'
-  const [selectedAnswer, setSelectedAnswer] = useState(null);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [score, setScore] = useState(0);
-  const [completed, setCompleted] = useState([]);
+  const [collectedIngredients, setCollectedIngredients] = useState([]);
   const [showCelebration, setShowCelebration] = useState(false);
   const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -57,61 +50,55 @@ export default function CookingLevel1() {
   const [showTip, setShowTip] = useState('');
   const [showCorrectAnimation, setShowCorrectAnimation] = useState(false);
   const [confettiPieces, setConfettiPieces] = useState([]);
+  const [draggedItem, setDraggedItem] = useState(null);
   
   // Level progression props
-  const [currentLevel] = useState(1); // Level 1
-  const [maxLevel] = useState(5); // Updated to 5 total levels
-  const [moduleIdentifier] = useState('cooking-basics'); // Module identifier
-  const [lessonIdentifier] = useState('ingredients'); // Lesson identifier
+  const [currentLevel] = useState(1);
+  const [maxLevel] = useState(5);
 
+  // Fried egg ingredients with scattered positions
   const ingredients = [
     { 
       id: 1, 
       name: "EGG", 
-      image: eggImg, // Changed from emoji to image
-      color: "#FFF3E0",
-      sound: "egg",
-      description: "We crack eggs to cook them",
-      encouragement: "Great job! Eggs are for breakfast!"
+      image: eggImg,
+      description: "Fresh egg for frying",
+      position: { top: '15%', left: '10%' },
+      collected: false
     },
     { 
       id: 2, 
-      name: "MILK", 
-      image: milkImg, // Changed from emoji to image
-      color: "#E8F5E8",
-      sound: "milk", 
-      description: "Milk is white and good to drink",
-      encouragement: "Wonderful! Milk comes from cows!"
+      name: "OIL", 
+      image: oilImg || "🫒", // fallback to emoji if image not available
+      description: "Oil to prevent sticking",
+      position: { top: '20%', right: '15%' },
+      collected: false
     },
     { 
       id: 3, 
-      name: "BREAD", 
-      image: breadImg, // Changed from emoji to image
-      color: "#FFF8E1",
-      sound: "bread",
-      description: "Bread is soft and we can make toast",
-      encouragement: "Excellent! Bread is yummy!"
+      name: "SALT", 
+      image: saltImg || "🧂",
+      description: "Salt for seasoning",
+      position: { bottom: '25%', left: '20%' },
+      collected: false
     },
     { 
       id: 4, 
-      name: "APPLE", 
-      image: appleImg, // Changed from emoji to image
-      color: "#FFEBEE",
-      sound: "apple",
-      description: "Apples are red and crunchy",
-      encouragement: "Amazing! Apples are healthy!"
+      name: "BUTTER", 
+      image: butterImg || "🧈",
+      description: "Butter for extra flavor",
+      position: { bottom: '30%', right: '25%' },
+      collected: false
     }
   ];
 
-  const currentItem = ingredients[currentIngredient];
-  const progressPercentage = ((currentIngredient + 1) / ingredients.length) * 100;
+  const progressPercentage = (collectedIngredients.length / ingredients.length) * 100;
+  const allCollected = collectedIngredients.length === ingredients.length;
 
   // Get student ID from localStorage
   const getStudentId = () => {
     const studentId = localStorage.getItem('studentId');
     const userType = localStorage.getItem('userType');
-    
-    console.log("Getting student ID - Type:", userType, "ID:", studentId);
     
     if (userType !== 'STUDENT') {
       console.error('User is not a student:', userType);
@@ -138,29 +125,24 @@ export default function CookingLevel1() {
       try {
         const studentId = getStudentId();
         if (!studentId || !lessonId) {
-          console.log('Missing studentId or lessonId:', { studentId, lessonId });
           setLoading(false);
-          setShowTip('Let\'s learn about cooking ingredients!');
+          setShowTip('Drag all ingredients to the pan to cook your fried egg!');
           return;
         }
         
-        console.log('Fetching progress for student:', studentId, 'lesson:', lessonId);
         const progressResponse = await getStudentLessonProgress(studentId, lessonId);
         if (progressResponse) {
-          setScore(progressResponse.score || 0);
           if (progressResponse.completed) {
-            setShowTip("Great job! You finished this before. Want to try again?");
+            setShowTip("You've completed this before! Try collecting all ingredients again.");
           } else {
-            setShowTip('Let\'s learn about cooking ingredients!');
+            setShowTip('Drag all ingredients to the pan to cook your fried egg!');
           }
-          console.log('Loaded existing progress:', progressResponse);
         } else {
-          console.log('No existing progress found - starting fresh');
-          setShowTip('Let\'s learn about cooking ingredients!');
+          setShowTip('Drag all ingredients to the pan to cook your fried egg!');
         }
       } catch (error) {
         console.log('Error fetching progress, starting fresh:', error);
-        setShowTip('Let\'s learn about cooking ingredients!');
+        setShowTip('Drag all ingredients to the pan to cook your fried egg!');
       } finally {
         setLoading(false);
       }
@@ -169,9 +151,9 @@ export default function CookingLevel1() {
     fetchUserProgress();
   }, [lessonId]);
 
-  // Simple audio feedback (using speech synthesis)
+  // Simple audio feedback
   const speak = (text) => {
-    if ('speechSynthesis' in window) {
+    if (autoPlayEnabled && 'speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 0.8;
       utterance.pitch = 1.2;
@@ -179,93 +161,83 @@ export default function CookingLevel1() {
     }
   };
 
-  const handleLearnMode = () => {
-    if (autoPlayEnabled) {
-      speak(currentItem.name);
-    }
-  };
-
-  useEffect(() => {
-    if (gameMode === 'learn' && !loading) {
-      handleLearnMode();
-    }
-  }, [currentIngredient, gameMode, loading]);
-
-  const nextIngredient = () => {
-    if (currentIngredient < ingredients.length - 1) {
-      setCurrentIngredient(prev => prev + 1);
-      setSelectedAnswer(null);
-      setShowFeedback(false);
-    } else {
-      // All ingredients learned, offer practice
-      setGameMode('practice');
-      setCurrentIngredient(0);
-    }
-  };
-
-  const previousIngredient = () => {
-    if (currentIngredient > 0) {
-      setCurrentIngredient(prev => prev - 1);
-      setSelectedAnswer(null);
-      setShowFeedback(false);
-    }
-  };
-
   // Confetti animation function
   const triggerCorrectAnimation = () => {
     setShowCorrectAnimation(true);
     
-    // Generate confetti pieces
     const pieces = [];
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 30; i++) {
       pieces.push({
         id: i,
         left: Math.random() * 100,
-        animationDelay: Math.random() * 3,
+        animationDelay: Math.random() * 2,
         backgroundColor: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'][Math.floor(Math.random() * 6)]
       });
     }
     setConfettiPieces(pieces);
     
-    // Hide animation after 3 seconds
     setTimeout(() => {
       setShowCorrectAnimation(false);
       setConfettiPieces([]);
-    }, 3000);
+    }, 2000);
   };
 
-  const handlePracticeAnswer = (answerId) => {
-    setSelectedAnswer(answerId);
-    setShowFeedback(true);
+  // Drag and drop handlers
+  const handleDragStart = (e, ingredient) => {
+    setDraggedItem(ingredient);
+    e.dataTransfer.effectAllowed = 'move';
+    speak(`Picking up ${ingredient.name}`);
     
-    const isCorrect = answerId === currentItem.id;
+    // Visual feedback for drag start
+    e.target.style.opacity = '0.7';
+    e.target.style.transform = 'scale(1.1) rotate(5deg)';
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
     
-    if (isCorrect) {
-      // Show confetti animation and "Correct!" popup
+    if (draggedItem && !collectedIngredients.some(item => item.id === draggedItem.id)) {
+      setCollectedIngredients(prev => [...prev, draggedItem]);
+      
+      // Enhanced feedback with sound effects
       triggerCorrectAnimation();
       
-      setScore(prev => prev + 1);
-      setCompleted(prev => [...prev, currentItem.id]);
-      speak(currentItem.encouragement);
+      // Multiple sound effects for different ingredients
+      const soundEffects = {
+        'EGG': `Crack! You added the ${draggedItem.name}! That's the main ingredient for our fried egg!`,
+        'OIL': `Sizzle! The ${draggedItem.name} will keep our egg from sticking!`,
+        'SALT': `Perfect! A pinch of ${draggedItem.name} adds great flavor!`,
+        'BUTTER': `Delicious! ${draggedItem.name} will make our egg extra tasty!`
+      };
       
-      setTimeout(() => {
-        if (currentIngredient < ingredients.length - 1) {
-          setCurrentIngredient(prev => prev + 1);
-          setSelectedAnswer(null);
-          setShowFeedback(false);
-        } else {
+      speak(soundEffects[draggedItem.name] || `Great! You added ${draggedItem.name} to the pan!`);
+      
+      // Visual "pop" effect on the pan
+      const panElement = document.querySelector('[data-pan="true"]');
+      if (panElement) {
+        panElement.style.transform = 'translate(-50%, -50%) scale(1.1)';
+        setTimeout(() => {
+          panElement.style.transform = 'translate(-50%, -50%) scale(1)';
+        }, 200);
+      }
+      
+      // Check if all ingredients collected
+      const newCollectedCount = collectedIngredients.length + 1;
+      if (newCollectedCount === ingredients.length) {
+        setTimeout(() => {
           setShowCelebration(true);
+          speak("Outstanding work! You collected all ingredients for your fried egg! You're ready to cook like a real chef!");
           saveProgress();
-          speak("Wonderful job! You learned all the ingredients!");
-        }
-      }, 3000);
-    } else {
-      speak(`Try again! This is ${currentItem.name}`);
-      setTimeout(() => {
-        setSelectedAnswer(null);
-        setShowFeedback(false);
-      }, 2000);
+        }, 1500);
+      }
     }
+    
+    setDraggedItem(null);
   };
 
   // Save progress to database
@@ -281,21 +253,16 @@ export default function CookingLevel1() {
         return;
       }
       
-      const finalScore = score + (completed.length > score ? 1 : 0); // Account for current correct answer
-      
       const progressData = {
         studentId: studentId,
         lessonId: parseInt(lessonId, 10),
-        score: finalScore,
+        score: ingredients.length,
         maxScore: ingredients.length,
         completed: true,
-        starsEarned: getStarRating(finalScore)
+        starsEarned: 3 // Full stars for completing the collection
       };
       
-      console.log('Saving progress for student:', studentId, progressData);
       await saveStudentLessonProgress(studentId, lessonId, progressData);
-      
-      console.log('Progress saved successfully!');
       setProgressSaved(true);
       
     } catch (error) {
@@ -305,32 +272,19 @@ export default function CookingLevel1() {
     }
   };
 
-  // Calculate star rating based on score
-  const getStarRating = (finalScore = score) => {
-    const percentage = (finalScore / ingredients.length) * 100;
-    if (percentage >= 90) return 3;
-    if (percentage >= 70) return 2;
-    if (percentage >= 50) return 1;
-    return 0;
-  };
-
   const resetGame = () => {
-    setCurrentIngredient(0);
-    setGameMode('learn');
-    setSelectedAnswer(null);
-    setShowFeedback(false);
-    setScore(0);
-    setCompleted([]);
+    setCollectedIngredients([]);
     setShowCelebration(false);
+    setShowCorrectAnimation(false);
+    setConfettiPieces([]);
     setProgressSaved(false);
     setProgressSaving(false);
+    speak("Let's collect all the ingredients again!");
   };
 
   const goToHomepage = () => {
     if (navigate) {
       navigate('/homepage');
-    } else if (window.history && window.history.length > 1) {
-      window.history.back();
     } else {
       window.location.href = '/homepage';
     }
@@ -341,25 +295,16 @@ export default function CookingLevel1() {
       await saveProgress();
     }
     
-    const hasNextLevel = currentLevel < maxLevel;
-    
     setTimeout(() => {
-      if (hasNextLevel) {
-        // Navigate to Level 2
-        if (navigate) {
-          navigate('/lesson/cooking/level-2');
-        } else {
-          window.location.href = '/lesson/cooking/level-2';
-        }
+      if (currentLevel < maxLevel) {
+        navigate('/lesson/cooking/level-2');
       } else {
         goToHomepage();
       }
     }, 300);
   };
 
-  const hasNextLevel = currentLevel < maxLevel;
-
-  // Loading state with Material-UI styling
+  // Loading state
   if (loading) {
     return (
       <div style={{
@@ -385,7 +330,7 @@ export default function CookingLevel1() {
         <Container sx={{ py: 8, textAlign: 'center', position: 'relative', zIndex: 2 }}>
           <CircularProgress size={50} sx={{ color: '#4CAF50' }} />
           <Typography variant="h5" sx={{ mt: 3, color: 'white', fontWeight: 'bold', textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
-            Loading cooking lesson...
+            Loading fried egg cooking game...
           </Typography>
         </Container>
       </div>
@@ -404,7 +349,7 @@ export default function CookingLevel1() {
       backgroundPosition: "center",
       backgroundAttachment: "fixed",
     }}>
-      {/* Kitchen overlay for better text readability */}
+      {/* Kitchen overlay for better readability */}
       <Box sx={{
         position: "absolute",
         top: 0,
@@ -424,7 +369,7 @@ export default function CookingLevel1() {
       }}>
         <Navbar />
         
-        {/* Main content container - SCROLLABLE */}
+        {/* Main content container */}
         <Box sx={{
           flex: 1,
           overflowY: 'auto',
@@ -434,455 +379,448 @@ export default function CookingLevel1() {
           flexDirection: 'column',
           alignItems: 'center'
         }}>
-          {/* Content wrapper */}
-          <Box sx={{
-            width: '100%',
-            maxWidth: '1000px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 2
-          }}>
-            {/* Header Section */}
-            <Box sx={{ textAlign: 'center', width: '100%', maxWidth: '800px' }}>
-              <Typography variant="h3" sx={{ 
-                fontWeight: 'bold', 
-                color: 'white', 
-                mb: 1,
-                textShadow: '3px 3px 6px rgba(0,0,0,0.8)'
-              }}>
-               Learning Ingredients
-              </Typography>
-              
+          {/* Header Section - Compact */}
+          <Box sx={{ textAlign: 'center', width: '100%', maxWidth: '800px', mb: 2 }}>
+            <Typography variant="h4" sx={{ 
+              fontWeight: 'bold', 
+              color: 'white', 
+              mb: 1,
+              textShadow: '3px 3px 6px rgba(0,0,0,0.8)',
+              fontSize: { xs: '1.8rem', sm: '2.2rem', md: '2.5rem' }
+            }}>
+              🍳 Fried Egg Cooking
+            </Typography>
+            
+            {/* Compact Top Bar with Level and Controls */}
+            <Stack 
+              direction={{ xs: 'column', sm: 'row' }} 
+              spacing={2} 
+              justifyContent="center" 
+              alignItems="center" 
+              sx={{ mb: 2 }}
+            >
               <Chip 
-                label={`Level ${currentLevel} of ${maxLevel}`}
+                label={`Level ${currentLevel} - Collect Ingredients`}
                 sx={{ 
-                  backgroundColor: 'rgba(25, 118, 210, 0.9)', 
+                  backgroundColor: 'rgba(255, 152, 0, 0.9)', 
                   color: 'white', 
                   fontWeight: 'bold',
-                  fontSize: '1rem',
-                  padding: '8px 12px',
-                  mb: 2,
-                  border: '2px solid rgba(255, 255, 255, 0.3)'
+                  fontSize: '0.9rem',
+                  padding: '4px 8px'
                 }}
               />
+              
+              {/* Compact Sound Toggle */}
+              <Box sx={{ 
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                borderRadius: '15px',
+                padding: '4px 10px',
+                backdropFilter: 'blur(10px)'
+              }}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={autoPlayEnabled}
+                      onChange={(e) => setAutoPlayEnabled(e.target.checked)}
+                      color="primary"
+                      size="small"
+                    />
+                  }
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      {autoPlayEnabled ? <VolumeUpIcon fontSize="small" /> : <VolumeOffIcon fontSize="small" />}
+                      <Typography variant="body2" fontWeight="bold" sx={{ fontSize: '0.8rem' }}>Sound</Typography>
+                    </Box>
+                  }
+                  sx={{ margin: 0 }}
+                />
+              </Box>
 
+              {/* Compact Chef Tip */}
               {showTip && (
                 <Box sx={{ 
-                  backgroundColor: 'rgba(33, 150, 243, 0.9)',
-                  borderRadius: '12px',
-                  padding: '8px 16px',
-                  mb: 2,
+                  backgroundColor: 'rgba(76, 175, 80, 0.9)',
+                  borderRadius: '10px',
+                  padding: '6px 12px',
                   backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255, 255, 255, 0.3)'
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  maxWidth: '300px'
                 }}>
+                  <Box sx={{ fontSize: '1.2rem' }}>👨‍🍳</Box>
                   <Typography sx={{ 
-                    fontSize: '0.9rem', 
+                    fontSize: '0.8rem', 
                     color: 'white', 
-                    fontWeight: '500',
+                    fontWeight: '600',
                     textShadow: '1px 1px 2px rgba(0,0,0,0.5)'
                   }}>
-                    {showTip}
+                    Drag ingredients to the pan!
                   </Typography>
                 </Box>
               )}
-              
-              {/* Controls Row */}
-              <Stack direction="row" spacing={2} justifyContent="center" alignItems="center" sx={{ mb: 2, flexWrap: 'wrap', gap: 2 }}>
-                {/* Audio Toggle */}
-                <Box sx={{ 
-                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                  borderRadius: '20px',
-                  padding: '6px 15px',
-                  backdropFilter: 'blur(10px)'
-                }}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={autoPlayEnabled}
-                        onChange={(e) => setAutoPlayEnabled(e.target.checked)}
-                        color="primary"
-                        size="small"
-                      />
-                    }
-                    label={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        {autoPlayEnabled ? <VolumeUpIcon fontSize="small" /> : <VolumeOffIcon fontSize="small" />}
-                        <Typography variant="body2" fontWeight="bold">Sound</Typography>
-                      </Box>
-                    }
-                  />
-                </Box>
+            </Stack>
 
-                {/* Mode Toggle */}
-                <Button
-                  onClick={() => setGameMode('learn')}
-                  variant={gameMode === 'learn' ? 'contained' : 'outlined'}
-                  size="medium"
-                  sx={{
-                    borderRadius: '20px',
-                    minWidth: '100px',
-                    backgroundColor: gameMode === 'learn' ? 'rgba(76, 175, 80, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-                    borderColor: '#4CAF50',
-                    color: gameMode === 'learn' ? 'white' : '#4CAF50',
-                    backdropFilter: 'blur(10px)',
-                    border: '2px solid #4CAF50',
-                    '&:hover': {
-                      backgroundColor: gameMode === 'learn' ? 'rgba(69, 160, 73, 0.9)' : 'rgba(76, 175, 80, 0.1)',
-                    }
-                  }}
-                >
-                  📚 Learn
-                </Button>
-                <Button
-                  onClick={() => setGameMode('practice')}
-                  variant={gameMode === 'practice' ? 'contained' : 'outlined'}
-                  size="medium"
-                  sx={{
-                    borderRadius: '20px',
-                    minWidth: '100px',
-                    backgroundColor: gameMode === 'practice' ? 'rgba(76, 175, 80, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-                    borderColor: '#4CAF50',
-                    color: gameMode === 'practice' ? 'white' : '#4CAF50',
-                    backdropFilter: 'blur(10px)',
-                    border: '2px solid #4CAF50',
-                    '&:hover': {
-                      backgroundColor: gameMode === 'practice' ? 'rgba(69, 160, 73, 0.9)' : 'rgba(76, 175, 80, 0.1)',
-                    }
-                  }}
-                >
-                  🎯 Practice
-                </Button>
-              </Stack>
-            </Box>
-
-            {/* Progress bar */}
-            <Box sx={{ width: '100%', maxWidth: '700px' }}>
+            {/* Cooking-themed Progress Display */}
+            <Box sx={{ width: '100%', maxWidth: '500px', mx: 'auto' }}>
               <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
                 <Typography variant="body1" sx={{ 
                   color: 'white', 
                   fontWeight: 'bold',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
                 }}>
-                  Ingredient {currentIngredient + 1} of {ingredients.length}
+                  Ingredients: {collectedIngredients.length} of {ingredients.length}
                 </Typography>
                 <Chip 
-                  label={`Score: ${score}/${ingredients.length}`} 
+                  label={`${Math.round(progressPercentage)}% Ready to Cook!`}
                   sx={{ 
-                    backgroundColor: 'rgba(255, 152, 0, 0.9)', 
+                    backgroundColor: 'rgba(33, 150, 243, 0.9)', 
                     color: 'white', 
                     fontWeight: 'bold',
-                    fontSize: '0.9rem',
-                    padding: '4px 8px',
-                    border: '2px solid rgba(255, 255, 255, 0.3)',
-                    backdropFilter: 'blur(10px)'
+                    fontSize: '0.9rem'
                   }}
                 />
               </Stack>
-              <LinearProgress 
-                variant="determinate" 
-                value={progressPercentage} 
-                sx={{ 
-                  height: 8, 
-                  borderRadius: '10px',
-                  backgroundColor: 'rgba(255,255,255,0.3)',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  '& .MuiLinearProgress-bar': {
-                    backgroundColor: '#4CAF50'
-                  }
-                }} 
-              />
+              
+              {/* Cooking Pan Progress Bar */}
+              <Box sx={{ 
+                position: 'relative',
+                width: '100%',
+                height: '40px',
+                background: 'linear-gradient(to right, #8B4513, #A0522D)',
+                borderRadius: '20px',
+                border: '3px solid #654321',
+                overflow: 'hidden',
+                boxShadow: '0 4px 8px rgba(0,0,0,0.3)'
+              }}>
+                {/* Pan Handle */}
+                <Box sx={{
+                  position: 'absolute',
+                  right: '-30px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  width: '40px',
+                  height: '8px',
+                  backgroundColor: '#654321',
+                  borderRadius: '4px',
+                  zIndex: 2
+                }} />
+                
+                {/* Progress Fill (like oil spreading in pan) */}
+                <Box sx={{
+                  width: `${progressPercentage}%`,
+                  height: '100%',
+                  background: allCollected 
+                    ? 'linear-gradient(to right, #FFD700, #FFA500, #FF8C00)'
+                    : 'linear-gradient(to right, #32CD32, #228B22, #006400)',
+                  borderRadius: '17px',
+                  transition: 'width 0.5s ease, background 0.3s ease',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}>
+                  {/* Shimmer effect */}
+                  <Box sx={{
+                    position: 'absolute',
+                    top: 0,
+                    left: '-100%',
+                    width: '100%',
+                    height: '100%',
+                    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
+                    animation: 'shimmer 2s infinite',
+                    '@keyframes shimmer': {
+                      '0%': { left: '-100%' },
+                      '100%': { left: '100%' }
+                    }
+                  }} />
+                </Box>
+                
+                {/* Cooking Icons that appear as progress increases */}
+                <Box sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  fontSize: '1.2rem',
+                  zIndex: 3
+                }}>
+                  {allCollected ? '🍳' : progressPercentage > 75 ? '🔥' : progressPercentage > 50 ? '🥄' : progressPercentage > 25 ? '🫒' : '👨‍🍳'}
+                </Box>
+              </Box>
+            </Box>
+          </Box>
+
+          {/* Enlarged Game Area */}
+          <Box sx={{
+            position: 'relative',
+            width: { xs: '95%', sm: '90%', md: '85%', lg: '80%', xl: '75%' },
+            maxWidth: '1200px',
+            height: { xs: '500px', sm: '600px', md: '700px', lg: '750px' },
+            background: 'linear-gradient(to bottom, #87CEEB 0%, #DEB887 100%)',
+            borderRadius: '20px',
+            border: '4px solid #8B4513',
+            overflow: 'hidden',
+            mt: 1,
+            mb: 3,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
+          }}>
+            
+            {/* Kitchen Counter Background */}
+            <Box sx={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: '40%',
+              background: 'linear-gradient(to bottom, #DEB887, #CD853F)',
+              borderRadius: '0 0 16px 16px'
+            }} />
+
+            {/* Central Cooking Pan - 2x Larger */}
+            <Box
+              data-pan="true"
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              sx={{
+                position: 'absolute',
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: { xs: '280px', sm: '320px', md: '360px' },
+                height: { xs: '280px', sm: '320px', md: '360px' },
+                background: allCollected 
+                  ? 'radial-gradient(circle, #FFD700, #FFA500)'  // Golden when complete
+                  : 'radial-gradient(circle, #2F2F2F, #1A1A1A)', // Dark pan
+                borderRadius: '50%',
+                border: { xs: '10px solid #333', md: '12px solid #333' },
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: 'inset 0 12px 24px rgba(0,0,0,0.4), 0 12px 36px rgba(0,0,0,0.3)',
+                zIndex: 5,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  boxShadow: 'inset 0 12px 24px rgba(0,0,0,0.4), 0 16px 40px rgba(255, 215, 0, 0.3)'
+                },
+                '@keyframes chefWave': {
+                  '0%, 100%': { transform: 'rotate(0deg)' },
+                  '25%': { transform: 'rotate(-10deg)' },
+                  '75%': { transform: 'rotate(10deg)' }
+                }
+              }}
+            >
+              <Typography sx={{
+                fontSize: { xs: '80px', sm: '100px', md: '120px' },
+                marginBottom: '12px',
+                filter: 'drop-shadow(3px 3px 8px rgba(0,0,0,0.6))',
+                animation: allCollected ? 'bounce 1s infinite' : 'none'
+              }}>
+                🍳
+              </Typography>
+              <Typography sx={{
+                color: 'white',
+                fontSize: { xs: '14px', sm: '16px', md: '18px' },
+                fontWeight: 'bold',
+                textAlign: 'center',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                maxWidth: '80%'
+              }}>
+                {allCollected ? 'Ready to cook!' : 'Drag ingredients here!'}
+              </Typography>
             </Box>
 
-            {gameMode === 'learn' ? (
-              /* Learn Mode */
-              <Box sx={{ 
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                width: '100%',
-                maxWidth: '600px',
-                pb: 4
-              }}>
-                {/* Ingredient Display Card */}
-                <Card sx={{
-                  backgroundColor: 'rgba(255, 250, 244, 0.95)',
-                  borderRadius: '20px',
-                  padding: '25px',
-                  mb: 3,
-                  border: '3px solid #4CAF50',
-                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-                  textAlign: 'center',
-                  width: '100%',
-                  backdropFilter: 'blur(15px)'
-                }}>
-                  {/* Ingredient image */}
-                  <Box sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'center', 
-                    mb: 2,
-                    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))'
-                  }}>
+            {/* Scattered Ingredients on Counter */}
+            {ingredients.filter(ingredient => 
+              !collectedIngredients.some(collected => collected.id === ingredient.id)
+            ).map((ingredient, index) => {
+              // Scatter ingredients naturally on the counter
+              const counterPositions = [
+                { bottom: '15%', left: '15%' },  // Front left
+                { bottom: '25%', right: '20%' }, // Front right  
+                { bottom: '20%', left: '75%' },  // Back right
+                { bottom: '30%', right: '65%' }  // Back left
+              ];
+              
+              return (
+                <Box
+                  key={ingredient.id}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, ingredient)}
+                  onDragEnd={(e) => {
+                    // Reset visual feedback after drag
+                    e.target.style.opacity = '1';
+                    e.target.style.transform = 'scale(1)';
+                  }}
+                  onClick={() => speak(`This is ${ingredient.name}. ${ingredient.description}`)}
+                  sx={{
+                    position: 'absolute',
+                    ...counterPositions[index],
+                    cursor: 'grab',
+                    userSelect: 'none',
+                    transition: 'all 0.3s ease',
+                    animation: 'gentleBounce 4s infinite',
+                    zIndex: 20,
+                    padding: '15px',
+                    '&:hover': {
+                      transform: 'scale(1.2)',
+                      animation: 'glow 1.5s infinite alternate, gentleBounce 4s infinite',
+                      filter: 'drop-shadow(0 0 25px rgba(255, 215, 0, 1))',
+                      zIndex: 25
+                    },
+                    '&:active': {
+                      cursor: 'grabbing'
+                    }
+                  }}
+                  title={`Click to learn about ${ingredient.name}, then drag to the pan!`}
+                >
+                  {typeof ingredient.image === 'string' && ingredient.image.startsWith('http') || ingredient.image.endsWith('.png') ? (
                     <img 
-                      src={currentItem.image} 
-                      alt={currentItem.name}
+                      src={ingredient.image} 
+                      alt={ingredient.name}
                       style={{
-                        width: '150px',
-                        height: '150px',
+                        width: '100px',
+                        height: '100px',
                         objectFit: 'contain',
-                        borderRadius: '15px'
+                        filter: 'drop-shadow(4px 4px 8px rgba(0,0,0,0.4))'
                       }}
                     />
+                  ) : (
+                    <Box sx={{ 
+                      fontSize: { xs: '80px', sm: '100px', md: '120px' },
+                      filter: 'drop-shadow(4px 4px 8px rgba(0,0,0,0.4))',
+                      lineHeight: 1
+                    }}>
+                      {ingredient.image}
+                    </Box>
+                  )}
+                  
+                  {/* Ingredient Label */}
+                  <Box sx={{
+                    position: 'absolute',
+                    bottom: '-35px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    padding: '6px 12px',
+                    borderRadius: '15px',
+                    fontSize: { xs: '12px', sm: '14px' },
+                    fontWeight: 'bold',
+                    color: '#333',
+                    boxShadow: '0 3px 10px rgba(0,0,0,0.3)',
+                    whiteSpace: 'nowrap',
+                    border: '2px solid rgba(76, 175, 80, 0.3)'
+                  }}>
+                    {ingredient.name}
                   </Box>
-                  <Typography variant="h4" sx={{ 
-                    fontWeight: 'bold', 
-                    color: '#2E7D32', 
-                    mb: 1,
-                    textShadow: '1px 1px 2px rgba(0,0,0,0.1)'
-                  }}>
-                    {currentItem.name}
-                  </Typography>
-                  <Typography variant="body1" sx={{ 
-                    color: '#1976D2', 
-                    lineHeight: 1.4,
-                    fontSize: '1.1rem'
-                  }}>
-                    {currentItem.description}
-                  </Typography>
-                </Card>
-
-                {/* Control Buttons */}
-                <Stack direction="row" spacing={2} sx={{ mb: 3, flexWrap: 'wrap', justifyContent: 'center' }}>
-                  <Button
-                    onClick={() => speak(currentItem.name)}
-                    variant="contained"
-                    size="medium"
-                    sx={{
-                      backgroundColor: '#2196F3',
-                      borderRadius: '15px',
-                      minWidth: '100px',
-                      '&:hover': { backgroundColor: '#1976D2' }
-                    }}
-                  >
-                    🔊 Say Name
-                  </Button>
-                  <Button
-                    onClick={() => speak(currentItem.description)}
-                    variant="contained"
-                    size="medium"
-                    sx={{
-                      backgroundColor: '#FF9800',
-                      borderRadius: '15px',
-                      minWidth: '100px',
-                      '&:hover': { backgroundColor: '#F57C00' }
-                    }}
-                  >
-                    📖 Read Info
-                  </Button>
-                </Stack>
-
-                {/* Navigation Buttons */}
-                <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', justifyContent: 'center' }}>
-                  <Button
-                    onClick={previousIngredient}
-                    disabled={currentIngredient === 0}
-                    variant="contained"
-                    size="medium"
-                    sx={{
-                      backgroundColor: '#9C27B0',
-                      borderRadius: '15px',
-                      minWidth: '80px',
-                      opacity: currentIngredient === 0 ? 0.5 : 1,
-                      '&:hover': { backgroundColor: '#7B1FA2' }
-                    }}
-                  >
-                    ⬅️ Prev
-                  </Button>
-                  <Button
-                    onClick={nextIngredient}
-                    variant="contained"
-                    size="medium"
-                    sx={{
-                      backgroundColor: '#9C27B0',
-                      borderRadius: '15px',
-                      minWidth: '80px',
-                      '&:hover': { backgroundColor: '#7B1FA2' }
-                    }}
-                  >
-                    {currentIngredient === ingredients.length - 1 ? '🎯 Practice' : '➡️ Next'}
-                  </Button>
-                  <Button
-                    onClick={goToHomepage}
-                    variant="contained"
-                    size="medium"
-                    sx={{
-                      backgroundColor: '#2196F3',
-                      borderRadius: '15px',
-                      minWidth: '80px',
-                      '&:hover': { backgroundColor: '#1976D2' }
-                    }}
-                  >
-                    🏠 Home
-                  </Button>
-                </Stack>
-              </Box>
-            ) : (
-              /* Practice Mode */
-              <Box sx={{ 
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                width: '100%',
-                maxWidth: '600px',
-                pb: 4
-              }}>
-                {/* Question Display */}
-                <Card sx={{
-                  backgroundColor: 'rgba(255, 250, 244, 0.95)',
-                  borderRadius: '20px',
-                  padding: '25px',
-                  mb: 3,
-                  border: '3px solid #4CAF50',
-                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-                  textAlign: 'center',
-                  width: '100%',
-                  backdropFilter: 'blur(15px)'
-                }}>
-                  <Typography sx={{ fontSize: '3rem', mb: 1 }}>❓</Typography>
-                  <Typography variant="h5" sx={{ 
-                    fontWeight: 'bold', 
-                    color: '#2E7D32', 
-                    mb: 2
-                  }}>
-                    Which ingredient is this?
-                  </Typography>
-                  {/* Ingredient image for question */}
-                  <Box sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'center',
-                    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))'
-                  }}>
-                    <img 
-                      src={currentItem.image} 
-                      alt="Guess this ingredient"
-                      style={{
-                        width: '120px',
-                        height: '120px',
-                        objectFit: 'contain',
-                        borderRadius: '12px'
-                      }}
-                    />
-                  </Box>
-                </Card>
-
-                {/* Answer Options */}
-                <Box sx={{ 
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, 1fr)',
-                  gap: 2,
-                  width: '100%',
-                  maxWidth: '400px',
-                  mb: 3
-                }}>
-                  {ingredients.map((ingredient) => (
-                    <Card
-                      key={ingredient.id}
-                      onClick={() => !showFeedback && handlePracticeAnswer(ingredient.id)}
-                      sx={{
-                        padding: '15px',
-                        borderRadius: '15px',
-                        border: '2px solid',
-                        borderColor: showFeedback && selectedAnswer === ingredient.id && ingredient.id === currentItem.id 
-                          ? '#4CAF50' 
-                          : showFeedback && selectedAnswer === ingredient.id && ingredient.id !== currentItem.id 
-                          ? '#F44336'
-                          : '#E0E0E0',
-                        cursor: showFeedback ? 'not-allowed' : 'pointer',
-                        textAlign: 'center',
-                        backgroundColor: showFeedback && selectedAnswer === ingredient.id && ingredient.id === currentItem.id 
-                          ? 'rgba(200, 230, 201, 0.95)'
-                          : showFeedback && selectedAnswer === ingredient.id && ingredient.id !== currentItem.id 
-                          ? 'rgba(255, 205, 210, 0.95)'
-                          : 'rgba(255, 255, 255, 0.95)',
-                        transition: 'all 0.3s ease',
-                        transform: showFeedback && selectedAnswer === ingredient.id && ingredient.id === currentItem.id 
-                          ? 'scale(1.05)' : 'scale(1)',
-                        backdropFilter: 'blur(10px)',
-                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
-                        '&:hover': {
-                          transform: showFeedback ? 'scale(1)' : 'scale(1.02)',
-                          boxShadow: showFeedback ? '0 4px 20px rgba(0, 0, 0, 0.2)' : '0 6px 25px rgba(0,0,0,0.3)'
-                        }
-                      }}
-                    >
-                      {/* Ingredient image for options */}
-                      <Box sx={{ 
-                        display: 'flex', 
-                        justifyContent: 'center', 
-                        mb: 1,
-                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
-                      }}>
-                        <img 
-                          src={ingredient.image} 
-                          alt={ingredient.name}
-                          style={{
-                            width: '60px',
-                            height: '60px',
-                            objectFit: 'contain',
-                            borderRadius: '8px'
-                          }}
-                        />
-                      </Box>
-                      <Typography variant="body1" sx={{ 
-                        fontWeight: 'bold', 
-                        color: '#2E7D32',
-                        fontSize: '0.9rem'
-                      }}>
-                        {ingredient.name}
-                      </Typography>
-                    </Card>
-                  ))}
                 </Box>
+              );
+            })}
 
-                {/* Control Buttons */}
-                <Stack direction="row" spacing={2} sx={{ flexWrap: 'wrap', justifyContent: 'center' }}>
-                  <Button
-                    onClick={resetGame}
-                    variant="contained"
-                    size="medium"
+            {/* Cooking Effects Display */}
+            {collectedIngredients.length > 0 && (
+              <Box sx={{
+                position: 'absolute',
+                bottom: '70%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                display: 'flex',
+                gap: 2,
+                zIndex: 15
+              }}>
+                {collectedIngredients.map((ingredient, index) => (
+                  <Box 
+                    key={ingredient.id}
                     sx={{
-                      backgroundColor: '#FF9800',
-                      borderRadius: '15px',
-                      minWidth: '100px',
-                      '&:hover': { backgroundColor: '#F57C00' }
+                      animation: `cookingEffect 2s ease-out ${index * 0.5}s`,
+                      '@keyframes cookingEffect': {
+                        '0%': {
+                          transform: 'translateY(0) scale(1)',
+                          opacity: 1
+                        },
+                        '50%': {
+                          transform: 'translateY(-20px) scale(1.2)',
+                          opacity: 0.8
+                        },
+                        '100%': {
+                          transform: 'translateY(-40px) scale(0.8)',
+                          opacity: 0
+                        }
+                      }
                     }}
                   >
-                    📚 Learn Again
-                  </Button>
-                  <Button
-                    onClick={goToHomepage}
-                    variant="contained"
-                    size="medium"
-                    sx={{
-                      backgroundColor: '#2196F3',
-                      borderRadius: '15px',
-                      minWidth: '100px',
-                      '&:hover': { backgroundColor: '#1976D2' }
-                    }}
-                  >
-                    🏠 Go Home
-                  </Button>
-                </Stack>
+                    {/* Cooking effect emojis */}
+                    {ingredient.name === 'EGG' && '🥚💫'}
+                    {ingredient.name === 'OIL' && '🫒✨'}
+                    {ingredient.name === 'SALT' && '🧂❄️'}
+                    {ingredient.name === 'BUTTER' && '🧈💛'}
+                  </Box>
+                ))}
               </Box>
             )}
+          </Box>
+
+          {/* Floating Bottom Control Bar */}
+          <Box sx={{
+            position: 'fixed',
+            bottom: 20,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 100,
+            display: 'flex',
+            gap: 2,
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            padding: '12px 24px',
+            borderRadius: '30px',
+            backdropFilter: 'blur(10px)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+            border: '2px solid rgba(255, 255, 255, 0.5)'
+          }}>
+            <Button
+              onClick={() => speak("Drag the egg, oil, salt, and butter from the counter into the pan on the stove to collect all ingredients for your fried egg!")}
+              variant="contained"
+              size="medium"
+              sx={{
+                backgroundColor: '#2196F3',
+                borderRadius: '20px',
+                minWidth: '120px',
+                '&:hover': { backgroundColor: '#1976D2' }
+              }}
+            >
+              🔊 Instructions
+            </Button>
+            <Button
+              onClick={resetGame}
+              variant="contained"
+              size="medium"
+              sx={{
+                backgroundColor: '#FF9800',
+                borderRadius: '20px',
+                minWidth: '100px',
+                '&:hover': { backgroundColor: '#F57C00' }
+              }}
+            >
+              🔄 Reset
+            </Button>
+            <Button
+              onClick={goToHomepage}
+              variant="contained"
+              size="medium"
+              sx={{
+                backgroundColor: '#9C27B0',
+                borderRadius: '20px',
+                minWidth: '100px',
+                '&:hover': { backgroundColor: '#7B1FA2' }
+              }}
+            >
+              🏠 Home
+            </Button>
           </Box>
         </Box>
       </Box>
 
-      {/* Confetti Animation and "Correct!" Popup */}
+      {/* Confetti Animation */}
       {showCorrectAnimation && (
         <>
-          {/* Confetti pieces */}
           {confettiPieces.map((piece) => (
             <Box
               key={piece.id}
@@ -894,8 +832,8 @@ export default function CookingLevel1() {
                 height: '10px',
                 backgroundColor: piece.backgroundColor,
                 zIndex: 9999,
-                borderRadius: '2px',
-                animation: 'confettiFall 3s linear forwards',
+                borderRadius: '50%',
+                animation: 'confettiFall 2s linear forwards',
                 animationDelay: `${piece.animationDelay}s`,
                 '@keyframes confettiFall': {
                   '0%': {
@@ -911,7 +849,6 @@ export default function CookingLevel1() {
             />
           ))}
           
-          {/* "Correct!" Popup */}
           <Box
             sx={{
               position: 'fixed',
@@ -919,57 +856,31 @@ export default function CookingLevel1() {
               left: '50%',
               transform: 'translate(-50%, -50%)',
               zIndex: 10000,
-              animation: 'correctPop 3s ease-out forwards',
+              animation: 'correctPop 2s ease-out forwards',
               '@keyframes correctPop': {
-                '0%': {
-                  transform: 'translate(-50%, -50%) scale(0)',
-                  opacity: 0,
-                },
-                '20%': {
-                  transform: 'translate(-50%, -50%) scale(1.2)',
-                  opacity: 1,
-                },
-                '40%': {
-                  transform: 'translate(-50%, -50%) scale(1)',
-                  opacity: 1,
-                },
-                '100%': {
-                  transform: 'translate(-50%, -50%) scale(1)',
-                  opacity: 0,
-                },
+                '0%': { transform: 'translate(-50%, -50%) scale(0)', opacity: 0 },
+                '50%': { transform: 'translate(-50%, -50%) scale(1.1)', opacity: 1 },
+                '100%': { transform: 'translate(-50%, -50%) scale(1)', opacity: 0 }
               },
             }}
           >
-            <Box
-              sx={{
-                backgroundColor: 'rgba(76, 175, 80, 0.95)',
-                color: 'white',
-                padding: '20px 40px',
-                borderRadius: '20px',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-                border: '4px solid #4CAF50',
-                backdropFilter: 'blur(10px)',
-                textAlign: 'center',
-              }}
-            >
-              <Typography
-                variant="h2"
-                sx={{
-                  fontWeight: 'bold',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-                  fontSize: { xs: '2.5rem', sm: '3.5rem' },
-                  margin: 0,
-                  lineHeight: 1,
-                }}
-              >
-                🎉 Correct! 🎉
+            <Box sx={{
+              backgroundColor: 'rgba(76, 175, 80, 0.95)',
+              color: 'white',
+              padding: '20px 40px',
+              borderRadius: '20px',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+              textAlign: 'center'
+            }}>
+              <Typography variant="h3" sx={{ fontWeight: 'bold', margin: 0 }}>
+                Great! ⭐
               </Typography>
             </Box>
           </Box>
         </>
       )}
 
-      {/* Success Dialog */}
+      {/* Success Dialog - "Good Job!" popup */}
       <Dialog
         open={showCelebration}
         maxWidth="sm"
@@ -977,50 +888,60 @@ export default function CookingLevel1() {
         PaperProps={{
           sx: { 
             borderRadius: '20px',
-            backgroundColor: 'rgba(255, 250, 244, 0.98)',
+            backgroundColor: 'rgba(255, 248, 220, 0.98)',
             border: '4px solid #4CAF50',
             backdropFilter: 'blur(15px)'
           }
         }}
       >
         <DialogTitle sx={{ textAlign: 'center', py: 3 }}>
-          <EmojiEventsIcon sx={{ fontSize: 80, color: '#4CAF50', mb: 2 }} />
+          <EmojiEventsIcon sx={{ fontSize: 100, color: '#4CAF50', mb: 2 }} />
           <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#2E7D32' }}>
-            Great Job!
+            Good Job!
           </Typography>
           <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-            {[...Array(getStarRating())].map((_, i) => (
-              <StarIcon key={i} sx={{ color: '#FFCA3A', fontSize: 40, mx: 0.5 }} />
-            ))}
-            {[...Array(3 - getStarRating())].map((_, i) => (
-              <StarIcon key={i} sx={{ color: '#E0E0E0', fontSize: 40, mx: 0.5 }} />
+            {[...Array(3)].map((_, i) => (
+              <StarIcon key={i} sx={{ color: '#FFCA3A', fontSize: 50, mx: 0.5 }} />
             ))}
           </Box>
         </DialogTitle>
         <DialogContent sx={{ textAlign: 'center', py: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#FF9800', mb: 1 }}>
-            You learned all {ingredients.length} ingredients!
+          <Typography variant="h5" sx={{ 
+            fontWeight: 'bold', 
+            color: '#FF9800', 
+            mb: 2,
+            fontSize: '1.8rem'
+          }}>
+            Perfect! 🍳
           </Typography>
-          <Typography variant="body1" sx={{ color: '#2E7D32', lineHeight: 1.4, mb: 2 }}>
-            Level {currentLevel} Complete! 
-            {hasNextLevel ? ` Ready for Level ${currentLevel + 1}?` : ' You finished all levels!'}
+          <Typography variant="body1" sx={{ 
+            color: '#2E7D32', 
+            lineHeight: 1.6, 
+            mb: 2,
+            fontSize: '1.1rem'
+          }}>
+            You collected all the ingredients needed to make a delicious fried egg! 
+            You gathered the egg, oil, salt, and butter - everything a chef needs!
+          </Typography>
+          <Typography variant="body2" sx={{ 
+            color: '#666', 
+            fontStyle: 'italic',
+            fontSize: '1rem'
+          }}>
+            Now you're ready to cook! Remember to always ask an adult to help when using the stove.
           </Typography>
           
           {progressSaving && (
-            <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(33, 150, 243, 0.9)', borderRadius: '12px', color: 'white', backdropFilter: 'blur(10px)' }}>
+            <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(33, 150, 243, 0.9)', borderRadius: '12px', color: 'white' }}>
               <CircularProgress size={16} sx={{ mr: 1, color: 'white' }} />
-              <Typography variant="body2">
-                Saving your progress...
-              </Typography>
+              <Typography variant="body2">Saving your progress...</Typography>
             </Box>
           )}
           
           {progressSaved && (
-            <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(76, 175, 80, 0.9)', borderRadius: '12px', color: 'white', backdropFilter: 'blur(10px)' }}>
+            <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(76, 175, 80, 0.9)', borderRadius: '12px', color: 'white' }}>
               <CheckCircleIcon sx={{ mr: 1, fontSize: 20 }} />
-              <Typography variant="body2">
-                Progress saved successfully!
-              </Typography>
+              <Typography variant="body2">Progress saved successfully!</Typography>
             </Box>
           )}
         </DialogContent>
@@ -1029,49 +950,41 @@ export default function CookingLevel1() {
             onClick={continueToNextLevel}
             disabled={progressSaving}
             variant="contained"
-            size="medium"
+            size="large"
             sx={{ 
-              backgroundColor: hasNextLevel ? 'rgba(76, 175, 80, 0.9)' : 'rgba(33, 150, 243, 0.9)',
-              borderRadius: '10px',
-              minWidth: '120px',
-              backdropFilter: 'blur(10px)',
-              '&:hover': { 
-                backgroundColor: hasNextLevel ? 'rgba(69, 160, 73, 0.9)' : 'rgba(25, 118, 210, 0.9)'
-              }
+              backgroundColor: '#4CAF50',
+              borderRadius: '15px',
+              minWidth: '120px'
             }}
           >
-            {progressSaving ? 'Saving...' : (hasNextLevel ? '🚀 Next Level' : '🏠 Go Home')}
+            {progressSaving ? 'Saving...' : (currentLevel < maxLevel ? '🚀 Next Level' : '🏠 Go Home')}
           </Button>
-          
           <Button 
             onClick={resetGame}
             variant="outlined"
-            size="medium"
+            size="large"
             sx={{ 
-              borderColor: '#4CAF50', 
-              color: '#2E7D32',
-              borderRadius: '10px',
+              borderColor: '#FF9800', 
+              color: '#FF9800',
+              borderRadius: '15px',
               minWidth: '120px',
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              backdropFilter: 'blur(10px)',
+              borderWidth: '2px',
               '&:hover': {
-                backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                borderWidth: '2px',
+                backgroundColor: 'rgba(255, 152, 0, 0.1)'
               }
             }}
           >
-            🔄 Replay
+            🔄 Play Again
           </Button>
-          
           <Button 
             onClick={goToHomepage}
             variant="contained"
-            size="medium"
+            size="large"
             sx={{ 
-              backgroundColor: 'rgba(255, 152, 0, 0.9)',
-              borderRadius: '10px',
-              minWidth: '120px',
-              backdropFilter: 'blur(10px)',
-              '&:hover': { backgroundColor: 'rgba(245, 124, 0, 0.9)' }
+              backgroundColor: '#2196F3',
+              borderRadius: '15px',
+              minWidth: '120px'
             }}
           >
             🏠 Home
