@@ -4,11 +4,7 @@ import {
   Typography, 
   Paper, 
   Container, 
-  Grid, 
   Button, 
-  Card, 
-  CardContent, 
-  CardMedia,
   Dialog,
   Stack,
   LinearProgress,
@@ -26,37 +22,17 @@ import {
   saveStudentLessonProgress,
 } from '../../services/progressService';
 
-// hygiene items images
-import toothpaste from "../../assets/hygieneLevel1/toothpaste.png"
-import toothbrush from "../../assets/hygieneLevel1/toothbrush.png"
-import soap from "../../assets/hygieneLevel1/soap.png"
-import lotion from "../../assets/hygieneLevel1/lotion.png"
-import shampoo from "../../assets/hygieneLevel1/shampoo.png"
-import cottonbuds from "../../assets/hygieneLevel1/cottonbuds.png"
-import nailcutter from "../../assets/hygieneLevel1/nailcutter.png"
-import deodorant from "../../assets/hygieneLevel1/deodorant.png"
-import comb from "../../assets/hygieneLevel1/comb.png"
-import handsanitizer from "../../assets/hygieneLevel1/handsanitizer.png"
-import mouthwash from "../../assets/hygieneLevel1/mouthwash.png"
-import floss from "../../assets/hygieneLevel1/floss.png"
-import tongueScraper from "../../assets/hygieneLevel1/tonguescraper.png"
+// Images
 import successGif from "../../assets/hygieneLevel1/roblox.gif"
-import noobGif from "../../assets/hygieneLevel1/cat.jpg"
-import bathroomBg from "../../assets/hygieneLevel1/bathroom.jpg"
-import loofah from "../../assets/hygieneLevel1/loofah.png"
-import licecomb from "../../assets/hygieneLevel1/headlicecomb.png"
-import razor from "../../assets/hygieneLevel1/razor.png"
-import conditioner from "../../assets/hygieneLevel1/conditioner.png"
-
-// Body parts images
-import teethImage from "../../assets/hygieneLevel1/teeth.jpg"
-import hairImage from "../../assets/hygieneLevel1/hair.png"
-import nailsImage from "../../assets/hygieneLevel1/nails.png"
-import handsImage from "../../assets/hygieneLevel1/hands.png"
-import earImage from "../../assets/hygieneLevel1/ear.png"
-import bodyImage from "../../assets/hygieneLevel1/body.png"
-import underarmImage from "../../assets/hygieneLevel1/underarm.png"
-import tongueImage from "../../assets/hygieneLevel1/tongue.png"
+import bathroomBg from "../../assets/hygieneLevel1/bg.png"
+import teethImg from "../../assets/hygienelevel2/before_teeth.png"
+import afterTeethImg from "../../assets/hygienelevel2/after_teeth.png"
+import blob1Img from "../../assets/hygienelevel2/blob1.png"
+import blob2Img from "../../assets/hygienelevel2/blob2.png"
+import toothbrushImg from "../../assets/hygienelevel2/toothbrush.png"
+import toothpasteImg from "../../assets/hygienelevel2/toothpaste.png"
+import toothbrushWithPasteImg from "../../assets/hygienelevel2/with_paste.png"
+import waterCupImg from "../../assets/hygienelevel2/water.png"
 
 // Audio files
 import backgroundMusic from "../../assets/hygieneLevel1/background-music.mp3"
@@ -64,25 +40,18 @@ import correctSound from "../../assets/hygieneLevel1/correct-sound.mp3"
 import incorrectSound from "../../assets/hygieneLevel1/incorrect-sound.mp3"
 import successSound from "../../assets/hygieneLevel1/success-sound.mp3"
 
-
 export default function PersonalHygieneLevel1() {
   const navigate = useNavigate();
   const { moduleId, lessonId } = useParams();
   const [lesson, setLesson] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
-  const [answers, setAnswers] = useState([]);
-  const [draggedItem, setDraggedItem] = useState(null);
-  const [dropZoneActive, setDropZoneActive] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
-  const [feedbackData, setFeedbackData] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [score, setScore] = useState(0);
   const [gameCompleted, setGameCompleted] = useState(false);
   const [progressSaving, setProgressSaving] = useState(false);
   const [progressSaved, setProgressSaved] = useState(false);
-  const [gameRounds, setGameRounds] = useState([]);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [audioRef, setAudioRef] = useState(null);
   const [correctSoundRef, setCorrectSoundRef] = useState(null);
@@ -91,206 +60,66 @@ export default function PersonalHygieneLevel1() {
   const [showStartScreen, setShowStartScreen] = useState(true);
   const [starAnimationStage, setStarAnimationStage] = useState(0);
   const [confettiPieces, setConfettiPieces] = useState([]);
-  const [triedIncorrectItems, setTriedIncorrectItems] = useState([]);
   const [difficulty, setDifficulty] = useState('easy');
   const [difficultyLoading, setDifficultyLoading] = useState(true);
 
+  // Game states for brushing sequence
+  const [gameStep, setGameStep] = useState(1); // 1: apply paste, 2: brush, 3: rinse
+  const [toothpasteApplied, setToothpasteApplied] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [draggedItem, setDraggedItem] = useState(null);
+  const [toothbrushPosition, setToothbrushPosition] = useState({ x: 0, y: 0 });
+  const [bubbles, setBubbles] = useState([]);
+  const [teethBubbles, setTeethBubbles] = useState([]); // Bubbles that stay on teeth
+  const [remainingPlaque, setRemainingPlaque] = useState([
+    { id: 1, x: 25, y: 20, width: 120, height: 80, removed: false },
+    { id: 2, x: 70, y: 20, width: 100, height: 80, removed: false },
+    { id: 3, x: 15, y: 65, width: 60, height: 65, removed: false },
+    { id: 4, x: 75, y: 20, width: 100, height: 75, removed: false },
+    { id: 5, x: 50, y: 35, width: 80, height: 55, removed: false }
+  ]);
+  const [waterCupVisible, setWaterCupVisible] = useState(false);
+  
+  // New animation states
+  const [pasteSliding, setPasteSliding] = useState(false);
+  const [sparkles, setSparkles] = useState([]);
+  const [showSparkleEffect, setShowSparkleEffect] = useState(false);
 
   const handleStartGame = () => {
     setShowStartScreen(false);
   };
 
-  const getActivityData = () => {
-    const baseBodyParts = [
-      { 
-        id: 1, 
-        name: "Teeth", 
-        imageUrl: teethImage,
-        hint: "What do you use to brush and clean these?",
-        correctItems: {
-          easy: [1, 2],
-          intermediate: [1, 2, 15],
-          difficult: [1,2,15, 16] 
-        }
-      },
-      { 
-        id: 2, 
-        name: "Hair", 
-        imageUrl: hairImage,
-        hint: "What makes your hair clean and tidy?",
-        correctItems: {
-          easy: [5, 9, 11], 
-          intermediate: [5, 9, 12, 11],
-          difficult: [5, 9, 12, 11] 
-        }
-      },
-      { 
-        id: 3, 
-        name: "Nails", 
-        imageUrl: nailsImage,
-        hint: "What keeps these short and neat?",
-        correctItems: {
-          easy: [7], 
-          intermediate: [7],
-        }
-      },
-      { 
-        id: 4, 
-        name: "Hands", 
-        imageUrl: handsImage,
-        hint: "What do you use to wash these?",
-        correctItems: {
-          easy: [3], 
-          intermediate: [3, 8],
-          difficult: [3, 8] 
-        }
-      },
-      { 
-        id: 5, 
-        name: "Ears", 
-        imageUrl: earImage,
-        hint: "What gently cleans inside these?",
-        correctItems: {
-          easy: [6], 
-        }
-      },
-      { 
-        id: 6, 
-        name: "Body", 
-        imageUrl: bodyImage,
-        hint: "What cleans our body?",
-        correctItems: {
-          easy: [3,4], 
-          intermediate: [3,4,,13,14],
-          difficult: [3,4,13,14] 
-        }
-      }
-    ];
-
-    if (difficulty === 'intermediate' || difficulty === 'difficult') {
-      baseBodyParts.push({
-        id: 7,
-        name: "Underarm",
-        imageUrl: underarmImage,  
-        hint: "What keeps your face clean and fresh?",
-        correctItems: {
-          intermediate: [10],
-          difficult: [10] 
-        }
-      });
-    }
-
-    if (difficulty === 'difficult') {
-      baseBodyParts.push({
-        id: 8,
-        name: "Tongue",
-        imageUrl: tongueImage, 
-        hint: "What keeps these from smelling?",
-        correctItems: {
-          difficult: [17] 
-        }
-      });
-    }
-
-    const allItems = [
-      // Easy level items (existing)
-      { id: 1, name: "Toothbrush", imageUrl: toothbrush, hint: "I clean your teeth!", level: "easy" },
-      { id: 2, name: "Toothpaste", imageUrl: toothpaste, hint: "I go on the toothbrush!", level: "easy" },
-      { id: 3, name: "Soap", imageUrl: soap, hint: "I help you wash!", level: "easy" },
-      { id: 4, name: "Body Lotion", imageUrl: lotion, hint: "I make skin soft!", level: "easy" },
-      { id: 5, name: "Shampoo", imageUrl: shampoo, hint: "I wash your hair!", level: "easy" },
-      { id: 6, name: "Cotton Buds", imageUrl: cottonbuds, hint: "I help clean your ears!", level: "easy" },
-      { id: 7, name: "Nail Cutter", imageUrl: nailcutter, hint: "I keep nails short!", level: "easy" },
-      { id: 8, name: "Hand Sanitizer", imageUrl: handsanitizer, hint: "I keep you smelling nice!", level: "easy" },
-      { id: 9, name: "Comb", imageUrl: comb, hint: "I fix your hair!", level: "easy" },
-      
-      // Intermediate level items
-      { id: 10, name: "Deodorant", imageUrl: deodorant, hint: "I clean your face gently!", level: "intermediate" }, 
-      { id: 11, name: "Conditioner", imageUrl: conditioner, hint: "I make hair soft after shampoo!", level: "intermediate" }, 
-      { id: 12, name: "Head Lice Comb", imageUrl: licecomb, hint: "I kill germs on hands!", level: "intermediate" }, 
-      { id: 13, name: "Razor", imageUrl: razor, hint: "I protect and soften lips!", level: "intermediate" }, 
-      { id: 14, name: "Loofah", imageUrl: loofah, hint: "I protect skin from sun!", level: "intermediate" },
-      
-      // Difficult level items
-      { id: 15, name: "Mouthwash", imageUrl: mouthwash, hint: "I rinse and freshen mouth!", level: "difficult" }, 
-      { id: 16, name: "Dental Floss", imageUrl: floss, hint: "I clean between teeth!", level: "difficult" }, 
-      { id: 17, name: "Tongue Scraper", imageUrl: tongueScraper, hint: "I exfoliate dead skin!", level: "difficult" }, 
-    ];
-
-    return {
-      instructions: `Drag the correct hygiene item to the body part!`,
-      bodyParts: baseBodyParts.map(bodyPart => ({
-        ...bodyPart,
-        correctItems: bodyPart.correctItems[difficulty] || bodyPart.correctItems.easy
-      })),
-      items: allItems
-    };
-  };
-
-  const getDifficultySettings = () => {
-    switch (difficulty) {
-      case 'easy':
-        return {
-          totalItems: 5,
-          itemsPerRound: 3,
-          totalRounds: 5,
-          multipleCorrectAnswers: false
-        };
-      case 'intermediate':
-        return {
-          totalItems: 12,
-          itemsPerRound: 4,
-          totalRounds: 7,
-          multipleCorrectAnswers: true
-        };
-      case 'difficult':
-        return {
-          totalItems: 17,
-          itemsPerRound: 5,
-          totalRounds: 10,
-          multipleCorrectAnswers: true
-        };
-      default:
-        return {
-          totalItems: 5,
-          itemsPerRound: 3,
-          totalRounds: 5,
-          multipleCorrectAnswers: false
-        };
-    }
-  };
-
   const fetchAssignedDifficulty = async () => {
-  try {
-    const studentId = getStudentId();
-    if (!studentId || !lessonId) {
-      console.log('Missing studentId or lessonId for difficulty fetch');
-      setDifficultyLoading(false);
-      return;
-    }
-
-    const response = await fetch(`http://localhost:8080/api/difficulty/student-difficulty/${studentId}/${lessonId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
+    try {
+      const studentId = getStudentId();
+      if (!studentId || !lessonId) {
+        console.log('Missing studentId or lessonId for difficulty fetch');
+        setDifficultyLoading(false);
+        return;
       }
-    });
 
-    if (response.ok) {
-      const data = await response.json();
-      setDifficulty(data.difficulty || 'easy');
-      console.log('Fetched assigned difficulty:', data.difficulty);
-    } else {
-      console.log('No assigned difficulty found, using default: easy');
+      const response = await fetch(`http://localhost:8080/api/difficulty/student-difficulty/${studentId}/${lessonId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setDifficulty(data.difficulty || 'easy');
+        console.log('Fetched assigned difficulty:', data.difficulty);
+      } else {
+        console.log('No assigned difficulty found, using default: easy');
+        setDifficulty('easy');
+      }
+    } catch (error) {
+      console.error('Error fetching assigned difficulty:', error);
       setDifficulty('easy');
+    } finally {
+      setDifficultyLoading(false);
     }
-  } catch (error) {
-    console.error('Error fetching assigned difficulty:', error);
-    setDifficulty('easy'); // Default to easy on error
-  } finally {
-    setDifficultyLoading(false);
-  }
-};
+  };
 
   const getStudentId = () => {
     const studentId = localStorage.getItem('studentId');
@@ -334,47 +163,150 @@ export default function PersonalHygieneLevel1() {
     }
   };
 
-  const generateGameRounds = () => {
-    const activityData = getActivityData();
-    const settings = getDifficultySettings();
-    const rounds = [];
-    
-    const shuffledBodyParts = [...activityData.bodyParts].sort(() => Math.random() - 0.5);
-    
-    for (let i = 0; i < Math.min(settings.totalRounds, shuffledBodyParts.length); i++) {
-      const bodyPart = shuffledBodyParts[i];
-      
-      const correctItemId = bodyPart.correctItems[Math.floor(Math.random() * bodyPart.correctItems.length)];
-      const correctItem = activityData.items.find(item => item.id === correctItemId);
-      
-      // Filter items based on difficulty level
-      const availableItems = activityData.items.filter(item => {
-        if (difficulty === 'easy') return item.level === 'easy';
-        if (difficulty === 'intermediate') return ['easy', 'intermediate'].includes(item.level);
-        return true; // difficult includes all items
-      });
-      
-      const incorrectItems = availableItems
-        .filter(item => !bodyPart.correctItems.includes(item.id))
-        .sort(() => Math.random() - 0.5)
-        .slice(0, settings.itemsPerRound - 1);
-      
-      const allItems = [correctItem, ...incorrectItems].sort(() => Math.random() - 0.5);
-      
-      rounds.push({
-        id: i + 1,
-        bodyPart,
-        items: allItems,
-        correctItemId,
-        allCorrectItems: bodyPart.correctItems 
+  // Create sparkle effects
+  const createSparkles = () => {
+    const sparkleArray = [];
+    for (let i = 0; i < 20; i++) {
+      sparkleArray.push({
+        id: i,
+        x: Math.random() * 300 + 50, // Around toothbrush area
+        y: Math.random() * 300 + 100,
+        size: Math.random() * 8 + 4,
+        delay: Math.random() * 0.5,
+        color: ['#FFD700', '#FFF700', '#87CEEB', '#FFB6C1', '#90EE90'][Math.floor(Math.random() * 5)]
       });
     }
+    setSparkles(sparkleArray);
+    setShowSparkleEffect(true);
     
-    return rounds;
+    // Hide sparkles after animation
+    setTimeout(() => {
+      setShowSparkleEffect(false);
+      setSparkles([]);
+    }, 2000);
   };
 
-  const currentRound = gameRounds[currentRoundIndex];
-  const progressPercentage = ((currentRoundIndex + (gameCompleted ? 1 : 0)) / gameRounds.length) * 100;
+  // Game mechanics
+  const handleToothpasteDrag = (e) => {
+    if (gameStep !== 1) return;
+    e.dataTransfer.setData('text/plain', 'toothpaste');
+    setDraggedItem('toothpaste');
+  };
+
+  const handleToothbrushDrop = (e) => {
+    e.preventDefault();
+    if (gameStep === 1 && draggedItem === 'toothpaste') {
+      // Start paste sliding animation
+      setPasteSliding(true);
+      
+      // After sliding animation completes
+      setTimeout(() => {
+        setToothpasteApplied(true);
+        setPasteSliding(false);
+        setGameStep(2);
+        playSoundEffect('correct');
+        setScore(20); // 20% for applying toothpaste
+        
+        // Create sparkle effect after paste is applied
+        createSparkles();
+      }, 800); // Match the sliding animation duration
+    }
+  };
+
+  const handleToothbrushMouseDown = (e) => {
+    if (gameStep !== 2 || !toothpasteApplied) return;
+    setIsDragging(true);
+    setDraggedItem('toothbrush');
+    const rect = e.currentTarget.getBoundingClientRect();
+    setToothbrushPosition({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging || draggedItem !== 'toothbrush') return;
+    
+    setToothbrushPosition({ x: e.clientX, y: e.clientY });
+    
+    // Check collision with plaque and create bubbles at teeth
+    const teethContainer = document.querySelector('[data-teeth-container]');
+    if (teethContainer) {
+      const containerRect = teethContainer.getBoundingClientRect();
+      const relativeX = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+      const relativeY = ((e.clientY - containerRect.top) / containerRect.height) * 100;
+
+      // Create bubbles on teeth surface when brushing with improved styling
+      if (Math.random() < 0.4) {
+        const newTeethBubble = {
+          id: Date.now() + Math.random(),
+          x: relativeX,
+          y: relativeY,
+          size: Math.random() * 16 + 10,
+          opacity: 0.9,
+          color: 'white' // Pure white for proper foam appearance
+        };
+        setTeethBubbles(prev => [...prev, newTeethBubble]);
+      }
+
+      setRemainingPlaque(prev => prev.map(plaque => {
+        if (plaque.removed) return plaque;
+        
+        // Check collision
+        if (relativeX >= plaque.x && relativeX <= plaque.x + (plaque.width / containerRect.width * 100) &&
+            relativeY >= plaque.y && relativeY <= plaque.y + (plaque.height / containerRect.height * 100)) {
+          if (!plaque.removed) {
+            playSoundEffect('correct');
+            // Update score based on plaque removed
+            setScore(prev => Math.min(prev + 15, 95)); // Max 95% before rinsing
+          }
+          return { ...plaque, removed: true };
+        }
+        return plaque;
+      }));
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    setDraggedItem(null);
+    
+    // Check if all plaque is removed
+    const allPlaqueRemoved = remainingPlaque.every(plaque => plaque.removed);
+    if (allPlaqueRemoved && gameStep === 2) {
+      setGameStep(3);
+      setWaterCupVisible(true);
+    }
+  };
+
+  const handleWaterCupDrag = (e) => {
+    if (gameStep !== 3) return;
+    e.dataTransfer.setData('text/plain', 'water');
+    setDraggedItem('water');
+  };
+
+  const handleMouthDrop = (e) => {
+    e.preventDefault();
+    if (gameStep === 3 && draggedItem === 'water') {
+      setScore(100);
+      setGameCompleted(true);
+      setShowSuccess(true);
+      playSoundEffect('success');
+      
+      // Clear all teeth bubbles when rinsing
+      setTeethBubbles([]);
+    }
+  };
+
+  // Bubble animation cleanup
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setBubbles(prev => prev.map(bubble => ({
+        ...bubble,
+        life: bubble.life - 0.02,
+        y: bubble.y - 1
+      })).filter(bubble => bubble.life > 0));
+    }, 50);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const fetchUserProgress = async () => {
@@ -389,9 +321,6 @@ export default function PersonalHygieneLevel1() {
         const progressResponse = await getStudentLessonProgress(studentId, lessonId);
         if (progressResponse) {
           setScore(progressResponse.score || 0);
-          if (progressResponse.completed) {
-            // You can add a tip here if needed
-          }
           console.log('Loaded existing progress:', progressResponse);
         } else {
           console.log('No existing progress found - starting fresh');
@@ -406,134 +335,28 @@ export default function PersonalHygieneLevel1() {
 
   useEffect(() => {
     const fetchData = async () => {
-    try {
-      setLoading(true);
-      
-      // Fetch assigned difficulty first
-      await fetchAssignedDifficulty();
-      
-      setTimeout(() => {
-        setLesson({
-          id: lessonId || 1,
-          title: "Personal Hygiene",
-          description: "Learn about keeping clean and healthy!",
-          level: 1
-        });
+      try {
+        setLoading(true);
+        
+        await fetchAssignedDifficulty();
+        
+        setTimeout(() => {
+          setLesson({
+            id: lessonId || 1,
+            title: "Brushing Teeth",
+            description: "Learn proper tooth brushing technique!",
+            level: 1
+          });
+          setLoading(false);
+        }, 1000);
+      } catch (err) {
+        setError('Something went wrong');
         setLoading(false);
-      }, 1000);
-    } catch (err) {
-      setError('Something went wrong');
-      setLoading(false);
-    }
-  };
-  
-  fetchData();
-}, [lessonId, moduleId]);
-
-  // Generate game rounds when difficulty is loaded
-useEffect(() => {
-  if (!difficultyLoading && !showStartScreen && difficulty) {
-    setGameRounds(generateGameRounds());
-  }
-}, [difficulty, difficultyLoading, showStartScreen]);
-
-  const handleDragStart = (e, item) => {
-    setDraggedItem(item);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/html', item.id);
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
-
-  const handleDragEnter = (e) => {
-    e.preventDefault();
-    setDropZoneActive(true);
-  };
-
-  const handleDragLeave = (e) => {
-    if (!e.currentTarget.contains(e.relatedTarget)) {
-      setDropZoneActive(false);
-    }
-  };
-
-  const handleDrop = (e) => {
-  e.preventDefault();
-  setDropZoneActive(false);
-  
-  if (!draggedItem || !currentRound) return;
-  
-  const settings = getDifficultySettings();
-  let isCorrect;
-  
-  if (settings.multipleCorrectAnswers) {
-    isCorrect = currentRound.allCorrectItems.includes(draggedItem.id);
-  } else {
-    isCorrect = draggedItem.id === currentRound.correctItemId;
-  }
-  
-  if (isCorrect) {
-    // Correct answer - proceed as normal
-    const newAnswer = {
-      roundId: currentRound.id,
-      bodyPartId: currentRound.bodyPart.id,
-      selectedItemId: draggedItem.id,
-      correctItemId: currentRound.correctItemId,
-      allCorrectItems: currentRound.allCorrectItems,
-      isCorrect: true
+      }
     };
     
-    setAnswers(prev => [...prev, newAnswer]);
-    
-    // Calculate score based on all correct answers so far
-    const allAnswers = [...answers, newAnswer];
-    const correctCount = allAnswers.filter(answer => answer.isCorrect).length;
-    setScore(correctCount);
-    playSoundEffect('correct');
-
-    const activityData = getActivityData();
-    setFeedbackData({
-      draggedItem,
-      bodyPart: currentRound.bodyPart,
-      correctItem: activityData.items.find(item => item.id === currentRound.correctItemId),
-      allCorrectItems: currentRound.allCorrectItems.map(id => 
-        activityData.items.find(item => item.id === id)
-      ),
-      isCorrect: true,
-      multipleCorrectAnswers: settings.multipleCorrectAnswers
-    });
-    
-    setShowFeedback(true);
-    setTriedIncorrectItems([]); // Reset for next round
-  } else {
-    // Incorrect answer - just remove the item and let them try again
-    playSoundEffect('incorrect');
-    setTriedIncorrectItems(prev => [...prev, draggedItem.id]);
-  }
-  
-  setDraggedItem(null);
-};
-  const handleNext = () => {
-  setShowFeedback(false);
-  setFeedbackData(null);
-  setTriedIncorrectItems([]); // Reset for next round
-  
-  if (currentRoundIndex < gameRounds.length - 1) {
-    setCurrentRoundIndex(prev => prev + 1);
-  } else {
-    setGameCompleted(true);
-    if (audioRef) {
-      audioRef.pause();
-      setAudioPlaying(false);
-    }
-    setTimeout(() => {
-      playSoundEffect('success');
-      setShowSuccess(true);
-    }, 300);
-  }
-};
+    fetchData();
+  }, [lessonId, moduleId]);
 
   const saveProgress = async () => {
     if (progressSaving || progressSaved) return;
@@ -547,13 +370,11 @@ useEffect(() => {
         return;
       }
       
-      const finalScore = answers.filter(answer => answer.isCorrect).length;
-      
       const progressData = {
         studentId: studentId,
         lessonId: parseInt(lessonId, 10),
-        score: finalScore,
-        maxScore: gameRounds.length,
+        score: score,
+        maxScore: 100, // Will be updated based on actual game mechanics
         completed: true,
         starsEarned: getStarRating(),
         difficulty: difficulty
@@ -573,31 +394,46 @@ useEffect(() => {
   };
 
   const resetGame = () => {
-  setCurrentRoundIndex(0);
-  setAnswers([]);
-  setShowFeedback(false);
-  setFeedbackData(null);
-  setShowSuccess(false);
-  setScore(0);
-  setGameCompleted(false);
-  setProgressSaved(false);
-  setProgressSaving(false);
-  setTriedIncorrectItems([]); // Reset tried incorrect items
-  setGameRounds(generateGameRounds());
-  if (audioRef && !audioPlaying) {
-    audioRef.play().then(() => {
-      setAudioPlaying(true);
-    }).catch(error => {
-      console.log('Audio play failed:', error);
-    });
-  }
-};
+    setShowFeedback(false);
+    setShowSuccess(false);
+    setScore(0);
+    setGameCompleted(false);
+    setProgressSaved(false);
+    setProgressSaving(false);
+    
+    // Reset game states
+    setGameStep(1);
+    setToothpasteApplied(false);
+    setIsDragging(false);
+    setDraggedItem(null);
+    setToothbrushPosition({ x: 0, y: 0 });
+    setBubbles([]);
+    setTeethBubbles([]);
+    setWaterCupVisible(false);
+    setPasteSliding(false);
+    setSparkles([]);
+    setShowSparkleEffect(false);
+    setRemainingPlaque([
+      { id: 1, x: 25, y: 20, width: 120, height: 80, removed: false },
+      { id: 2, x: 70, y: 20, width: 100, height: 80, removed: false },
+      { id: 3, x: 15, y: 65, width: 60, height: 65, removed: false },
+      { id: 4, x: 75, y: 20, width: 100, height: 75, removed: false },
+      { id: 5, x: 50, y: 35, width: 80, height: 55, removed: false }
+    ]);
+    
+    if (audioRef && !audioPlaying) {
+      audioRef.play().then(() => {
+        setAudioPlaying(true);
+      }).catch(error => {
+        console.log('Audio play failed:', error);
+      });
+    }
+  };
 
   const getStarRating = () => {
-    const percentage = (score / gameRounds.length) * 100;
-    if (percentage >= 90) return 3;
-    if (percentage >= 70) return 2;
-    if (percentage >= 50) return 1;
+    if (score >= 90) return 3;
+    if (score >= 70) return 2;
+    if (score >= 50) return 1;
     return 0;
   };
 
@@ -639,7 +475,7 @@ useEffect(() => {
       const timer = setTimeout(animateStars, 1000);
       return () => clearTimeout(timer);
     }
-  }, [showSuccess, score, gameRounds.length]);
+  }, [showSuccess, score]);
 
   useEffect(() => {
     const audio = new Audio(backgroundMusic);
@@ -647,7 +483,6 @@ useEffect(() => {
     audio.volume = 0.3;
     setAudioRef(audio);
 
-    // Initialize sound effects
     const correctAudio = new Audio(correctSound);
     const incorrectAudio = new Audio(incorrectSound);
     const successAudio = new Audio(successSound);
@@ -709,7 +544,7 @@ useEffect(() => {
     }
   }, [showSuccess]);
 
-  // Simple start screen - only shows title and play button
+  // Start screen
   if (showStartScreen) {
     return (
       <div style={{
@@ -745,7 +580,7 @@ useEffect(() => {
             textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
             textAlign: 'center'
           }}>
-            🧼 Hygiene Match-Up 🧼
+            Brush Your Teeth
           </Typography>
           
           <Typography variant="h4" sx={{ 
@@ -758,7 +593,7 @@ useEffect(() => {
             maxWidth: '600px',
             px: 2
           }}>
-            Match the right hygiene items with body parts to stay clean and healthy!
+            Learn how to brush your teeth properly to keep them clean and healthy!
           </Typography>
           
           <Stack direction="row" spacing={3}>
@@ -782,8 +617,7 @@ useEffect(() => {
                 }
               }}
             >
-              <span style={{ fontSize: '1.8rem', marginRight: '8px' }}>🎮</span>
-              Let's Play!
+              Start Brushing!
             </Button>
           </Stack>
         </Box>
@@ -866,8 +700,6 @@ useEffect(() => {
     );
   }
 
-  const activityData = getActivityData();
-
   return (
     <div style={{
       minHeight: "100vh",
@@ -876,43 +708,56 @@ useEffect(() => {
       backgroundSize: "cover",
       backgroundPosition: "center",
       backgroundRepeat: "no-repeat",
-    }}>
-      <Navbar />
+    }}
+    onMouseMove={handleMouseMove}
+    onMouseUp={handleMouseUp}
+    >
+      
       <Container maxWidth="xl" sx={{ py: 1 }}>
-        <Box mb={2}>
+        {/* Progress bar and instructions - positioned with higher z-index */}
+        <Box 
+          sx={{ 
+            position: 'relative',
+            zIndex: 1010,
+            mb: 2
+          }}
+        >
           <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1} sx={{ maxWidth: '800px', mx: 'auto' }}>
             <Typography variant="body1" sx={{ 
               color: 'white', 
               fontWeight: 'bold',
               fontFamily: 'Poppins, sans-serif',
-              backgroundColor: 'rgba(0, 0, 0, 0.3)',
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
               px: 2,
               py: 1,
-              borderRadius: '10px'
+              borderRadius: '10px',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
             }}>
-              Round {currentRoundIndex + 1} of {gameRounds.length}
+              Step {gameStep}/3: {gameStep === 1 ? 'Apply Toothpaste' : gameStep === 2 ? 'Brush Teeth' : 'Rinse'}
             </Typography>
             
             <Chip 
-              label={`Score: ${score}/${gameRounds.length}`} 
+              label={`Score: ${score}/100`} 
               sx={{
                 backgroundColor: '#FF595E',
                 color: 'white',
                 fontWeight: 'bold',
                 fontSize: '0.9rem',
                 fontFamily: 'Poppins, sans-serif',
-                borderRadius: '15px'
+                borderRadius: '15px',
+                boxShadow: '0 4px 15px rgba(255, 89, 94, 0.4)'
               }}
             />
           </Stack>
           <Box sx={{ maxWidth: '800px', mx: 'auto' }}>
             <LinearProgress 
               variant="determinate" 
-              value={progressPercentage} 
+              value={score} 
               sx={{ 
                 height: 8, 
                 borderRadius: '10px',
                 backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
                 '& .MuiLinearProgress-bar': {
                   borderRadius: '10px',
                   backgroundColor: '#90BE6D'
@@ -966,24 +811,185 @@ useEffect(() => {
 
         <Box sx={{ 
           mb: 1,
-          textAlign: 'center'
+          textAlign: 'center',
+          position: 'relative',
+          zIndex: 1010
         }}>
           <Typography variant="body1" sx={{ 
             color: 'white', 
             fontWeight: 'bold',
             fontFamily: 'Poppins, sans-serif',
-            backgroundColor: 'rgba(25, 130, 196, 0.8)',
+            backgroundColor: 'rgba(25, 130, 196, 0.9)',
             display: 'inline-block',
             px: 3,
             py: 1,
             borderRadius: '15px',
-            fontSize: '1rem'
+            fontSize: '1rem',
+            boxShadow: '0 4px 15px rgba(25, 130, 196, 0.4)'
           }}>
-            {activityData.instructions}
+            {gameStep === 1 && 'Drag the toothpaste to the toothbrush!'}
+            {gameStep === 2 && 'Drag the toothbrush to clean all the plaque!'}
+            {gameStep === 3 && 'Drag the water cup to your mouth to rinse!'}
           </Typography>
         </Box>
 
-        {!gameCompleted && currentRound && (
+        {/* Teeth bubbles - bubbles that stay on teeth surface with improved styling */}
+        {teethBubbles.map(bubble => (
+          <Box
+            key={bubble.id}
+            sx={{
+              position: 'absolute',
+              left: `${bubble.x}%`,
+              top: `${bubble.y}%`,
+              width: `${bubble.size}px`,
+              height: `${bubble.size}px`,
+              backgroundColor: 'white',
+              border: '1px solid rgba(173, 216, 230, 0.3)',
+              borderRadius: '50%',
+              pointerEvents: 'none',
+              zIndex: 10,
+              opacity: bubble.opacity,
+              transform: 'translate(-50%, -50%)',
+              boxShadow: '0 0 8px rgba(255, 255, 255, 0.6), inset 0 0 8px rgba(173, 216, 230, 0.2)',
+              animation: 'gentleBubble 3s ease-in-out infinite',
+              '@keyframes gentleBubble': {
+                '0%': { transform: 'translate(-50%, -50%) scale(1)' },
+                '50%': { transform: 'translate(-50%, -50%) scale(1.1)' },
+                '100%': { transform: 'translate(-50%, -50%) scale(1)' }
+              }
+            }}
+          />
+        ))}
+
+        {/* Floating bubbles */}
+        {bubbles.map(bubble => (
+          <Box
+            key={bubble.id}
+            sx={{
+              position: 'fixed',
+              left: bubble.x,
+              top: bubble.y,
+              width: bubble.size,
+              height: bubble.size,
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              borderRadius: '50%',
+              pointerEvents: 'none',
+              zIndex: 1000,
+              opacity: bubble.life,
+              transform: 'translate(-50%, -50%)',
+              animation: 'bubble 1s ease-out',
+              '@keyframes bubble': {
+                '0%': { transform: 'translate(-50%, -50%) scale(0)' },
+                '50%': { transform: 'translate(-50%, -50%) scale(1.2)' },
+                '100%': { transform: 'translate(-50%, -50%) scale(1)' }
+              }
+            }}
+          />
+        ))}
+
+        {/* Sparkle effects */}
+        {showSparkleEffect && sparkles.map(sparkle => (
+          <Box
+            key={sparkle.id}
+            sx={{
+              position: 'fixed',
+              left: `${sparkle.x}px`,
+              top: `${sparkle.y}px`,
+              width: `${sparkle.size}px`,
+              height: `${sparkle.size}px`,
+              backgroundColor: sparkle.color,
+              borderRadius: '50%',
+              pointerEvents: 'none',
+              zIndex: 1002,
+              animation: `sparkle 2s ease-out ${sparkle.delay}s`,
+              transform: 'translate(-50%, -50%)',
+              boxShadow: `0 0 ${sparkle.size * 2}px ${sparkle.color}`,
+              '@keyframes sparkle': {
+                '0%': {
+                  opacity: 0,
+                  transform: 'translate(-50%, -50%) scale(0) rotate(0deg)',
+                },
+                '50%': {
+                  opacity: 1,
+                  transform: 'translate(-50%, -50%) scale(1.5) rotate(180deg)',
+                },
+                '100%': {
+                  opacity: 0,
+                  transform: 'translate(-50%, -50%) scale(0) rotate(360deg)',
+                }
+              }
+            }}
+          />
+        ))}
+
+        {/* Sliding toothpaste animation */}
+        {pasteSliding && (
+          <Box
+            sx={{
+              position: 'fixed',
+              left: '85%',
+              top: '30%',
+              transform: 'translateY(-50%)',
+              zIndex: 1003,
+              animation: 'slideToothpaste 0.8s ease-in-out',
+              '@keyframes slideToothpaste': {
+                '0%': {
+                  left: '85%',
+                  opacity: 1,
+                  transform: 'translateY(-50%) scale(1)'
+                },
+                '50%': {
+                  left: '50%',
+                  opacity: 0.8,
+                  transform: 'translateY(-50%) scale(0.8)'
+                },
+                '100%': {
+                  left: '15%',
+                  opacity: 0,
+                  transform: 'translateY(-50%) scale(0.5)'
+                }
+              }
+            }}
+          >
+            <img 
+              src={toothpasteImg} 
+              alt="Sliding toothpaste" 
+              style={{
+                width: '200px',
+                height: '200px',
+                objectFit: 'contain',
+                filter: 'brightness(1.2) drop-shadow(0 0 10px rgba(255,255,255,0.5))'
+              }}
+            />
+          </Box>
+        )}
+
+        {/* Dragging toothbrush */}
+        {isDragging && draggedItem === 'toothbrush' && (
+          <Box
+            sx={{
+              position: 'fixed',
+              left: toothbrushPosition.x,
+              top: toothbrushPosition.y,
+              transform: 'translate(-50%, -50%)',
+              zIndex: 1001,
+              pointerEvents: 'none'
+            }}
+          >
+            <img 
+              src={toothbrushWithPasteImg} 
+              alt="Toothbrush with paste" 
+              style={{
+                width: '300px',
+                height: '300px',
+                objectFit: 'contain',
+                filter: 'brightness(1.1)'
+              }}
+            />
+          </Box>
+        )}
+
+        {!gameCompleted && (
           <Box 
             sx={{ 
               display: 'flex',
@@ -996,251 +1002,223 @@ useEffect(() => {
               pb: 0
             }}
           >
-            {/* Top - Body part drop zone */}
-            <Box display="flex" flexDirection="column" alignItems="center" sx={{ mb: 4 }}>
-              <div
-                onDragOver={handleDragOver}
-                onDragEnter={handleDragEnter}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                style={{
-                  width: '400px',
-                  height: '400px',
-                  borderRadius: '20px',
-                  background: dropZoneActive 
-                    ? 'rgba(255, 255, 255, 0.3)' 
-                    : 'rgba(255, 255, 255, 0.1)',
-                  position: 'relative',
-                  padding: '2rem',
-                  border: `4px dashed ${dropZoneActive ? '#FFCA3A' : '#90BE6D'}`,
-                  transition: 'all 0.3s ease',
-                  textAlign: 'center',
+            {/* Game Area with Teeth, Toothbrush, and Toothpaste */}
+            <Box 
+              sx={{ 
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mb: 4,
+                mt: 2,
+                position: 'relative',
+                width: '100%'
+              }}
+            >
+              {/* Toothbrush on the left */}
+              {!isDragging && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    left: '5%',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    zIndex: 3,
+                    transition: 'all 0.3s ease'
+                  }}
+                  onDrop={handleToothbrushDrop}
+                  onDragOver={(e) => e.preventDefault()}
+                  onMouseDown={handleToothbrushMouseDown}
+                >
+                  <img 
+                    src={toothpasteApplied ? toothbrushWithPasteImg : toothbrushImg} 
+                    alt="Toothbrush" 
+                    style={{
+                      width: '300px',
+                      height: '300px',
+                      objectFit: 'contain',
+                      filter: toothpasteApplied ? 'brightness(1.2) drop-shadow(0 0 15px rgba(144, 190, 109, 0.6))' : 'brightness(1.1)',
+                      cursor: gameStep === 2 ? 'grab' : 'default',
+                      transition: 'filter 0.3s ease'
+                    }}
+                  />
+                </Box>
+              )}
+
+              {/* Central teeth container with body background */}
+              <Box
+                data-teeth-container
+                sx={{
+                  width: '650px',
+                  height: '600px',
                   display: 'flex',
-                  flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  cursor: 'pointer'
+                  transition: 'all 0.3s ease',
+                  transform: 'scale(1)',
+                  position: 'relative',
+                  overflow: 'visible'
                 }}
+                onDrop={gameStep === 3 ? handleMouthDrop : undefined}
+                onDragOver={(e) => e.preventDefault()}
               >
-                <CardMedia
-                  component="img"
-                  image={currentRound.bodyPart.imageUrl}
-                  alt={currentRound.bodyPart.name}
-                  sx={{ 
-                    width: 400, 
-                    height: 400, 
+                
+                {/* Teeth image - in front of body */}
+                <img 
+                  src={gameCompleted ? afterTeethImg : teethImg} 
+                  alt="Teeth" 
+                  style={{
+                    width: '650px',
+                    height: '600px',
                     objectFit: 'contain',
-                    mb: 2,
-                    filter: 'drop-shadow(2px 2px 8px rgba(0,0,0,0.3))'
+                    filter: gameCompleted ? 'brightness(1.1) drop-shadow(0 0 20px rgba(255, 255, 255, 0.5))' : 'brightness(1)',
+                    transition: 'filter 0.5s ease',
+                    position: 'relative',
+                    zIndex: 1
                   }}
                 />
-                <Typography variant="h4" sx={{ 
-                  fontWeight: 'bold',
-                  color: 'white',
-                  mb: 1,
-                  fontFamily: 'Poppins, sans-serif',
-                  textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
-                }}>
-                  {currentRound.bodyPart.name}
-                </Typography>
-              </div>
-            </Box>
 
-            {/* Bottom - Hygiene items */}
-            <Box sx={{ maxWidth: '1500px', width: '100%' }}>
-              <Grid container spacing={3} justifyContent="center">
-                {currentRound.items
-                  .filter(item => !triedIncorrectItems.includes(item.id)) // Filter out tried incorrect items
-                  .map((item, index) => (
-                  <Grid item xs={6} sm={4} md={3} key={item.id}>
-                    <div 
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, item)}
+                {/* Plaque blobs - only show if not removed */}
+                {remainingPlaque.map((plaque, index) => {
+                  if (plaque.removed) return null;
+                  
+                  const blobImages = [blob1Img, blob2Img, blob1Img, blob2Img, blob1Img];
+                  const filters = [
+                    'none',
+                    'hue-rotate(-15deg) saturate(1.1)',
+                    'hue-rotate(40deg) saturate(0.9)',
+                    'hue-rotate(60deg) saturate(1.1)',
+                    'none'
+                  ];
+                  
+                  return (
+                    <img 
+                      key={plaque.id}
+                      src={blobImages[index]}
+                      alt={`Plaque ${plaque.id}`}
                       style={{
-                        width: '100%',
-                        minHeight: '200px',
-                        position: 'relative',
-                        padding: '0.5rem',
-                        transition: 'all 0.3s ease',
-                        cursor: 'grab',
-                        textAlign: 'center',
-                        display: 'flex',
-                        flexDirection: 'column',
+                        position: 'absolute',
+                        width: `${plaque.width}px`,
+                        height: `${plaque.height}px`,
+                        top: `${plaque.y}%`,
+                        left: `${plaque.x}%`,
+                        objectFit: 'contain',
+                        opacity: 0.85,
+                        zIndex: 2,
+                        filter: filters[index],
+                        transition: 'opacity 0.3s ease'
                       }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'scale(1.05)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'scale(1)';
-                      }}
-                      onMouseDown={(e) => {
-                        e.currentTarget.style.cursor = 'grabbing';
-                      }}
-                      onMouseUp={(e) => {
-                        e.currentTarget.style.cursor = 'grab';
-                      }}
-                    >
-                      <CardMedia
-                        component="img"
-                        image={item.imageUrl}
-                        alt={item.name}
-                        sx={{ 
-                          width: '100%',
-                          height: 200, 
-                          objectFit: 'contain',
-                          mb: 1
-                        }}
-                      />
-                      <Typography variant="h6" sx={{ 
-                        color: 'white', 
-                        fontWeight: 'bold',
-                        fontFamily: 'Poppins, sans-serif',
-                        textShadow: '1px 1px 2px rgba(0,0,0,0.7)',
-                        fontSize: '0.9rem'
-                      }}>
-                        {item.name}
-                      </Typography>
-                    </div>
-                  </Grid>
-                ))}
-              </Grid>
+                    />
+                  );
+                })}
+              </Box>
+              
+              {/* Toothpaste on the right - only show in step 1 and when not sliding */}
+              {gameStep === 1 && !pasteSliding && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    right: '5%',
+                    top: '30%',
+                    transform: 'translateY(-50%)',
+                    zIndex: 3
+                  }}
+                >
+                  <img 
+                    src={toothpasteImg} 
+                    alt="Toothpaste" 
+                    style={{
+                      width: '300px',
+                      height: '300px',
+                      objectFit: 'contain',
+                      filter: 'brightness(1.1)',
+                      cursor: 'grab'
+                    }}
+                    draggable
+                    onDragStart={handleToothpasteDrag}
+                  />
+                </Box>
+              )}
+
+              {/* Water cup - only show in step 3 */}
+              {waterCupVisible && gameStep === 3 && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    right: '5%',
+                    top: '30%',
+                    transform: 'translateY(-50%)',
+                    zIndex: 3
+                  }}
+                >
+                  <img 
+                    src={waterCupImg} 
+                    alt="Water Cup" 
+                    style={{
+                      width: '200px',
+                      height: '200px',
+                      objectFit: 'contain',
+                      filter: 'brightness(1.1)',
+                      cursor: 'grab'
+                    }}
+                    draggable
+                    onDragStart={handleWaterCupDrag}
+                  />
+                </Box>
+              )}
             </Box>
           </Box>
         )}
 
         <Stack direction="row" spacing={4} justifyContent="center" sx={{ mt: 8, mb: 8 }}>
-  <Button 
-    variant="contained"
-    onClick={resetGame}
-    sx={{ 
-      background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
-      color: 'white',
-      px: 6,
-      py: 2,
-      borderRadius: '25px',
-      fontFamily: 'Poppins, sans-serif',
-      fontWeight: '700',
-      fontSize: '1.3rem',
-      textTransform: 'none',
-      boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
-      '&:hover': {
-        background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
-        transform: 'translateY(-2px)',
-        boxShadow: '0 12px 30px rgba(255, 89, 94, 0.7)'
-      }
-    }}
-  >
-    <span style={{ fontSize: '1.8rem', marginRight: '8px' }}>🔄</span>
-    Start Over
-  </Button>
-  
-  <Button 
-    variant="contained"
-    onClick={handleGoHome}
-    sx={{ 
-      background: 'linear-gradient(135deg, #1982C4 0%, #1568A0 100%)',
-      color: 'white',
-      px: 6,
-      py: 2,
-      borderRadius: '25px',
-      fontFamily: 'Poppins, sans-serif',
-      fontWeight: '700',
-      fontSize: '1.3rem',
-      textTransform: 'none',
-      boxShadow: '0 10px 25px rgba(25, 130, 196, 0.5)',
-      '&:hover': {
-        background: 'linear-gradient(135deg, #42A5F5 0%, #1982C4 100%)',
-        transform: 'translateY(-2px)',
-        boxShadow: '0 12px 30px rgba(25, 130, 196, 0.7)'
-      }
-    }}
-  >
-    <span style={{ fontSize: '1.8rem', marginRight: '8px' }}>🏠</span>
-    Go Home
-  </Button>
-</Stack>
+          <Button 
+            variant="contained"
+            onClick={resetGame}
+            sx={{ 
+              background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+              color: 'white',
+              px: 6,
+              py: 2,
+              borderRadius: '25px',
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '700',
+              fontSize: '1.3rem',
+              textTransform: 'none',
+              boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
+                transform: 'translateY(-2px)',
+                boxShadow: '0 12px 30px rgba(255, 89, 94, 0.7)'
+              }
+            }}
+          >
+            Start Over
+          </Button>
+          
+          <Button 
+            variant="contained"
+            onClick={handleGoHome}
+            sx={{ 
+              background: 'linear-gradient(135deg, #1982C4 0%, #1568A0 100%)',
+              color: 'white',
+              px: 6,
+              py: 2,
+              borderRadius: '25px',
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '700',
+              fontSize: '1.3rem',
+              textTransform: 'none',
+              boxShadow: '0 10px 25px rgba(25, 130, 196, 0.5)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #42A5F5 0%, #1982C4 100%)',
+                transform: 'translateY(-2px)',
+                boxShadow: '0 12px 30px rgba(25, 130, 196, 0.7)'
+              }
+            }}
+          >
+            Go Home
+          </Button>
+        </Stack>
         
-        {/* Feedback Dialog - Only for Correct Answers */}
-<Dialog
-  open={showFeedback}
-  fullScreen
-  PaperProps={{
-    sx: { 
-      background: 'linear-gradient(135deg, rgba(144, 190, 109, 0.95) 0%, rgba(123, 160, 91, 0.95) 100%)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      flexDirection: 'column'
-    }
-  }}
->
-  <Box sx={{
-    textAlign: 'center',
-    color: 'white'
-  }}>
-    <Box sx={{ mb: 4 }}>
-      <img 
-        src={successGif}
-        alt="Success celebration"
-        style={{
-          width: '300px',
-          height: '300px',
-          objectFit: 'contain'
-        }}
-      />
-    </Box>
-    
-    <Typography variant="h1" sx={{ 
-      fontWeight: 'bold',
-      color: 'white',
-      fontFamily: 'Poppins, sans-serif',
-      fontSize: { xs: '3rem', md: '5rem' },
-      textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
-      mb: 4
-    }}>
-      Perfect match!
-    </Typography>
-    
-    <Typography variant="h3" sx={{ 
-      color: 'white',
-      fontFamily: 'Inter, sans-serif',
-      textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-      mb: 6,
-      maxWidth: '800px',
-      lineHeight: 1.4
-    }}>
-      Yes! {feedbackData?.draggedItem?.name} is perfect for {feedbackData?.bodyPart?.name.toLowerCase()}!
-    </Typography>
-    
-    <Button 
-      onClick={handleNext} 
-      variant="contained"
-      sx={{ 
-        background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
-        color: 'white',
-        px: 8,
-        py: 3,
-        borderRadius: '25px',
-        fontSize: '1.8rem',
-        fontFamily: 'Poppins, sans-serif',
-        fontWeight: '700',
-        textTransform: 'none',
-        boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
-        '&:hover': {
-          background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
-          transform: 'translateY(-2px)',
-          boxShadow: '0 15px 35px rgba(255, 89, 94, 0.7)'
-        }
-      }}
-    >
-      <span style={{ fontSize: '2rem', marginRight: '12px' }}>
-        {currentRoundIndex < gameRounds.length - 1 ? '➡️' : '🏁'}
-      </span>
-      {currentRoundIndex < gameRounds.length - 1 ? 'Next Round' : 'Finish'}
-    </Button>
-  </Box>
-</Dialog>
-
         {/* Success Dialog */}
         <Dialog
           open={showSuccess}
@@ -1318,7 +1296,7 @@ useEffect(() => {
               textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
               mb: 2
             }}>
-              You did it!
+              Sparkling Clean Teeth!
             </Typography>
             
             <Chip 
@@ -1377,7 +1355,7 @@ useEffect(() => {
               fontFamily: 'Poppins, sans-serif',
               textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
             }}>
-              Score: {score}/{gameRounds.length}
+              Score: {score}/100
             </Typography>
             <Typography variant="h6" sx={{ 
               color: 'white',
@@ -1387,9 +1365,7 @@ useEffect(() => {
               maxWidth: '800px',
               textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
             }}>
-              {difficulty === 'easy' && 'Great job learning the basics of hygiene! You matched everyday items with body parts.'}
-              {difficulty === 'intermediate' && 'Excellent work! You handled both basic and specialized hygiene items like a pro.'}
-              {difficulty === 'difficult' && 'Outstanding! You mastered advanced hygiene knowledge and multiple correct answers.'}
+              Excellent brushing technique! Your teeth are now clean and healthy!
             </Typography>
             
             {progressSaving && (
@@ -1423,7 +1399,6 @@ useEffect(() => {
             )}
             
             <Box sx={{ display: 'flex', gap: 3, justifyContent: 'center', flexWrap: 'wrap' }}>
-
               <Button 
                 onClick={() => {
                   setShowSuccess(false);
@@ -1448,8 +1423,7 @@ useEffect(() => {
                   }
                 }}
               >
-                <span style={{ fontSize: '1.5rem', marginRight: '8px' }}>🔄</span>
-                Play Again
+                Brush Again
               </Button>
               <Button 
                 variant="contained"
@@ -1472,7 +1446,6 @@ useEffect(() => {
                   }
                 }}
               >
-                <span style={{ fontSize: '1.5rem', marginRight: '8px' }}>✅</span>
                 {progressSaving ? 'Saving...' : 'Continue'}
               </Button>
             </Box>
