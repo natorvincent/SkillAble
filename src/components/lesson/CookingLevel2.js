@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
   Box, 
@@ -45,6 +45,15 @@ export default function IngredientPrepLevel2() {
   const navigate = useNavigate();
   const { moduleId, lessonId } = useParams();
 
+  // Audio refs for sound effects
+  const chopSoundRef = useRef(null);
+  const crackSoundRef = useRef(null);
+  const shakeSoundRef = useRef(null);
+  const successSoundRef = useRef(null);
+
+  // Sound management
+  const [isMuted, setIsMuted] = useState(false);
+
   // Sequential ingredient flow
   const [currentIngredientIndex, setCurrentIngredientIndex] = useState(0);
   const [springOnionChops, setSpringOnionChops] = useState(0);
@@ -52,6 +61,10 @@ export default function IngredientPrepLevel2() {
   const [saltShakes, setSaltShakes] = useState(0);
   const [showCompletion, setShowCompletion] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  
+  // Progress tracking states
+  const [progressSaving, setProgressSaving] = useState(false);
+  const [progressSaved, setProgressSaved] = useState(false);
   
   // Simple animation states
   const [onionAnimation, setOnionAnimation] = useState(false);
@@ -67,6 +80,138 @@ export default function IngredientPrepLevel2() {
 
   const requiredChops = 5;
   const requiredShakes = 3;
+
+  // Get student ID from localStorage
+  const getStudentId = () => {
+    const studentId = localStorage.getItem('studentId');
+    const userType = localStorage.getItem('userType');
+    
+    if (userType !== 'STUDENT') {
+      console.error('User is not a student:', userType);
+      return null;
+    }
+    
+    if (!studentId || studentId === 'null') {
+      console.error('No student ID found in localStorage');
+      return null;
+    }
+    
+    const parsedId = parseInt(studentId, 10);
+    if (isNaN(parsedId)) {
+      console.error('Invalid student ID format:', studentId);
+      return null;
+    }
+    
+    return parsedId;
+  };
+
+  // Save progress to database
+  const saveProgress = async () => {
+    if (progressSaving || progressSaved) return;
+
+    try {
+      setProgressSaving(true);
+      const studentId = getStudentId();
+      
+      if (!studentId || !lessonId) {
+        console.error('Cannot save progress - missing data:', { studentId, lessonId });
+        return;
+      }
+      
+      const finalScore = 3; // All 3 ingredients completed
+      
+      const progressData = {
+        studentId: studentId,
+        lessonId: parseInt(lessonId, 10),
+        score: finalScore,
+        maxScore: 3,
+        completed: true,
+        starsEarned: 3 // Perfect score gets 3 stars
+      };
+      
+      await saveStudentLessonProgress(studentId, lessonId, progressData);
+      setProgressSaved(true);
+      
+    } catch (error) {
+      console.error('Error saving progress:', error);
+    } finally {
+      setProgressSaving(false);
+    }
+  };
+
+  // Navigate to next level
+  const continueToNextLevel = async () => {
+    if (!progressSaved && !progressSaving) {
+      await saveProgress();
+    }
+    
+    setTimeout(() => {
+      // Navigate to Level 3 (adjust the path based on your routing structure)
+      if (navigate) {
+        navigate('/lesson/cooking/level-3'); // or whatever your Level 3 route is
+      } else {
+        window.location.href = '/lesson/cooking/level-3';
+      }
+    }, 300);
+  };
+
+  const goToHomepage = () => {
+    if (navigate) {
+      navigate('/homepage');
+    } else if (window.history && window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = '/homepage';
+    }
+  };
+
+  // Initialize audio elements
+  useEffect(() => {
+    // Create audio elements for sound effects
+    chopSoundRef.current = new Audio('/sounds/chop.mp3');
+    crackSoundRef.current = new Audio('/sounds/crack.mp3');
+    shakeSoundRef.current = new Audio('/sounds/shake.mp3');
+    successSoundRef.current = new Audio('/sounds/success.mp3');
+
+    // Set audio properties
+    [chopSoundRef, crackSoundRef, shakeSoundRef, successSoundRef].forEach(audioRef => {
+      if (audioRef.current) {
+        audioRef.current.volume = 0.6;
+        audioRef.current.preload = 'auto';
+        audioRef.current.addEventListener('error', () => {
+          console.log('Audio file not found - continuing without sound');
+        });
+      }
+    });
+
+    return () => {
+      [chopSoundRef, crackSoundRef, shakeSoundRef, successSoundRef].forEach(audioRef => {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current = null;
+        }
+      });
+    };
+  }, []);
+
+  // Play sound effect helper function
+  const playSound = (audioRef) => {
+    if (!isMuted && audioRef.current) {
+      try {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(error => {
+          console.log('Audio play failed:', error);
+        });
+      } catch (error) {
+        console.log('Audio error:', error);
+      }
+    }
+  };
+
+  // Toggle mute function
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
+  };
   
   // Ingredients data
   const ingredients = [
@@ -124,25 +269,29 @@ export default function IngredientPrepLevel2() {
     
     // Show confetti when ingredient is completed, then auto-progress
     if (currentIngredientIndex === 0 && newCompletedTasks.onion && !completedTasks.onion) {
+      playSound(successSoundRef);
       setShowConfetti(true);
       setTimeout(() => {
         setShowConfetti(false);
         setCurrentIngredientIndex(1);
       }, 2000);
     } else if (currentIngredientIndex === 1 && newCompletedTasks.egg && !completedTasks.egg) {
+      playSound(successSoundRef);
       setShowConfetti(true);
       setTimeout(() => {
         setShowConfetti(false);
         setCurrentIngredientIndex(2);
       }, 2000);
     } else if (currentIngredientIndex === 2 && newCompletedTasks.salt && !completedTasks.salt) {
+      playSound(successSoundRef);
       setShowConfetti(true);
       setTimeout(() => {
         setShowConfetti(false);
         setShowCompletion(true);
+        saveProgress(); // Auto-save when level is completed
       }, 2000);
     }
-  }, [springOnionChops, eggCracked, saltShakes, currentIngredientIndex, completedTasks]);
+  }, [springOnionChops, eggCracked, saltShakes, currentIngredientIndex, completedTasks, isMuted]);
 
   // Handle ingredient interactions
   const handleIngredientAction = () => {
@@ -150,11 +299,13 @@ export default function IngredientPrepLevel2() {
     
     if (currentIngredientIndex === 0) {
       // Onion chopping
+      playSound(chopSoundRef);
       setOnionAnimation(true);
       setSpringOnionChops(prev => prev + 1);
       setTimeout(() => setOnionAnimation(false), 300);
     } else if (currentIngredientIndex === 1) {
       // Egg cracking
+      playSound(crackSoundRef);
       setEggAnimation(true);
       setTimeout(() => {
         setEggCracked(true);
@@ -162,6 +313,7 @@ export default function IngredientPrepLevel2() {
       }, 500);
     } else if (currentIngredientIndex === 2) {
       // Salt shaking
+      playSound(shakeSoundRef);
       setSaltAnimation(true);
       setSaltShakes(prev => prev + 1);
       setTimeout(() => setSaltAnimation(false), 400);
@@ -176,6 +328,8 @@ export default function IngredientPrepLevel2() {
     setShowCompletion(false);
     setShowConfetti(false);
     setCompletedTasks({ onion: false, egg: false, salt: false });
+    setProgressSaved(false);
+    setProgressSaving(false);
   };
 
   const completedCount = Object.values(completedTasks).filter(Boolean).length;
@@ -184,13 +338,59 @@ export default function IngredientPrepLevel2() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #FFE0B2, #FFCC02, #FF8F00)',
+      backgroundImage: kitchenBg ? `url(${kitchenBg})` : 'linear-gradient(135deg, #FFE0B2, #FFCC02, #FF8F00)',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+      position: 'relative',
       padding: '20px',
       fontFamily: 'Arial, sans-serif'
     }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      {/* Overlay for better text readability */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'linear-gradient(135deg, rgba(255, 224, 178, 0.2), rgba(255, 204, 2, 0.3), rgba(255, 143, 0, 0.4))',
+        pointerEvents: 'none'
+      }} />
+      <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+          {/* Sound Toggle Button */}
+          <div style={{ 
+            position: 'absolute', 
+            top: '20px', 
+            right: '20px', 
+            zIndex: 100 
+          }}>
+            <button
+              onClick={toggleMute}
+              style={{
+                backgroundColor: isMuted ? '#FF5722' : '#4CAF50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '50%',
+                width: '50px',
+                height: '50px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                fontSize: '20px',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseOver={(e) => e.target.style.transform = 'scale(1.1)'}
+              onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+              title={isMuted ? 'Unmute sounds' : 'Mute sounds'}
+            >
+              {isMuted ? '🔇' : '🔊'}
+            </button>
+          </div>
+
           <h1 style={{ 
             fontSize: '48px', 
             fontWeight: 'bold', 
@@ -212,7 +412,7 @@ export default function IngredientPrepLevel2() {
             marginBottom: '30px',
             boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
           }}>
-            Ingredient Preparation
+            Ingredient Preparation {!isMuted && '🔊'}
           </div>
 
           {/* Progress Bar */}
@@ -269,7 +469,8 @@ export default function IngredientPrepLevel2() {
             onClick={handleIngredientAction}
             style={{
               position: 'relative',
-              backgroundColor: getCurrentIngredientCompleted() ? '#E8F5E8' : 'white',
+              backgroundColor: getCurrentIngredientCompleted() ? 'rgba(232, 245, 232, 0.8)' : 'rgba(255, 255, 255, 0.2)',
+              backdropFilter: 'blur(10px)',
               border: `4px solid ${getCurrentIngredientCompleted() ? '#4CAF50' : '#FF8F00'}`,
               borderRadius: '20px',
               padding: '40px',
@@ -281,7 +482,7 @@ export default function IngredientPrepLevel2() {
               flexDirection: 'column',
               justifyContent: 'space-between',
               textAlign: 'center',
-              boxShadow: '0 12px 24px rgba(0,0,0,0.15)',
+              boxShadow: '0 12px 24px rgba(0,0,0,0.2)',
               transform: (onionAnimation && currentIngredientIndex === 0) || 
                         (eggAnimation && currentIngredientIndex === 1) || 
                         (saltAnimation && currentIngredientIndex === 2) ? 'scale(1.05)' : 'scale(1)',
@@ -360,6 +561,29 @@ export default function IngredientPrepLevel2() {
                     );
                   }
                 })()}
+
+                {/* Sound effect indicator */}
+                {!getCurrentIngredientCompleted() && !isMuted && (
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '-10px',
+                    right: '-10px',
+                    backgroundColor: '#FF8F00',
+                    color: 'white',
+                    borderRadius: '50%',
+                    width: '30px',
+                    height: '30px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '14px',
+                    animation: currentIngredientIndex === 0 && onionAnimation ? 'pulse 0.3s ease' :
+                              currentIngredientIndex === 1 && eggAnimation ? 'pulse 0.5s ease' :
+                              currentIngredientIndex === 2 && saltAnimation ? 'pulse 0.4s ease' : 'none'
+                  }}>
+                    🔊
+                  </div>
+                )}
               </div>
 
               <p style={{ 
@@ -427,8 +651,8 @@ export default function IngredientPrepLevel2() {
           </div>
         )}
 
-        {/* Reset Button */}
-        <div style={{ textAlign: 'center' }}>
+        {/* Control Buttons */}
+        <div style={{ textAlign: 'center', display: 'flex', justifyContent: 'center', gap: '15px', flexWrap: 'wrap' }}>
           <button
             onClick={resetGame}
             style={{
@@ -447,6 +671,26 @@ export default function IngredientPrepLevel2() {
             onMouseOut={(e) => e.target.style.backgroundColor = '#FF8F00'}
           >
             🔄 Start Over
+          </button>
+          
+          <button
+            onClick={goToHomepage}
+            style={{
+              backgroundColor: '#2196F3',
+              color: 'white',
+              fontWeight: 'bold',
+              padding: '15px 30px',
+              borderRadius: '15px',
+              fontSize: '18px',
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+              transition: 'background-color 0.2s ease'
+            }}
+            onMouseOver={(e) => e.target.style.backgroundColor = '#1976D2'}
+            onMouseOut={(e) => e.target.style.backgroundColor = '#2196F3'}
+          >
+            🏠 Home
           </button>
         </div>
 
@@ -481,6 +725,11 @@ export default function IngredientPrepLevel2() {
                   transform: translateY(100vh) rotate(720deg);
                   opacity: 0;
                 }
+              }
+              @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.2); }
+                100% { transform: scale(1); }
               }
             `}</style>
           </div>
@@ -519,7 +768,7 @@ export default function IngredientPrepLevel2() {
                 color: '#2E7D32', 
                 marginBottom: '20px' 
               }}>
-                Great Job!
+                Level 2 Complete!
               </h2>
               
               <div style={{ 
@@ -552,12 +801,27 @@ export default function IngredientPrepLevel2() {
               </p>
               
               <p style={{ color: '#5D4037', fontSize: '16px', marginBottom: '30px' }}>
-                Now you're ready for the cooking stage!
+                Ready for Level 3 - Let's start cooking!
               </p>
+
+              {/* Progress saving indicator */}
+              {progressSaving && (
+                <div style={{ marginBottom: '20px', color: '#FF8F00' }}>
+                  <CircularProgress size={20} style={{ marginRight: '10px' }} />
+                  Saving your progress...
+                </div>
+              )}
               
-              <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+              {progressSaved && (
+                <div style={{ marginBottom: '20px', color: '#4CAF50' }}>
+                  ✅ Progress saved successfully!
+                </div>
+              )}
+              
+              <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
                 <button 
-                  onClick={() => setShowCompletion(false)}
+                  onClick={continueToNextLevel}
+                  disabled={progressSaving}
                   style={{
                     backgroundColor: '#4CAF50',
                     color: 'white',
@@ -566,11 +830,12 @@ export default function IngredientPrepLevel2() {
                     borderRadius: '10px',
                     fontSize: '16px',
                     border: 'none',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                    cursor: progressSaving ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                    opacity: progressSaving ? 0.7 : 1
                   }}
                 >
-                  🎉 Continue
+                  {progressSaving ? 'Saving...' : '🚀 Go to Level 3'}
                 </button>
                 
                 <button 
@@ -588,6 +853,23 @@ export default function IngredientPrepLevel2() {
                   }}
                 >
                   🔄 Try Again
+                </button>
+
+                <button 
+                  onClick={goToHomepage}
+                  style={{
+                    backgroundColor: '#2196F3',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    padding: '15px 25px',
+                    borderRadius: '10px',
+                    fontSize: '16px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                  }}
+                >
+                  🏠 Home
                 </button>
               </div>
             </div>
