@@ -118,7 +118,7 @@ export default function HouseholdLevel3() {
     spongeHasSoap: false,
     dishesPlaced: [],
     dishesCleaned: [],
-    dishesOnRack: [] // NEW: track dishes on drying rack
+    dishesOnRack: [] 
   });
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState('');
@@ -153,7 +153,7 @@ export default function HouseholdLevel3() {
 
   const allItemsClicked = clickedItems.size === tools.length;
 
-  // Game page handlers - MODIFIED
+  // Game page handlers 
   const handleSpongeClick = () => {
     if (currentStep === 0) {
       setGameState(prev => ({ ...prev, spongeHasSoap: true }));
@@ -382,8 +382,8 @@ export default function HouseholdLevel3() {
         <Box sx={{ 
         flex: 1, 
         display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)', // Force 4 equal columns
-        gridTemplateRows: 'repeat(2, 1fr)', // Force 2 equal rows
+        gridTemplateColumns: 'repeat(4, 1fr)', 
+        gridTemplateRows: 'repeat(2, 1fr)', 
         gap: '16px',
         overflow: 'hidden',
         height: '100%'
@@ -400,7 +400,7 @@ export default function HouseholdLevel3() {
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                minHeight: 0, // Important for grid items
+                minHeight: 0, 
                 '&:hover': {
                 transform: 'scale(1.02)',
                 boxShadow: 6

@@ -25,6 +25,7 @@ import CookingLevel5 from './components/lesson/CookingLevel5';
 import HouseholdLevel1 from './components/lesson/HouseholdLevel1';
 import HouseholdLevel2 from './components/lesson/HouseholdLevel2';
 import HouseholdLevel3 from './components/lesson/HouseholdLevel3';
+import HouseholdLevel4 from './components/lesson/HouseholdLevel4';
 import ManageStudents from './components/teacher/ManageStudents';
 import StudentProgress from './components/teacher/StudentProgress';
 import AchievementsPage from './components/AchievementsPage';
@@ -221,6 +222,10 @@ function App() {
 
         <Route path="/lesson/household-chores/level-3/:lessonId" element={
           isLoggedIn ? <HouseholdLevel3 /> : <Navigate to="/login" replace />
+        } />
+
+        <Route path="/lesson/household-chores/level-4/:lessonId" element={
+          isLoggedIn ? <HouseholdLevel4 /> : <Navigate to="/login" replace />
         } />
 
 

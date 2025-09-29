@@ -156,6 +156,14 @@ const LessonManagement = () => {
       icon: '🧹'
     },  
     {
+      value: 'HouseholdLevel4',
+      label: 'Household Chores Level 4 - Sorting Trash',
+      description: 'Learn proper trash sorting and recycling through a fun, interactive game',
+      component: 'HouseholdLevel4',
+      path: '/lesson/household-chores/level-4',
+      icon: '🧹'
+    }, 
+    {
       value: 'SortingLevel1 - Healthy vs Unhealthy Food Sorting',
       label: 'Food Sorting Level 1',
       description: 'Identify healthy vs. unhealthy food',
