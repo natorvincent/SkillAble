@@ -25,11 +25,12 @@ import HouseholdLevel1 from './components/lesson/HouseholdLevel1';
 import HouseholdLevel2 from './components/lesson/HouseholdLevel2';
 import ManageStudents from './components/teacher/ManageStudents';
 import StudentProgress from './components/teacher/StudentProgress';
-import AchievementsPage from './components/AchievementsPage';
+import BadgesPage from './components/BadgesPage';
 import AboutUsPage from './components/AboutUsPage';
 import ContactPage from './components/ContactPage';
 import StudentDashboard from './components/StudentDashboard';
 import TeacherDashboard from './components/TeacherDashboard';
+import PersonalHygieneLevel3 from './components/lesson/PersonalHygieneLevel3';
 
 function useLocalStorage(key, defaultValue) {
   const [value, setValue] = useState(() => {
@@ -122,9 +123,9 @@ function App() {
           isLoggedIn ? <AccountPage /> : <Navigate to="/login" replace />
         } />
         
-        <Route path="/achievements" element={
+        <Route path="/badges" element={
           !isLoggedIn ? <Navigate to="/login" replace /> : 
-            (isAdmin ? <Navigate to="/admin" replace /> : <AchievementsPage/>)
+            (isAdmin ? <Navigate to="/admin" replace /> : <BadgesPage/>)
         } />
 
         <Route path="/module/:moduleId" element={
