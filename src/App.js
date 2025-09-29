@@ -11,6 +11,7 @@ import AdminRoute from './components/admin/AdminRoute';
 import ModuleDetails from './components/ModuleDetails';
 import PersonalHygieneLevel1 from './components/lesson/PersonalHygieneLevel1';
 import PersonalHygieneLevel2 from './components/lesson/PersonalHygieneLevel2';
+import PersonalHygieneLevel3 from './components/lesson/PersonalHygieneLevel3';
 import SortingLevel1 from './components/lesson/SortingLevel1'; 
 import SortingLevel2 from './components/lesson/SortingLevel2'; 
 import SortingLevel3 from './components/lesson/SortingLevel3'; 
@@ -23,6 +24,8 @@ import CookingLevel4 from './components/lesson/CookingLevel4';
 import CookingLevel5 from './components/lesson/CookingLevel5';
 import HouseholdLevel1 from './components/lesson/HouseholdLevel1';
 import HouseholdLevel2 from './components/lesson/HouseholdLevel2';
+import HouseholdLevel3 from './components/lesson/HouseholdLevel3';
+import HouseholdLevel4 from './components/lesson/HouseholdLevel4';
 import ManageStudents from './components/teacher/ManageStudents';
 import StudentProgress from './components/teacher/StudentProgress';
 import BadgesPage from './components/BadgesPage';
@@ -176,19 +179,6 @@ function App() {
         <Route path="/lesson/cooking/level-4/:lessonId" element={
           isLoggedIn ? <CookingLevel4 /> : <Navigate to="/login" replace /> 
         } />
-          {/* Personal Hygiene Level 3 Route */}
-          <Route path="/lesson/hygiene/level-3/:moduleId/:lessonId" element={
-            isLoggedIn ? <PersonalHygieneLevel3 /> : <Navigate to="/login" replace />
-          } />
-
-          {/* Household Chores Routes */}
-          <Route path="/lesson/household-chores/level-1/:lessonId" element={
-            isLoggedIn ? <HouseholdLevel1 /> : <Navigate to="/login" replace />
-          } />
-          
-          <Route path="/lesson/household-chores/level-2/:lessonId" element={
-            isLoggedIn ? <HouseholdLevel2 /> : <Navigate to="/login" replace />
-          } />
 
         <Route path="/lesson/cooking/level-5/:lessonId" element={
           isLoggedIn ? <CookingLevel5 /> : <Navigate to="/login" replace /> 
@@ -202,17 +192,7 @@ function App() {
         <Route path="/lesson/cooking/level-2" element={
           isLoggedIn ? <Navigate to="/lesson/cooking/level-2/1/2" replace /> : <Navigate to="/login" replace />
         } />
-          {/* Generic hygiene route (backwards compatibility) */}
-          <Route path="/lesson/hygiene/:lessonId" element={
-            isLoggedIn ? <PersonalHygieneLevel1 /> : <Navigate to="/login" replace />
-          } />
-
-          {/* New Food Sorting Route */}
-          {/* Food Sorting Route */}
-          <Route path="/lesson/food-sorting/level-1/:lessonId" element={
-            isLoggedIn ? <SortingLevel1 /> : <Navigate to="/login" replace />
-          } />
-
+          
         <Route path="/lesson/cooking/level-3" element={
           isLoggedIn ? <Navigate to="/lesson/cooking/level-3/1/3" replace /> : <Navigate to="/login" replace />
         } />
@@ -220,10 +200,7 @@ function App() {
         <Route path="/lesson/cooking/level-4" element={
           isLoggedIn ? <Navigate to="/lesson/cooking/level-4/1/4" replace /> : <Navigate to="/login" replace />
         } />
-          <Route path="/lesson/food-sorting/:lessonId" element={
-            isLoggedIn ? <SortingLevel1 /> : <Navigate to="/login" replace />
-          } />
-
+          
         <Route path="/lesson/cooking/level-5" element={
           isLoggedIn ? <Navigate to="/lesson/cooking/level-5/1/5" replace /> : <Navigate to="/login" replace />
         } />
@@ -233,6 +210,27 @@ function App() {
           isLoggedIn ? <CookingLevel1 /> : <Navigate to="/login" replace />
         } />
 
+
+
+        {/* Household Chores Routes */}
+        <Route path="/lesson/household-chores/level-1/:lessonId" element={
+          isLoggedIn ? <HouseholdLevel1 /> : <Navigate to="/login" replace />
+        } />
+          
+        <Route path="/lesson/household-chores/level-2/:lessonId" element={
+          isLoggedIn ? <HouseholdLevel2 /> : <Navigate to="/login" replace />
+        } />
+
+        <Route path="/lesson/household-chores/level-3/:lessonId" element={
+          isLoggedIn ? <HouseholdLevel3 /> : <Navigate to="/login" replace />
+        } />
+
+        <Route path="/lesson/household-chores/level-4/:lessonId" element={
+          isLoggedIn ? <HouseholdLevel4 /> : <Navigate to="/login" replace />
+        } />
+
+
+
         {/* Personal Hygiene Level Routes */}
         <Route path="/lesson/hygiene/level-1/:lessonId" element={
           isLoggedIn ? <PersonalHygieneLevel1 /> : <Navigate to="/login" replace />
@@ -241,6 +239,17 @@ function App() {
         <Route path="/lesson/hygiene/level-2/:moduleId/:lessonId" element={
           isLoggedIn ? <PersonalHygieneLevel2 /> : <Navigate to="/login" replace />
         } />
+
+        <Route path="/lesson/hygiene/level-3/:moduleId/:lessonId" element={
+          isLoggedIn ? <PersonalHygieneLevel3 /> : <Navigate to="/login" replace />
+        } />
+
+        {/* Generic hygiene route (backwards compatibility) */}
+        <Route path="/lesson/hygiene/:lessonId" element={
+          isLoggedIn ? <PersonalHygieneLevel1 /> : <Navigate to="/login" replace />
+        } />
+
+
 
         {/* Food Sorting Route */}
         <Route path="/lesson/food-sorting/level-1/:lessonId" element={

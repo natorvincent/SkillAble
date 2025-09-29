@@ -76,11 +76,11 @@ const LessonManagement = () => {
       icon: '🧼'
     },
     {
-    value: 'PersonalHygieneLevel2',
-    label: 'Personal Hygiene Level 2',
-    description: 'Daily routine sequencing and hygiene habit formation',
-    path: '/lesson/hygiene/level-2',
-    icon: '🗓️'
+      value: 'PersonalHygieneLevel2',
+      label: 'Personal Hygiene Level 2',
+      description: 'Daily routine sequencing and hygiene habit formation',
+      path: '/lesson/hygiene/level-2',
+      icon: '🗓️'
     },
     {
       value: 'PersonalHygieneLevel3',
@@ -132,6 +132,14 @@ const LessonManagement = () => {
       icon: '🍽️'
     },
     {
+      value: 'HouseholdLevel1',
+      label: 'Household Chores Level 1 - Sorting Laundry',
+      description: 'Drag-and-drop interaction to sort clothing items into appropriate laundry baskets category',
+      component: 'HouseholdLevel1',
+      path: '/lesson/household-chores/level-1',
+      icon: '🧹'
+    },  
+    {
       value: 'HouseholdLevel2',
       label: 'Household Chores Level 2 - Sweeping & Cleaning',
       description: 'Master basic cleaning tools and techniques through interactive sweeping and wiping practice',
@@ -140,7 +148,23 @@ const LessonManagement = () => {
       icon: '🧹'
     },  
     {
-      value: 'SortingLevel1',
+      value: 'HouseholdLevel3',
+      label: 'Household Chores Level 3 - Washing Dishes',
+      description: 'Learn proper dishwashing steps and hygiene through a fun, interactive game',
+      component: 'HouseholdLevel3',
+      path: '/lesson/household-chores/level-3',
+      icon: '🧹'
+    },  
+    {
+      value: 'HouseholdLevel4',
+      label: 'Household Chores Level 4 - Sorting Trash',
+      description: 'Learn proper trash sorting and recycling through a fun, interactive game',
+      component: 'HouseholdLevel4',
+      path: '/lesson/household-chores/level-4',
+      icon: '🧹'
+    }, 
+    {
+      value: 'SortingLevel1 - Healthy vs Unhealthy Food Sorting',
       label: 'Food Sorting Level 1',
       description: 'Identify healthy vs. unhealthy food',
       component: 'SortingLevel1',
@@ -148,7 +172,7 @@ const LessonManagement = () => {
       icon: '🍎'
     },
     {
-      value: 'SortingLevel2',
+      value: 'SortingLevel2 - Fruit, Vegetable, or Neither?',
       label: 'Food Sorting Level 2',
       description: 'Identify fruits, vegetables, or other foods',
       component: 'SortingLevel2',
@@ -157,11 +181,11 @@ const LessonManagement = () => {
     },
     {
       value: 'SortingLevel3',
-      label: 'Food Sorting Level 3 - Pyramid Builder',
+      label: 'Food Sorting Level 3 - Food Pyramid Builder',
       description: 'Classify foods into 5 main groups and build balanced meals',
       component: 'SortingLevel3',
       path: '/lesson/food-sorting/level-3',
-      icon: '🏗️'
+      icon: '🛕'
     },
     {
       value: 'SortingLevel4',
@@ -169,7 +193,7 @@ const LessonManagement = () => {
       description: 'Teach portion control and meal composition',
       component: 'SortingLevel4',
       path: '/lesson/food-sorting/level-4',
-      icon: '🏗️'
+      icon: '🍽️'
     },
     {
       value: 'SortingLevel5',
@@ -177,7 +201,7 @@ const LessonManagement = () => {
       description: 'Combine all prior learning into one detective-themed game.',
       component: 'SortingLevel5',
       path: '/lesson/food-sorting/level-5',
-      icon: '🏗️'
+      icon: '🔍︎'
     }
   ];
 
