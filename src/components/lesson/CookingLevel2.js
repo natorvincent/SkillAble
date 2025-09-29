@@ -5,7 +5,7 @@ import {
   Typography, 
   Container, 
   Button, 
-  Card, 
+  Card,
   CardContent,
   Dialog,
   DialogTitle,
@@ -24,6 +24,7 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import StarIcon from '@mui/icons-material/Star';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import VolumeOffIcon from '@mui/icons-material/VolumeOff';
+
 import { 
   getStudentLessonProgress, 
   saveStudentLessonProgress,
@@ -139,30 +140,22 @@ export default function IngredientPrepLevel2() {
     }
   };
 
-  // Navigate to next level
+  const goToHomepage = () => {
+    if (navigate) {
+      navigate('/homepage');
+    } else {
+      window.location.href = '/homepage';
+    }
+  };
+
   const continueToNextLevel = async () => {
     if (!progressSaved && !progressSaving) {
       await saveProgress();
     }
     
     setTimeout(() => {
-      // Navigate to Level 3 (adjust the path based on your routing structure)
-      if (navigate) {
-        navigate('/lesson/cooking/level-3'); // or whatever your Level 3 route is
-      } else {
-        window.location.href = '/lesson/cooking/level-3';
-      }
+      navigate('/lesson/cooking/level-3');
     }, 300);
-  };
-
-  const goToHomepage = () => {
-    if (navigate) {
-      navigate('/homepage');
-    } else if (window.history && window.history.length > 1) {
-      window.history.back();
-    } else {
-      window.location.href = '/homepage';
-    }
   };
 
   // Initialize audio elements
@@ -651,48 +644,49 @@ export default function IngredientPrepLevel2() {
           </div>
         )}
 
-        {/* Control Buttons */}
-        <div style={{ textAlign: 'center', display: 'flex', justifyContent: 'center', gap: '15px', flexWrap: 'wrap' }}>
-          <button
+        {/* Floating Bottom Control Bar */}
+        <Box sx={{
+          position: 'fixed',
+          bottom: 20,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 100,
+          display: 'flex',
+          gap: 2,
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          padding: '12px 24px',
+          borderRadius: '30px',
+          backdropFilter: 'blur(10px)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+          border: '2px solid rgba(255, 255, 255, 0.5)'
+        }}>
+          <Button
             onClick={resetGame}
-            style={{
-              backgroundColor: '#FF8F00',
-              color: 'white',
-              fontWeight: 'bold',
-              padding: '15px 30px',
-              borderRadius: '15px',
-              fontSize: '18px',
-              border: 'none',
-              cursor: 'pointer',
-              boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-              transition: 'background-color 0.2s ease'
+            variant="contained"
+            size="medium"
+            sx={{
+              backgroundColor: '#FF9800',
+              borderRadius: '20px',
+              minWidth: '100px',
+              '&:hover': { backgroundColor: '#F57C00' }
             }}
-            onMouseOver={(e) => e.target.style.backgroundColor = '#F57C00'}
-            onMouseOut={(e) => e.target.style.backgroundColor = '#FF8F00'}
           >
-            🔄 Start Over
-          </button>
-          
-          <button
+            🔄 Reset
+          </Button>
+          <Button
             onClick={goToHomepage}
-            style={{
+            variant="contained"
+            size="medium"
+            sx={{
               backgroundColor: '#2196F3',
-              color: 'white',
-              fontWeight: 'bold',
-              padding: '15px 30px',
-              borderRadius: '15px',
-              fontSize: '18px',
-              border: 'none',
-              cursor: 'pointer',
-              boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-              transition: 'background-color 0.2s ease'
+              borderRadius: '20px',
+              minWidth: '100px',
+              '&:hover': { backgroundColor: '#1976D2' }
             }}
-            onMouseOver={(e) => e.target.style.backgroundColor = '#1976D2'}
-            onMouseOut={(e) => e.target.style.backgroundColor = '#2196F3'}
           >
             🏠 Home
-          </button>
-        </div>
+          </Button>
+        </Box>
 
         {/* Confetti Animation */}
         {showConfetti && (
@@ -804,74 +798,67 @@ export default function IngredientPrepLevel2() {
                 Ready for Level 3 - Let's start cooking!
               </p>
 
-              {/* Progress saving indicator */}
               {progressSaving && (
-                <div style={{ marginBottom: '20px', color: '#FF8F00' }}>
-                  <CircularProgress size={20} style={{ marginRight: '10px' }} />
-                  Saving your progress...
-                </div>
+                <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(33, 150, 243, 0.9)', borderRadius: '12px', color: 'white' }}>
+                  <CircularProgress size={16} sx={{ mr: 1, color: 'white' }} />
+                  <Typography variant="body2">Saving your progress...</Typography>
+                </Box>
               )}
               
               {progressSaved && (
-                <div style={{ marginBottom: '20px', color: '#4CAF50' }}>
-                  ✅ Progress saved successfully!
-                </div>
+                <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(76, 175, 80, 0.9)', borderRadius: '12px', color: 'white' }}>
+                  <CheckCircleIcon sx={{ mr: 1, fontSize: 20 }} />
+                  <Typography variant="body2">Progress saved successfully!</Typography>
+                </Box>
               )}
               
-              <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                <button 
+              <DialogActions sx={{ justifyContent: 'center', pb: 3, gap: 2 }}>
+                <Button 
                   onClick={continueToNextLevel}
                   disabled={progressSaving}
-                  style={{
+                  variant="contained"
+                  size="large"
+                  sx={{ 
                     backgroundColor: '#4CAF50',
-                    color: 'white',
-                    fontWeight: 'bold',
-                    padding: '15px 25px',
-                    borderRadius: '10px',
-                    fontSize: '16px',
-                    border: 'none',
-                    cursor: progressSaving ? 'not-allowed' : 'pointer',
-                    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-                    opacity: progressSaving ? 0.7 : 1
+                    borderRadius: '15px',
+                    minWidth: '120px',
+                    '&:hover': { backgroundColor: '#45a049' }
                   }}
                 >
-                  {progressSaving ? 'Saving...' : '🚀 Go to Level 3'}
-                </button>
-                
-                <button 
+                  {progressSaving ? 'Saving...' : '🚀 Next Level'}
+                </Button>
+                <Button 
                   onClick={resetGame}
-                  style={{
-                    backgroundColor: 'white',
-                    color: '#FF8F00',
-                    fontWeight: 'bold',
-                    padding: '15px 25px',
-                    borderRadius: '10px',
-                    fontSize: '16px',
-                    border: '2px solid #FF8F00',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                  variant="outlined"
+                  size="large"
+                  sx={{ 
+                    borderColor: '#FF9800', 
+                    color: '#FF9800',
+                    borderRadius: '15px',
+                    minWidth: '120px',
+                    borderWidth: '2px',
+                    '&:hover': {
+                      borderWidth: '2px',
+                      backgroundColor: 'rgba(255, 152, 0, 0.1)'
+                    }
                   }}
                 >
-                  🔄 Try Again
-                </button>
-
-                <button 
+                  🔄 Play Again
+                </Button>
+                <Button 
                   onClick={goToHomepage}
-                  style={{
+                  variant="contained"
+                  size="large"
+                  sx={{ 
                     backgroundColor: '#2196F3',
-                    color: 'white',
-                    fontWeight: 'bold',
-                    padding: '15px 25px',
-                    borderRadius: '10px',
-                    fontSize: '16px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                    borderRadius: '15px',
+                    minWidth: '120px',
+                    '&:hover': { backgroundColor: '#1976D2' }
                   }}
                 >
                   🏠 Home
-                </button>
-              </div>
+                </Button>
+              </DialogActions>
             </div>
           </div>
         )}
