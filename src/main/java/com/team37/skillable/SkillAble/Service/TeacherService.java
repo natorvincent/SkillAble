@@ -187,8 +187,25 @@ public class TeacherService {
         student.setTeacher(teacher);
         studentRepository.save(student);
     }
+    @Transactional
+    public void transferToTeacher(String email, String role) {
+        // Find student
+        Student student = studentRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
 
+        // Create new teacher record with student's data
+        Teacher teacher = new Teacher();
+        teacher.setEmail(student.getEmail());
+        teacher.setPassword(student.getPassword());
+        teacher.setName(student.getFirstName() + " " + student.getLastName());
+        teacher.setCreatedAt(LocalDateTime.now());
+        teacher.setUpdatedAt(LocalDateTime.now());
 
+        teacherRepository.save(teacher);
+
+        // Delete from student table
+        studentRepository.delete(student);
+    }
     public void changePassword(String email, String newPassword) {
         Optional<Teacher> teacherOpt = teacherRepository.findByEmail(email);
 
@@ -207,6 +224,13 @@ public class TeacherService {
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         teacher.setPassword(encoder.encode(newPassword));
         teacherRepository.save(teacher);
+    }
+    public void deleteTeacherById(Long id) {
+        Optional<Teacher> teacherOpt = teacherRepository.findById(id);
+        if (teacherOpt.isEmpty()) {
+            throw new RuntimeException("Teacher not found");
+        }
+        teacherRepository.delete(teacherOpt.get());
     }
 
     @Transactional

@@ -50,6 +50,26 @@ public class StudentController {
         }
     }
 
+    @PostMapping("/set-role")
+    public ResponseEntity<String> setStudentRole(@RequestBody Map<String, String> request) {
+        try {
+            String email = request.get("email");
+            String role = request.get("role");
+
+            if (email == null || !role.equals("STUDENT")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("Invalid request");
+            }
+
+            // User stays in student table, no action needed except maybe updating updatedAt
+            studentService.confirmStudentRole(email);
+            return ResponseEntity.ok("Student role confirmed successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(e.getMessage());
+        }
+    }
+
     @PostMapping("/update")
     public ResponseEntity<String> updateStudentProfile(
             @RequestBody StudentProfileUpdateRequest request) {

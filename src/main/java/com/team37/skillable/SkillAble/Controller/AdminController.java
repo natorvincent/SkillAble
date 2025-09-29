@@ -9,6 +9,7 @@ import com.team37.skillable.SkillAble.Service.TeacherService;
 import com.team37.skillable.SkillAble.dto.PromoteToTeacherRequest;
 import com.team37.skillable.SkillAble.dto.DemoteToStudentRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -71,6 +72,17 @@ public class AdminController {
         String result = teacherService.promoteToTeacher(request);
         return ResponseEntity.ok(result);
     }
+
+    @DeleteMapping("/teachers/{id}")
+    public ResponseEntity<String> deleteTeacher(@PathVariable Long id) {
+        try {
+            teacherService.deleteTeacherById(id);
+            return ResponseEntity.ok("Teacher deleted successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
 
     @PostMapping("/demote-teacher")
     public ResponseEntity<String> demoteToStudent(@RequestBody DemoteToStudentRequest request) {

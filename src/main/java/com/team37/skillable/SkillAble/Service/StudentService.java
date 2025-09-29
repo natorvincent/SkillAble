@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -63,6 +64,13 @@ public class StudentService {
         studentRepository.delete(studentOpt.get());
     }
 
+    public void confirmStudentRole(String email) {
+        Student student = studentRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Student not found with email: " + email));
+
+        student.setUpdatedAt(LocalDateTime.now());
+        studentRepository.save(student);
+    }
     public void changePassword(String email, String newPassword) {
         Optional<Student> studentOpt = studentRepository.findByEmail(email);
 
