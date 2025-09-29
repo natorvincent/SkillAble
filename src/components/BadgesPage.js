@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Container, Grid, Card, CardContent, CircularProgress } from '@mui/material';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import SchoolIcon from '@mui/icons-material/School';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-
-import MenuBookIcon from '@mui/icons-material/MenuBook';
 import StarIcon from '@mui/icons-material/Star';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
@@ -41,16 +36,31 @@ function BadgesPage() {
             const badgesData = await badgesResponse.json();
             console.log("Backend badges data:", badgesData);
             
-            // Transform backend data to frontend format
-            const transformedBadges = badgesData.badges ? badgesData.badges.map(badge => ({
-              id: badge.id || 'unknown',
-              label: badge.label || 'Unknown Badge',
-              description: badge.description || 'No description',
-              category: badge.category || 'General',
-              earned: badge.earned || false,
-              progress: badge.progress || '0/0',
-              icon: getBadgeIcon(badge.id, badge.color)
-            })) : [];
+            // Transform backend data to frontend format - ensure all 4 main badges are always present
+            const requiredBadges = ['super-learner', 'shining-bright', 'star-master', 'module-legend'];
+            const backendBadges = badgesData.badges || [];
+            
+            const transformedBadges = requiredBadges.map(badgeId => {
+              const backendBadge = backendBadges.find(b => b.id === badgeId);
+              if (backendBadge) {
+                return {
+                  id: backendBadge.id,
+                  label: backendBadge.label || getBadgeDefaultData(badgeId).label,
+                  description: backendBadge.description || getBadgeDefaultData(badgeId).description,
+                  category: backendBadge.category || getBadgeDefaultData(badgeId).category,
+                  earned: backendBadge.earned || false,
+                  progress: backendBadge.progress || getBadgeDefaultData(badgeId).progress,
+                  icon: getBadgeIcon(badgeId, backendBadge.color)
+                };
+              } else {
+                // If badge not found in backend, create default
+                const defaultData = getBadgeDefaultData(badgeId);
+                return {
+                  ...defaultData,
+                  icon: getBadgeIcon(badgeId, '#ccc')
+                };
+              }
+            });
             
             setBadges(transformedBadges);
             return; // Successfully got badges from backend
@@ -75,6 +85,52 @@ function BadgesPage() {
     }
   };
 
+  // Helper function to get default badge data
+  const getBadgeDefaultData = (badgeId) => {
+    const defaults = {
+      'super-learner': {
+        id: 'super-learner',
+        label: 'Super Learner',
+        description: 'Complete 100 lessons',
+        category: 'Lessons',
+        earned: false,
+        progress: '0/100'
+      },
+      'shining-bright': {
+        id: 'shining-bright',
+        label: 'Shining Bright',
+        description: 'Earn 100 stars',
+        category: 'Stars',
+        earned: false,
+        progress: '⭐ 0/100'
+      },
+      'star-master': {
+        id: 'star-master',
+        label: 'Star Master',
+        description: 'Earn 500 stars',
+        category: 'Stars',
+        earned: false,
+        progress: '⭐ 0/500'
+      },
+      'module-legend': {
+        id: 'module-legend',
+        label: 'Module Legend',
+        description: 'Complete 25 modules',
+        category: 'Modules',
+        earned: false,
+        progress: '0/25'
+      }
+    };
+    return defaults[badgeId] || {
+      id: badgeId,
+      label: 'Unknown Badge',
+      description: 'No description',
+      category: 'General',
+      earned: false,
+      progress: '0/0'
+    };
+  };
+
   // Helper function to get the correct icon based on badge ID and color
   const getBadgeIcon = (badgeId, color) => {
     const iconColor = color === '#ccc' ? '#ccc' : color;
@@ -82,203 +138,81 @@ function BadgesPage() {
     
     switch (badgeId) {
       case 'super-learner':
-      case 'lesson-master':
-      case 'lesson-expert':
-      case 'lesson-achiever':
         return <SchoolIcon sx={{ fontSize: iconSize, color: iconColor }} />;
+      case 'shining-bright':
+        return <StarIcon sx={{ fontSize: iconSize, color: iconColor }} />;
       case 'star-master':
-      case 'star-collector':
-      case 'rising-star':
         return <StarIcon sx={{ fontSize: iconSize, color: iconColor }} />;
       case 'module-legend':
-      case 'module-champion':
-      case 'module-warrior':
         return <AssignmentTurnedInIcon sx={{ fontSize: iconSize, color: iconColor }} />;
-      case 'streak-legend':
-      case 'streak-keeper':
-      case 'streak-starter':
-        return <LocalFireDepartmentIcon sx={{ fontSize: iconSize, color: iconColor }} />;
-      case 'perfectionist':
-      case 'almost-perfect':
-      case 'high-achiever':
-        return <TrendingUpIcon sx={{ fontSize: iconSize, color: iconColor }} />;
       default:
         return <HelpOutlineIcon sx={{ fontSize: iconSize, color: iconColor }} />;
     }
   };
 
   const calculateBadges = (stats) => {
-    const badges = [];
-    
     // Add null safety for stats
     if (!stats) {
       console.log("No stats available, returning default badges");
-      // Return some default locked badges
-      return [
-        {
-          id: 'super-learner',
-          label: 'Super Learner',
-          icon: <SchoolIcon sx={{ fontSize: 40, color: '#ccc' }} />,
-          description: 'Complete 100 lessons',
-          category: 'Lessons',
-          earned: false,
-          progress: '0/100'
-        },
-        {
-          id: 'star-master',
-          label: 'Star Master',
-          icon: <StarIcon sx={{ fontSize: 40, color: '#ccc' }} />,
-          description: 'Earn 500 stars',
-          category: 'Stars',
-          earned: false,
-          progress: '0/500'
-        },
-        {
-          id: 'module-legend',
-          label: 'Module Legend',
-          icon: <AssignmentTurnedInIcon sx={{ fontSize: 40, color: '#ccc' }} />,
-          description: 'Complete 25 modules',
-          category: 'Modules',
-          earned: false,
-          progress: '0/25'
-        }
-      ];
+      // Return all four main badges in locked state using helper function
+      return ['super-learner', 'shining-bright', 'star-master', 'module-legend'].map(badgeId => ({
+        ...getBadgeDefaultData(badgeId),
+        icon: getBadgeIcon(badgeId, '#ccc')
+      }));
     }
 
     console.log("Calculating badges with stats:", stats);
     
-    // Safely get values with defaults - FIXED undefined issue
+    // Safely get values with defaults
     const completedLessons = Number(stats.completedLessons) || 0;
     const totalStars = Number(stats.totalStars) || 0;
     const completedModules = Number(stats.completedModules) || 0;
-    const currentStreak = Number(stats.currentStreak) || 0;
-    const progressPercentage = Number(stats.totalProgress) || 0;
 
-    console.log("Safe values:", { completedLessons, totalStars, completedModules, currentStreak, progressPercentage });
+    console.log("Safe values:", { completedLessons, totalStars, completedModules });
 
-    // Lesson completion badges
-    if (completedLessons >= 50) {
-      badges.push({
-        id: 'lesson-master',
-        label: 'Lesson Master',
-        icon: <SchoolIcon sx={{ fontSize: 40, color: '#4a6cf7' }} />,
-        description: 'Completed 50+ lessons',
+    // Always return all four main achievement badges in consistent order
+    const badges = [
+      // Super Learner Badge
+      {
+        id: 'super-learner',
+        label: 'Super Learner',
+        icon: <SchoolIcon sx={{ fontSize: 40, color: completedLessons >= 100 ? '#4a6cf7' : '#ccc' }} />,
+        description: 'Complete 100 lessons',
         category: 'Lessons',
-        earned: true,
-        progress: `${completedLessons}/50`
-      });
-    } else if (completedLessons >= 25) {
-      badges.push({
-        id: 'lesson-expert',
-        label: 'Lesson Expert',
-        icon: <MenuBookIcon sx={{ fontSize: 40, color: '#4a6cf7' }} />,
-        description: 'Completed 25+ lessons',
-        category: 'Lessons',
-        earned: true,
-        progress: `${completedLessons}/25`
-      });
-    } else if (completedLessons >= 10) {
-      badges.push({
-        id: 'lesson-achiever',
-        label: 'Achiever',
-        icon: <MenuBookIcon sx={{ fontSize: 40, color: '#4a6cf7' }} />,
-        description: 'Completed 10+ lessons',
-        category: 'Lessons',
-        earned: true,
-        progress: `${completedLessons}/10`
-      });
-    }
-
-    // Star collection badges
-    if (totalStars >= 100) {
-      badges.push({
-        id: 'star-collector',
-        label: 'Star Collector',
-        icon: <StarIcon sx={{ fontSize: 40, color: '#ffc107' }} />,
-        description: 'Earned 100+ stars',
+        earned: completedLessons >= 100,
+        progress: `${completedLessons}/100`
+      },
+      // Shining Bright Badge
+      {
+        id: 'shining-bright',
+        label: 'Shining Bright',
+        icon: <StarIcon sx={{ fontSize: 40, color: totalStars >= 100 ? '#ff6b35' : '#ccc' }} />,
+        description: 'Earn 100 stars',
         category: 'Stars',
-        earned: true,
-        progress: `${totalStars}/100`
-      });
-    } else if (totalStars >= 50) {
-      badges.push({
-        id: 'rising-star',
-        label: 'Rising Star',
-        icon: <StarIcon sx={{ fontSize: 40, color: '#ffc107' }} />,
-        description: 'Earned 50+ stars',
+        earned: totalStars >= 100,
+        progress: `⭐ ${totalStars}/100`
+      },
+      // Star Master Badge
+      {
+        id: 'star-master',
+        label: 'Star Master',
+        icon: <StarIcon sx={{ fontSize: 40, color: totalStars >= 500 ? '#ffc107' : '#ccc' }} />,
+        description: 'Earn 500 stars',
         category: 'Stars',
-        earned: true,
-        progress: `${totalStars}/50`
-      });
-    }
-
-    // Module completion badges
-    if (completedModules >= 10) {
-      badges.push({
-        id: 'module-champion',
-        label: 'Champion',
-        icon: <EmojiEventsIcon sx={{ fontSize: 40, color: '#28a745' }} />,
-        description: 'Completed 10+ modules',
+        earned: totalStars >= 500,
+        progress: `⭐ ${totalStars}/500`
+      },
+      // Module Legend Badge 
+      {
+        id: 'module-legend',
+        label: 'Module Legend',
+        icon: <AssignmentTurnedInIcon sx={{ fontSize: 40, color: completedModules >= 25 ? '#28a745' : '#ccc' }} />,
+        description: 'Complete 25 modules',
         category: 'Modules',
-        earned: true,
-        progress: `${completedModules}/10`
-      });
-    } else if (completedModules >= 5) {
-      badges.push({
-        id: 'module-warrior',
-        label: 'Warrior',
-        icon: <AssignmentTurnedInIcon sx={{ fontSize: 40, color: '#48bb78' }} />,
-        description: 'Completed 5+ modules',
-        category: 'Modules',
-        earned: true,
-        progress: `${completedModules}/5`
-      });
-    }
-
-    // Always show these major achievement badges
-    // Super Learner Badge
-    badges.push({
-      id: 'super-learner',
-      label: 'Super Learner',
-      icon: <SchoolIcon sx={{ fontSize: 40, color: completedLessons >= 100 ? '#4a6cf7' : '#ccc' }} />,
-      description: 'Complete 100 lessons',
-      category: 'Lessons',
-      earned: completedLessons >= 100,
-      progress: `${completedLessons}/100`
-    });
-
-    // Star Master Badge
-    badges.push({
-      id: 'star-master',
-      label: 'Star Master',
-      icon: <StarIcon sx={{ fontSize: 40, color: totalStars >= 500 ? '#ffc107' : '#ccc' }} />,
-      description: 'Earn 500 stars',
-      category: 'Stars',
-      earned: totalStars >= 500,
-      progress: `${totalStars}/500`
-    });
-
-    // Module Legend Badge 
-    badges.push({
-      id: 'module-legend',
-      label: 'Module Legend',
-      icon: <AssignmentTurnedInIcon sx={{ fontSize: 40, color: completedModules >= 25 ? '#28a745' : '#ccc' }} />,
-      description: 'Complete 25 modules',
-      category: 'Modules',
-      earned: completedModules >= 25,
-      progress: `${completedModules}/25`
-    });
-
-    // Perfectionist Badge
-    badges.push({
-      id: 'perfectionist',
-      label: 'Perfectionist',
-      icon: <TrendingUpIcon sx={{ fontSize: 40, color: progressPercentage >= 100 ? '#28a745' : '#ccc' }} />,
-      description: '100% completion',
-      category: 'Completion',
-      earned: progressPercentage >= 100,
-      progress: `${progressPercentage}%`
-    });
+        earned: completedModules >= 25,
+        progress: `${completedModules}/25`
+      }
+    ];
 
     console.log("Final badges calculated:", badges.length);
     return badges;
@@ -364,7 +298,7 @@ function BadgesPage() {
                   boxShadow: '0 12px 30px rgba(102, 126, 234, 0.6)',
                 }
               }}>
-                ✨ Achievements Unlocked: {earnedBadgesCount}/{totalBadgesCount} ✨
+                ✨ Badge Unlocked: {earnedBadgesCount}/{totalBadgesCount} ✨
               </Box>
 
               {/* Motivational Message */}

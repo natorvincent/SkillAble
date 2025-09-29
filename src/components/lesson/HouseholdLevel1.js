@@ -1204,7 +1204,7 @@ const HouseholdLevel1 = ({ studentId = "student123", lessonId = "household-level
                 <Button
                   variant="contained"
                   startIcon={<PlayArrow />}
-                  onClick={() => navigate('/household-level-2')}
+                  onClick={() => navigate(`/lesson/household-chores/level-2/${lessonId}`)}
                   sx={{
                     bgcolor: 'white',
                     color: '#667eea',

@@ -52,28 +52,31 @@ function Navbar() {
     };
   }, []);
 
-const fetchUserProfile = async () => {
+ const fetchUserProfile = async () => {
   try {
     const userEmail = localStorage.getItem("userEmail");
-    const userType = localStorage.getItem("userType");
+    const userRole = localStorage.getItem("userRole");
     const isAdmin = localStorage.getItem("isAdmin") === "true";
     
     if (!userEmail) return;
 
     let response;
     let apiEndpoint;
+    let detectedRole = null;
 
-    // Check user role and call appropriate endpoint
-    if (isAdmin || userType === "ADMIN") {
+    // Determine which endpoint to call based on stored role
+    if (isAdmin) {
       apiEndpoint = `http://localhost:8080/api/admin/profile?email=${userEmail}`;
-    } else if (userType === "TEACHER") {
+      detectedRole = "ADMIN";
+    } else if (userRole === "TEACHER") {
       apiEndpoint = `http://localhost:8080/api/teachers/profile?email=${userEmail}`;
+      detectedRole = "TEACHER";
     } else {
-      // Default to student or try student first for backward compatibility
       apiEndpoint = `http://localhost:8080/api/students/profile?email=${userEmail}`;
+      detectedRole = "STUDENT";
     }
 
-    console.log("Fetching profile from:", apiEndpoint); // Debug log
+    console.log("Fetching profile from:", apiEndpoint);
 
     response = await fetch(apiEndpoint, {
       method: "GET",
@@ -83,56 +86,30 @@ const fetchUserProfile = async () => {
     });
 
     if (!response.ok) {
-      // If the primary endpoint fails and we don't know the user type, try fallbacks
-      if (!userType || userType === "STUDENT") {
-        console.log("Primary endpoint failed, trying teacher endpoint...");
-        response = await fetch(`http://localhost:8080/api/teachers/profile?email=${userEmail}`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json"
-          }
-        });
-        
-        if (!response.ok) {
-          console.log("Teacher endpoint failed, trying admin endpoint...");
-          response = await fetch(`http://localhost:8080/api/admin/profile?email=${userEmail}`, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json"
-            }
-          });
-        }
-      }
-      
-      if (!response.ok) {
-        console.error("All profile endpoints failed");
-        return;
-      }
+      console.error(`Profile fetch failed for ${detectedRole}`);
+      // Don't try alternate endpoints - this prevents the loop
+      return;
     }
 
     const profileData = await response.json();
-    // console.log("Profile data received:", profileData); // Debug log
-    
-    // Ensure userType is set properly
-    if (!profileData.userType) {
-      if (isAdmin) {
-        profileData.userType = "ADMIN";
-      } else if (userType) {
-        profileData.userType = userType;
-      }
-    }
-    
+    profileData.userType = detectedRole;
     setUserProfile(profileData);
     
-    // Only fetch progress stats for students
-    if (profileData.userType === "STUDENT") {
+    // Store the appropriate ID
+    if (detectedRole === "STUDENT" && profileData.id) {
+      localStorage.setItem('studentId', profileData.id);
+    } else if (detectedRole === "TEACHER" && profileData.id) {
+      localStorage.setItem('teacherId', profileData.id);
+    }
+    
+    if (detectedRole === "STUDENT") {
       fetchProgressStats(profileData.id);
     }
   } catch (err) {
     console.error("Error fetching profile:", err);
   }
 };
-//
+
   const fetchProgressStats = async (studentId) => {
     try {
       const storedStudentId = localStorage.getItem('studentId') || studentId;
@@ -157,10 +134,10 @@ const fetchUserProfile = async () => {
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('isAdmin');
     localStorage.removeItem('userType');
+    localStorage.removeItem('userRole'); // Remove userRole
     localStorage.removeItem("studentId"); 
     localStorage.removeItem("teacherId");  
     localStorage.removeItem("userId");    
-
 
     window.dispatchEvent(new Event('localStorageChange'));
     
@@ -360,8 +337,8 @@ const fetchUserProfile = async () => {
                   Account
                 </RouterLink>
                 {shouldShowMyBadges() && (
-                  <RouterLink to="/achievements" className="dropdown-item">
-                    Achievements
+                  <RouterLink to="/badges" className="dropdown-item">
+                    Badge
                   </RouterLink>
                 )}
                 <div className="dropdown-item" onClick={handleLogout}>
