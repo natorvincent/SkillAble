@@ -18,29 +18,18 @@ import {
   Switch,
   FormControlLabel
 } from '@mui/material';
-import Navbar from '../Navbar';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import StarIcon from '@mui/icons-material/Star';
-import VolumeUpIcon from '@mui/icons-material/VolumeUp';
-import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 
-import { 
-  getStudentLessonProgress, 
-  saveStudentLessonProgress,
-  updateModuleProgress
-} from '../../services/progressService';
-
-// Import kitchen background
+// Import kitchen background and ingredient images
 import kitchenBg from "../../assets/sortingLevel1/kitchen.jpg";
-
-// Import ingredient preparation images
+import chefImg from "../../assets/cookingLevel1/chef.png";
 import springOnionImg from "../../assets/cookingLevel2/spring-onion.png";
 import springOnionChoppedImg from "../../assets/cookingLevel2/spring-onion-chopped.png";
 import eggImg from "../../assets/cookingLevel2/egg.png";
 import eggCrackedImg from "../../assets/cookingLevel2/egg-cracked.png";
 import saltImg from "../../assets/cookingLevel2/salt.png";
 import saltPouringImg from "../../assets/cookingLevel2/salt-pouring.png";
+import knifeImg from "../../assets/cookingLevel2/knife.png";
 
 export default function IngredientPrepLevel2() {
   const navigate = useNavigate();
@@ -71,6 +60,9 @@ export default function IngredientPrepLevel2() {
   const [onionAnimation, setOnionAnimation] = useState(false);
   const [eggAnimation, setEggAnimation] = useState(false);
   const [saltAnimation, setSaltAnimation] = useState(false);
+  const [knifeChop, setKnifeChop] = useState(false);
+  const [onionPieces, setOnionPieces] = useState([]);
+  const [showChef, setShowChef] = useState(true);
   
   // Progress tracking
   const [completedTasks, setCompletedTasks] = useState({
@@ -119,7 +111,7 @@ export default function IngredientPrepLevel2() {
         return;
       }
       
-      const finalScore = 3; // All 3 ingredients completed
+      const finalScore = 3;
       
       const progressData = {
         studentId: studentId,
@@ -127,10 +119,10 @@ export default function IngredientPrepLevel2() {
         score: finalScore,
         maxScore: 3,
         completed: true,
-        starsEarned: 3 // Perfect score gets 3 stars
+        starsEarned: 3
       };
       
-      await saveStudentLessonProgress(studentId, lessonId, progressData);
+      console.log('Progress saved:', progressData);
       setProgressSaved(true);
       
     } catch (error) {
@@ -160,13 +152,11 @@ export default function IngredientPrepLevel2() {
 
   // Initialize audio elements
   useEffect(() => {
-    // Create audio elements for sound effects
     chopSoundRef.current = new Audio('/sounds/chop.mp3');
     crackSoundRef.current = new Audio('/sounds/crack.mp3');
     shakeSoundRef.current = new Audio('/sounds/shake.mp3');
     successSoundRef.current = new Audio('/sounds/success.mp3');
 
-    // Set audio properties
     [chopSoundRef, crackSoundRef, shakeSoundRef, successSoundRef].forEach(audioRef => {
       if (audioRef.current) {
         audioRef.current.volume = 0.6;
@@ -187,6 +177,20 @@ export default function IngredientPrepLevel2() {
     };
   }, []);
 
+  // Handle scroll to hide/show chef
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 100) {
+        setShowChef(false);
+      } else {
+        setShowChef(true);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   // Play sound effect helper function
   const playSound = (audioRef) => {
     if (!isMuted && audioRef.current) {
@@ -201,6 +205,53 @@ export default function IngredientPrepLevel2() {
     }
   };
 
+  // Synthesized sound using Web Audio API (fallback when audio files aren't available)
+  const playSynthSound = (type) => {
+    if (isMuted) return;
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      if (type === 'chop') {
+        oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(150, audioContext.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.15);
+      } else if (type === 'crack') {
+        oscillator.type = 'square';
+        oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.2);
+        gainNode.gain.setValueAtTime(0.25, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.25);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.25);
+      } else if (type === 'shake') {
+        oscillator.frequency.setValueAtTime(500, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.2);
+      } else if (type === 'success') {
+        // Success sound - cheerful ascending notes
+        oscillator.frequency.setValueAtTime(523, audioContext.currentTime); // C5
+        oscillator.frequency.exponentialRampToValueAtTime(659, audioContext.currentTime + 0.1); // E5
+        oscillator.frequency.exponentialRampToValueAtTime(784, audioContext.currentTime + 0.2); // G5
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.4);
+      }
+    } catch (e) {
+      console.log('Web Audio API error:', e);
+    }
+  };
+
   // Toggle mute function
   const toggleMute = () => {
     setIsMuted(!isMuted);
@@ -211,8 +262,8 @@ export default function IngredientPrepLevel2() {
     {
       id: 'onion',
       name: 'Spring Onion',
-      beforeImage: springOnionImg || '🧅',
-      afterImage: springOnionChoppedImg || '🥗',
+      beforeImage: springOnionImg,
+      afterImage: springOnionChoppedImg,
       actionText: 'Tap to Chop',
       progressText: `${springOnionChops}/${requiredChops} chops`,
       encouragement: 'Keep chopping!'
@@ -220,8 +271,8 @@ export default function IngredientPrepLevel2() {
     {
       id: 'egg', 
       name: 'Egg',
-      beforeImage: eggImg || '🥚',
-      afterImage: eggCrackedImg || '🍳',
+      beforeImage: eggImg,
+      afterImage: eggCrackedImg,
       actionText: 'Tap to Crack',
       progressText: eggCracked ? 'Cracked into bowl' : 'Ready to crack',
       encouragement: 'Crack into bowl!'
@@ -229,8 +280,8 @@ export default function IngredientPrepLevel2() {
     {
       id: 'salt',
       name: 'Salt', 
-      beforeImage: saltImg || '🧂',
-      afterImage: saltPouringImg || '🌨️',
+      beforeImage: saltImg,
+      afterImage: saltPouringImg,
       actionText: 'Tap to Shake',
       progressText: `${saltShakes}/${requiredShakes} shakes`,
       encouragement: 'Season well!'
@@ -260,9 +311,9 @@ export default function IngredientPrepLevel2() {
     
     setCompletedTasks(newCompletedTasks);
     
-    // Show confetti when ingredient is completed, then auto-progress
     if (currentIngredientIndex === 0 && newCompletedTasks.onion && !completedTasks.onion) {
       playSound(successSoundRef);
+      playSynthSound('success'); // Fallback synthesized sound
       setShowConfetti(true);
       setTimeout(() => {
         setShowConfetti(false);
@@ -270,6 +321,7 @@ export default function IngredientPrepLevel2() {
       }, 2000);
     } else if (currentIngredientIndex === 1 && newCompletedTasks.egg && !completedTasks.egg) {
       playSound(successSoundRef);
+      playSynthSound('success'); // Fallback synthesized sound
       setShowConfetti(true);
       setTimeout(() => {
         setShowConfetti(false);
@@ -277,11 +329,12 @@ export default function IngredientPrepLevel2() {
       }, 2000);
     } else if (currentIngredientIndex === 2 && newCompletedTasks.salt && !completedTasks.salt) {
       playSound(successSoundRef);
+      playSynthSound('success'); // Fallback synthesized sound
       setShowConfetti(true);
       setTimeout(() => {
         setShowConfetti(false);
         setShowCompletion(true);
-        saveProgress(); // Auto-save when level is completed
+        saveProgress();
       }, 2000);
     }
   }, [springOnionChops, eggCracked, saltShakes, currentIngredientIndex, completedTasks, isMuted]);
@@ -291,22 +344,39 @@ export default function IngredientPrepLevel2() {
     if (getCurrentIngredientCompleted()) return;
     
     if (currentIngredientIndex === 0) {
-      // Onion chopping
+      // Onion chopping with pieces animation
       playSound(chopSoundRef);
+      playSynthSound('chop'); // Fallback synthesized sound
       setOnionAnimation(true);
+      setKnifeChop(true);
+      
+      // Create new onion pieces with each chop
+      const newPiece = {
+        id: Date.now() + Math.random(),
+        left: Math.random() * 60 + 20,
+        top: Math.random() * 40 + 30,
+        rotation: Math.random() * 360,
+        size: Math.random() * 15 + 10
+      };
+      
+      setOnionPieces(prev => [...prev, newPiece]);
       setSpringOnionChops(prev => prev + 1);
-      setTimeout(() => setOnionAnimation(false), 300);
+      
+      setTimeout(() => {
+        setOnionAnimation(false);
+        setKnifeChop(false);
+      }, 300);
     } else if (currentIngredientIndex === 1) {
-      // Egg cracking
       playSound(crackSoundRef);
+      playSynthSound('crack'); // Fallback synthesized sound
       setEggAnimation(true);
       setTimeout(() => {
         setEggCracked(true);
         setEggAnimation(false);
       }, 500);
     } else if (currentIngredientIndex === 2) {
-      // Salt shaking
       playSound(shakeSoundRef);
+      playSynthSound('shake'); // Fallback synthesized sound
       setSaltAnimation(true);
       setSaltShakes(prev => prev + 1);
       setTimeout(() => setSaltAnimation(false), 400);
@@ -323,6 +393,7 @@ export default function IngredientPrepLevel2() {
     setCompletedTasks({ onion: false, egg: false, salt: false });
     setProgressSaved(false);
     setProgressSaving(false);
+    setOnionPieces([]);
   };
 
   const completedCount = Object.values(completedTasks).filter(Boolean).length;
@@ -335,54 +406,123 @@ export default function IngredientPrepLevel2() {
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
+      backgroundAttachment: 'fixed',
       position: 'relative',
       padding: '20px',
       fontFamily: 'Arial, sans-serif'
     }}>
-      {/* Overlay for better text readability */}
       <div style={{
         position: 'absolute',
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
-        background: 'linear-gradient(135deg, rgba(255, 224, 178, 0.2), rgba(255, 204, 2, 0.3), rgba(255, 143, 0, 0.4))',
+        background: 'rgba(0, 0, 0, 0.3)',
         pointerEvents: 'none'
       }} />
+      
+      {/* Chef Character - Fixed beside container */}
+      <div style={{
+        position: 'fixed',
+        top: '100px',
+        left: 'calc(50% + 620px)',
+        zIndex: 50,
+        opacity: showChef ? 1 : 0,
+        transform: showChef ? 'translateX(0)' : 'translateX(20px)',
+        transition: 'all 0.3s ease',
+        pointerEvents: showChef ? 'auto' : 'none'
+      }}>
+        <img 
+          src={chefImg}
+          alt="Chef"
+          style={{
+            width: '120px',
+            height: '120px',
+            objectFit: 'contain',
+            filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))'
+          }}
+        />
+        
+        {/* Chef's Message Bubble */}
+        <div style={{
+          position: 'absolute',
+          top: '0',
+          right: '130px',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          padding: '15px 20px',
+          borderRadius: '20px',
+          border: '3px solid #FF8F00',
+          width: '280px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+        }}>
+          <p style={{
+            margin: 0,
+            color: '#8B4513',
+            fontSize: '13px',
+            fontWeight: '500',
+            lineHeight: '1.5'
+          }}>
+            <span style={{ fontSize: '16px' }}>👨‍🍳</span> <strong>Chef's Tip:</strong> Tap each ingredient to prepare it! Chop the spring onion, crack the egg, and shake the salt. Watch as your ingredients get ready for cooking!
+          </p>
+          {/* Speech bubble pointer */}
+          <div style={{
+            position: 'absolute',
+            right: '-12px',
+            top: '20px',
+            width: 0,
+            height: 0,
+            borderTop: '10px solid transparent',
+            borderBottom: '10px solid transparent',
+            borderLeft: '12px solid #FF8F00'
+          }} />
+          <div style={{
+            position: 'absolute',
+            right: '-8px',
+            top: '22px',
+            width: 0,
+            height: 0,
+            borderTop: '8px solid transparent',
+            borderBottom: '8px solid transparent',
+            borderLeft: '10px solid rgba(255, 255, 255, 0.95)'
+          }} />
+        </div>
+      </div>
+
+      {/* Sound Toggle Button - Fixed position */}
+      <div style={{ 
+        position: 'fixed', 
+        top: '20px', 
+        right: '20px', 
+        zIndex: 100 
+      }}>
+        <button
+          onClick={toggleMute}
+          style={{
+            backgroundColor: isMuted ? '#FF5722' : '#4CAF50',
+            color: 'white',
+            border: 'none',
+            borderRadius: '50%',
+            width: '50px',
+            height: '50px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+            fontSize: '20px',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseOver={(e) => e.target.style.transform = 'scale(1.1)'}
+          onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+          title={isMuted ? 'Unmute sounds' : 'Mute sounds'}
+        >
+          <span>{isMuted ? '🔇' : '🔊'}</span>
+        </button>
+      </div>
+
       <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-          {/* Sound Toggle Button */}
-          <div style={{ 
-            position: 'absolute', 
-            top: '20px', 
-            right: '20px', 
-            zIndex: 100 
-          }}>
-            <button
-              onClick={toggleMute}
-              style={{
-                backgroundColor: isMuted ? '#FF5722' : '#4CAF50',
-                color: 'white',
-                border: 'none',
-                borderRadius: '50%',
-                width: '50px',
-                height: '50px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-                fontSize: '20px',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseOver={(e) => e.target.style.transform = 'scale(1.1)'}
-              onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
-              title={isMuted ? 'Unmute sounds' : 'Mute sounds'}
-            >
-              {isMuted ? '🔇' : '🔊'}
-            </button>
-          </div>
+        <div style={{ textAlign: 'center', marginBottom: '40px', paddingTop: '20px' }}>
 
           <h1 style={{ 
             fontSize: '48px', 
@@ -405,7 +545,7 @@ export default function IngredientPrepLevel2() {
             marginBottom: '30px',
             boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
           }}>
-            Ingredient Preparation {!isMuted && '🔊'}
+            Ingredient Preparation {!isMuted && <span>🔊</span>}
           </div>
 
           {/* Progress Bar */}
@@ -525,35 +665,102 @@ export default function IngredientPrepLevel2() {
                 justifyContent: 'center',
                 border: `4px solid ${getCurrentIngredientCompleted() ? '#4CAF50' : '#FF8F00'}`,
                 position: 'relative',
+                overflow: 'hidden',
                 transform: (onionAnimation && currentIngredientIndex === 0) ? 'rotate(5deg)' :
                           (eggAnimation && currentIngredientIndex === 1) ? 'rotate(2deg)' :
                           (saltAnimation && currentIngredientIndex === 2) ? 'rotate(-10deg)' : 'rotate(0deg)',
                 transition: 'all 0.3s ease'
               }}>
-                {/* Show appropriate image */}
-                {(() => {
-                  const imageToShow = getCurrentIngredientCompleted() ? currentIngredient.afterImage : currentIngredient.beforeImage;
-                  
-                  if (typeof imageToShow === 'string' && imageToShow.includes('.png')) {
-                    return (
-                      <img 
-                        src={imageToShow}
-                        alt={currentIngredient.name}
+                {/* Knife Animation for Onion */}
+                {currentIngredientIndex === 0 && !getCurrentIngredientCompleted() && (
+                  <div style={{
+                    position: 'absolute',
+                    top: knifeChop ? '60px' : '-20px',
+                    right: '10px',
+                    width: '60px',
+                    height: '80px',
+                    transition: 'top 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transform: 'rotate(-45deg)',
+                    zIndex: 10,
+                    filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))'
+                  }}>
+                    <img 
+                      src={knifeImg}
+                      alt="Knife"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain'
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Onion chopping pieces animation */}
+                {currentIngredientIndex === 0 && !getCurrentIngredientCompleted() && (
+                  <>
+                    {/* Main onion that gets smaller with each chop */}
+                    <img 
+                      src={springOnionImg}
+                      alt="Spring Onion"
+                      style={{
+                        width: `${100 - (springOnionChops * 15)}px`,
+                        height: `${100 - (springOnionChops * 15)}px`,
+                        objectFit: 'contain',
+                        opacity: springOnionChops >= requiredChops ? 0 : 1,
+                        transition: 'all 0.3s ease',
+                        filter: onionAnimation ? 'blur(2px)' : 'none'
+                      }}
+                    />
+                    
+                    {/* Chopped pieces that appear with each tap */}
+                    {onionPieces.map((piece) => (
+                      <div
+                        key={piece.id}
                         style={{
-                          width: '100px',
-                          height: '100px',
-                          objectFit: 'contain'
+                          position: 'absolute',
+                          left: `${piece.left}%`,
+                          top: `${piece.top}%`,
+                          width: `${piece.size}px`,
+                          height: `${piece.size}px`,
+                          backgroundImage: `url(${springOnionChoppedImg})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          borderRadius: '50%',
+                          transform: `rotate(${piece.rotation}deg)`,
+                          animation: 'pieceAppear 0.3s ease-out',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
                         }}
                       />
-                    );
-                  } else {
-                    return (
-                      <span style={{ fontSize: '80px' }}>
-                        {imageToShow}
-                      </span>
-                    );
-                  }
-                })()}
+                    ))}
+                  </>
+                )}
+
+                {/* Show completed chopped onion */}
+                {currentIngredientIndex === 0 && getCurrentIngredientCompleted() && (
+                  <img 
+                    src={currentIngredient.afterImage}
+                    alt={currentIngredient.name}
+                    style={{
+                      width: '100px',
+                      height: '100px',
+                      objectFit: 'contain'
+                    }}
+                  />
+                )}
+
+                {/* Show other ingredients normally */}
+                {currentIngredientIndex !== 0 && (
+                  <img 
+                    src={getCurrentIngredientCompleted() ? currentIngredient.afterImage : currentIngredient.beforeImage}
+                    alt={currentIngredient.name}
+                    style={{
+                      width: '100px',
+                      height: '100px',
+                      objectFit: 'contain'
+                    }}
+                  />
+                )}
 
                 {/* Sound effect indicator */}
                 {!getCurrentIngredientCompleted() && !isMuted && (
@@ -632,9 +839,16 @@ export default function IngredientPrepLevel2() {
                   borderRadius: '20px',
                   border: '2px solid #4CAF50'
                 }}>
-                  <span style={{ fontSize: '20px', marginRight: '8px' }}>
-                    {typeof ingredient.afterImage === 'string' && ingredient.afterImage.includes('.png') ? '✅' : ingredient.afterImage}
-                  </span>
+                  <img 
+                    src={ingredient.afterImage}
+                    alt={ingredient.name}
+                    style={{
+                      width: '30px',
+                      height: '30px',
+                      objectFit: 'contain',
+                      marginRight: '8px'
+                    }}
+                  />
                   <span style={{ color: '#2E7D32', fontWeight: 'bold' }}>
                     {ingredient.name} ✓
                   </span>
@@ -686,6 +900,24 @@ export default function IngredientPrepLevel2() {
           >
             🏠 Home
           </Button>
+          
+          {(completedTasks.onion && completedTasks.egg && completedTasks.salt) && (
+            <Button
+              onClick={continueToNextLevel}
+              disabled={progressSaving}
+              variant="contained"
+              size="medium"
+              sx={{
+                backgroundColor: '#4CAF50',
+                borderRadius: '20px',
+                minWidth: '120px',
+                '&:hover': { backgroundColor: '#45a049' },
+                animation: 'pulse 2s infinite'
+              }}
+            >
+              {progressSaving ? 'Saving...' : '🚀 Next Level'}
+            </Button>
+          )}
         </Box>
 
         {/* Confetti Animation */}
@@ -724,6 +956,20 @@ export default function IngredientPrepLevel2() {
                 0% { transform: scale(1); }
                 50% { transform: scale(1.2); }
                 100% { transform: scale(1); }
+              }
+              @keyframes pieceAppear {
+                0% {
+                  transform: scale(0) rotate(0deg);
+                  opacity: 0;
+                }
+                50% {
+                  transform: scale(1.2) rotate(180deg);
+                  opacity: 1;
+                }
+                100% {
+                  transform: scale(1) rotate(360deg);
+                  opacity: 1;
+                }
               }
             `}</style>
           </div>
@@ -806,13 +1052,13 @@ export default function IngredientPrepLevel2() {
               )}
               
               {progressSaved && (
-                <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(76, 175, 80, 0.9)', borderRadius: '12px', color: 'white' }}>
+                <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(76, 175, 80, 0.9)', borderRadius: '12px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <CheckCircleIcon sx={{ mr: 1, fontSize: 20 }} />
                   <Typography variant="body2">Progress saved successfully!</Typography>
                 </Box>
               )}
               
-              <DialogActions sx={{ justifyContent: 'center', pb: 3, gap: 2 }}>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '20px', flexWrap: 'wrap' }}>
                 <Button 
                   onClick={continueToNextLevel}
                   disabled={progressSaving}
@@ -858,7 +1104,7 @@ export default function IngredientPrepLevel2() {
                 >
                   🏠 Home
                 </Button>
-              </DialogActions>
+              </div>
             </div>
           </div>
         )}
