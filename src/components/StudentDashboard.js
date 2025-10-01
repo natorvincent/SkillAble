@@ -265,7 +265,8 @@ const handleSaveRole = async () => {
   setTimeout(() => {
     localStorage.clear();            // Clear all session data
     navigate("/login", { replace: true }); // Redirect to login
-  }, 2000); // 2 seconds delay so user sees the message
+  }, 2000);
+  // 2 seconds delay so user sees the message
 } else {
   setSuccess("Successfully registered as STUDENT!");
   setOpenSnackbar(true);

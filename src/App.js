@@ -33,7 +33,6 @@ import AboutUsPage from './components/AboutUsPage';
 import ContactPage from './components/ContactPage';
 import StudentDashboard from './components/StudentDashboard';
 import TeacherDashboard from './components/TeacherDashboard';
-import PersonalHygieneLevel3 from './components/lesson/PersonalHygieneLevel3';
 
 function useLocalStorage(key, defaultValue) {
   const [value, setValue] = useState(() => {
