@@ -199,3 +199,65 @@ html {
     padding: 6px 10px;
   }
 }
+
+
+
+/* bag o */
+.login-btn-nav {
+  background: transparent;
+  border: 2px solid white;
+  color: white;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.login-btn-nav:hover {
+  background: white;
+  color: #4a6cf7;
+}
+
+.register-btn-nav {
+  background: white;
+  border: 2px solid white;
+  color: #4a6cf7;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.register-btn-nav:hover {
+  background: #f8f9fa;
+  border-color: #f8f9fa;
+  color: #3a5ce5;
+}
+
+/* Ensure the buttons container has proper spacing */
+.navbar-right .login-btn-nav,
+.navbar-right .register-btn-nav {
+  margin-left: 0.5rem;
+}
+
+/* Mobile responsiveness for buttons */
+@media (max-width: 768px) {
+  .login-btn-nav,
+  .register-btn-nav {
+    padding: 6px 16px;
+    font-size: 13px;
+  }
+  
+  .navbar-right {
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+}

@@ -16,14 +16,13 @@ const AdminRoute = ({ children }) => {
       
       // First check localStorage for role information
       const token = localStorage.getItem('token');
-      const userType = localStorage.getItem('userType');
+      const userRole = localStorage.getItem('userRole'); // Use userRole instead of userType
       const email = localStorage.getItem('userEmail');
-      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
       
-      console.log("Auth state:", { isLoggedIn, userType });
+      console.log("Auth state:", { token: !!token, userRole, email });
       
       // If not logged in, bail early
-      if (!isLoggedIn || !token || !email) {
+      if (!token || !email) {
         console.log("Not logged in, redirecting...");
         setIsAdmin(false);
         setLoading(false);
@@ -31,10 +30,18 @@ const AdminRoute = ({ children }) => {
       }
       
       // Fast path: if we already know from token this is an ADMIN
-      if (userType === 'ADMIN') {
+      if (userRole === 'ADMIN') {
         console.log("Already know user is admin from token");
         localStorage.setItem('isAdmin', 'true');
         setIsAdmin(true);
+        setLoading(false);
+        return;
+      }
+
+      // If user is clearly not admin, redirect immediately
+      if (userRole === 'STUDENT' || userRole === 'TEACHER') {
+        console.log("User is not admin, redirecting...");
+        setIsAdmin(false);
         setLoading(false);
         return;
       }
@@ -44,11 +51,12 @@ const AdminRoute = ({ children }) => {
         console.log("Verifying admin status with API...");
         const response = await fetch(`http://localhost:8080/api/admin/check?email=${encodeURIComponent(email)}`, {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
         });
 
-        console.log("Admin check response:", response.status);
+        console.log("Admin check response status:", response.status);
         
         if (!response.ok) {
           throw new Error(`Failed to verify admin status: ${response.status}`);
@@ -59,6 +67,9 @@ const AdminRoute = ({ children }) => {
         
         // Store the result in localStorage for future fast checks
         localStorage.setItem('isAdmin', isAdminUser ? 'true' : 'false');
+        if (isAdminUser) {
+          localStorage.setItem('userRole', 'ADMIN');
+        }
         
         setIsAdmin(isAdminUser);
       } catch (error) {
@@ -91,7 +102,7 @@ const AdminRoute = ({ children }) => {
 
   if (!isAdmin) {
     console.log("Not an admin, redirecting to homepage");
-    return <Navigate to="/homepage" replace />;
+    return <Navigate to="/" replace />; // Redirect to home instead of homepage to avoid loops
   }
   
   console.log("Admin access verified, rendering admin content");

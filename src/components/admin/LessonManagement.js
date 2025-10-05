@@ -3,6 +3,7 @@ import {
   Box,
   Typography,
   Button,
+  TextField,
   Paper,
   Table,
   TableBody,
@@ -10,28 +11,29 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
+  Snackbar,
+  Alert,
+  Switch,
+  FormControlLabel,
+  Tooltip,
+  CircularProgress,
+  Chip,
+  Card,
+  CardContent,
   FormControl,
   InputLabel,
   Select,
-  MenuItem,
-  Chip,
-  IconButton,
-  Alert,
-  Snackbar,
-  Grid,
-  Switch,
-  FormControlLabel
+  MenuItem
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Visibility as ViewIcon,
   MenuBook as LessonIcon,
   SportsEsports as GameIcon
 } from '@mui/icons-material';
@@ -44,7 +46,6 @@ const LessonManagement = () => {
   const [editingLesson, setEditingLesson] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   
-  // Add delete confirmation dialog state
   const [confirmDeleteDialog, setConfirmDeleteDialog] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState(null);
   
@@ -106,8 +107,7 @@ const LessonManagement = () => {
       path: '/lesson/cooking/level-2',
       icon: '👨‍🍳'
     },
-    
-      {
+    {
       value: 'cooking-level-3',
       label: 'Cooking Level 3 - Tools & Actions',
       description: 'Learn cooking tools and advanced techniques',
@@ -215,7 +215,6 @@ const LessonManagement = () => {
       const response = await fetch('http://localhost:8080/api/lessons');
       if (response.ok) {
         const data = await response.json();
-        console.log('Fetched lessons:', data);
         setLessons(data);
       } else {
         showSnackbar('Failed to fetch lessons', 'error');
@@ -233,10 +232,8 @@ const LessonManagement = () => {
       const response = await fetch('http://localhost:8080/api/modules');
       if (response.ok) {
         const data = await response.json();
-        console.log('Fetched modules:', data);
         setModules(data);
       } else {
-        console.error('Failed to fetch modules, status:', response.status);
         showSnackbar('Failed to fetch modules', 'error');
       }
     } catch (error) {
@@ -277,8 +274,6 @@ const LessonManagement = () => {
         moduleId = lesson.module.id;
       }
       
-      console.log('Opening dialog for lesson:', lesson, 'moduleId:', moduleId);
-      
       setFormData({
         title: lesson.title || '',
         description: lesson.description || '',
@@ -308,16 +303,6 @@ const LessonManagement = () => {
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setEditingLesson(null);
-    setFormData({
-      title: '',
-      description: '',
-      level: 1,
-      displayOrder: 1,
-      active: true,
-      type: 'multiple_choice',
-      moduleId: '',
-      activity: ''
-    });
   };
 
   const handleInputChange = (field, value) => {
@@ -335,13 +320,6 @@ const LessonManagement = () => {
       moduleId: moduleId,
       level: editingLesson ? prev.level : nextLevel,
       displayOrder: editingLesson ? prev.displayOrder : nextOrder
-    }));
-  };
-
-  const handleTypeChange = (value) => {
-    setFormData(prev => ({
-      ...prev,
-      type: value
     }));
   };
 
@@ -393,9 +371,7 @@ const LessonManagement = () => {
 
       const response = await fetch(url, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(lessonData),
       });
 
@@ -407,16 +383,13 @@ const LessonManagement = () => {
         handleCloseDialog();
         fetchLessons();
       } else {
-        const errorData = await response.text();
-        showSnackbar(`Failed to ${editingLesson ? 'update' : 'create'} lesson: ${errorData}`, 'error');
+        showSnackbar(`Failed to ${editingLesson ? 'update' : 'create'} lesson`, 'error');
       }
     } catch (error) {
-      console.error('Error submitting lesson:', error);
       showSnackbar('Error submitting lesson', 'error');
     }
   };
 
-  // Updated delete functions to use dialog
   const handleConfirmDelete = (lesson) => {
     setSelectedLesson(lesson);
     setConfirmDeleteDialog(true);
@@ -436,7 +409,6 @@ const LessonManagement = () => {
         showSnackbar('Failed to delete lesson', 'error');
       }
     } catch (error) {
-      console.error('Error deleting lesson:', error);
       showSnackbar('Error deleting lesson', 'error');
     }
   };
@@ -446,25 +418,16 @@ const LessonManagement = () => {
   };
 
   const getModuleName = (lesson) => {
-    if (lesson.moduleName) {
-      return lesson.moduleName;
-    }
-    
-    if (lesson.module && lesson.module.name) {
-      return lesson.module.name;
-    }
-    
+    if (lesson.moduleName) return lesson.moduleName;
+    if (lesson.module && lesson.module.name) return lesson.module.name;
     if (lesson.moduleId) {
       const module = modules.find(m => m.id === lesson.moduleId);
       if (module) return module.name;
     }
-    
     if (lesson.module && lesson.module.id) {
       const module = modules.find(m => m.id === lesson.module.id);
       if (module) return module.name;
     }
-    
-    console.log('Could not find module for lesson:', lesson);
     return 'Unknown Module';
   };
 
@@ -480,142 +443,668 @@ const LessonManagement = () => {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-        <Typography>Loading lessons...</Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'center', my: 8 }}>
+        <CircularProgress size={60} />
       </Box>
     );
   }
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <LessonIcon sx={{ mr: 1, color: '#4a6cf7' }} />
-          <Typography variant="h5" fontWeight={600}>
-            Lesson Management
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => handleOpenDialog()}
-          sx={{
-            backgroundColor: '#4a6cf7',
-            '&:hover': { backgroundColor: '#3a5ce5' }
-          }}
-        >
-          Add New Lesson
-        </Button>
-      </Box>
+    <Box sx={{ p: 3 }}>
+      {/* Header Section */}
+      <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <CardContent sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box>
+              <Typography variant="h4" fontWeight="600" color="#1a237e" gutterBottom>
+                Lesson Management
+              </Typography>
+              <Typography variant="body1" color="#546e7a">
+                Manage learning lessons and educational activities
+              </Typography>
+            </Box>
+            <Button 
+              variant="contained" 
+              startIcon={<AddIcon />} 
+              onClick={() => handleOpenDialog()}
+              sx={{
+                backgroundColor: '#1976d2',
+                borderRadius: 2,
+                px: 3,
+                py: 1.5,
+                fontWeight: '600',
+                textTransform: 'none',
+                fontSize: '16px',
+                boxShadow: '0 2px 8px rgba(25, 118, 210, 0.2)',
+                '&:hover': {
+                  backgroundColor: '#1565c0',
+                  boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)'
+                }
+              }}
+            >
+              Create Lesson
+            </Button>
+          </Box>
+        </CardContent>
+      </Card>
 
-      <TableContainer component={Paper} sx={{ borderRadius: '10px' }}>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ backgroundColor: '#f8f9fa' }}>
-              <TableCell sx={{ fontWeight: 600 }}>Title</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Module</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Type</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Activity</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Level</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Order</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {lessons.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} sx={{ textAlign: 'center', py: 4 }}>
-                  <Typography color="text.secondary">
-                    No lessons found. Create your first lesson!
-                  </Typography>
-                </TableCell>
+      {/* Lessons Table */}
+      <Card sx={{ borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ backgroundColor: '#f5f7ff' }}>
+                <TableCell sx={{ fontWeight: '600', color: '#37474f', py: 3, fontSize: '15px' }}>Title</TableCell>
+                <TableCell sx={{ fontWeight: '600', color: '#37474f', py: 3, fontSize: '15px' }}>Module</TableCell>
+                <TableCell sx={{ fontWeight: '600', color: '#37474f', py: 3, fontSize: '15px' }}>Type</TableCell>
+                <TableCell sx={{ fontWeight: '600', color: '#37474f', py: 3, fontSize: '15px' }}>Activity</TableCell>
+                <TableCell align="center" sx={{ fontWeight: '600', color: '#37474f', py: 3, fontSize: '15px' }}>Level</TableCell>
+                <TableCell align="center" sx={{ fontWeight: '600', color: '#37474f', py: 3, fontSize: '15px' }}>Order</TableCell>
+                <TableCell align="center" sx={{ fontWeight: '600', color: '#37474f', py: 3, fontSize: '15px' }}>Status</TableCell>
+                <TableCell align="center" sx={{ fontWeight: '600', color: '#37474f', py: 3, fontSize: '15px' }}>Actions</TableCell>
               </TableRow>
-            ) : (
-              lessons.map((lesson) => (
-                <TableRow key={lesson.id} sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}>
-                  <TableCell>
-                    <Typography fontWeight={500}>{lesson.title}</Typography>
-                    {lesson.description && (
-                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                        {lesson.description.length > 50 
-                          ? `${lesson.description.substring(0, 50)}...` 
-                          : lesson.description}
-                      </Typography>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={getModuleName(lesson)} 
-                      size="small" 
-                      sx={{ backgroundColor: '#e3f2fd' }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={getLessonTypeLabel(lesson.type)} 
-                      size="small"
-                      variant="outlined"
-                      color="default"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {lesson.activity ? (
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <GameIcon sx={{ fontSize: 16, color: '#4a6cf7' }} />
-                        <Chip 
-                          label={getActivityLabel(lesson.activity)} 
-                          size="small"
-                          color="secondary"
-                          variant="outlined"
-                        />
-                      </Box>
-                    ) : (
-                      <Typography variant="body2" color="text.secondary">
-                        -
-                      </Typography>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={`Level ${lesson.level}`} 
-                      size="small"
-                      color="primary"
-                      variant="outlined"
-                    />
-                  </TableCell>
-                  <TableCell>{lesson.displayOrder}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={lesson.active ? 'Active' : 'Inactive'}
-                      color={lesson.active ? 'success' : 'default'}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <IconButton
-                      onClick={() => handleOpenDialog(lesson)}
-                      color="primary"
-                      size="small"
+            </TableHead>
+            <TableBody>
+              {lessons.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} align="center" sx={{ py: 8 }}>
+                    <LessonIcon sx={{ fontSize: 64, color: '#b0bec5', mb: 2 }} />
+                    <Typography variant="h6" color="#78909c" gutterBottom>
+                      No lessons found
+                    </Typography>
+                    <Typography variant="body2" color="#b0bec5" sx={{ mb: 3 }}>
+                      Start building your curriculum by creating the first lesson
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={() => handleOpenDialog()}
+                      sx={{
+                        backgroundColor: '#1976d2',
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        px: 4,
+                        py: 1.5
+                      }}
                     >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      onClick={() => handleConfirmDelete(lesson)}
-                      color="error"
-                      size="small"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
+                      Create First Lesson
+                    </Button>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              ) : (
+                lessons.map((lesson) => (
+                  <TableRow 
+                    key={lesson.id} 
+                    sx={{ 
+                      '&:hover': { 
+                        backgroundColor: '#fafafa',
+                        transition: 'background-color 0.2s ease'
+                      },
+                      '&:not(:last-child)': {
+                        borderBottom: '1px solid #f0f0f0'
+                      }
+                    }}
+                  >
+                    <TableCell sx={{ py: 3 }}>
+                      <Box>
+                        <Typography fontWeight="600" color="#2e3a47">
+                          {lesson.title}
+                        </Typography>
+                        {lesson.description && (
+                          <Typography variant="body2" color="#546e7a" sx={{ 
+                            mt: 0.5,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden'
+                          }}>
+                            {lesson.description}
+                          </Typography>
+                        )}
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={{ py: 3 }}>
+                      <Chip 
+                        label={getModuleName(lesson)} 
+                        size="small"
+                        sx={{ 
+                          backgroundColor: '#e3f2fd',
+                          color: '#1976d2',
+                          fontWeight: '500'
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell sx={{ py: 3 }}>
+                      <Chip 
+                        label={getLessonTypeLabel(lesson.type)} 
+                        size="small"
+                        variant="outlined"
+                        sx={{ fontWeight: '500' }}
+                      />
+                    </TableCell>
+                    <TableCell sx={{ py: 3 }}>
+                      {lesson.activity ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <GameIcon sx={{ fontSize: 16, color: '#1976d2' }} />
+                          <Chip 
+                            label={getActivityLabel(lesson.activity)} 
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                            sx={{ fontWeight: '500' }}
+                          />
+                        </Box>
+                      ) : (
+                        <Typography variant="body2" color="#b0bec5">
+                          -
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell align="center" sx={{ py: 3 }}>
+                      <Typography 
+                        variant="body1" 
+                        fontWeight="600" 
+                        color="#5c6bc0"
+                        sx={{ fontSize: '15px' }}
+                      >
+                        {lesson.level}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center" sx={{ py: 3 }}>
+                      <Typography 
+                        variant="body1" 
+                        fontWeight="600" 
+                        color="#5c6bc0"
+                        sx={{ fontSize: '15px' }}
+                      >
+                        {lesson.displayOrder}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center" sx={{ py: 3 }}>
+                      <Chip
+                        label={lesson.active ? "Active" : "Inactive"}
+                        color={lesson.active ? "success" : "default"}
+                        size="small"
+                        sx={{ fontWeight: '600' }}
+                      />
+                    </TableCell>
+                    <TableCell align="center" sx={{ py: 3 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                        <Tooltip title="Edit lesson">
+                          <IconButton 
+                            onClick={() => handleOpenDialog(lesson)}
+                            sx={{ 
+                              color: '#1976d2',
+                              backgroundColor: 'rgba(25, 118, 210, 0.04)',
+                              '&:hover': { 
+                                backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                                transform: 'scale(1.05)'
+                              },
+                              transition: 'all 0.2s ease',
+                              borderRadius: 2
+                            }}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete lesson">
+                          <IconButton 
+                            onClick={() => handleConfirmDelete(lesson)}
+                            sx={{ 
+                              color: '#d32f2f',
+                              backgroundColor: 'rgba(211, 47, 47, 0.04)',
+                              '&:hover': { 
+                                backgroundColor: 'rgba(211, 47, 47, 0.1)',
+                                transform: 'scale(1.05)'
+                              },
+                              transition: 'all 0.2s ease',
+                              borderRadius: 2
+                            }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Card>
 
-      {/* Minimalist Kid-Friendly Delete Confirmation Dialog */}
+      {/* Create/Edit Lesson Dialog - Professional Table Style */}
+      <Dialog 
+        open={dialogOpen} 
+        onClose={handleCloseDialog} 
+        fullWidth 
+        maxWidth="md"
+        sx={{
+          '& .MuiDialog-paper': {
+            borderRadius: 3,
+            boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+            overflow: 'hidden'
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            backgroundColor: '#1976d2',
+            color: 'white',
+            py: 3,
+            px: 4,
+            borderBottom: '1px solid rgba(255,255,255,0.1)'
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <LessonIcon sx={{ fontSize: 28 }} />
+            <Box>
+              <Typography variant="h5" fontWeight="600">
+                {editingLesson ? 'Edit Lesson' : 'Create New Lesson'}
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.5 }}>
+                {editingLesson ? 'Update lesson configuration and settings' : 'Define a new learning lesson for your curriculum'}
+              </Typography>
+            </Box>
+          </Box>
+        </DialogTitle>
+
+        <DialogContent sx={{ p: 0 }}>
+          <TableContainer>
+            <Table sx={{ minWidth: 650 }}>
+              <TableBody>
+                {/* Title Row */}
+                <TableRow>
+                  <TableCell 
+                    component="th" 
+                    scope="row"
+                    sx={{ 
+                      width: '30%',
+                      backgroundColor: '#f8f9fa',
+                      fontWeight: '600',
+                      color: '#455a64',
+                      borderRight: '1px solid #e0e0e0',
+                      py: 3,
+                      pl: 4
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="subtitle1">Lesson Title</Typography>
+                      <Typography color="error" component="span">*</Typography>
+                    </Box>
+                    <Typography variant="caption" color="#78909c" sx={{ display: 'block', mt: 0.5 }}>
+                      Enter a clear, descriptive title
+                    </Typography>
+                  </TableCell>
+                  <TableCell sx={{ py: 3, pr: 4 }}>
+                    <TextField
+                      fullWidth
+                      variant="outlined"
+                      placeholder="e.g., Introduction to Personal Hygiene"
+                      value={formData.title}
+                      onChange={(e) => handleInputChange('title', e.target.value)}
+                      size="medium"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          '&:hover fieldset': {
+                            borderColor: '#1976d2'
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#1976d2',
+                            borderWidth: '2px'
+                          }
+                        }
+                      }}
+                    />
+                  </TableCell>
+                </TableRow>
+
+                {/* Description Row */}
+                <TableRow>
+                  <TableCell 
+                    component="th" 
+                    scope="row"
+                    sx={{ 
+                      backgroundColor: '#f8f9fa',
+                      fontWeight: '600',
+                      color: '#455a64',
+                      borderRight: '1px solid #e0e0e0',
+                      py: 3,
+                      pl: 4
+                    }}
+                  >
+                    <Typography variant="subtitle1">Description</Typography>
+                    <Typography variant="caption" color="#78909c" sx={{ display: 'block', mt: 0.5 }}>
+                      Overview of learning content
+                    </Typography>
+                  </TableCell>
+                  <TableCell sx={{ py: 3, pr: 4 }}>
+                    <TextField
+                      fullWidth
+                      variant="outlined"
+                      placeholder="Describe what students will learn in this lesson..."
+                      value={formData.description}
+                      onChange={(e) => handleInputChange('description', e.target.value)}
+                      multiline
+                      rows={3}
+                      size="medium"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          '&:hover fieldset': {
+                            borderColor: '#1976d2'
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#1976d2',
+                            borderWidth: '2px'
+                          }
+                        }
+                      }}
+                    />
+                  </TableCell>
+                </TableRow>
+
+                {/* Module Selection Row */}
+                <TableRow>
+                  <TableCell 
+                    component="th" 
+                    scope="row"
+                    sx={{ 
+                      backgroundColor: '#f8f9fa',
+                      fontWeight: '600',
+                      color: '#455a64',
+                      borderRight: '1px solid #e0e0e0',
+                      py: 3,
+                      pl: 4
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="subtitle1">Module</Typography>
+                      <Typography color="error" component="span">*</Typography>
+                    </Box>
+                    <Typography variant="caption" color="#78909c" sx={{ display: 'block', mt: 0.5 }}>
+                      Select parent module
+                    </Typography>
+                  </TableCell>
+                  <TableCell sx={{ py: 3, pr: 4 }}>
+                    <FormControl fullWidth>
+                      <Select
+                        value={formData.moduleId}
+                        onChange={(e) => handleModuleChange(e.target.value)}
+                        displayEmpty
+                        sx={{
+                          borderRadius: 2,
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#e0e0e0'
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#1976d2'
+                          }
+                        }}
+                      >
+                        <MenuItem value="" disabled>
+                          Choose a module...
+                        </MenuItem>
+                        {modules.map((module) => (
+                          <MenuItem key={module.id} value={module.id}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Box sx={{ 
+                                width: 8, 
+                                height: 8, 
+                                borderRadius: '50%', 
+                                backgroundColor: module.active ? '#4caf50' : '#bdbdbd' 
+                              }} />
+                              {module.name}
+                            </Box>
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </TableCell>
+                </TableRow>
+
+                {/* Lesson Type Row */}
+                <TableRow>
+                  <TableCell 
+                    component="th" 
+                    scope="row"
+                    sx={{ 
+                      backgroundColor: '#f8f9fa',
+                      fontWeight: '600',
+                      color: '#455a64',
+                      borderRight: '1px solid #e0e0e0',
+                      py: 3,
+                      pl: 4
+                    }}
+                  >
+                    <Typography variant="subtitle1">Lesson Type</Typography>
+                    <Typography variant="caption" color="#78909c" sx={{ display: 'block', mt: 0.5 }}>
+                      Type of learning activity
+                    </Typography>
+                  </TableCell>
+                  <TableCell sx={{ py: 3, pr: 4 }}>
+                    <FormControl fullWidth>
+                      <Select
+                        value={formData.type}
+                        onChange={(e) => handleInputChange('type', e.target.value)}
+                        sx={{
+                          borderRadius: 2
+                        }}
+                      >
+                        {lessonTypes.map((type) => (
+                          <MenuItem key={type.value} value={type.value}>
+                            {type.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </TableCell>
+                </TableRow>
+
+                {/* Activity Selection Row */}
+                <TableRow>
+                  <TableCell 
+                    component="th" 
+                    scope="row"
+                    sx={{ 
+                      backgroundColor: '#f8f9fa',
+                      fontWeight: '600',
+                      color: '#455a64',
+                      borderRight: '1px solid #e0e0e0',
+                      py: 3,
+                      pl: 4
+                    }}
+                  >
+                    <Typography variant="subtitle1">Interactive Activity</Typography>
+                    <Typography variant="caption" color="#78909c" sx={{ display: 'block', mt: 0.5 }}>
+                      Optional game activity
+                    </Typography>
+                  </TableCell>
+                  <TableCell sx={{ py: 3, pr: 4 }}>
+                    <FormControl fullWidth>
+                      <Select
+                        value={formData.activity}
+                        onChange={(e) => handleInputChange('activity', e.target.value)}
+                        sx={{
+                          borderRadius: 2
+                        }}
+                      >
+                        <MenuItem value="">
+                          No Interactive Activity
+                        </MenuItem>
+                        {activityOptions.map((activity) => (
+                          <MenuItem key={activity.value} value={activity.value}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <span style={{ fontSize: '18px' }}>{activity.icon}</span>
+                              <Box>
+                                <Typography variant="body2" fontWeight={500}>
+                                  {activity.label}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {activity.description}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </TableCell>
+                </TableRow>
+
+                {/* Level and Order Row */}
+                <TableRow>
+                  <TableCell 
+                    component="th" 
+                    scope="row"
+                    sx={{ 
+                      backgroundColor: '#f8f9fa',
+                      fontWeight: '600',
+                      color: '#455a64',
+                      borderRight: '1px solid #e0e0e0',
+                      py: 3,
+                      pl: 4
+                    }}
+                  >
+                    <Typography variant="subtitle1">Level & Order</Typography>
+                    <Typography variant="caption" color="#78909c" sx={{ display: 'block', mt: 0.5 }}>
+                      Lesson sequence
+                    </Typography>
+                  </TableCell>
+                  <TableCell sx={{ py: 3, pr: 4 }}>
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                      <TextField
+                        label="Level"
+                        type="number"
+                        value={formData.level}
+                        onChange={(e) => handleInputChange('level', parseInt(e.target.value) || 1)}
+                        inputProps={{ min: 1, max: 10 }}
+                        sx={{ width: 120 }}
+                      />
+                      <TextField
+                        label="Order"
+                        type="number"
+                        value={formData.displayOrder}
+                        onChange={(e) => handleInputChange('displayOrder', parseInt(e.target.value) || 1)}
+                        inputProps={{ min: 1 }}
+                        sx={{ width: 120 }}
+                      />
+                    </Box>
+                  </TableCell>
+                </TableRow>
+
+                {/* Status Row */}
+                <TableRow>
+                  <TableCell 
+                    component="th" 
+                    scope="row"
+                    sx={{ 
+                      backgroundColor: '#f8f9fa',
+                      fontWeight: '600',
+                      color: '#455a64',
+                      borderRight: '1px solid #e0e0e0',
+                      py: 3,
+                      pl: 4
+                    }}
+                  >
+                    <Typography variant="subtitle1">Status</Typography>
+                    <Typography variant="caption" color="#78909c" sx={{ display: 'block', mt: 0.5 }}>
+                      Lesson visibility
+                    </Typography>
+                  </TableCell>
+                  <TableCell sx={{ py: 3, pr: 4 }}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={formData.active}
+                          onChange={(e) => handleInputChange('active', e.target.checked)}
+                          color="primary"
+                          size="medium"
+                        />
+                      }
+                      label={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Chip 
+                            label={formData.active ? "Active" : "Inactive"} 
+                            size="medium"
+                            color={formData.active ? "success" : "default"}
+                            variant="outlined"
+                            sx={{ 
+                              fontWeight: '600',
+                              minWidth: 90
+                            }}
+                          />
+                          <Typography variant="body2" color="#546e7a">
+                            {formData.active ? "Visible to students" : "Hidden from students"}
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </DialogContent>
+
+        <DialogActions sx={{ 
+          p: 3, 
+          gap: 2, 
+          borderTop: '1px solid #e0e0e0',
+          backgroundColor: '#fafafa'
+        }}>
+          <Button 
+            onClick={handleCloseDialog}
+            variant="outlined"
+            sx={{
+              borderRadius: 2,
+              px: 4,
+              py: 1.5,
+              fontWeight: '600',
+              textTransform: 'none',
+              borderColor: '#b0bec5',
+              color: '#546e7a',
+              '&:hover': {
+                borderColor: '#78909c',
+                backgroundColor: 'rgba(120, 144, 156, 0.04)'
+              }
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant="contained" 
+            onClick={handleSubmit}
+            disabled={!formData.title || !formData.moduleId}
+            startIcon={editingLesson ? <EditIcon /> : <AddIcon />}
+            sx={{
+              borderRadius: 2,
+              px: 4,
+              py: 1.5,
+              fontWeight: '600',
+              textTransform: 'none',
+              fontSize: '16px',
+              backgroundColor: '#1976d2',
+              boxShadow: '0 2px 8px rgba(25, 118, 210, 0.2)',
+              '&:hover': {
+                backgroundColor: '#1565c0',
+                boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)'
+              },
+              '&:disabled': {
+                backgroundColor: '#e0e0e0',
+                color: '#9e9e9e',
+                boxShadow: 'none'
+              }
+            }}
+          >
+            {editingLesson ? 'Update Lesson' : 'Create Lesson'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
       <Dialog
         open={confirmDeleteDialog}
         onClose={() => setConfirmDeleteDialog(false)}
@@ -623,699 +1112,88 @@ const LessonManagement = () => {
         fullWidth
         sx={{
           '& .MuiDialog-paper': {
-            borderRadius: '16px',
-            padding: '16px'
+            borderRadius: 3,
+            boxShadow: '0 10px 40px rgba(0,0,0,0.1)'
           }
         }}
       >
-        <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
-          <Typography
-            variant="h5"
-            sx={{
-              color: '#ff6b35',
-              fontWeight: 'bold',
-              fontSize: '24px',
-              mb: 1
-            }}
-          >
-            ⚠️ Delete Lesson?
+        <DialogContent sx={{ p: 4, textAlign: 'center' }}>
+          <Box sx={{ color: '#d32f2f', fontSize: '64px', mb: 3 }}>
+            ⚠️
+          </Box>
+          <Typography variant="h5" fontWeight="600" color="#2e3a47" gutterBottom>
+            Confirm Deletion
           </Typography>
-        </DialogTitle>
-        
-        <DialogContent sx={{ textAlign: 'center', py: 2 }}>
-          <Typography
-            variant="h6"
-            sx={{
-              color: '#333',
-              fontSize: '18px',
-              mb: 2
-            }}
-          >
-            You want to delete:
+          <Typography variant="body1" color="#546e7a" sx={{ mb: 3, lineHeight: 1.6 }}>
+            You are about to delete the following lesson:
           </Typography>
           
           <Box
             sx={{
-              backgroundColor: '#f5f5f5',
-              borderRadius: '12px',
-              padding: '16px',
-              border: '2px solid #ff6b35',
+              backgroundColor: '#ffebee',
+              borderRadius: 2,
+              padding: 3,
+              border: '1px solid #ffcdd2',
               mb: 3
             }}
           >
-            <Typography
-              variant="h6"
-              sx={{
-                color: '#ff6b35',
-                fontWeight: 'bold',
-                fontSize: '20px'
-              }}
-            >
-              📖 {selectedLesson?.title}
+            <Typography variant="h6" fontWeight="600" color="#d32f2f">
+              {selectedLesson?.title}
             </Typography>
           </Box>
           
           <Box
             sx={{
               backgroundColor: '#fff3e0',
-              borderRadius: '12px',
-              padding: '16px',
-              border: '1px solid #ff9800',
-              mb: 2
+              borderRadius: 2,
+              padding: 2.5,
+              border: '1px solid #ffe0b2'
             }}
           >
-            <Typography
-              sx={{
-                color: '#e65100',
-                fontSize: '16px',
-                fontWeight: 600
-              }}
-            >
-              🚨 Warning: This action cannot be undone!
+            <Typography variant="body2" color="#e65100" fontWeight="500">
+              ⚠️ This action will permanently delete the lesson and cannot be undone.
             </Typography>
           </Box>
-          
-          <Typography
-            sx={{
-              color: '#666',
-              fontSize: '16px',
-              fontWeight: 500
-            }}
-          >
-            All lesson content will be permanently removed.
-          </Typography>
         </DialogContent>
         
-        <DialogActions
-          sx={{
-            padding: '16px',
-            gap: '12px',
-            justifyContent: 'center'
-          }}
-        >
+        <DialogActions sx={{ p: 3, gap: 2, borderTop: '1px solid #e0e0e0' }}>
           <Button
             onClick={() => setConfirmDeleteDialog(false)}
-            size="large"
+            variant="outlined"
             sx={{
-              fontSize: '16px',
-              fontWeight: 'bold',
-              padding: '12px 24px',
-              borderRadius: '12px',
-              backgroundColor: '#4caf50',
-              color: 'white',
-              minWidth: '120px',
+              borderRadius: 2,
+              px: 4,
+              py: 1.5,
+              fontWeight: '600',
+              textTransform: 'none',
+              borderColor: '#b0bec5',
+              color: '#546e7a',
               '&:hover': {
-                backgroundColor: '#45a049'
+                borderColor: '#78909c',
+                backgroundColor: 'rgba(120, 144, 156, 0.04)'
               }
             }}
           >
-            ✅ Keep It
+            Cancel
           </Button>
-          
           <Button
             variant="contained"
-            color="error"
             onClick={handleDelete}
-            size="large"
             sx={{
-              fontSize: '16px',
-              fontWeight: 'bold',
-              padding: '12px 24px',
-              borderRadius: '12px',
-              backgroundColor: '#f44336',
-              minWidth: '120px',
+              borderRadius: 2,
+              px: 4,
+              py: 1.5,
+              fontWeight: '600',
+              textTransform: 'none',
+              backgroundColor: '#d32f2f',
+              boxShadow: '0 2px 8px rgba(211, 47, 47, 0.2)',
               '&:hover': {
-                backgroundColor: '#d32f2f'
+                backgroundColor: '#c62828',
+                boxShadow: '0 4px 12px rgba(211, 47, 47, 0.3)'
               }
             }}
           >
-            🗑️ Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Updated Dialog to match Module styling */}
-      <Dialog 
-        open={dialogOpen} 
-        onClose={handleCloseDialog} 
-        maxWidth="md" 
-        fullWidth
-        sx={{
-          '& .MuiDialog-paper': {
-            borderRadius: '16px',
-            padding: '8px',
-            backgroundColor: '#f8f9ff',
-            border: '3px solid #4CAF50'
-          }
-        }}
-      >
-        <DialogTitle
-          sx={{
-            fontSize: '28px',
-            fontWeight: 'bold',
-            color: '#2E7D32',
-            textAlign: 'center',
-            padding: '24px',
-            backgroundColor: '#E8F5E8',
-            borderRadius: '12px',
-            margin: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '12px'
-          }}
-        >
-          <Box
-            component="span"
-            sx={{
-              fontSize: '32px',
-              color: '#4CAF50'
-            }}
-          >
-            📖
-          </Box>
-          {editingLesson ? 'Edit Learning Lesson' : 'Create New Learning Lesson'}
-        </DialogTitle>
-
-        <DialogContent sx={{ padding: '24px' }}>
-          <Grid container spacing={3} sx={{ mt: 1 }}>
-            {/* Lesson Title - Full Width */}
-            <Grid item xs={12}>
-              <Box sx={{ mb: 2 }}>
-                <Typography 
-                  variant="h6" 
-                  sx={{ 
-                    fontSize: '20px', 
-                    fontWeight: 'bold', 
-                    color: '#1976D2',
-                    mb: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <span>✏️</span> Lesson Title
-                </Typography>
-                <TextField
-                  fullWidth
-                  placeholder="Enter a clear, engaging title for your lesson"
-                  value={formData.title}
-                  onChange={(e) => handleInputChange('title', e.target.value)}
-                  required
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      fontSize: '18px',
-                      backgroundColor: '#ffffff',
-                      borderRadius: '12px',
-                      '& fieldset': {
-                        borderColor: '#4CAF50',
-                        borderWidth: '2px'
-                      },
-                      '&:hover fieldset': {
-                        borderColor: '#2E7D32',
-                        borderWidth: '3px'
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#1976D2',
-                        borderWidth: '3px'
-                      }
-                    },
-                    '& .MuiInputBase-input': {
-                      padding: '16px'
-                    }
-                  }}
-                />
-              </Box>
-            </Grid>
-
-            {/* Description - Full Width */}
-            <Grid item xs={12}>
-              <Box sx={{ mb: 2 }}>
-                <Typography 
-                  variant="h6" 
-                  sx={{ 
-                    fontSize: '20px', 
-                    fontWeight: 'bold', 
-                    color: '#1976D2',
-                    mb: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <span>📝</span> Lesson Description
-                </Typography>
-                <TextField
-                  fullWidth
-                  placeholder="Describe what students will learn in this lesson"
-                  value={formData.description}
-                  onChange={(e) => handleInputChange('description', e.target.value)}
-                  multiline
-                  rows={3}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      fontSize: '18px',
-                      backgroundColor: '#ffffff',
-                      borderRadius: '12px',
-                      minHeight: '100px',
-                      '& fieldset': {
-                        borderColor: '#4CAF50',
-                        borderWidth: '2px'
-                      },
-                      '&:hover fieldset': {
-                        borderColor: '#2E7D32',
-                        borderWidth: '3px'
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#1976D2',
-                        borderWidth: '3px'
-                      }
-                    },
-                    '& .MuiInputBase-input': {
-                      padding: '16px'
-                    },
-                    '& .MuiInputBase-inputMultiline': {
-                      padding: '16px',
-                      lineHeight: '1.5'
-                    }
-                  }}
-                />
-              </Box>
-            </Grid>
-
-            {/* Module Selection - Half Width */}
-            <Grid item xs={12} md={6}>
-              <Box sx={{ mb: 2 }}>
-                <Typography 
-                  variant="h6" 
-                  sx={{ 
-                    fontSize: '20px', 
-                    fontWeight: 'bold', 
-                    color: '#1976D2',
-                    mb: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <span>📚</span> Select Module
-                </Typography>
-                <FormControl fullWidth required>
-                  <Select
-                    value={formData.moduleId}
-                    onChange={(e) => handleModuleChange(e.target.value)}
-                    displayEmpty
-                    sx={{
-                      fontSize: '18px',
-                      backgroundColor: '#ffffff',
-                      borderRadius: '12px',
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#4CAF50',
-                        borderWidth: '2px'
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#2E7D32',
-                        borderWidth: '3px'
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#1976D2',
-                        borderWidth: '3px'
-                      },
-                      '& .MuiSelect-select': {
-                        padding: '16px'
-                      }
-                    }}
-                  >
-                    <MenuItem value="" disabled>
-                      <em>Choose a module...</em>
-                    </MenuItem>
-                    {modules.map((module) => (
-                      <MenuItem key={module.id} value={module.id}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Box sx={{ 
-                            width: 8, 
-                            height: 8, 
-                            borderRadius: '50%', 
-                            backgroundColor: module.active ? '#4caf50' : '#bdbdbd' 
-                          }} />
-                          {module.name || module.title || `Module ${module.id}`}
-                        </Box>
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-            </Grid>
-
-            {/* Lesson Type - Half Width */}
-            <Grid item xs={12} md={6}>
-              <Box sx={{ mb: 2 }}>
-                <Typography 
-                  variant="h6" 
-                  sx={{ 
-                    fontSize: '20px', 
-                    fontWeight: 'bold', 
-                    color: '#1976D2',
-                    mb: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <span>🎯</span> Lesson Type
-                </Typography>
-                <FormControl fullWidth>
-                  <Select
-                    value={formData.type}
-                    onChange={(e) => handleTypeChange(e.target.value)}
-                    sx={{
-                      fontSize: '18px',
-                      backgroundColor: '#ffffff',
-                      borderRadius: '12px',
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#4CAF50',
-                        borderWidth: '2px'
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#2E7D32',
-                        borderWidth: '3px'
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#1976D2',
-                        borderWidth: '3px'
-                      },
-                      '& .MuiSelect-select': {
-                        padding: '16px'
-                      }
-                    }}
-                  >
-                    {lessonTypes.map((type) => (
-                      <MenuItem key={type.value} value={type.value}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Box sx={{ 
-                            minWidth: 20, 
-                            fontSize: '14px',
-                            opacity: 0.7
-                          }}>
-                            {type.value === 'multiple_choice' && '🔘'}
-                            {type.value === 'drag_drop' && '🎯'}
-                            {type.value === 'matching' && '🔗'}
-                            {type.value === 'fill_blanks' && '📝'}
-                            {type.value === 'true_false' && '✅'}
-                          </Box>
-                          {type.label}
-                        </Box>
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-            </Grid>
-
-            {/* Activity Selection - Full Width */}
-            <Grid item xs={12}>
-              <Box sx={{ mb: 2 }}>
-                <Typography 
-                  variant="h6" 
-                  sx={{ 
-                    fontSize: '20px', 
-                    fontWeight: 'bold', 
-                    color: '#1976D2',
-                    mb: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <span>🎮</span> Interactive Activity (Optional)
-                </Typography>
-                <FormControl fullWidth>
-                  <Select
-                    value={formData.activity}
-                    onChange={(e) => handleInputChange('activity', e.target.value)}
-                    sx={{
-                      fontSize: '18px',
-                      backgroundColor: '#ffffff',
-                      borderRadius: '12px',
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#4CAF50',
-                        borderWidth: '2px'
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#2E7D32',
-                        borderWidth: '3px'
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#1976D2',
-                        borderWidth: '3px'
-                      },
-                      '& .MuiSelect-select': {
-                        padding: '16px'
-                      }
-                    }}
-                  >
-                    <MenuItem value="">
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, fontStyle: 'italic', opacity: 0.7 }}>
-                        <span>📄</span>
-                        No Interactive Activity
-                      </Box>
-                    </MenuItem>
-                    {activityOptions.map((activity) => (
-                      <MenuItem key={activity.value} value={activity.value}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <span style={{ fontSize: '18px' }}>{activity.icon}</span>
-                          <Box>
-                            <Typography variant="body2" fontWeight={500}>
-                              {activity.label}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {activity.description}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-            </Grid>
-
-            {/* Level, Order, and Status - Three columns */}
-            <Grid item xs={12} md={4}>
-              <Box sx={{ mb: 2 }}>
-                <Typography 
-                  variant="h6" 
-                  sx={{ 
-                    fontSize: '20px', 
-                    fontWeight: 'bold', 
-                    color: '#1976D2',
-                    mb: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <span>📊</span> Level
-                </Typography>
-                <TextField
-                  fullWidth
-                  type="number"
-                  value={formData.level}
-                  onChange={(e) => handleInputChange('level', parseInt(e.target.value) || 1)}
-                  inputProps={{ min: 1, max: 10 }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      fontSize: '18px',
-                      backgroundColor: '#ffffff',
-                      borderRadius: '12px',
-                      '& fieldset': {
-                        borderColor: '#4CAF50',
-                        borderWidth: '2px'
-                      },
-                      '&:hover fieldset': {
-                        borderColor: '#2E7D32',
-                        borderWidth: '3px'
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#1976D2',
-                        borderWidth: '3px'
-                      }
-                    },
-                    '& .MuiInputBase-input': {
-                      padding: '16px'
-                    }
-                  }}
-                />
-              </Box>
-            </Grid>
-
-            <Grid item xs={12} md={4}>
-              <Box sx={{ mb: 2 }}>
-                <Typography 
-                  variant="h6" 
-                  sx={{ 
-                    fontSize: '20px', 
-                    fontWeight: 'bold', 
-                    color: '#1976D2',
-                    mb: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <span>🔢</span> Display Order
-                </Typography>
-                <TextField
-                  fullWidth
-                  type="number"
-                  value={formData.displayOrder}
-                  onChange={(e) => handleInputChange('displayOrder', parseInt(e.target.value) || 1)}
-                  inputProps={{ min: 1 }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      fontSize: '18px',
-                      backgroundColor: '#ffffff',
-                      borderRadius: '12px',
-                      '& fieldset': {
-                        borderColor: '#4CAF50',
-                        borderWidth: '2px'
-                      },
-                      '&:hover fieldset': {
-                        borderColor: '#2E7D32',
-                        borderWidth: '3px'
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#1976D2',
-                        borderWidth: '3px'
-                      }
-                    },
-                    '& .MuiInputBase-input': {
-                      padding: '16px'
-                    }
-                  }}
-                />
-              </Box>
-            </Grid>
-
-            <Grid item xs={12} md={4}>
-              <Box 
-                sx={{ 
-                  mb: 2,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'flex-start',
-                  justifyContent: 'flex-start',
-                  minHeight: '96px',
-                  backgroundColor: '#fff3e0',
-                  borderRadius: '12px',
-                  padding: '16px',
-                  border: '2px solid #FF9800'
-                }}
-              >
-                <Typography 
-                  variant="h6" 
-                  sx={{ 
-                    fontSize: '20px', 
-                    fontWeight: 'bold', 
-                    color: '#F57C00',
-                    mb: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <span>🔄</span> Lesson Status
-                </Typography>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.active}
-                      onChange={(e) => handleInputChange('active', e.target.checked)}
-                      size="large"
-                      sx={{
-                        '& .MuiSwitch-switchBase': {
-                          '&.Mui-checked': {
-                            color: '#4CAF50',
-                            '& + .MuiSwitch-track': {
-                              backgroundColor: '#4CAF50',
-                            },
-                          },
-                        },
-                        '& .MuiSwitch-track': {
-                          backgroundColor: '#ccc',
-                        },
-                      }}
-                    />
-                  }
-                  label={
-                    <Typography sx={{ 
-                      fontSize: '18px', 
-                      fontWeight: 'bold',
-                      color: formData.active ? '#4CAF50' : '#666'
-                    }}>
-                      {formData.active ? '✅ Active' : '❌ Inactive'}
-                    </Typography>
-                  }
-                />
-              </Box>
-            </Grid>
-          </Grid>
-        </DialogContent>
-
-        <DialogActions 
-          sx={{ 
-            padding: '24px',
-            backgroundColor: '#f5f5f5',
-            borderRadius: '0 0 12px 12px',
-            gap: '16px',
-            justifyContent: 'center'
-          }}
-        >
-          <Button 
-            onClick={handleCloseDialog}
-            size="large"
-            sx={{
-              fontSize: '18px',
-              fontWeight: 'bold',
-              padding: '12px 24px',
-              borderRadius: '25px',
-              backgroundColor: '#f44336',
-              color: 'white',
-              minWidth: '120px',
-              '&:hover': {
-                backgroundColor: '#d32f2f',
-                transform: 'scale(1.05)'
-              },
-              transition: 'all 0.2s ease'
-            }}
-          >
-            ❌ Cancel
-          </Button>
-          
-          <Button 
-            variant="contained" 
-            onClick={handleSubmit}
-            disabled={!formData.title || !formData.moduleId}
-            size="large"
-            sx={{
-              fontSize: '18px',
-              fontWeight: 'bold',
-              padding: '12px 24px',
-              borderRadius: '25px',
-              backgroundColor: '#4CAF50',
-              minWidth: '120px',
-              '&:hover': {
-                backgroundColor: '#45a049',
-                transform: 'scale(1.05)'
-              },
-              '&:disabled': {
-                backgroundColor: '#cccccc',
-                color: '#666666'
-              },
-              transition: 'all 0.2s ease'
-            }}
-          >
-            {editingLesson ? '💾 Update Lesson' : '✅ Create Lesson'}
+            Delete Lesson
           </Button>
         </DialogActions>
       </Dialog>
@@ -1324,11 +1202,17 @@ const LessonManagement = () => {
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert 
-          onClose={() => setSnackbar({ ...snackbar, open: false })} 
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
           severity={snackbar.severity}
-          sx={{ width: '100%' }}
+          sx={{ 
+            borderRadius: 2,
+            fontWeight: '500',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            alignItems: 'center'
+          }}
         >
           {snackbar.message}
         </Alert>

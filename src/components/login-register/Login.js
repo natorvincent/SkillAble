@@ -25,41 +25,66 @@ function Login() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const navigate = useNavigate();
 
-  // Clear any stale login state on mount
+  // Cleanup effect to handle redirects from role selection and check auth status
   useEffect(() => {
-    console.log("Login component mounted");
+    console.log("Login component mounted - checking authentication status");
     
-    // Check for any existing login state
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    const isAdmin = localStorage.getItem('isAdmin') === 'true';
-    const userType = localStorage.getItem('userType');
+    // Clear any redirect flags or temporary storage
+    const cleanupRedirectState = () => {
+      localStorage.removeItem("redirecting");
+      sessionStorage.removeItem("pendingRoleSelection");
+    };
+
+    cleanupRedirectState();
+
+    // Check if user is already authenticated with a more robust approach
+    const token = localStorage.getItem("token");
+    const userEmail = localStorage.getItem("userEmail");
+    const userRole = localStorage.getItem("userRole");
     
-    if (isLoggedIn) {
-      console.log("User already logged in, checking user type:", userType, "admin status:", isAdmin);
+    console.log("Current auth state:", { token: !!token, userEmail, userRole });
+
+    if (token && userEmail) {
+      console.log("User already authenticated, redirecting based on role:", userRole);
       
-      // If already logged in, redirect to appropriate page
-      if (isAdmin) {
-        navigate('/admin', { replace: true });
-      } else if (userType === 'STUDENT') {
-        navigate('/studentdashboard', { replace: true });
-      } else if (userType === 'TEACHER') {
-        navigate('/teacherdashboard', { replace: true });
-      } else {
-        // Fallback to homepage if userType is unclear
-        navigate('/homepage', { replace: true });
-      }
+      // Use setTimeout to ensure the component is fully mounted before navigation
+      setTimeout(() => {
+        if (userRole === "ADMIN") {
+          console.log("Redirecting to admin dashboard");
+          // Use hard redirect for admin to prevent conflicts with AdminRoute
+          window.location.href = "/admin";
+        } else if (userRole === "TEACHER") {
+          console.log("Redirecting to teacher dashboard");
+          // Use hard redirect for teachers to prevent loops
+          window.location.href = "/teacherdashboard";
+        } else if (userRole === "STUDENT") {
+          console.log("Redirecting to student dashboard");
+          navigate("/studentdashboard", { replace: true });
+        } else {
+          // If role is not set but user is authenticated, clear and stay on login
+          console.log("Role not set but user authenticated, clearing auth data");
+          clearAuthData();
+        }
+      }, 100);
     } else {
       // Clean up any stale auth data - CLEAR ALL USER-SPECIFIC DATA
-      localStorage.removeItem('token');
-      localStorage.removeItem('userEmail');
-      localStorage.removeItem('isAdmin');
-      localStorage.removeItem('userType');
-      localStorage.removeItem('studentId');
-      localStorage.removeItem('teacherId');
-      localStorage.removeItem('userId');
-      localStorage.removeItem('isLoggedIn');
+      clearAuthData();
     }
   }, [navigate]);
+
+  // Function to clear all authentication data
+  const clearAuthData = () => {
+    console.log("Clearing all authentication data");
+    localStorage.removeItem('token');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('isAdmin');
+    localStorage.removeItem('studentId');
+    localStorage.removeItem('teacherId');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('redirecting');
+  };
 
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
@@ -144,15 +169,12 @@ function Login() {
       console.log("Is admin user:", isAdmin, "User role:", userRole);
       
       // CLEAR ALL PREVIOUS USER DATA FIRST
-      localStorage.removeItem('studentId');
-      localStorage.removeItem('teacherId');
-      localStorage.removeItem('userId');
+      clearAuthData();
       
       // Store authentication data
       localStorage.setItem("token", result);
       localStorage.setItem("userEmail", email);
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userType", userRole);
+      localStorage.setItem("userRole", userRole);
       localStorage.setItem("isAdmin", isAdmin ? "true" : "false");
       
       // Store user-specific ID based on role
@@ -170,34 +192,34 @@ function Login() {
       }
       
       // Show success message
-      setSuccessMessage("Login successful!");
+      setSuccessMessage("Login successful! Redirecting...");
       setOpenSnackbar(true);
-      
-      // Dispatch custom event to notify App component about the change
-      window.dispatchEvent(new Event('localStorageChange'));
       
       // Log the current localStorage state to confirm values are set
       console.log("localStorage after login:", {
-        isLoggedIn: localStorage.getItem("isLoggedIn"),
-        userType: localStorage.getItem("userType"),
+        userRole: localStorage.getItem("userRole"),
         isAdmin: localStorage.getItem("isAdmin"),
         studentId: localStorage.getItem("studentId"),
         teacherId: localStorage.getItem("teacherId"),
         userId: localStorage.getItem("userId")
       });
       
-      // Wait a moment before navigating to ensure localStorage values are set
+      // Wait a moment before navigating to ensure localStorage values are set and user sees success message
       setTimeout(() => {
         try {
+          console.log("Navigating based on role:", userRole);
+          
           if (isAdmin) {
             console.log("Navigating to admin dashboard...");
-            navigate("/admin", { replace: true });
+            // Use hard redirect for admin to prevent conflicts with AdminRoute
+            window.location.href = "/admin";
           } else if (userRole === "STUDENT") {
             console.log("Navigating to student dashboard...");
             navigate("/studentdashboard", { replace: true });
           } else if (userRole === "TEACHER") {
             console.log("Navigating to teacher dashboard...");
-            navigate("/teacherdashboard", { replace: true });
+            // Use hard redirect for teachers to prevent loops
+            window.location.href = "/teacherdashboard";
           } else {
             // Fallback to homepage if role is unclear
             console.log("Unknown role, navigating to homepage...");
@@ -206,17 +228,19 @@ function Login() {
         } catch (navError) {
           console.error("Navigation error:", navError);
           // If navigation fails, try a more direct approach
-          if (isAdmin) {
-            window.location.href = "/admin";
-          } else if (userRole === "STUDENT") {
-            window.location.href = "/studentdashboard";
-          } else if (userRole === "TEACHER") {
-            window.location.href = "/teacherdashboard";
-          } else {
-            window.location.href = "/homepage";
-          }
+          setTimeout(() => {
+            if (isAdmin) {
+              window.location.href = "/admin";
+            } else if (userRole === "STUDENT") {
+              window.location.href = "/studentdashboard";
+            } else if (userRole === "TEACHER") {
+              window.location.href = "/teacherdashboard";
+            } else {
+              window.location.href = "/homepage";
+            }
+          }, 100);
         }
-      }, 800);
+      }, 1500);
       
     } catch (err) {
       console.error("Login error:", err);
@@ -231,6 +255,11 @@ function Login() {
       return;
     }
     setOpenSnackbar(false);
+    // Clear messages when snackbar closes to prevent stale messages
+    setTimeout(() => {
+      setErrorMessage("");
+      setSuccessMessage("");
+    }, 300);
   };
 
   return (
@@ -349,14 +378,22 @@ function Login() {
               />
 
               {errorMessage && (
-                <Typography variant="body2" color="error">
+                <Typography variant="body2" color="error" sx={{ mt: 1, textAlign: 'center' }}>
                   {errorMessage}
                 </Typography>
               )}
 
               <Grid container justifyContent="flex-end" sx={{ pt: 0, pb: 3 }}>
                 <Grid item>
-                  <RouterLink to="/forgot-password" variant="body2" style={{ textDecoration: "none" }}>
+                  <RouterLink 
+                    to="/forgot-password" 
+                    variant="body2" 
+                    style={{ 
+                      textDecoration: "none",
+                      color: "#4a6cf7",
+                      fontWeight: "500"
+                    }}
+                  >
                     {"Forgot Password?"}
                   </RouterLink>
                 </Grid>
@@ -369,7 +406,8 @@ function Login() {
                   disabled={isLoggingIn}
                   style={{ 
                     position: 'relative',
-                    opacity: isLoggingIn ? 0.8 : 1 
+                    opacity: isLoggingIn ? 0.8 : 1,
+                    cursor: isLoggingIn ? 'not-allowed' : 'pointer'
                   }}
                 >
                   {isLoggingIn ? (
@@ -416,14 +454,14 @@ function Login() {
 
         <Snackbar
           open={openSnackbar}
-          autoHideDuration={6000}
+          autoHideDuration={4000}
           onClose={handleCloseSnackbar}
           anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
         >
           <Alert
             onClose={handleCloseSnackbar}
             severity={successMessage ? "success" : "error"}
-            sx={{ width: "100%" }}
+            sx={{ width: "100%", borderRadius: "10px" }}
             icon={successMessage ? <CheckCircleIcon /> : undefined}
           >
             {successMessage || errorMessage}

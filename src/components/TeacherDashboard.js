@@ -62,16 +62,30 @@ function TeacherDashboard() {
   const navigate = useNavigate();
   const theme = useTheme();
 
-  
-
-
-
+  // FIXED: Authentication check with role verification
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userEmail = localStorage.getItem("userEmail");
+    const userRole = localStorage.getItem("userRole");
     
+    console.log("TeacherDashboard auth check:", { token: !!token, userEmail, userRole });
+    
+    // If no token or not a teacher, redirect appropriately
     if (!token || !userEmail) {
       navigate("/login");
+      return;
+    }
+    
+    if (userRole !== "TEACHER") {
+      console.log("Non-teacher user in TeacherDashboard, redirecting...");
+      // Redirect to appropriate dashboard based on role
+      if (userRole === "STUDENT") {
+        navigate("/studentdashboard", { replace: true });
+      } else if (userRole === "ADMIN") {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
       return;
     }
 
@@ -467,27 +481,27 @@ function TeacherDashboard() {
                         transition: 'all 0.3s ease'
                       }}>
                         <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                                        <PlaylistAddCheckIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-                                        <Chip 
-                                          label="Total" 
-                                          size="small" 
-                                          sx={{ 
-                                            backgroundColor: alpha('#ffffff', 0.2),
-                                            color: 'white',
-                                            fontWeight: 500
-                                          }} 
-                                        />
-                                      </Box>
-                                      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                        <Typography variant="h3" fontWeight={700} sx={{ mb: 1 }}>
-                                          {modules.length}
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                                          Learning Modules
-                                        </Typography>
-                                      </Box>
-                                    </CardContent>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                            <PlaylistAddCheckIcon sx={{ fontSize: 40, opacity: 0.8 }} />
+                            <Chip 
+                              label="Total" 
+                              size="small" 
+                              sx={{ 
+                                backgroundColor: alpha('#ffffff', 0.2),
+                                color: 'white',
+                                fontWeight: 500
+                              }} 
+                            />
+                          </Box>
+                          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            <Typography variant="h3" fontWeight={700} sx={{ mb: 1 }}>
+                              {modules.length}
+                            </Typography>
+                            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                              Learning Modules
+                            </Typography>
+                          </Box>
+                        </CardContent>
                       </Card>
                     </Grid>
 
@@ -503,27 +517,27 @@ function TeacherDashboard() {
                         transition: 'all 0.3s ease'
                       }}>
                         <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                                        <CheckCircle sx={{ fontSize: 40, opacity: 0.8 }} />
-                                        <Chip 
-                                          label="Active" 
-                                          size="small" 
-                                          sx={{ 
-                                            backgroundColor: alpha('#ffffff', 0.2),
-                                            color: 'white',
-                                            fontWeight: 500
-                                          }} 
-                                        />
-                                      </Box>
-                                      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                        <Typography variant="h3" fontWeight={700} sx={{ mb: 1 }}>
-                                          {modules.filter(m => m.active).length}
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                                          Active Modules
-                                        </Typography>
-                                      </Box>
-                                    </CardContent>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                            <CheckCircle sx={{ fontSize: 40, opacity: 0.8 }} />
+                            <Chip 
+                              label="Active" 
+                              size="small" 
+                              sx={{ 
+                                backgroundColor: alpha('#ffffff', 0.2),
+                                color: 'white',
+                                fontWeight: 500
+                              }} 
+                            />
+                          </Box>
+                          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            <Typography variant="h3" fontWeight={700} sx={{ mb: 1 }}>
+                              {modules.filter(m => m.active).length}
+                            </Typography>
+                            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                              Active Modules
+                            </Typography>
+                          </Box>
+                        </CardContent>
                       </Card>
                     </Grid>
                   </Grid>
@@ -542,31 +556,31 @@ function TeacherDashboard() {
                         transition: 'all 0.3s ease'
                       }}>
                         <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                                        <PeopleAltIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-                                        <Chip 
-                                          label="Enrolled" 
-                                          size="small" 
-                                          sx={{ 
-                                            backgroundColor: alpha('#ffffff', 0.2),
-                                            color: 'white',
-                                            fontWeight: 500
-                                          }} 
-                                        />
-                                      </Box>
-                                      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                        <Typography variant="h3" fontWeight={700} sx={{ mb: 1 }}>
-                                          {loadingStudents ? (
-                                            <CircularProgress size={24} sx={{ color: 'white' }} />
-                                          ) : (
-                                            enrolledStudentsCount
-                                          )}
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                                          Students
-                                        </Typography>
-                                      </Box>
-                                    </CardContent>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                            <PeopleAltIcon sx={{ fontSize: 40, opacity: 0.8 }} />
+                            <Chip 
+                              label="Enrolled" 
+                              size="small" 
+                              sx={{ 
+                                backgroundColor: alpha('#ffffff', 0.2),
+                                color: 'white',
+                                fontWeight: 500
+                              }} 
+                            />
+                          </Box>
+                          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            <Typography variant="h3" fontWeight={700} sx={{ mb: 1 }}>
+                              {loadingStudents ? (
+                                <CircularProgress size={24} sx={{ color: 'white' }} />
+                              ) : (
+                                enrolledStudentsCount
+                              )}
+                            </Typography>
+                            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                              Students
+                            </Typography>
+                          </Box>
+                        </CardContent>
                       </Card>
                     </Grid>
 
@@ -582,42 +596,42 @@ function TeacherDashboard() {
                         transition: 'all 0.3s ease'
                       }}>
                         <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                                        <AutoGraphIcon sx={{ fontSize: 40, opacity: 0.8 }} />
-                                        <Chip 
-                                          label="Progress" 
-                                          size="small" 
-                                          sx={{ 
-                                            backgroundColor: alpha('#ffffff', 0.2),
-                                            color: 'white',
-                                            fontWeight: 500
-                                          }} 
-                                        />
-                                      </Box>
-                                      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                        <Typography variant="h3" fontWeight={700} sx={{ mb: 1 }}>
-                                          {loadingCompletionRate ? (
-                                            <CircularProgress size={24} sx={{ color: 'white' }} />
-                                          ) : (
-                                            `${completionRate}%`
-                                          )}
-                                        </Typography>
-                                        <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                                          Completion Rate
-                                        </Typography>
-                                        <LinearProgress 
-                                          variant="determinate" 
-                                          value={completionRate} 
-                                          sx={{ 
-                                            mt: 1,
-                                            backgroundColor: alpha('#ffffff', 0.3),
-                                            '& .MuiLinearProgress-bar': {
-                                              backgroundColor: '#ffffff'
-                                            }
-                                          }} 
-                                        />
-                                      </Box>
-                                    </CardContent>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                            <AutoGraphIcon sx={{ fontSize: 40, opacity: 0.8 }} />
+                            <Chip 
+                              label="Progress" 
+                              size="small" 
+                              sx={{ 
+                                backgroundColor: alpha('#ffffff', 0.2),
+                                color: 'white',
+                                fontWeight: 500
+                              }} 
+                            />
+                          </Box>
+                          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            <Typography variant="h3" fontWeight={700} sx={{ mb: 1 }}>
+                              {loadingCompletionRate ? (
+                                <CircularProgress size={24} sx={{ color: 'white' }} />
+                              ) : (
+                                `${completionRate}%`
+                              )}
+                            </Typography>
+                            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                              Completion Rate
+                            </Typography>
+                            <LinearProgress 
+                              variant="determinate" 
+                              value={completionRate} 
+                              sx={{ 
+                                mt: 1,
+                                backgroundColor: alpha('#ffffff', 0.3),
+                                '& .MuiLinearProgress-bar': {
+                                  backgroundColor: '#ffffff'
+                                }
+                              }} 
+                            />
+                          </Box>
+                        </CardContent>
                       </Card>
                     </Grid>
                   </Grid>

@@ -22,19 +22,36 @@ function Navbar() {
 
   useEffect(() => {
     const checkLoginStatus = () => {
-      const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      // FIXED: Check for token + userEmail instead of isLoggedIn
+      const token = localStorage.getItem('token');
+      const userEmail = localStorage.getItem('userEmail');
+      const loggedIn = !!(token && userEmail);
+      
+      console.log("Navbar auth check:", { token: !!token, userEmail, loggedIn });
+      
       setIsLoggedIn(loggedIn);
       
-      if (loggedIn) {
+      // Only fetch profile if logged in AND not on landing/auth pages
+      const isAuthPage = ['/', '/login', '/register'].includes(location.pathname);
+      
+      if (loggedIn && !isAuthPage) {
         fetchUserProfile();
+      } else if (isAuthPage) {
+        // Clear profile data when on auth pages to prevent stale data
+        setUserProfile(null);
+        setProgressStats(null);
+        setModuleStats(null);
       }
     };
     
     checkLoginStatus();
     
+    // Listen for both storage events and custom localStorageChange events
+    window.addEventListener('storage', checkLoginStatus);
     window.addEventListener('localStorageChange', checkLoginStatus);
     
     return () => {
+      window.removeEventListener('storage', checkLoginStatus);
       window.removeEventListener('localStorageChange', checkLoginStatus);
     };
   }, [location.pathname]);
@@ -52,74 +69,74 @@ function Navbar() {
     };
   }, []);
 
- const fetchUserProfile = async () => {
-  try {
-    const userEmail = localStorage.getItem("userEmail");
-    const userRole = localStorage.getItem("userRole");
-    const isAdmin = localStorage.getItem("isAdmin") === "true";
-    
-    if (!userEmail) return;
+  const fetchUserProfile = async () => {
+    try {
+      const userEmail = localStorage.getItem("userEmail");
+      const userRole = localStorage.getItem("userRole");
+      const isAdmin = localStorage.getItem("isAdmin") === "true";
+      
+      if (!userEmail) return;
 
-    let response;
-    let apiEndpoint;
-    let detectedRole = null;
+      let response;
+      let apiEndpoint;
+      let detectedRole = null;
 
-    // Determine which endpoint to call based on stored role
-    if (isAdmin) {
-      apiEndpoint = `http://localhost:8080/api/admin/profile?email=${userEmail}`;
-      detectedRole = "ADMIN";
-    } else if (userRole === "TEACHER") {
-      apiEndpoint = `http://localhost:8080/api/teachers/profile?email=${userEmail}`;
-      detectedRole = "TEACHER";
-    } else {
-      apiEndpoint = `http://localhost:8080/api/students/profile?email=${userEmail}`;
-      detectedRole = "STUDENT";
-    }
-
-    console.log("Fetching profile from:", apiEndpoint);
-
-    response = await fetch(apiEndpoint, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json"
+      // Determine which endpoint to call based on stored role
+      if (isAdmin) {
+        apiEndpoint = `http://localhost:8080/api/admin/profile?email=${userEmail}`;
+        detectedRole = "ADMIN";
+      } else if (userRole === "TEACHER") {
+        apiEndpoint = `http://localhost:8080/api/teachers/profile?email=${userEmail}`;
+        detectedRole = "TEACHER";
+      } else {
+        apiEndpoint = `http://localhost:8080/api/students/profile?email=${userEmail}`;
+        detectedRole = "STUDENT";
       }
-    });
 
-    if (!response.ok) {
-      console.error(`Profile fetch failed for ${detectedRole}`);
-      // Don't try alternate endpoints - this prevents the loop
-      return;
-    }
+      console.log("Fetching profile from:", apiEndpoint);
 
-    const profileData = await response.json();
-    profileData.userType = detectedRole;
-    setUserProfile(profileData);
-    
-    // Store the appropriate ID
-    if (detectedRole === "STUDENT" && profileData.id) {
-      localStorage.setItem('studentId', profileData.id);
-    } else if (detectedRole === "TEACHER" && profileData.id) {
-      localStorage.setItem('teacherId', profileData.id);
+      response = await fetch(apiEndpoint, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        console.error(`Profile fetch failed for ${detectedRole}`);
+        return;
+      }
+
+      const profileData = await response.json();
+      profileData.userType = detectedRole;
+      setUserProfile(profileData);
+      
+      // Store the appropriate ID
+      if (detectedRole === "STUDENT" && profileData.id) {
+        localStorage.setItem('studentId', profileData.id);
+        // Only fetch progress stats for students
+        fetchProgressStats(profileData.id);
+      } else if (detectedRole === "TEACHER" && profileData.id) {
+        localStorage.setItem('teacherId', profileData.id);
+      }
+      
+    } catch (err) {
+      console.error("Error fetching profile:", err);
     }
-    
-    if (detectedRole === "STUDENT") {
-      fetchProgressStats(profileData.id);
-    }
-  } catch (err) {
-    console.error("Error fetching profile:", err);
-  }
-};
+  };
 
   const fetchProgressStats = async (studentId) => {
     try {
       const storedStudentId = localStorage.getItem('studentId') || studentId;
       
       if (!storedStudentId) return;
+      
       const progressResponse = await getStudentModuleProgressStats(storedStudentId, 1);
       setProgressStats(progressResponse);
       setModuleStats(progressResponse);
     } catch (error) {
       console.error('Error fetching progress stats:', error);
+      // Silently fail - don't throw the error
     }
   };
 
@@ -129,16 +146,20 @@ function Navbar() {
 
     setDropdownOpen(false);
     
+    // FIXED: Clear all authentication data consistently
     localStorage.removeItem('token');
     localStorage.removeItem('userEmail');
-    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userRole');
     localStorage.removeItem('isAdmin');
+    localStorage.removeItem('studentId');
+    localStorage.removeItem('teacherId');
+    localStorage.removeItem('userId');
+    
+    // Also remove the old isLoggedIn flag if it exists
+    localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('userType');
-    localStorage.removeItem('userRole'); // Remove userRole
-    localStorage.removeItem("studentId"); 
-    localStorage.removeItem("teacherId");  
-    localStorage.removeItem("userId");    
 
+    // Dispatch event to notify other components
     window.dispatchEvent(new Event('localStorageChange'));
     
     setIsLoggedIn(false);
@@ -165,7 +186,15 @@ function Navbar() {
       navigate('/');
     }
     else {
-      navigate('/homepage');
+      // FIXED: Redirect to appropriate dashboard based on user role
+      const userRole = localStorage.getItem('userRole');
+      if (userRole === 'TEACHER') {
+        navigate('/teacherdashboard');
+      } else if (userRole === 'ADMIN') {
+        navigate('/admin');
+      } else {
+        navigate('/studentdashboard');
+      }
     }
   };
 
@@ -181,12 +210,25 @@ function Navbar() {
       return '/';
     }
     else {
-      return '/homepage';
+      // FIXED: Return appropriate dashboard based on user role
+      const userRole = localStorage.getItem('userRole');
+      if (userRole === 'TEACHER') {
+        return '/teacherdashboard';
+      } else if (userRole === 'ADMIN') {
+        return '/admin';
+      } else {
+        return '/studentdashboard';
+      }
     }
   };
 
   const shouldShowProfileDropdown = () => {
     const currentPath = location.pathname;
+    console.log("Should show profile dropdown:", { 
+      isLoggedIn, 
+      currentPath,
+      userProfile 
+    });
     return isLoggedIn && currentPath !== '/' && currentPath !== '/login' && currentPath !== '/register';
   };
 
@@ -206,6 +248,9 @@ function Navbar() {
     } else if (userProfile.userType === "TEACHER") {
       const fullName = userProfile.name || "Teacher";
       return fullName.split(' ')[0];
+    } else if (userProfile.userType === "ADMIN") {
+      // FIXED: Default to "Admin" for admin users
+      return "Admin";
     }
     
     return "User";
@@ -333,12 +378,12 @@ function Navbar() {
             
             {dropdownOpen && (
               <div className="profile-dropdown-menu">
-                <RouterLink to="/account" className="dropdown-item">
+                <RouterLink to="/account" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                   Account
                 </RouterLink>
                 {shouldShowMyBadges() && (
-                  <RouterLink to="/badges" className="dropdown-item">
-                    Badge
+                  <RouterLink to="/badges" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                    Badges
                   </RouterLink>
                 )}
                 <div className="dropdown-item" onClick={handleLogout}>
@@ -347,6 +392,18 @@ function Navbar() {
               </div>
             )}
           </div>
+        )}
+
+        {/* Show login/register buttons when not logged in */}
+        {!isLoggedIn && location.pathname !== '/login' && location.pathname !== '/register' && (
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <RouterLink to="/login" style={{ textDecoration: 'none' }}>
+              <button className="login-btn-nav">Login</button>
+            </RouterLink>
+            <RouterLink to="/register" style={{ textDecoration: 'none' }}>
+              <button className="register-btn-nav">Register</button>
+            </RouterLink>
+          </Box>
         )}
       </div>
     </nav>

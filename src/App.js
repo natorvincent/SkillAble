@@ -34,16 +34,29 @@ import ContactPage from './components/ContactPage';
 import StudentDashboard from './components/StudentDashboard';
 import TeacherDashboard from './components/TeacherDashboard';
 
-function useLocalStorage(key, defaultValue) {
-  const [value, setValue] = useState(() => {
-    const storedValue = localStorage.getItem(key);
-    return storedValue === null ? defaultValue : storedValue === 'true';
+// Simplified localStorage hook without state to prevent re-renders
+function useAuthStatus() {
+  const [authStatus, setAuthStatus] = useState(() => {
+    const token = localStorage.getItem("token");
+    const userEmail = localStorage.getItem("userEmail");
+    const userRole = localStorage.getItem("userRole"); // Use userRole instead of userType
+    return {
+      isLoggedIn: !!(token && userEmail),
+      isAdmin: localStorage.getItem("isAdmin") === "true",
+      userRole: userRole || "STUDENT" // Changed from userType to userRole
+    };
   });
 
   useEffect(() => {
     const handleStorageChange = () => {
-      const newValue = localStorage.getItem(key);
-      setValue(newValue === null ? defaultValue : newValue === 'true');
+      const token = localStorage.getItem("token");
+      const userEmail = localStorage.getItem("userEmail");
+      const userRole = localStorage.getItem("userRole");
+      setAuthStatus({
+        isLoggedIn: !!(token && userEmail),
+        isAdmin: localStorage.getItem("isAdmin") === "true",
+        userRole: userRole || "STUDENT"
+      });
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -53,14 +66,13 @@ function useLocalStorage(key, defaultValue) {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('localStorageChange', handleStorageChange);
     };
-  }, [key, defaultValue]);
+  }, []);
 
-  return value;
+  return authStatus;
 }
 
 function App() {
-  const isLoggedIn = useLocalStorage('isLoggedIn', false);
-  const isAdmin = useLocalStorage('isAdmin', false);
+  const { isLoggedIn, isAdmin, userRole } = useAuthStatus(); // Changed from userType to userRole
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -70,22 +82,35 @@ function App() {
     return () => clearTimeout(timer);
   }, []);
 
-  if (!isLoaded) {
-    return null;
-  }
-  // Helper function to get appropriate dashboard redirect
+  // Helper function to get appropriate dashboard redirect - FIXED
   const getDashboardRedirect = () => {
     if (isAdmin) return "/admin";
-    
-    const userType = localStorage.getItem('userType');
-    if (userType === 'STUDENT') return "/studentdashboard";
-    if (userType === 'TEACHER') return "/teacherdashboard";
-    
+    if (userRole === 'TEACHER') return "/teacherdashboard";
+    if (userRole === 'STUDENT') return "/studentdashboard";
+    return "/"; // Fallback to landing page
   };
 
+  // Don't render until loaded to prevent flash
   if (!isLoaded) {
-    return null;
+    return (
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "center", 
+        alignItems: "center", 
+        height: "100vh" 
+      }}>
+        <div>Loading...</div>
+      </div>
+    );
   }
+
+  console.log("App.js Routing - Current state:", {
+    isLoggedIn,
+    userRole,
+    currentPath: window.location.pathname,
+    token: !!localStorage.getItem('token'),
+    userEmail: localStorage.getItem('userEmail')
+  });
 
   return (
     <Router>
@@ -96,38 +121,30 @@ function App() {
         <Route path="/about" element={<AboutUsPage />} />
         <Route path="/contact" element={<ContactPage />} />
         
+        {/* Auth routes with FIXED navigation logic */}
         <Route path="/login" element={
-          isLoggedIn ? (isAdmin ? <Navigate to="/admin" replace /> : <Navigate to={getDashboardRedirect()} replace />) : <Login />
+          isLoggedIn ? <Navigate to={getDashboardRedirect()} replace /> : <Login />
         } />
+        
         <Route path="/register" element={
           isLoggedIn ? <Navigate to={getDashboardRedirect()} replace /> : <Register />
         } />
         
-        {/* Dashboard routes (require login and specific user type) */}
-        <Route path="/studentdashboard" element={
-          !isLoggedIn ? <Navigate to="/login" replace /> : 
-            (localStorage.getItem('userType') === 'STUDENT' ? <StudentDashboard /> : 
-             <Navigate to={getDashboardRedirect()} replace />)
-        } />
-        
-        <Route path="/teacherdashboard" element={
-          !isLoggedIn ? <Navigate to="/login" replace /> : 
-            (localStorage.getItem('userType') === 'TEACHER' ? <TeacherDashboard /> : 
-             <Navigate to={getDashboardRedirect()} replace />)
-        } />
+        {/* Dashboard routes - REMOVED authentication checks to prevent loops */}
+        <Route path="/studentdashboard" element={<StudentDashboard />} />
+        <Route path="/teacherdashboard" element={<TeacherDashboard />} />
         
         {/* Legacy homepage route - redirect to appropriate dashboard */}
         <Route path="/homepage" element={
-          !isLoggedIn ? <Navigate to="/login" replace /> : 
-            <Navigate to={getDashboardRedirect()} replace />
+          isLoggedIn ? <Navigate to={getDashboardRedirect()} replace /> : <Navigate to="/login" replace />
         } />
+        
         <Route path="/account" element={
           isLoggedIn ? <AccountPage /> : <Navigate to="/login" replace />
         } />
         
         <Route path="/badges" element={
-          !isLoggedIn ? <Navigate to="/login" replace /> : 
-            (isAdmin ? <Navigate to="/admin" replace /> : <BadgesPage/>)
+          isLoggedIn ? <BadgesPage /> : <Navigate to="/login" replace />
         } />
 
         <Route path="/module/:moduleId" element={
@@ -135,10 +152,11 @@ function App() {
         } />
 
         <Route path="/manageStudents" element={
-          isLoggedIn ? <ManageStudents /> : <Navigate to="/login" replace />
+          isLoggedIn && userRole === 'TEACHER' ? <ManageStudents /> : <Navigate to="/login" replace />
         } />
+        
         <Route path="/studentProgress" element={
-          isLoggedIn ? <StudentProgress /> : <Navigate to="/login" replace />
+          isLoggedIn && userRole === 'TEACHER' ? <StudentProgress /> : <Navigate to="/login" replace />
         } />
 
         {/* Cooking Routes - WITH lessonId parameter */}
@@ -209,8 +227,6 @@ function App() {
           isLoggedIn ? <CookingLevel1 /> : <Navigate to="/login" replace />
         } />
 
-
-
         {/* Household Chores Routes */}
         <Route path="/lesson/household-chores/level-1/:lessonId" element={
           isLoggedIn ? <HouseholdLevel1 /> : <Navigate to="/login" replace />
@@ -227,8 +243,6 @@ function App() {
         <Route path="/lesson/household-chores/level-4/:lessonId" element={
           isLoggedIn ? <HouseholdLevel4 /> : <Navigate to="/login" replace />
         } />
-
-
 
         {/* Personal Hygiene Level Routes */}
         <Route path="/lesson/hygiene/level-1/:lessonId" element={
@@ -247,8 +261,6 @@ function App() {
         <Route path="/lesson/hygiene/:lessonId" element={
           isLoggedIn ? <PersonalHygieneLevel1 /> : <Navigate to="/login" replace />
         } />
-
-
 
         {/* Food Sorting Route */}
         <Route path="/lesson/food-sorting/level-1/:lessonId" element={
@@ -285,6 +297,7 @@ function App() {
           } 
         /> 
         
+        {/* Catch-all route */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
