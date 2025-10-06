@@ -244,6 +244,12 @@ function App() {
           isLoggedIn ? <HouseholdLevel4 /> : <Navigate to="/login" replace />
         } />
 
+        <Route path="/lesson/household-chores/:lessonId" element={
+          isLoggedIn ? <HouseholdLevel1 /> : <Navigate to="/login" replace />
+        } />
+
+
+
         {/* Personal Hygiene Level Routes */}
         <Route path="/lesson/hygiene/level-1/:lessonId" element={
           isLoggedIn ? <PersonalHygieneLevel1 /> : <Navigate to="/login" replace />
