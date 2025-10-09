@@ -16,11 +16,25 @@ import {
   DialogActions,
   LinearProgress,
   Chip,
-  Stack
+  Stack,
+  IconButton,
+  CircularProgress
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../Navbar';
 import kitchenBg from "../../assets/householdLevel3/kitchen.jpg";
+import { useParams } from 'react-router-dom'; 
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import VolumeOffIcon from '@mui/icons-material/VolumeOff';
+import StarIcon from '@mui/icons-material/Star';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+
+// Import progress service - ADD updateModuleProgress
+import { 
+  getStudentLessonProgress, 
+  saveStudentLessonProgress,
+  updateModuleProgress  // ADD THIS IMPORT
+} from '../../services/progressService';
 
 // Import all assets
 import sponge from "../../assets/householdLevel3/sponge.png";
@@ -105,6 +119,11 @@ const washingOrder = [
   { id: 5, name: "Pot", dirty: pot, clean: cleanPot, type: "pot" }
 ];
 
+// Scoring constants
+const MAX_POSSIBLE_SCORE = 100;
+const POINTS_PER_DISH = 20; // 20 points per dish (5 dishes × 20 = 100 total)
+const DISHES_COUNT = washingOrder.length;
+
 export default function HouseholdLevel3() {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(PAGES.LANDING);
@@ -112,18 +131,27 @@ export default function HouseholdLevel3() {
   // Instructions page state
   const [clickedItems, setClickedItems] = useState(new Set());
   
+  // Voice feature state
+  const [currentSpeech, setCurrentSpeech] = useState(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  
   // Game page state
   const [currentStep, setCurrentStep] = useState(0);
   const [gameState, setGameState] = useState({
     spongeHasSoap: false,
     dishesPlaced: [],
     dishesCleaned: [],
-    dishesOnRack: [] 
+    dishesOnRack: [],
+    dishScores: {} // Track scores for each dish individually
   });
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [gameCompleted, setGameCompleted] = useState(false);
   const [score, setScore] = useState(0);
+
+  // Progress saving state
+  const [progressSaving, setProgressSaving] = useState(false);
+  const [progressSaved, setProgressSaved] = useState(false);
 
   const [draggingSoap, setDraggingSoap] = useState(false);
   const [spongeActive, setSpongeActive] = useState(false);
@@ -138,11 +166,127 @@ export default function HouseholdLevel3() {
   ];
 
   const progressPercentage = ((currentStep + (gameCompleted ? 1 : 0)) / steps.length) * 100;
+  const { lessonId } = useParams();
+
+  // Get student ID from localStorage - IMPROVED VERSION
+  const getStudentId = () => {
+    const studentId = localStorage.getItem('studentId');
+    const userType = localStorage.getItem('userType');
+    
+    if (userType !== 'STUDENT') {
+      console.error('User is not a student:', userType);
+      return null;
+    }
+    
+    if (!studentId || studentId === 'null') {
+      console.error('No student ID found in localStorage');
+      return null;
+    }
+    
+    const parsedId = parseInt(studentId, 10);
+    if (isNaN(parsedId)) {
+      console.error('Invalid student ID format:', studentId);
+      return null;
+    }
+    
+    return parsedId;
+  };
+
+  // Fetch user progress when lessonId changes - IMPROVED VERSION
+  useEffect(() => {
+    const fetchUserProgress = async () => {
+      try {
+        const studentId = getStudentId();
+        if (!studentId || !lessonId) {
+          console.log('Missing studentId or lessonId:', { studentId, lessonId });
+          return;
+        }
+        
+        console.log('Fetching progress for student:', studentId, 'lesson:', lessonId);
+        const progressResponse = await getStudentLessonProgress(studentId, lessonId);
+        
+        if (progressResponse) {
+          setScore(progressResponse.score || 0);
+          if (progressResponse.completed) {
+            setFeedbackMessage("Great job! You finished this before. Want to try again?");
+            setShowFeedback(true);
+          }
+        } else {
+          console.log('No existing progress found, starting fresh');
+          setScore(0);
+        }
+      } catch (error) {
+        console.log('Error fetching progress (starting fresh):', error);
+        setScore(0);
+      }
+    };
+    
+    fetchUserProgress();
+  }, [lessonId]);
 
   // Page navigation handlers
   const goToInstructions = () => setCurrentPage(PAGES.INSTRUCTIONS);
   const goToGame = () => setCurrentPage(PAGES.GAME);
   const goToHome = () => navigate('/homepage');
+
+  // Voice feature handlers
+  const speakText = (text) => {
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+    }
+
+    const speech = new SpeechSynthesisUtterance();
+    speech.text = text;
+    speech.rate = 0.8;
+    speech.pitch = 1;
+    speech.volume = 1;
+
+    speech.onstart = () => {
+      setIsSpeaking(true);
+      setCurrentSpeech(speech);
+    };
+
+    speech.onend = () => {
+      setIsSpeaking(false);
+      setCurrentSpeech(null);
+    };
+
+    speech.onerror = () => {
+      setIsSpeaking(false);
+      setCurrentSpeech(null);
+    };
+
+    window.speechSynthesis.speak(speech);
+  };
+
+  const stopSpeech = () => {
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      setCurrentSpeech(null);
+    }
+  };
+
+  const handleItemClickWithVoice = (itemId) => {
+    const tool = tools.find(t => t.id === itemId);
+    if (tool) {
+      const speechText = `${tool.name}. ${tool.description}`;
+      speakText(speechText);
+    }
+    
+    const newClickedItems = new Set(clickedItems);
+    newClickedItems.add(itemId);
+    setClickedItems(newClickedItems);
+  };
+
+  // Clean up speech synthesis on component unmount
+  useEffect(() => {
+    return () => {
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
 
   // Instructions page handlers
   const handleItemClick = (itemId) => {
@@ -153,14 +297,97 @@ export default function HouseholdLevel3() {
 
   const allItemsClicked = clickedItems.size === tools.length;
 
-  // Game page handlers 
+  // UPDATED Progress saving function - MATCHES SORTINGLEVEL1 PATTERN
+  const saveProgress = async () => {
+    if (progressSaving || progressSaved) return;
+
+    try {
+      setProgressSaving(true);
+      const studentId = getStudentId();
+      
+      if (!studentId || !lessonId) {
+        console.error('Cannot save progress - missing data:', { studentId, lessonId });
+        return;
+      }
+      
+      // Calculate score percentage capped at 100%
+      const cappedScore = Math.min(score, MAX_POSSIBLE_SCORE);
+      const finalScore = cappedScore;
+      
+      console.log('Attempting to save progress with data:', {
+        studentId,
+        lessonId: parseInt(lessonId, 10),
+        score: finalScore,
+        maxScore: MAX_POSSIBLE_SCORE,
+        completed: true,
+        starsEarned: getStarRating()
+      });
+      
+      const progressData = {
+        studentId: studentId,
+        lessonId: parseInt(lessonId, 10),
+        score: finalScore,
+        maxScore: MAX_POSSIBLE_SCORE,
+        completed: true,
+        starsEarned: getStarRating()
+      };
+      
+      // Try to save lesson progress
+      try {
+        const lessonProgress = await saveStudentLessonProgress(studentId, lessonId, progressData);
+        console.log('Lesson progress saved successfully:', lessonProgress);
+      } catch (lessonError) {
+        console.error('Failed to save lesson progress:', lessonError);
+        // Don't throw here - we'll try module progress as fallback
+      }
+      
+      // Try to update module progress as fallback (with better error handling)
+      try {
+        // Use the correct module ID for household chores (adjust based on your actual module ID)
+        const moduleId = 4; // This should match your household chores module ID
+        const moduleProgress = await updateModuleProgress(studentId, moduleId, {
+          score: finalScore,
+          completed: true,
+          starsEarned: getStarRating()
+        });
+        if (moduleProgress) {
+          console.log('Module progress updated successfully:', moduleProgress);
+        } else {
+          console.log('Module progress update skipped (endpoint may not exist)');
+        }
+      } catch (moduleError) {
+        console.log('Module progress update failed (expected if endpoint not available):', moduleError);
+      }
+      
+      setProgressSaved(true);
+      console.log('Progress saving process completed');
+      
+    } catch (error) {
+      console.error('Error in save progress process:', error);
+      // Even if there's an error, we mark it as saved to prevent infinite retries
+      setProgressSaved(true);
+    } finally {
+      setProgressSaving(false);
+    }
+  };
+
+  // Star rating calculation
+  const getStarRating = () => {
+    const percentage = (Math.min(score, MAX_POSSIBLE_SCORE) / MAX_POSSIBLE_SCORE) * 100;
+    if (percentage >= 90) return 3;
+    if (percentage >= 70) return 2;
+    if (percentage >= 50) return 1;
+    return 0;
+  };
+
+  // Game page handlers with new scoring system
   const handleSpongeClick = () => {
     if (currentStep === 0) {
       setGameState(prev => ({ ...prev, spongeHasSoap: true }));
       setCurrentStep(1);
       setFeedbackMessage("Great! Now place the dishes in the sink in the correct order.");
       setShowFeedback(true);
-      setScore(prev => prev + 10);
+      // No points for instructions/soap step
     }
   };
 
@@ -170,18 +397,30 @@ export default function HouseholdLevel3() {
       
       if (dish.id === expectedDish.id) {
         const newDishesPlaced = [...gameState.dishesPlaced, dish];
-        setGameState(prev => ({ ...prev, dishesPlaced: newDishesPlaced }));
         
+        // Award points for correct dish placement
+        const placementPoints = 5; // First step of 4 for this dish
+        const newScore = Math.min(score + placementPoints, MAX_POSSIBLE_SCORE);
+        
+        setGameState(prev => ({ 
+          ...prev, 
+          dishesPlaced: newDishesPlaced,
+          dishScores: {
+            ...prev.dishScores,
+            [dish.id]: (prev.dishScores[dish.id] || 0) + placementPoints
+          }
+        }));
+        
+        setScore(newScore);
         setFeedbackMessage(`Correct! ${dish.name} is next. Now scrub it with the sponge!`);
         setShowFeedback(true);
-        setScore(prev => prev + 20);
 
         // Move to scrubbing step after placing a dish
         setCurrentStep(2);
       } else {
         setFeedbackMessage(`Try again! Remember the order: Glasses → Utensils → Plates → Pots`);
         setShowFeedback(true);
-        setScore(prev => Math.max(0, prev - 5));
+        // No penalty points, just try again
       }
     }
   };
@@ -190,17 +429,22 @@ export default function HouseholdLevel3() {
     if (currentStep === 2 && gameState.spongeHasSoap) {
       const dish = washingOrder.find(d => d.id === dishId);
       if (dish && !gameState.dishesCleaned.includes(dishId)) {
+        // Award points for scrubbing completion
+        const scrubPoints = 5; // Second step of 4 for this dish
+        const newScore = Math.min(score + scrubPoints, MAX_POSSIBLE_SCORE);
+        
         setGameState(prev => ({
           ...prev,
-          dishesCleaned: [...prev.dishesCleaned, dishId]
+          dishesCleaned: [...prev.dishesCleaned, dishId],
+          dishScores: {
+            ...prev.dishScores,
+            [dishId]: (prev.dishScores[dishId] || 0) + scrubPoints
+          }
         }));
         
+        setScore(newScore);
         setFeedbackMessage(`Good job! ${dish.name} is now clean. Drag it to the drying rack.`);
         setShowFeedback(true);
-        setScore(prev => prev + 15);
-
-        // Move to rack placement step after scrubbing
-        setCurrentStep(3);
       }
     }
   };
@@ -214,12 +458,11 @@ export default function HouseholdLevel3() {
         setScrubProgress(prev => {
           if (prev >= 100) {
             clearInterval(scrubInterval);
-            // Dish is cleaned
             handleScrubComplete(dishId);
             setScrubbingDish(null);
             return 100;
           }
-          return prev + 20; // 5 seconds total (100/20 = 5 increments)
+          return prev + 20;
         });
       }, 1000);
     }
@@ -232,27 +475,50 @@ export default function HouseholdLevel3() {
 
   const handleMoveToRack = (dishId) => {
     if (currentStep === 3) {
-      // Remove from cleaned dishes and add to rack
-      setGameState(prev => ({
-        ...prev,
-        dishesCleaned: prev.dishesCleaned.filter(id => id !== dishId),
-        dishesOnRack: [...(prev.dishesOnRack || []), dishId]
-      }));
+      const dish = washingOrder.find(d => d.id === dishId);
       
-      setScore(prev => prev + 10);
+      // Award points for moving to rack (final step for this dish)
+      const rackPoints = 10; // Third and fourth steps combined (5 + 5)
+      const newScore = Math.min(score + rackPoints, MAX_POSSIBLE_SCORE);
       
-      // Check if all dishes are on rack
-      const dishesOnRack = [...(gameState.dishesOnRack || []), dishId];
-      if (dishesOnRack.length === washingOrder.length) {
-        setGameCompleted(true);
-        setFeedbackMessage("Congratulations! You've successfully washed all the dishes!");
-        setShowFeedback(true);
-      } else {
-        // Return to step 1 for next dish
-        setCurrentStep(1);
-        setFeedbackMessage("Great! Now place the next dish in the sink.");
-        setShowFeedback(true);
-      }
+      setGameState(prev => {
+        const updatedDishesPlaced = prev.dishesPlaced.filter(dish => dish.id !== dishId);
+        const updatedDishesCleaned = prev.dishesCleaned.filter(id => id !== dishId);
+        const updatedDishesOnRack = [...(prev.dishesOnRack || []), dishId];
+        
+        // Check if all dishes are on rack
+        const allDishesOnRack = updatedDishesOnRack.length === washingOrder.length;
+        
+        if (allDishesOnRack) {
+          setGameCompleted(true);
+          setFeedbackMessage("Congratulations! You've successfully washed all the dishes!");
+          setShowFeedback(true);
+          
+          // AUTO-SAVE PROGRESS WHEN GAME COMPLETES (LIKE SORTINGLEVEL1)
+          setTimeout(() => {
+            if (!progressSaved) {
+              saveProgress();
+            }
+          }, 1000);
+        } else {
+          setCurrentStep(1);
+          setFeedbackMessage("Great! Now place the next dish in the sink.");
+          setShowFeedback(true);
+        }
+        
+        setScore(newScore);
+        
+        return {
+          ...prev,
+          dishesPlaced: updatedDishesPlaced,
+          dishesCleaned: updatedDishesCleaned,
+          dishesOnRack: updatedDishesOnRack,
+          dishScores: {
+            ...prev.dishScores,
+            [dishId]: (prev.dishScores[dishId] || 0) + rackPoints
+          }
+        };
+      });
     }
   };
 
@@ -269,7 +535,8 @@ export default function HouseholdLevel3() {
       spongeHasSoap: false,
       dishesPlaced: [],
       dishesCleaned: [],
-      dishesOnRack: []
+      dishesOnRack: [],
+      dishScores: {}
     });
     setGameCompleted(false);
     setScore(0);
@@ -277,6 +544,16 @@ export default function HouseholdLevel3() {
     setSpongeActive(false);
     setScrubbingDish(null);
     setScrubProgress(0);
+    setProgressSaving(false);
+    setProgressSaved(false);
+  };
+
+  // Handle continue to next module
+  const handleContinue = async () => {
+    if (!progressSaved && !progressSaving) {
+      await saveProgress();
+    }
+    navigate(`/lesson/household-chores/level-4/${lessonId}`);
   };
 
   // Render different pages based on currentPage state
@@ -358,15 +635,28 @@ export default function HouseholdLevel3() {
         mb: 1,
         flexShrink: 0 // Prevent growing
         }}>
-        <Typography variant="h4" sx={{ 
-          color: '#1982C4', 
-          fontWeight: 'bold', 
-          mb: 2,
-          fontFamily: 'Poppins, sans-serif',
-          textAlign: 'center'
-        }}>
-          🧽 Kitchen Tools & Dish Order
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+          <Typography variant="h4" sx={{ 
+            color: '#1982C4', 
+            fontWeight: 'bold',
+            fontFamily: 'Poppins, sans-serif',
+            textAlign: 'center'
+          }}>
+            🧽 Kitchen Tools & Dish Order
+          </Typography>
+          <IconButton 
+            onClick={stopSpeech}
+            sx={{ 
+              color: '#1982C4',
+              backgroundColor: 'rgba(25, 130, 196, 0.1)',
+              '&:hover': {
+                backgroundColor: 'rgba(25, 130, 196, 0.2)'
+              }
+            }}
+          >
+            {isSpeaking ? <VolumeOffIcon /> : <VolumeUpIcon />}
+          </IconButton>
+        </Box>
         
         <Typography variant="h6" sx={{ 
           color: '#280B60', 
@@ -391,7 +681,7 @@ export default function HouseholdLevel3() {
         {tools.map((tool) => (
             <Card 
             key={tool.id}
-            onClick={() => handleItemClick(tool.id)}
+            onClick={() => handleItemClickWithVoice(tool.id)}
             sx={{ 
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
@@ -401,12 +691,16 @@ export default function HouseholdLevel3() {
                 flexDirection: 'column',
                 justifyContent: 'space-between',
                 minHeight: 0, 
+                position: 'relative',
                 '&:hover': {
                 transform: 'scale(1.02)',
                 boxShadow: 6
                 }
             }}
             >
+            <Box sx={{ position: 'absolute', top: 8, right: 8 }}>
+              <VolumeUpIcon sx={{ color: '#1982C4', fontSize: '1rem' }} />
+            </Box>
             <Box sx={{ height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 1 }}>
                 <CardMedia
                 component="img"
@@ -494,7 +788,7 @@ export default function HouseholdLevel3() {
             Step {currentStep + 1} of {steps.length}
           </Typography>
           <Chip 
-            label={`Score: ${score}`} 
+            label={`Score: ${score}/100`} 
             sx={{
               backgroundColor: '#FF595E',
               color: 'white',
@@ -528,69 +822,113 @@ export default function HouseholdLevel3() {
         }}>
         {/* Left Section - Drying Rack with individual boxes */}
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <Typography variant="h6" sx={{ 
+          <Typography variant="h6" sx={{ 
             textAlign: 'center', 
             color: 'white',
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
             py: 1,
             borderRadius: '10px',
             fontWeight: 'bold'
-        }}>
+          }}>
             🏠 Drying Rack
-        </Typography>
-        <Box sx={{ 
+          </Typography>
+          <Box sx={{ 
             display: 'grid', 
             gridTemplateColumns: '1fr 1fr', 
             gap: 2,
             flex: 1
-        }}>
+          }}>
             {washingOrder.map(dish => (
-            <Paper 
+              <Paper 
                 key={dish.id}
                 draggable={getDishStatus(dish.id) === 'clean' && currentStep === 3}
                 onDragStart={(e) => {
-                if (getDishStatus(dish.id) === 'clean' && currentStep === 3) {
+                  if (getDishStatus(dish.id) === 'clean' && currentStep === 3) {
                     e.dataTransfer.setData('cleanDishId', dish.id);
-                }
+                  }
                 }}
                 sx={{ 
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: getDishStatus(dish.id) === 'on-rack' ? 'rgba(144, 190, 109, 0.3)' : 'rgba(255, 255, 255, 0.9)',
-                borderRadius: '10px',
-                p: 1,
-                opacity: getDishStatus(dish.id) === 'on-rack' ? 1 : 
-                        getDishStatus(dish.id) === 'clean' ? 1 : 0.4,
-                transition: 'all 0.3s ease',
-                cursor: getDishStatus(dish.id) === 'clean' && currentStep === 3 ? 'grab' : 'default',
-                border: getDishStatus(dish.id) === 'on-rack' ? '2px solid #90BE6D' : 'none'
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: getDishStatus(dish.id) === 'on-rack' 
+                    ? 'rgba(144, 190, 109, 0.95)'  // More opaque when on rack
+                    : getDishStatus(dish.id) === 'clean' 
+                    ? 'rgba(255, 255, 255, 0.9)'   // Much less transparent for clean dishes
+                    : 'rgba(255, 255, 255, 0.4)',  // Slightly more visible for dirty dishes
+                  borderRadius: '10px',
+                  p: 1,
+                  opacity: getDishStatus(dish.id) === 'on-rack' ? 1 : 0.9, // Make clean but not dragged dishes semi-transparent
+                  transition: 'all 0.3s ease',
+                  cursor: getDishStatus(dish.id) === 'clean' && currentStep === 3 ? 'grab' : 'default',
+                  border: getDishStatus(dish.id) === 'on-rack' 
+                    ? '3px solid #90BE6D' 
+                    : getDishStatus(dish.id) === 'clean'
+                    ? '2px dashed #1976d2'
+                    : '1px solid #ccc',
+                  // Only glow for dishes that are actually on the rack
+                  boxShadow: getDishStatus(dish.id) === 'on-rack' 
+                    ? '0 0 20px rgba(144, 190, 109, 1), 0 0 30px rgba(144, 190, 109, 0.7)' 
+                    : 'none',
                 }}
-            >
+              >
                 <img 
-                src={getDishStatus(dish.id) === 'on-rack' ? dish.clean : dish.clean} 
-                alt={dish.name}
-                style={{ 
+                  src={dish.clean} 
+                  alt={dish.name}
+                  style={{ 
                     width: '50px', 
                     height: '50px', 
                     objectFit: 'contain',
-                }}
+                    // Enhanced styling for different states
+                    filter: getDishStatus(dish.id) === 'on-rack' 
+                      ? 'none' 
+                      : getDishStatus(dish.id) === 'clean'
+                      ? 'grayscale(30%) opacity(90%)'
+                      : 'grayscale(100%) opacity(40%)'
+                  }}
                 />
-                <Typography variant="caption" sx={{ mt: 1, fontWeight: 'bold' }}>
-                {dish.name}
+                <Typography variant="caption" sx={{ 
+                  mt: 1, 
+                  fontWeight: 'bold',
+                  color: getDishStatus(dish.id) === 'on-rack' 
+                    ? '#90BE6D' 
+                    : getDishStatus(dish.id) === 'clean'
+                    ? '#1976d2'
+                    : '#666'
+                }}>
+                  {dish.name}
                 </Typography>
                 {getDishStatus(dish.id) === 'on-rack' && (
-                <Typography variant="caption" sx={{ color: '#90BE6D', fontSize: '0.6rem' }}>
-                    ✓ Clean
-                </Typography>
+                  <Typography variant="caption" sx={{ 
+                    color: '#90BE6D', 
+                    fontSize: '0.6rem', 
+                    fontWeight: 'bold',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    px: 1,
+                    borderRadius: '4px'
+                  }}>
+                    ✓ ON RACK
+                  </Typography>
                 )}
-            </Paper>
+                {getDishStatus(dish.id) === 'clean' && currentStep === 3 && (
+                  <Typography variant="caption" sx={{ 
+                    color: '#1976d2', 
+                    fontSize: '0.5rem', 
+                    fontStyle: 'italic',
+                    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                    px: 0.5,
+                    borderRadius: '3px'
+                  }}>
+                    Drag to rack →
+                  </Typography>
+                )}
+              </Paper>
             ))}
             
             {/* Drop zone for drying rack */}
             <Box 
-            sx={{ 
+              sx={{ 
                 gridColumn: '1 / -1',
                 border: '2px dashed #90BE6D',
                 borderRadius: '8px',
@@ -598,22 +936,22 @@ export default function HouseholdLevel3() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 minHeight: '60px',
-                backgroundColor: 'rgba(144, 190, 109, 0.2)'
-            }}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
+                backgroundColor: 'rgba(144, 190, 109, 0.1)'
+              }}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
                 e.preventDefault();
                 if (currentStep === 3) {
-                const dishId = parseInt(e.dataTransfer.getData('cleanDishId'));
-                handleMoveToRack(dishId);
+                  const dishId = parseInt(e.dataTransfer.getData('cleanDishId'));
+                  handleMoveToRack(dishId);
                 }
-            }}
+              }}
             >
-            <Typography variant="body2" sx={{ color: '#90BE6D', textAlign: 'center' }}>
-                Drag clean dishes here to dry
-            </Typography>
+              <Typography variant="body2" sx={{ color: '#90BE6D', textAlign: 'center', fontWeight: 'bold' }}>
+                {currentStep === 3 ? 'Drag clean dishes here to dry' : 'Dishes will appear here after cleaning'}
+              </Typography>
             </Box>
-        </Box>
+          </Box>
         </Box>
 
         {/* Center Section - Sink Area */}
@@ -628,157 +966,189 @@ export default function HouseholdLevel3() {
         }}>
             {/* Tools at top right corner */}
             <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'flex-end', 
-            gap: 1,
-            mb: 2 
+              display: 'flex', 
+              justifyContent: 'flex-end', 
+              gap: 1,
+              mb: 2 
             }}>
-            <Box 
+              {/* Soap - Only draggable before sponge activation */}
+              <Box 
                 draggable={!spongeActive}
-                onDragStart={() => setDraggingSoap(true)}
+                onDragStart={(e) => {
+                  if (!spongeActive) {
+                    setDraggingSoap(true);
+                  } else {
+                    e.preventDefault();
+                  }
+                }}
                 onDragEnd={() => setDraggingSoap(false)}
                 sx={{ 
-                textAlign: 'center',
-                p: 1,
-                border: '3px solid #ccc',
-                borderRadius: '8px',
-                backgroundColor: 'white',
-                width: '80px',
-                cursor: 'grab'
+                  textAlign: 'center',
+                  p: 1,
+                  border: '3px solid #ccc',
+                  borderRadius: '8px',
+                  backgroundColor: 'white',
+                  width: '80px',
+                  cursor: spongeActive ? 'not-allowed' : 'grab',
+                  opacity: spongeActive ? 0.6 : 1,
+                  userSelect: 'none',
                 }}
-            >
-                <img src={dishLiquid} alt="Dish Liquid" style={{ width: '40px', height: '40px' }} />
-                <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
-                Soap
+              >
+                <img 
+                  src={dishLiquid} 
+                  alt="Dish Liquid" 
+                  style={{ 
+                    width: '40px', 
+                    height: '40px',
+                    pointerEvents: 'none'
+                  }} 
+                />
+                <Typography variant="caption" sx={{ fontSize: '0.7rem', display: 'block', mt: 0.5 }}>
+                  Soap
                 </Typography>
-            </Box>
-            
-            <Box 
+              </Box>
+              
+              {/* Sponge */}
+              <Box 
+                draggable={spongeActive} // Make sponge draggable when activated
+                onDragStart={(e) => {
+                  if (spongeActive) {
+                    // Set data to identify this as a sponge drag
+                    e.dataTransfer.setData('sponge', 'true');
+                  } else {
+                    e.preventDefault();
+                  }
+                }}
+                onDragEnd={() => {
+                  // Optional: Add any drag end logic for sponge
+                }}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
-                e.preventDefault();
-                if (currentStep === 0) {
+                  e.preventDefault();
+                  if (currentStep === 0 && !spongeActive) {
                     setSpongeActive(true);
                     setGameState(prev => ({ ...prev, spongeHasSoap: true }));
                     setCurrentStep(1);
-                    setScore(prev => prev + 10);
                     setFeedbackMessage("Great! Now drag dishes to the sink in the correct order.");
                     setShowFeedback(true);
-                }
+                  }
                 }}
                 sx={{ 
-                textAlign: 'center',
-                p: 1,
-                border: spongeActive ? '3px solid #90BE6D' : '3px solid #ccc',
-                borderRadius: '8px',
-                backgroundColor: spongeActive ? '#f0f9f0' : 'white',
-                width: '80px',
-                cursor: spongeActive ? 'pointer' : 'default'
+                  textAlign: 'center',
+                  p: 1,
+                  border: spongeActive ? '3px solid #90BE6D' : '3px solid #ccc',
+                  borderRadius: '8px',
+                  backgroundColor: spongeActive ? '#f0f9f0' : 'white',
+                  width: '80px',
+                  cursor: spongeActive ? 'grab' : 'default'
                 }}
-            >
+              >
                 <img src={sponge} alt="Sponge" style={{ 
-                width: '40px', 
-                height: '40px',
-                animation: spongeActive ? 'pulse 1s infinite' : 'none'
+                  width: '40px', 
+                  height: '40px',
+                  animation: spongeActive ? 'pulse 1s infinite' : 'none',
+                  pointerEvents: 'none'
                 }} />
-                <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
-                Sponge {spongeActive && '🧼'}
+                <Typography variant="caption" sx={{ fontSize: '0.7rem', display: 'block', mt: 0.5 }}>
+                  Sponge {spongeActive && '🧼'}
                 </Typography>
                 <style>{`
-                @keyframes pulse {
+                  @keyframes pulse {
                     0% { transform: scale(1); }
                     50% { transform: scale(1.1); }
                     100% { transform: scale(1); }
-                }
+                  }
                 `}</style>
-            </Box>
+              </Box>
             </Box>
 
             {/* Sink with drop zone */}
             <Box sx={{ 
-            position: 'relative', 
-            height: '250px',
-            background: 'linear-gradient(180deg, #87CEEB 0%, #4682B4 100%)',
-            borderRadius: '10px',
-            border: '4px solid #696969',
-            mb: 2,
-            flexShrink: 0,
-            overflow: 'hidden'
+              position: 'relative', 
+              height: '250px',
+              background: 'linear-gradient(180deg, #87CEEB 0%, #4682B4 100%)',
+              borderRadius: '10px',
+              border: '4px solid #696969',
+              mb: 2,
+              flexShrink: 0,
+              overflow: 'hidden'
             }}>
-            <img 
+              <img 
                 src={sink} 
                 alt="Sink" 
                 style={{ 
-                width: '100%', 
-                height: '100%', 
-                objectFit: 'contain',
-                borderRadius: '6px'
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: 'contain',
+                  borderRadius: '6px'
                 }} 
-            />
-            
-            {/* Drop zone for dishes - only show one dish at a time */}
-            <Box 
+              />
+              
+              {/* Drop zone for dishes - only show current dish that hasn't been moved to rack */}
+              <Box 
                 sx={{ 
-                position: 'absolute', 
-                top: '50%', 
-                left: '50%', 
-                transform: 'translate(-50%, -50%)',
-                width: '120px',
-                height: '120px',
-                border: '2px dashed rgba(255, 255, 255, 0.5)',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: 'rgba(255, 255, 255, 0.2)'
+                  position: 'absolute', 
+                  top: '50%', 
+                  left: '50%', 
+                  transform: 'translate(-50%, -50%)',
+                  width: '120px',
+                  height: '120px',
+                  border: '2px dashed rgba(255, 255, 255, 0.5)',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)'
                 }}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
-                e.preventDefault();
-                if (currentStep === 1 && gameState.dishesPlaced.length < washingOrder.length) {
+                  e.preventDefault();
+                  if (currentStep === 1 && gameState.dishesPlaced.length < washingOrder.length) {
                     const dishId = parseInt(e.dataTransfer.getData('dishId'));
                     const dish = washingOrder.find(d => d.id === dishId);
                     if (dish) handleDishDrop(dish);
-                } else if (currentStep === 2 && spongeActive && gameState.dishesPlaced.length > 0) {
+                  } else if (currentStep === 2 && spongeActive && gameState.dishesPlaced.length > 0) {
                     // Only allow scrubbing if there's a dish in sink and we're on scrubbing step
                     const currentDish = gameState.dishesPlaced[gameState.dishesPlaced.length - 1];
-                    if (!gameState.dishesCleaned.includes(currentDish.id)) {
-                    handleScrubStart(currentDish.id);
+                    if (!gameState.dishesCleaned.includes(currentDish.id) && !gameState.dishesOnRack?.includes(currentDish.id)) {
+                      handleScrubStart(currentDish.id);
                     }
-                }
+                  }
                 }}
-            >
-                {gameState.dishesPlaced.length === 0 ? (
-                <Typography variant="body2" sx={{ color: 'white', textAlign: 'center' }}>
-                    Drop next dish here
-                </Typography>
-                ) : (
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              >
+                {/* Only show dish in sink if it hasn't been moved to rack yet */}
+                {gameState.dishesPlaced.length > 0 && 
+                !gameState.dishesOnRack?.includes(gameState.dishesPlaced[gameState.dishesPlaced.length - 1].id) ? (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     <img 
-                    src={getDishStatus(gameState.dishesPlaced[gameState.dishesPlaced.length - 1].id) === 'clean' 
+                      src={getDishStatus(gameState.dishesPlaced[gameState.dishesPlaced.length - 1].id) === 'clean' 
                         ? gameState.dishesPlaced[gameState.dishesPlaced.length - 1].clean 
                         : gameState.dishesPlaced[gameState.dishesPlaced.length - 1].dirty}
-                    alt={gameState.dishesPlaced[gameState.dishesPlaced.length - 1].name}
-                    style={{ 
+                      alt={gameState.dishesPlaced[gameState.dishesPlaced.length - 1].name}
+                      style={{ 
                         width: '80px',
                         height: '80px',
-                    }}
+                      }}
                     />
                     {scrubbingDish === gameState.dishesPlaced[gameState.dishesPlaced.length - 1].id && (
-                    <Box sx={{ width: '100%', mt: 1 }}>
+                      <Box sx={{ width: '100%', mt: 1 }}>
                         <LinearProgress 
-                        variant="determinate" 
-                        value={scrubProgress} 
-                        sx={{ height: 8, borderRadius: '4px' }}
+                          variant="determinate" 
+                          value={scrubProgress} 
+                          sx={{ height: 8, borderRadius: '4px' }}
                         />
                         <Typography variant="caption" sx={{ color: 'white', fontSize: '0.6rem' }}>
-                        Scrubbing... {scrubProgress}%
+                          Scrubbing... {scrubProgress}%
                         </Typography>
-                    </Box>
+                      </Box>
                     )}
-                </Box>
+                  </Box>
+                ) : (
+                  <Typography variant="body2" sx={{ color: 'white', textAlign: 'center' }}>
+                    {currentStep === 1 ? 'Drop next dish here' : 'Ready for next dish'}
+                  </Typography>
                 )}
-            </Box>
+              </Box>
             </Box>
 
             {/* Instructions */}
@@ -922,7 +1292,12 @@ export default function HouseholdLevel3() {
       {currentPage === PAGES.GAME && renderGamePage()}
 
       {/* Feedback Dialog */}
-      <Dialog open={showFeedback} onClose={() => setShowFeedback(false)}>
+      <Dialog open={showFeedback} onClose={() => {
+        setShowFeedback(false);
+        if (feedbackMessage.includes("Drag it to the drying rack")) {
+          setCurrentStep(3);
+        }
+      }}>
         <DialogTitle>
           {feedbackMessage.includes("Congratulations") ? "🎉 Level Complete!" : "💡 Tip"}
         </DialogTitle>
@@ -930,12 +1305,17 @@ export default function HouseholdLevel3() {
           <Typography>{feedbackMessage}</Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowFeedback(false)}>
+          <Button onClick={() => {
+            setShowFeedback(false);
+            if (feedbackMessage.includes("Drag it to the drying rack")) {
+              setCurrentStep(3);
+            }
+          }}>
             {gameCompleted ? "View Score" : "Continue"}
           </Button>
         </DialogActions>
       </Dialog>
-
+      
       {/* Success Dialog */}
       <Dialog open={gameCompleted} fullScreen>
         <Box sx={{ 
@@ -950,31 +1330,106 @@ export default function HouseholdLevel3() {
         }}>
           <Typography variant="h1" sx={{ mb: 3 }}>🏆</Typography>
           <Typography variant="h2" sx={{ mb: 2 }}>Excellent Work!</Typography>
-          <Typography variant="h4" sx={{ mb: 4 }}>Final Score: {score}</Typography>
+          <Typography variant="h4" sx={{ mb: 4 }}>Final Score: {score}/100</Typography>
+          
+          {/* Star Rating */}
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+            {[...Array(getStarRating())].map((_, i) => (
+              <StarIcon key={i} sx={{ 
+                color: 'white', 
+                fontSize: 80,
+                mx: 1,
+                textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+              }} />
+            ))}
+            {[...Array(3 - getStarRating())].map((_, i) => (
+              <StarIcon key={i} sx={{ 
+                color: 'rgba(255,255,255,0.3)', 
+                fontSize: 80,
+                mx: 1
+              }} />
+            ))}
+          </Box>
+          
           <Typography variant="h6" sx={{ mb: 4 }}>
             You've mastered the proper dishwashing technique!
           </Typography>
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          
+          {/* Progress Saving Status */}
+          {progressSaving && (
+            <Box sx={{ 
+              mb: 4, 
+              p: 3, 
+              backgroundColor: 'rgba(25, 130, 196, 0.8)', 
+              borderRadius: '15px',
+              color: 'white'
+            }}>
+              <CircularProgress size={30} sx={{ mr: 2, color: 'white' }} />
+              <Typography variant="h5" sx={{ display: 'inline' }}>
+                Saving your progress...
+              </Typography>
+            </Box>
+          )}
+          
+          {progressSaved && (
+            <Box sx={{ 
+              mb: 4, 
+              p: 3, 
+              backgroundColor: 'rgba(144, 190, 109, 0.8)', 
+              borderRadius: '15px',
+              color: 'white'
+            }}>
+              <CheckCircleIcon sx={{ mr: 2, fontSize: 30, verticalAlign: 'middle' }} />
+              <Typography variant="h6" sx={{ display: 'inline' }}>
+                Progress saved successfully!
+              </Typography>
+            </Box>
+          )}
+          
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
+            <Button 
+              variant="contained"
+              onClick={goToHome}
+              sx={{ 
+                backgroundColor: '#FF595E',
+                px: 4,
+                minWidth: '140px',
+                '&:hover': {
+                  backgroundColor: '#E04549'
+                }
+              }}
+            >
+              🏠 Return Home
+            </Button>
             <Button 
               variant="outlined"
-              onClick={resetGame}
+              onClick={() => {
+                resetGame();
+                setGameCompleted(false);
+              }}
               sx={{ 
                 borderColor: 'white',
                 color: 'white',
-                px: 3
+                px: 3,
+                minWidth: '140px'
               }}
             >
               🔄 Play Again
             </Button>
             <Button 
               variant="contained"
-              onClick={goToHome}
+              onClick={handleContinue}
+              disabled={progressSaving}
               sx={{ 
-                backgroundColor: '#FF595E',
-                px: 4
+                backgroundColor: '#90BE6D',
+                px: 4,
+                minWidth: '140px',
+                '&:hover': {
+                  backgroundColor: '#7DA95D'
+                }
               }}
             >
-              🏠 Return Home
+              {progressSaving ? 'Saving...' : '➡️ Next Module'}
             </Button>
           </Box>
         </Box>
