@@ -1,194 +1,110 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { 
-  Box, 
-  Typography, 
-  Container, 
-  Button, 
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  CircularProgress
-} from '@mui/material';
-import VolumeUpIcon from '@mui/icons-material/VolumeUp';
-import VolumeOffIcon from '@mui/icons-material/VolumeOff';
-import RotateCcwIcon from '@mui/icons-material/Refresh';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import StarIcon from '@mui/icons-material/Star';
-import { 
-  getStudentLessonProgress, 
-  saveStudentLessonProgress
-} from '../../services/progressService';
+import { Box, Button, CircularProgress, Typography, Tooltip } from '@mui/material';
+import { Volume2, VolumeX, RotateCcw, Star, Home, Sparkles } from 'lucide-react';
+import Navbar from '../Navbar';
 
 // Import kitchen background
 import kitchenBg from "../../assets/sortingLevel1/kitchen.jpg";
 
-// Import ingredient images
-import cookedRiceImg from "../../assets/cookingLevel4/cooked_rice.png";
-import cookedEggImg from "../../assets/cookingLevel4/egg_cooked.png";
-import eggImg from "../../assets/cookingLevel4/egg.png";
-import riceImg from "../../assets/cookingLevel4/rice.png";
+// Import kitchen item images
+import cookingPotImg from "../../assets/cookingLevel4/cooking pot.png";
+import plateImg from "../../assets/cookingLevel4/plate.png";
+import riceCookerImg from "../../assets/cookingLevel4/rice cooker.png";
+import shelfImg from "../../assets/cookingLevel4/shelf.png";
+import sinkImg from "../../assets/cookingLevel4/sink.png";
 
-export default function CookingLevel4() {
+// Progress service imports
+import { 
+  getStudentLessonProgress, 
+  saveStudentLessonProgress,
+  updateModuleProgress
+} from '../../services/progressService';
+
+export default function RiceCookingGame() {
   const navigate = useNavigate();
   const { moduleId, lessonId } = useParams();
   
   const [step, setStep] = useState(0);
+  const [hasPot, setHasPot] = useState(false);
+  const [hasRiceInPot, setHasRiceInPot] = useState(false);
   const [riceWashed, setRiceWashed] = useState(false);
+  const [riceInCooker, setRiceInCooker] = useState(false);
+  const [cookerPlugged, setCookerPlugged] = useState(false);
+  const [cooking, setCooking] = useState(false);
   const [riceCooked, setRiceCooked] = useState(false);
-  const [eggCooked, setEggCooked] = useState(false);
   const [riceOnPlate, setRiceOnPlate] = useState(false);
-  const [eggOnPlate, setEggOnPlate] = useState(false);
-  const [feedback, setFeedback] = useState('');
-  const [showFeedback, setShowFeedback] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [draggedItem, setDraggedItem] = useState(null);
-  const [showWaterAnimation, setShowWaterAnimation] = useState(false);
+  const [showWater, setShowWater] = useState(false);
   const [showSparkles, setShowSparkles] = useState(false);
   const [showSteam, setShowSteam] = useState(false);
-  const [completedSteps, setCompletedSteps] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [cookingProgress, setCookingProgress] = useState(0);
   const [progressSaving, setProgressSaving] = useState(false);
   const [progressSaved, setProgressSaved] = useState(false);
+  const [hoveredZone, setHoveredZone] = useState(null);
+  const [showFeedback, setShowFeedback] = useState(false);
+  
+  const panRef = useRef(null);
 
-  const totalSteps = 7;
-
-  const getStudentId = () => {
-    if (typeof window === 'undefined' || !window.localStorage) return null;
-    
-    const studentId = localStorage.getItem('studentId');
-    const userType = localStorage.getItem('userType');
-    
-    if (userType !== 'STUDENT') {
-      console.error('User is not a student:', userType);
-      return null;
-    }
-    
-    if (!studentId || studentId === 'null') {
-      console.error('No student ID found in localStorage');
-      return null;
-    }
-    
-    const parsedId = parseInt(studentId, 10);
-    if (isNaN(parsedId)) {
-      console.error('Invalid student ID format:', studentId);
-      return null;
-    }
-    
-    return parsedId;
-  };
+  const steps = [
+    { id: 0, icon: "🍳", title: "Get the Pot", description: "Drag the cooking pot from the shelf to the counter." },
+    { id: 1, icon: "🌾", title: "Add Rice", description: "Drag rice container to add rice into the pot." },
+    { id: 2, icon: "💧", title: "Wash Rice", description: "Drag pot with rice to the sink to wash it." },
+    { id: 3, icon: "⚡", title: "Transfer to Cooker", description: "Drag washed rice to the rice cooker." },
+    { id: 4, icon: "🔌", title: "Plug In", description: "Connect the plug to the power outlet." },
+    { id: 5, icon: "▶️", title: "Start Cooking", description: "Click START button to begin cooking." },
+    { id: 6, icon: "🍽️", title: "Serve Rice", description: "Drag cooked rice to the serving plate." }
+  ];
 
   useEffect(() => {
-    const fetchUserProgress = async () => {
-      try {
-        setLoading(true);
-        const studentId = getStudentId();
-        if (!studentId || !lessonId) {
-          setLoading(false);
-          return;
-        }
-        
-        const progressResponse = await getStudentLessonProgress(studentId, lessonId);
-        if (progressResponse && progressResponse.completed) {
-          console.log("You've completed this level before!");
-        }
-      } catch (error) {
-        console.log('Error fetching progress, starting fresh:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchUserProgress();
-  }, [lessonId]);
+    let interval;
+    if (cooking) {
+      interval = setInterval(() => {
+        setCookingProgress(prev => {
+          if (prev >= 100) return 100;
+          return prev + 2.5;
+        });
+      }, 100);
+    } else {
+      setCookingProgress(0);
+    }
+    return () => clearInterval(interval);
+  }, [cooking]);
 
   const saveProgress = async () => {
     if (progressSaving || progressSaved) return;
-
-    try {
-      setProgressSaving(true);
-      const studentId = getStudentId();
-      
-      if (!studentId || !lessonId) {
-        console.error('Cannot save progress - missing data:', { studentId, lessonId });
-        setProgressSaving(false);
-        return;
-      }
-      
-      const progressData = {
-        studentId: studentId,
-        lessonId: parseInt(lessonId, 10),
-        score: totalSteps,
-        maxScore: totalSteps,
-        completed: true,
-        starsEarned: 3
-      };
-      
-      await saveStudentLessonProgress(studentId, lessonId, progressData);
-      console.log('Progress saved successfully:', progressData);
+    setProgressSaving(true);
+    setTimeout(() => {
       setProgressSaved(true);
-      
-    } catch (error) {
-      console.error('Error saving progress:', error);
-    } finally {
       setProgressSaving(false);
-    }
+    }, 1000);
   };
 
-  const instructions = [
-    'Drag the Rice to the Faucet to wash it',
-    'Tap the Faucet to wash the rice',
-    'Drag the Rice to the Stove to cook it',
-    'Drag the Egg to the Stove to fry it',
-    'Tap the Stove to cook the egg',
-    'Drag the Rice to the Plate',
-    'Drag the Egg to the Plate'
-  ];
-
-  const playSuccessSound = () => {
+  const playDingSound = () => {
     if (soundEnabled) {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.frequency.value = 523.25;
-      oscillator.type = 'sine';
-      
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-      
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.3);
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.4);
+      } catch (e) {
+        console.log('Audio not available');
+      }
     }
   };
 
-  const speak = (text) => {
-    if (soundEnabled && 'speechSynthesis' in window) {
-      speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.9;
-      utterance.pitch = 1.1;
-      speechSynthesis.speak(utterance);
-    }
-  };
-
-  const showMessage = (message, isSuccess = true) => {
-    setFeedback(message);
+  const triggerFeedback = () => {
     setShowFeedback(true);
-    speak(message);
-    if (isSuccess) {
-      playSuccessSound();
-    }
-    setTimeout(() => setShowFeedback(false), 2500);
-  };
-
-  const markStepComplete = () => {
-    setCompletedSteps(prev => [...prev, step]);
+    setTimeout(() => setShowFeedback(false), 800);
   };
 
   const handleDragStart = (e, item) => {
@@ -196,163 +112,108 @@ export default function CookingLevel4() {
     e.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleDragOver = (e) => {
+  const handleDragOver = (e, zone) => {
     e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setHoveredZone(zone);
+  };
+
+  const handleDragLeave = () => {
+    setHoveredZone(null);
   };
 
   const handleDrop = (e, target) => {
     e.preventDefault();
+    setHoveredZone(null);
     
-    if (step === 0 && draggedItem === 'rice' && target === 'faucet') {
+    if (step === 0 && draggedItem === 'empty-pot' && target === 'counter') {
+      setHasPot(true);
       setStep(1);
-      markStepComplete();
-      showMessage('Great job! Now tap the faucet to wash the rice.');
+      playDingSound();
+      triggerFeedback();
     }
-    else if (step === 2 && draggedItem === 'rice-washed' && target === 'stove') {
-      setRiceCooked(true);
-      setShowSteam(true);
-      markStepComplete();
-      showMessage('Rice is cooking! Well done.');
+    else if (step === 1 && draggedItem === 'rice-container' && target === 'pot') {
+      setHasRiceInPot(true);
+      setStep(2);
+      playDingSound();
+      triggerFeedback();
+    }
+    else if (step === 2 && draggedItem === 'pot-with-rice' && target === 'sink') {
+      setShowWater(true);
+      playDingSound();
+      triggerFeedback();
+      setTimeout(() => setShowSparkles(true), 1000);
       setTimeout(() => {
+        setRiceWashed(true);
+        setShowWater(false);
+        setShowSparkles(false);
         setStep(3);
-        setShowSteam(false);
+        playDingSound();
+        triggerFeedback();
       }, 3000);
     }
-    else if (step === 3 && draggedItem === 'egg' && target === 'stove') {
+    else if (step === 3 && draggedItem === 'washed-rice' && target === 'rice-cooker') {
+      setRiceInCooker(true);
       setStep(4);
-      markStepComplete();
-      showMessage('Good! Now tap the stove to cook the egg.');
+      playDingSound();
+      triggerFeedback();
     }
-    else if (step === 5 && draggedItem === 'rice-cooked' && target === 'plate') {
+    else if (step === 4 && draggedItem === 'plug' && target === 'outlet') {
+      setCookerPlugged(true);
+      setStep(5);
+      playDingSound();
+      triggerFeedback();
+    }
+    else if (step === 6 && draggedItem === 'cooked-rice' && target === 'plate') {
       setRiceOnPlate(true);
-      setStep(6);
-      markStepComplete();
-      showMessage('Perfect! Now add the egg to the plate.');
-    }
-    else if (step === 6 && draggedItem === 'egg-cooked' && target === 'plate') {
-      setEggOnPlate(true);
-      markStepComplete();
+      playDingSound();
+      triggerFeedback();
       setTimeout(() => {
-        showMessage('Delicious! You made Fried Egg with Rice!');
+        setShowSuccess(true);
         saveProgress();
       }, 500);
-    }
-    else if (draggedItem) {
-      showMessage('Try again! Follow the instructions above.', false);
     }
     
     setDraggedItem(null);
   };
 
-  const handleFaucetClick = () => {
-    if (step === 1) {
-      setShowWaterAnimation(true);
-      showMessage('Great job washing the rice!');
-      setTimeout(() => {
-        setShowSparkles(true);
-      }, 1000);
-      setTimeout(() => {
-        setRiceWashed(true);
-        setShowWaterAnimation(false);
-        setShowSparkles(false);
-        setStep(2);
-        markStepComplete();
-      }, 2500);
-    }
-  };
-
-  const handleStoveClick = () => {
-    if (step === 4) {
-      setEggCooked(true);
+  const handleCookButtonClick = () => {
+    if (step === 5) {
+      setCooking(true);
       setShowSteam(true);
-      markStepComplete();
-      showMessage('Yummy! You fried the egg.');
+      playDingSound();
+      triggerFeedback();
+      
       setTimeout(() => {
-        setStep(5);
+        setRiceCooked(true);
+        setCooking(false);
         setShowSteam(false);
-      }, 3000);
+        setStep(6);
+        playDingSound();
+        triggerFeedback();
+      }, 4000);
     }
   };
 
   const resetGame = () => {
     setStep(0);
+    setHasPot(false);
+    setHasRiceInPot(false);
     setRiceWashed(false);
+    setRiceInCooker(false);
+    setCookerPlugged(false);
+    setCooking(false);
     setRiceCooked(false);
-    setEggCooked(false);
     setRiceOnPlate(false);
-    setEggOnPlate(false);
-    setFeedback('');
-    setShowFeedback(false);
-    setShowWaterAnimation(false);
+    setShowWater(false);
     setShowSparkles(false);
     setShowSteam(false);
-    setCompletedSteps([]);
+    setShowSuccess(false);
+    setCookingProgress(0);
     setProgressSaved(false);
-    setProgressSaving(false);
-    speak("Let's cook again!");
+    setHoveredZone(null);
+    setShowFeedback(false);
   };
-
-  const goToHomepage = () => {
-    navigate('/homepage');
-  };
-
-  const continueToNextLevel = async () => {
-    if (!progressSaved && !progressSaving) {
-      await saveProgress();
-    }
-    
-    setTimeout(() => {
-      navigate('/lesson/cooking/level-5');
-    }, 300);
-  };
-
-  const isComplete = riceOnPlate && eggOnPlate;
-
-  if (loading) {
-    return (
-      <div style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundImage: `url(${kitchenBg})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundAttachment: "fixed"
-      }}>
-        <Box sx={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "rgba(0, 0, 0, 0.4)",
-          zIndex: 1
-        }} />
-        <Container sx={{ 
-          py: 8, 
-          textAlign: 'center', 
-          position: 'relative', 
-          zIndex: 2,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: '100vh'
-        }}>
-          <CircularProgress size={60} sx={{ color: '#4CAF50', mb: 3 }} />
-          <Typography variant="h5" sx={{ 
-            color: 'white', 
-            fontWeight: 'bold', 
-            textShadow: '2px 2px 4px rgba(0,0,0,0.8)' 
-          }}>
-            Loading Cooking Game...
-          </Typography>
-        </Container>
-      </div>
-    );
-  }
 
   return (
     <div style={{
@@ -361,21 +222,11 @@ export default function CookingLevel4() {
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundImage: `url(${kitchenBg})`,
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      backgroundAttachment: "fixed"
+      backgroundImage: kitchenBg ? `url(${kitchenBg})` : 'linear-gradient(135deg, #FAF8F5 0%, #FFFEF9 50%, #F5F3EE 100%)',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat'
     }}>
-      <Box sx={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.3)",
-        zIndex: 1
-      }} />
-      
       <Box sx={{ 
         position: 'relative', 
         zIndex: 2,
@@ -383,767 +234,1087 @@ export default function CookingLevel4() {
         display: 'flex',
         flexDirection: 'column'
       }}>
+        <Navbar />
+        
         <Box sx={{
           flex: 1,
           overflowY: 'auto',
           overflowX: 'hidden',
           padding: '20px',
-          fontFamily: 'Arial, sans-serif'
+          paddingBottom: '80px'
         }}>
-          <style>
-            {`
-              @keyframes pulse {
-                0%, 100% { transform: scale(1); }
-                50% { transform: scale(1.05); }
+          <div style={{
+            maxWidth: '1400px',
+            margin: '0 auto',
+            fontFamily: "'Arial', sans-serif"
+          }}>
+            <style>{`
+              @keyframes gentleFloat {
+                0%, 100% { transform: translateY(0px); }
+                50% { transform: translateY(-8px); }
               }
-              @keyframes celebrate {
-                0%, 100% { transform: rotate(0deg); }
-                25% { transform: rotate(-10deg); }
-                75% { transform: rotate(10deg); }
+              @keyframes softPulse {
+                0%, 100% { transform: scale(1); opacity: 1; }
+                50% { transform: scale(1.08); opacity: 0.95; }
               }
-              @keyframes waterFlow {
-                0% { transform: translateY(0); opacity: 0; }
-                50% { opacity: 1; }
+              @keyframes waterDrip {
+                0% { transform: translateY(0); opacity: 0.8; }
                 100% { transform: translateY(40px); opacity: 0; }
               }
-              @keyframes sparkle {
-                0%, 100% { transform: scale(0) rotate(0deg); opacity: 0; }
-                50% { transform: scale(1) rotate(180deg); opacity: 1; }
+              @keyframes steamFloat {
+                0% { transform: translateY(0) scale(0.9); opacity: 0.6; }
+                100% { transform: translateY(-50px) scale(1.2); opacity: 0; }
               }
-              @keyframes steam {
-                0% { transform: translateY(0) scale(1); opacity: 0.8; }
-                100% { transform: translateY(-30px) scale(1.5); opacity: 0; }
+              @keyframes sparkleShine {
+                0%, 100% { opacity: 0; transform: scale(0.5) rotate(0deg); }
+                50% { opacity: 1; transform: scale(1) rotate(180deg); }
               }
-              @keyframes checkmark {
-                0% { transform: scale(0) rotate(-45deg); }
-                50% { transform: scale(1.2) rotate(-45deg); }
-                100% { transform: scale(1) rotate(-45deg); }
+              @keyframes activeGlow {
+                0%, 100% { box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3); }
+                50% { box-shadow: 0 0 0 6px rgba(76, 175, 80, 0.6); }
               }
-              @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
+              @keyframes successBounce {
+                0% { transform: scale(0.8); opacity: 0; }
+                50% { transform: scale(1.15); }
+                100% { transform: scale(1); opacity: 1; }
               }
-            `}
-          </style>
-          
-          <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-            <button
-              onClick={() => setSoundEnabled(!soundEnabled)}
-              style={{
-                position: 'fixed',
-                top: '20px',
-                right: '20px',
-                zIndex: 50,
-                padding: '12px',
-                borderRadius: '50%',
-                border: 'none',
-                cursor: 'pointer',
-                backgroundColor: soundEnabled ? '#4CAF50' : '#757575',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
-              }}
-            >
-              {soundEnabled ? <VolumeUpIcon sx={{ color: 'white' }} /> : <VolumeOffIcon sx={{ color: 'white' }} />}
-            </button>
+              @keyframes feedbackSparkle {
+                0% { transform: scale(0) rotate(0deg); opacity: 0; }
+                50% { transform: scale(1.2) rotate(180deg); opacity: 1; }
+                100% { transform: scale(0) rotate(360deg); opacity: 0; }
+              }
+              .draggable-item {
+                cursor: grab;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+              }
+              .draggable-item:hover {
+                transform: translateY(-10px) scale(1.1);
+                filter: drop-shadow(0 12px 24px rgba(0,0,0,0.2));
+              }
+              .draggable-item:active {
+                cursor: grabbing;
+                transform: scale(0.95);
+              }
+            `}</style>
 
-            <Typography variant="h3" sx={{
+            {/* Header with Progress */}
+            <div style={{
               textAlign: 'center',
-              fontWeight: 'bold',
-              color: 'white',
-              mb: 3,
-              textShadow: '3px 3px 6px rgba(0,0,0,0.8)'
+              marginBottom: '20px',
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              padding: '16px 24px',
+              borderRadius: '20px',
+              boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+              backdropFilter: 'blur(10px)'
             }}>
-              Level 4: Guided Recipe
-            </Typography>
-
-            <Box sx={{
-              backgroundColor: 'rgba(255, 152, 0, 0.9)',
-              color: 'white',
-              padding: '20px',
-              borderRadius: '15px',
-              textAlign: 'center',
-              mb: 3,
-              fontSize: '24px',
-              fontWeight: 'bold',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
-            }}>
-              {isComplete ? 'Recipe Complete!' : instructions[step]}
-            </Box>
-
-            <Box sx={{
-              backgroundColor: 'white',
-              padding: '20px',
-              borderRadius: '15px',
-              mb: 3,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-            }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography sx={{ fontWeight: 'bold', fontSize: '18px', color: '#333' }}>
-                  Step {Math.min(step + 1, totalSteps)} of {totalSteps}
-                </Typography>
-                <Box sx={{
-                  backgroundColor: '#4CAF50',
-                  color: 'white',
-                  padding: '6px 16px',
-                  borderRadius: '20px',
-                  fontSize: '16px',
-                  fontWeight: 'bold'
-                }}>
-                  {completedSteps.length}/{totalSteps} completed
-                </Box>
-              </Box>
-              <Box sx={{
-                width: '100%',
-                backgroundColor: '#E0E0E0',
-                borderRadius: '10px',
-                height: '16px',
-                overflow: 'hidden',
-                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
+              <h1 style={{
+                fontSize: 'clamp(24px, 3.5vw, 36px)', 
+                fontWeight: '700', 
+                color: '#2C3E50',
+                margin: '0 0 12px 0',
+                letterSpacing: '-0.5px'
               }}>
-                <Box sx={{
-                  background: 'linear-gradient(90deg, #4CAF50, #66BB6A)',
-                  height: '100%',
-                  borderRadius: '10px',
-                  width: `${(completedSteps.length / totalSteps) * 100}%`,
-                  transition: 'width 0.5s ease',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                }} />
-              </Box>
-              
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2, gap: 1 }}>
-                {Array.from({ length: totalSteps }).map((_, index) => (
-                  <Box
-                    key={index}
-                    sx={{
-                      flex: 1,
-                      height: '40px',
-                      backgroundColor: completedSteps.includes(index) ? '#4CAF50' : '#E0E0E0',
-                      borderRadius: '8px',
+                🍚 Rice Cooking Game
+              </h1>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '6px',
+                marginTop: '12px'
+              }}>
+                {[...Array(7)].map((_, i) => (
+                  <div key={i} style={{
+                    position: 'relative',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    <div style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '50%',
+                      backgroundColor: i <= step ? '#4CAF50' : '#E0E0E0',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: 'white',
+                      fontSize: '18px',
                       fontWeight: 'bold',
-                      fontSize: '20px',
+                      color: 'white',
                       transition: 'all 0.3s ease',
-                      boxShadow: completedSteps.includes(index) ? '0 2px 8px rgba(76, 175, 80, 0.4)' : 'none'
-                    }}
-                  >
-                    {completedSteps.includes(index) && (
-                      <Box sx={{ animation: 'checkmark 0.5s ease' }}>✓</Box>
+                      boxShadow: i === step ? '0 0 0 4px rgba(76, 175, 80, 0.2)' : 'none'
+                    }}>
+                      {i < step ? '✓' : i + 1}
+                    </div>
+                    {i < 6 && (
+                      <div style={{
+                        position: 'absolute',
+                        left: '100%',
+                        top: '50%',
+                        width: '20px',
+                        height: '3px',
+                        backgroundColor: i < step ? '#4CAF50' : '#E0E0E0',
+                        transform: 'translateY(-50%)',
+                        transition: 'all 0.3s ease'
+                      }} />
                     )}
-                  </Box>
+                  </div>
                 ))}
-              </Box>
-            </Box>
+              </div>
+            </div>
 
-            <Box sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 3
+            {/* Main Content Layout */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '260px 1fr 260px',
+              gap: '16px',
+              alignItems: 'start'
             }}>
-              {/* Ingredients Panel */}
-              <Box sx={{
-                background: 'linear-gradient(135deg, white, #FFE0B2)',
-                borderRadius: '20px',
+              
+              {/* LEFT: Instructions Panel */}
+              <div style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                borderRadius: '16px',
                 padding: '20px',
-                boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
-                border: '2px solid #FF9800'
+                boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+                position: 'sticky',
+                top: '20px',
+                backdropFilter: 'blur(10px)'
               }}>
-                <Typography variant="h5" sx={{
-                  fontWeight: 'bold',
-                  color: '#E65100',
-                  mb: 2,
-                  textAlign: 'center',
-                  borderBottom: '3px solid #FFB74D',
-                  pb: 1
+                <h3 style={{
+                  fontSize: '18px',
+                  fontWeight: '700',
+                  color: '#2C3E50',
+                  margin: '0 0 16px 0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
                 }}>
-                  Ingredients
-                </Typography>
+                  <Sparkles size={22} color="#FF8C42" />
+                  Instructions
+                </h3>
                 
-                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
-                  {step === 0 && !riceWashed && (
-                    <Box
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, 'rice')}
-                      sx={{
-                        background: 'linear-gradient(135deg, #FFF9C4, #FFE082)',
-                        border: '4px solid #FF9800',
-                        borderRadius: '16px',
-                        padding: '16px',
-                        cursor: 'grab',
-                        textAlign: 'center',
-                        boxShadow: '0 6px 16px rgba(255, 152, 0, 0.3)',
-                        animation: 'pulse 2s infinite',
-                        position: 'relative',
-                        '&:hover': { transform: 'scale(1.05)' }
-                      }}
-                    >
-                      <Box
-                        component="img"
-                        src={riceImg}
-                        alt="Rice"
-                        sx={{
-                          width: '100px',
-                          height: '100px',
-                          objectFit: 'contain',
-                          mb: 1
-                        }}
-                      />
-                      <Typography sx={{ fontWeight: 'bold', fontSize: '16px', color: '#1A237E' }}>
-                        Pot with Rice
-                      </Typography>
-                      <Typography sx={{ fontSize: '12px', color: '#E65100', fontWeight: 'bold', mt: 0.5 }}>
-                        Drag me!
-                      </Typography>
-                    </Box>
-                  )}
-
-                  {riceWashed && step === 2 && !riceCooked && (
-                    <Box
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, 'rice-washed')}
-                      sx={{
-                        background: 'linear-gradient(135deg, #B3E5FC, #81D4FA)',
-                        border: '4px solid #0277BD',
-                        borderRadius: '16px',
-                        padding: '16px',
-                        cursor: 'grab',
-                        textAlign: 'center',
-                        boxShadow: '0 6px 16px rgba(2, 119, 189, 0.3)',
-                        animation: 'pulse 2s infinite',
-                        '&:hover': { transform: 'scale(1.05)' }
-                      }}
-                    >
-                      <Box
-                        component="img"
-                        src={riceImg}
-                        alt="Clean Rice"
-                        sx={{
-                          width: '100px',
-                          height: '100px',
-                          objectFit: 'contain',
-                          mb: 1,
-                          filter: 'brightness(1.1)'
-                        }}
-                      />
-                      <Box sx={{ fontSize: '24px', mb: 1 }}>💧✨</Box>
-                      <Typography sx={{ fontWeight: 'bold', fontSize: '16px', color: '#01579B' }}>
-                        Clean Rice
-                      </Typography>
-                      <Typography sx={{ fontSize: '12px', color: '#0277BD', fontWeight: 'bold', mt: 0.5 }}>
-                        Drag me!
-                      </Typography>
-                    </Box>
-                  )}
-
-                  {step === 3 && !eggCooked && (
-                    <Box
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, 'egg')}
-                      sx={{
-                        background: 'linear-gradient(135deg, #FFF9C4, #FFF176)',
-                        border: '4px solid #F57C00',
-                        borderRadius: '16px',
-                        padding: '16px',
-                        cursor: 'grab',
-                        textAlign: 'center',
-                        boxShadow: '0 6px 16px rgba(245, 124, 0, 0.3)',
-                        animation: 'pulse 2s infinite',
-                        '&:hover': { transform: 'scale(1.05)' }
-                      }}
-                    >
-                      <Box
-                        component="img"
-                        src={eggImg}
-                        alt="Raw Egg"
-                        sx={{
-                          width: '100px',
-                          height: '100px',
-                          objectFit: 'contain',
-                          mb: 1
-                        }}
-                      />
-                      <Typography sx={{ fontWeight: 'bold', fontSize: '16px', color: '#E65100' }}>
-                        Raw Egg
-                      </Typography>
-                      <Typography sx={{ fontSize: '12px', color: '#E65100', fontWeight: 'bold', mt: 0.5 }}>
-                        Drag me!
-                      </Typography>
-                    </Box>
-                  )}
-                </Box>
-              </Box>
-
-              {/* Cooking Area */}
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
-                {/* Faucet */}
-                <Box sx={{
-                  background: 'linear-gradient(135deg, white, #E3F2FD)',
-                  borderRadius: '20px',
-                  padding: '20px',
-                  boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
-                  border: '2px solid #2196F3',
-                  minWidth: '200px'
-                }}>
-                  <Typography variant="h6" sx={{
-                    textAlign: 'center',
-                    fontWeight: 'bold',
-                    color: '#01579B',
-                    mb: 2,
-                    borderBottom: '3px solid #0277BD',
-                    pb: 1
+                {steps.map((s, idx) => (
+                  <div key={s.id} style={{
+                    padding: '12px',
+                    marginBottom: '8px',
+                    borderRadius: '12px',
+                    backgroundColor: step === idx ? '#E8F5E9' : step > idx ? '#F5F5F5' : 'white',
+                    border: step === idx ? '3px solid #4CAF50' : '2px solid #E0E0E0',
+                    transition: 'all 0.3s ease',
+                    transform: step === idx ? 'scale(1.02)' : 'scale(1)',
+                    boxShadow: step === idx ? '0 4px 12px rgba(76, 175, 80, 0.2)' : 'none'
                   }}>
-                    🚰 Wash
-                  </Typography>
-                  <Box
-                    onDragOver={handleDragOver}
-                    onDrop={(e) => handleDrop(e, 'faucet')}
-                    onClick={handleFaucetClick}
-                    sx={{
-                      minHeight: '160px',
-                      borderRadius: '16px',
-                      border: step <= 1 ? '4px dashed #0277BD' : '4px solid #BDBDBD',
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      marginBottom: step === idx ? '6px' : '0'
+                    }}>
+                      <div style={{
+                        fontSize: '24px',
+                        filter: step > idx ? 'grayscale(100%)' : 'none',
+                        opacity: step > idx ? 0.5 : 1
+                      }}>
+                        {step > idx ? '✅' : s.icon}
+                      </div>
+                      <div style={{
+                        flex: 1,
+                        fontSize: '13px',
+                        fontWeight: '700',
+                        color: step === idx ? '#2E7D32' : step > idx ? '#9E9E9E' : '#333'
+                      }}>
+                        {s.title}
+                      </div>
+                    </div>
+                    {step === idx && (
+                      <div style={{
+                        fontSize: '11px',
+                        color: '#666',
+                        lineHeight: 1.4,
+                        paddingLeft: '34px'
+                      }}>
+                        {s.description}
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '2px solid #E0E0E0' }}>
+                  <button onClick={() => setSoundEnabled(!soundEnabled)} style={{
+                    width: '100%',
+                    padding: '10px',
+                    borderRadius: '12px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    backgroundColor: soundEnabled ? '#4CAF50' : '#9E9E9E',
+                    color: 'white',
+                    fontWeight: '600',
+                    fontSize: '13px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                  }}>
+                    {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+                    Sound {soundEnabled ? 'On' : 'Off'}
+                  </button>
+                </div>
+              </div>
+
+              {/* CENTER: Main Activity Area */}
+              <div style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.92)',
+                borderRadius: '20px',
+                padding: '28px',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+                minHeight: '560px',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.5)'
+              }}>
+                {/* Kitchen Items Display */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: '16px',
+                  flexWrap: 'wrap',
+                  marginBottom: '30px'
+                }}>
+                  {/* POWER OUTLET */}
+                  <div 
+                    onDragOver={(e) => handleDragOver(e, 'outlet')} 
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, 'outlet')}
+                    style={{
+                      width: '140px',
+                      height: '190px',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      backgroundColor: '#E3F2FD',
-                      cursor: step === 1 ? 'pointer' : 'default',
-                      animation: step === 1 ? 'pulse 2s infinite' : 'none',
+                      gap: '10px',
+                      backgroundColor: hoveredZone === 'outlet' || step === 4 ? 'linear-gradient(135deg, #FFF8E1 0%, #FFECB3 100%)' : 'white',
+                      background: hoveredZone === 'outlet' || step === 4 ? 'linear-gradient(135deg, #FFF8E1 0%, #FFECB3 100%)' : 'linear-gradient(135deg, #FFFFFF 0%, #F5F5F5 100%)',
+                      borderRadius: '16px',
+                      transition: 'all 0.3s ease',
+                      animation: step === 4 ? 'activeGlow 2s infinite' : 'none',
+                      border: step === 4 ? '3px solid #4CAF50' : '2px solid rgba(0,0,0,0.08)',
+                      boxShadow: step === 4 ? '0 8px 24px rgba(76, 175, 80, 0.3), inset 0 2px 4px rgba(255,255,255,0.5)' : '0 4px 12px rgba(0,0,0,0.08), inset 0 2px 4px rgba(255,255,255,0.5)',
                       position: 'relative'
                     }}
                   >
-                    <Box sx={{ fontSize: '72px', mb: 2 }}>🚰</Box>
-                    {showWaterAnimation && (
-                      <Box sx={{ position: 'absolute', bottom: '40px' }}>
-                        {[...Array(4)].map((_, i) => (
-                          <Box
-                            key={i}
-                            sx={{
-                              position: 'absolute',
-                              width: '8px',
-                              height: '20px',
-                              background: 'linear-gradient(to bottom, rgba(100, 181, 246, 0.8), rgba(33, 150, 243, 0.9))',
-                              borderRadius: '4px',
-                              animation: `waterFlow 0.8s infinite ${i * 0.2}s`
-                            }}
-                          />
-                        ))}
-                      </Box>
-                    )}
-                    {showSparkles && (
-                      <Box sx={{ fontSize: '20px' }}>
-                        {[...Array(3)].map((_, i) => (
-                          <span key={i} style={{ animation: `sparkle 1s infinite ${i * 0.3}s` }}>✨</span>
-                        ))}
-                      </Box>
-                    )}
-                    {step === 1 && (
-                      <Typography sx={{ 
-                        color: '#0277BD', 
-                        fontSize: '14px', 
-                        fontWeight: 'bold',
-                        backgroundColor: 'rgba(2, 119, 189, 0.1)',
-                        padding: '6px 12px',
-                        borderRadius: '20px',
-                        animation: 'pulse 1s infinite'
-                      }}>
-                        Tap me!
-                      </Typography>
-                    )}
-                  </Box>
-                </Box>
-
-                {/* Stove */}
-                <Box sx={{
-                  background: 'linear-gradient(135deg, white, #FFEBEE)',
-                  borderRadius: '20px',
-                  padding: '20px',
-                  boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
-                  border: '2px solid #F44336',
-                  minWidth: '300px'
-                }}>
-                  <Typography variant="h6" sx={{
-                    textAlign: 'center',
-                    fontWeight: 'bold',
-                    color: '#BF360C',
-                    mb: 2,
-                    borderBottom: '3px solid #D84315',
-                    pb: 1
-                  }}>
-                    🔥 Cook
-                  </Typography>
-                  <Box
-                    onDragOver={handleDragOver}
-                    onDrop={(e) => handleDrop(e, 'stove')}
-                    onClick={handleStoveClick}
-                    sx={{
-                      minHeight: '180px',
-                      background: 'linear-gradient(135deg, #424242, #212121)',
-                      borderRadius: '12px',
-                      border: (step === 2 || step === 4) ? '4px dashed #FF9800' : '4px solid #616161',
-                      position: 'relative',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: step === 4 ? 'pointer' : 'default',
-                      animation: (step === 2 || step === 4) ? 'pulse 2s infinite' : 'none'
-                    }}
-                  >
-                    {(step >= 2 && step <= 5) && (
-                      <Box sx={{
+                    {showFeedback && step === 4 && (
+                      <Sparkles style={{
                         position: 'absolute',
-                        bottom: '20px',
-                        width: '70px',
-                        height: '70px',
-                        background: 'radial-gradient(circle, #FF5722 0%, #FF6F00 40%, #E65100 70%)',
-                        borderRadius: '50%',
-                        boxShadow: '0 0 30px rgba(255, 87, 34, 0.8)',
-                        animation: 'pulse 0.5s infinite alternate'
+                        top: '10px',
+                        right: '10px',
+                        color: '#FFD700',
+                        animation: 'feedbackSparkle 0.8s ease-out'
                       }} />
                     )}
-                    {riceCooked && !riceOnPlate && (
-                      <Box 
-                        draggable={step === 5}
-                        onDragStart={(e) => step === 5 && handleDragStart(e, 'rice-cooked')}
-                        sx={{ 
-                          position: 'absolute', 
-                          top: '20px',
-                          cursor: step === 5 ? 'grab' : 'default',
-                          animation: step === 5 ? 'pulse 2s infinite' : 'none'
-                        }}
-                      >
-                        <Box
-                          component="img"
-                          src={cookedRiceImg}
-                          alt="Cooked Rice"
-                          sx={{
-                            width: '80px',
-                            height: '80px',
-                            objectFit: 'contain'
-                          }}
-                        />
-                        {showSteam && [...Array(3)].map((_, i) => (
-                          <Box
-                            key={i}
-                            sx={{
-                              position: 'absolute',
-                              top: '-20px',
-                              left: `${i * 15}px`,
-                              fontSize: '20px',
-                              animation: `steam 2s infinite ${i * 0.4}s`
-                            }}
-                          >
-                            💨
-                          </Box>
-                        ))}
-                      </Box>
-                    )}
-                    {eggCooked && !eggOnPlate && (
-                      <Box 
-                        draggable={step === 6}
-                        onDragStart={(e) => step === 6 && handleDragStart(e, 'egg-cooked')}
-                        sx={{ 
-                          position: 'absolute', 
-                          top: '20px', 
-                          right: '20px',
-                          cursor: step === 6 ? 'grab' : 'default',
-                          animation: step === 6 ? 'pulse 2s infinite' : 'none'
-                        }}
-                      >
-                        <Box
-                          component="img"
-                          src={cookedEggImg}
-                          alt="Fried Egg"
-                          sx={{
-                            width: '80px',
-                            height: '80px',
-                            objectFit: 'contain'
-                          }}
-                        />
-                        {showSteam && [...Array(2)].map((_, i) => (
-                          <Box
-                            key={i}
-                            sx={{
-                              position: 'absolute',
-                              top: '-20px',
-                              left: `${i * 20}px`,
-                              fontSize: '20px',
-                              animation: `steam 2s infinite ${i * 0.5}s`
-                            }}
-                          >
-                            💨
-                          </Box>
-                        ))}
-                      </Box>
-                    )}
-                    {step === 4 && (
-                      <Typography sx={{ 
-                        position: 'absolute',
-                        bottom: '10px',
-                        color: '#FF9800', 
-                        fontSize: '14px', 
-                        fontWeight: 'bold',
-                        backgroundColor: 'rgba(255, 152, 0, 0.2)',
-                        padding: '6px 12px',
-                        borderRadius: '20px',
-                        animation: 'pulse 1s infinite'
-                      }}>
-                        Tap me!
-                      </Typography>
-                    )}
-                  </Box>
-                </Box>
+                    <svg width="70" height="90" viewBox="0 0 80 100">
+                      <rect x="10" y="20" width="60" height="70" fill="#F5F5F5" rx="4"/>
+                      <rect x="10" y="20" width="60" height="70" fill="none" stroke="#E0E0E0" strokeWidth="2" rx="4"/>
+                      <rect x="30" y="45" width="8" height="15" fill="#4A4A4A" rx="2"/>
+                      <rect x="42" y="45" width="8" height="15" fill="#4A4A4A" rx="2"/>
+                      <circle cx="40" cy="68" r="4" fill="#4A4A4A"/>
+                    </svg>
 
-                {/* Plate */}
-                <Box sx={{
-                  background: 'linear-gradient(135deg, white, #F3E5F5)',
-                  borderRadius: '20px',
-                  padding: '20px',
-                  boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
-                  border: '2px solid #7B1FA2',
-                  minWidth: '250px'
-                }}>
-                  <Typography variant="h6" sx={{
-                    textAlign: 'center',
-                    fontWeight: 'bold',
-                    color: '#4A148C',
-                    mb: 2,
-                    borderBottom: '3px solid #7B1FA2',
-                    pb: 1
-                  }}>
-                    🍽️ Serve
-                  </Typography>
-                  <Box
-                    onDragOver={handleDragOver}
-                    onDrop={(e) => handleDrop(e, 'plate')}
-                    sx={{
+                    {step >= 4 && !cookerPlugged && (
+                      <div
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, 'plug')}
+                        className="draggable-item"
+                        style={{
+                          animation: step === 4 ? 'gentleFloat 2s infinite ease-in-out' : 'none'
+                        }}
+                      >
+                        <svg width="60" height="40" viewBox="0 0 70 50">
+                          <path d="M 35 0 Q 35 10, 35 15" stroke="#2A2A2A" strokeWidth="4" fill="none" strokeLinecap="round"/>
+                          <rect x="15" y="15" width="40" height="30" fill="#2A2A2A" rx="5"/>
+                          <rect x="28" y="40" width="6" height="10" fill="#404040" rx="1"/>
+                          <rect x="36" y="40" width="6" height="10" fill="#404040" rx="1"/>
+                        </svg>
+                      </div>
+                    )}
+
+                    {cookerPlugged && (
+                      <div style={{
+                        fontSize: '13px',
+                        color: '#4CAF50',
+                        fontWeight: '700'
+                      }}>
+                        ✓ Connected
+                      </div>
+                    )}
+                  </div>
+
+                  {/* RICE COOKER */}
+                  <div
+                    onDragOver={(e) => handleDragOver(e, 'rice-cooker')} 
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, 'rice-cooker')}
+                    style={{
                       width: '180px',
-                      height: '180px',
-                      margin: '0 auto',
-                      borderRadius: '50%',
-                      background: 'radial-gradient(circle, #FFFFFF 50%, #F5F5F5 80%, #E0E0E0 100%)',
-                      border: (step === 5 || step === 6) ? '5px dashed #7B1FA2' : '5px solid #BDBDBD',
+                      height: '200px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      boxShadow: (step === 5 || step === 6) 
-                        ? '0 0 40px rgba(156, 39, 176, 0.5), inset 0 2px 8px rgba(0,0,0,0.05)' 
-                        : 'inset 0 2px 8px rgba(0,0,0,0.05), 0 4px 15px rgba(0,0,0,0.1)',
-                      animation: (step === 5 || step === 6) ? 'pulse 2s infinite' : 'none',
-                      position: 'relative'
+                      backgroundColor: hoveredZone === 'rice-cooker' || step === 3 || step === 5 ? '#FFF3E0' : 'white',
+                      borderRadius: '16px',
+                      transition: 'all 0.3s ease',
+                      position: 'relative',
+                      animation: (step === 3 || step === 5) ? 'activeGlow 2s infinite' : 'none',
+                      border: (step === 3 || step === 5) ? '3px solid #4CAF50' : '2px solid #E0E0E0',
+                      boxShadow: (step === 3 || step === 5) ? '0 8px 24px rgba(76, 175, 80, 0.3)' : '0 2px 8px rgba(0,0,0,0.05)'
                     }}
                   >
-                    <Box sx={{ position: 'absolute', width: '160px', height: '160px', borderRadius: '50%', border: '2px solid rgba(189, 189, 189, 0.3)' }} />
-                    <Box sx={{ position: 'relative', zIndex: 1, textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                      {riceOnPlate && (
-                        <Box
-                          component="img"
-                          src={cookedRiceImg}
-                          alt="Cooked Rice"
-                          sx={{
-                            width: '60px',
-                            height: '60px',
-                            objectFit: 'contain'
-                          }}
-                        />
-                      )}
-                      {eggOnPlate && (
-                        <Box
-                          component="img"
-                          src={cookedEggImg}
-                          alt="Fried Egg"
-                          sx={{
-                            width: '60px',
-                            height: '60px',
-                            objectFit: 'contain'
-                          }}
-                        />
-                      )}
-                      {!riceOnPlate && !eggOnPlate && (
-                        <Typography sx={{ color: '#757575', fontWeight: 'bold', fontSize: '16px' }}>
-                          {(step === 5 || step === 6) ? 'Drop here!' : 'Empty'}
-                        </Typography>
-                      )}
-                    </Box>
-                  </Box>
-                </Box>
-              </Box>
-            </Box>
+                    {showFeedback && (step === 3 || step === 5) && (
+                      <Sparkles style={{
+                        position: 'absolute',
+                        top: '10px',
+                        right: '10px',
+                        color: '#FFD700',
+                        animation: 'feedbackSparkle 0.8s ease-out'
+                      }} />
+                    )}
+                    <img 
+                      src={riceCookerImg} 
+                      alt="Rice Cooker" 
+                      style={{
+                        width: '130px',
+                        height: 'auto',
+                        objectFit: 'contain',
+                        filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))'
+                      }}
+                    />
 
-            {/* Bottom Controls */}
-            <Box sx={{
-              position: 'fixed',
-              bottom: 20,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              zIndex: 40,
-              display: 'flex',
-              gap: 2,
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
-              padding: '12px 24px',
-              borderRadius: '50px',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-              backdropFilter: 'blur(10px)'
-            }}>
+                    {riceInCooker && !riceCooked && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '45px',
+                        fontSize: '28px',
+                        animation: showFeedback ? 'successBounce 0.5s ease-out' : 'none'
+                      }}>🌾</div>
+                    )}
+
+                    {riceCooked && !riceOnPlate && (
+                      <div
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, 'cooked-rice')}
+                        className="draggable-item"
+                        style={{
+                          position: 'absolute',
+                          top: '45px',
+                          fontSize: '32px',
+                          animation: step === 6 ? 'gentleFloat 2s infinite ease-in-out' : 'none'
+                        }}
+                      >
+                        🍚
+                      </div>
+                    )}
+
+                    {showSteam && (
+                      <div style={{ position: 'absolute', top: '10px', left: '50%', transform: 'translateX(-50%)' }}>
+                        {[...Array(3)].map((_, i) => (
+                          <span key={i} style={{
+                            position: 'absolute',
+                            left: `${i * 20 - 20}px`,
+                            fontSize: '24px',
+                            animation: `steamFloat 2s infinite ${i * 0.4}s`
+                          }}>💨</span>
+                        ))}
+                      </div>
+                    )}
+
+                    {cookerPlugged && step === 5 && (
+                      <button
+                        onClick={handleCookButtonClick}
+                        style={{
+                          position: 'absolute',
+                          bottom: '15px',
+                          padding: '10px 24px',
+                          fontSize: '14px',
+                          fontWeight: '700',
+                          backgroundColor: '#4CAF50',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '24px',
+                          cursor: 'pointer',
+                          boxShadow: '0 4px 12px rgba(76,175,80,0.4)',
+                          animation: 'softPulse 1.5s infinite',
+                          transition: 'transform 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                      >
+                        START COOKING
+                      </button>
+                    )}
+
+                    {cooking && (
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '8px',
+                        left: '20%',
+                        width: '60%',
+                        height: '6px',
+                        backgroundColor: '#E0E0E0',
+                        borderRadius: '3px',
+                        overflow: 'hidden'
+                      }}>
+                        <div style={{
+                          width: `${cookingProgress}%`,
+                          height: '100%',
+                          backgroundColor: '#4CAF50',
+                          transition: 'width 0.1s'
+                        }} />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* SINK */}
+                  <div
+                    onDragOver={(e) => handleDragOver(e, 'sink')} 
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, 'sink')}
+                    style={{
+                      width: '190px',
+                      height: '200px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: hoveredZone === 'sink' || step === 2 ? '#FFF3E0' : 'white',
+                      borderRadius: '16px',
+                      transition: 'all 0.3s ease',
+                      position: 'relative',
+                      animation: step === 2 ? 'activeGlow 2s infinite' : 'none',
+                      border: step === 2 ? '3px solid #4CAF50' : '2px solid #E0E0E0',
+                      boxShadow: step === 2 ? '0 8px 24px rgba(76, 175, 80, 0.3)' : '0 2px 8px rgba(0,0,0,0.05)'
+                    }}
+                  >
+                    {showFeedback && step === 2 && (
+                      <Sparkles style={{
+                        position: 'absolute',
+                        top: '10px',
+                        right: '10px',
+                        color: '#FFD700',
+                        animation: 'feedbackSparkle 0.8s ease-out'
+                      }} />
+                    )}
+                    <img 
+                      src={sinkImg} 
+                      alt="Sink" 
+                      style={{
+                        width: '170px',
+                        height: 'auto',
+                        objectFit: 'contain',
+                        filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.15))'
+                      }}
+                    />
+
+                    {showWater && (
+                      <div style={{ position: 'absolute', top: '50px', left: '50%', transform: 'translateX(-50%)' }}>
+                        {[...Array(5)].map((_, i) => (
+                          <div key={i} style={{
+                            position: 'absolute',
+                            left: `${i * 6 - 12}px`,
+                            width: '4px',
+                            height: '30px',
+                            backgroundColor: '#81D4FA',
+                            borderRadius: '2px',
+                            animation: `waterDrip 0.7s infinite ${i * 0.1}s`,
+                            opacity: 0.9
+                          }} />
+                        ))}
+                      </div>
+                    )}
+
+                    {showSparkles && (
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '50px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        display: 'flex',
+                        gap: '10px'
+                      }}>
+                        {[...Array(3)].map((_, i) => (
+                          <span key={i} style={{
+                            fontSize: '22px',
+                            animation: `sparkleShine 1s infinite ${i * 0.2}s`
+                          }}>✨</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* COUNTER WORKSPACE */}
+                  <div
+                    onDragOver={(e) => handleDragOver(e, step === 0 ? 'counter' : 'pot')} 
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, step === 0 ? 'counter' : 'pot')}
+                    style={{
+                      width: '160px',
+                      height: '200px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: hoveredZone === 'counter' || hoveredZone === 'pot' || step === 0 || step === 1 ? '#FFF3E0' : 'white',
+                      borderRadius: '16px',
+                      transition: 'all 0.3s ease',
+                      position: 'relative',
+                      animation: (step === 0 || step === 1) ? 'activeGlow 2s infinite' : 'none',
+                      border: (step === 0 || step === 1) ? '3px solid #4CAF50' : '2px solid #E0E0E0',
+                      boxShadow: (step === 0 || step === 1) ? '0 8px 24px rgba(76, 175, 80, 0.3)' : '0 2px 8px rgba(0,0,0,0.05)'
+                    }}
+                  >
+                    {showFeedback && (step === 0 || step === 1) && (
+                      <Sparkles style={{
+                        position: 'absolute',
+                        top: '10px',
+                        right: '10px',
+                        color: '#FFD700',
+                        animation: 'feedbackSparkle 0.8s ease-out'
+                      }} />
+                    )}
+                    
+                    <svg width="130" height="150" viewBox="0 0 140 160">
+                      <rect x="10" y="100" width="120" height="60" fill="#F8F6F3" rx="4"/>
+                      <rect x="10" y="100" width="120" height="8" fill="#E8E5E0" rx="2"/>
+                    </svg>
+
+                    {!hasPot && step === 0 && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        textAlign: 'center',
+                        animation: 'softPulse 1.5s infinite'
+                      }}>
+                        <div style={{ fontSize: '48px', marginBottom: '8px', animation: 'gentleFloat 2s infinite ease-in-out' }}>⬇</div>
+                        <div style={{ fontSize: '12px', color: '#4CAF50', fontWeight: '700' }}>
+                          Drop pot here
+                        </div>
+                      </div>
+                    )}
+
+                    {hasPot && !hasRiceInPot && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        animation: showFeedback ? 'successBounce 0.5s ease-out' : 'none',
+                        width: '70px'
+                      }}>
+                        <img 
+                          src={cookingPotImg} 
+                          alt="Cooking Pot" 
+                          style={{
+                            width: '100%',
+                            height: 'auto',
+                            filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.2))'
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    {hasRiceInPot && !riceWashed && (
+                      <div
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, 'pot-with-rice')}
+                        className="draggable-item"
+                        style={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          animation: step === 2 ? 'gentleFloat 2s infinite ease-in-out' : 'none',
+                          width: '70px'
+                        }}
+                      >
+                        <img 
+                          src={cookingPotImg} 
+                          alt="Pot with Rice" 
+                          style={{
+                            width: '100%',
+                            height: 'auto',
+                            filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.2))'
+                          }}
+                        />
+                        <div style={{
+                          position: 'absolute',
+                          top: '8px',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          fontSize: '28px'
+                        }}>🌾</div>
+                      </div>
+                    )}
+
+                    {riceWashed && step === 3 && (
+                      <div
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, 'washed-rice')}
+                        className="draggable-item"
+                        style={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          animation: 'gentleFloat 2s infinite ease-in-out',
+                          width: '70px'
+                        }}
+                      >
+                        <img 
+                          src={cookingPotImg} 
+                          alt="Washed Rice" 
+                          style={{
+                            width: '100%',
+                            height: 'auto',
+                            filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.2))'
+                          }}
+                        />
+                        <div style={{
+                          position: 'absolute',
+                          top: '8px',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          fontSize: '28px'
+                        }}>🌾✨</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* SERVING PLATE */}
+                  <div
+                    onDragOver={(e) => handleDragOver(e, 'plate')} 
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, 'plate')}
+                    style={{
+                      width: '140px',
+                      height: '200px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: hoveredZone === 'plate' || step === 6 ? '#FFF3E0' : 'white',
+                      borderRadius: '16px',
+                      transition: 'all 0.3s ease',
+                      position: 'relative',
+                      animation: step === 6 ? 'activeGlow 2s infinite' : 'none',
+                      border: step === 6 ? '3px solid #4CAF50' : '2px solid #E0E0E0',
+                      boxShadow: step === 6 ? '0 8px 24px rgba(76, 175, 80, 0.3)' : '0 2px 8px rgba(0,0,0,0.05)'
+                    }}
+                  >
+                    {showFeedback && step === 6 && (
+                      <Sparkles style={{
+                        position: 'absolute',
+                        top: '10px',
+                        right: '10px',
+                        color: '#FFD700',
+                        animation: 'feedbackSparkle 0.8s ease-out'
+                      }} />
+                    )}
+                    <img 
+                      src={plateImg} 
+                      alt="Plate" 
+                      style={{
+                        width: '110px',
+                        height: 'auto',
+                        objectFit: 'contain',
+                        filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.1))'
+                      }}
+                    />
+
+                    {!riceOnPlate && step === 6 && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        textAlign: 'center',
+                        animation: 'softPulse 1.5s infinite'
+                      }}>
+                        <div style={{ fontSize: '42px', marginBottom: '5px', animation: 'gentleFloat 2s infinite ease-in-out' }}>⬇</div>
+                        <div style={{ fontSize: '11px', color: '#4CAF50', fontWeight: '700' }}>
+                          Serve here
+                        </div>
+                      </div>
+                    )}
+
+                    {riceOnPlate && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        fontSize: '52px',
+                        animation: 'successBounce 0.5s ease-out'
+                      }}>
+                        🍚
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* RIGHT: Available Items Panel */}
+              <div style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                borderRadius: '16px',
+                padding: '20px',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.12)',
+                position: 'sticky',
+                top: '20px',
+                backdropFilter: 'blur(10px)'
+              }}>
+                <h3 style={{
+                  fontSize: '18px',
+                  fontWeight: '700',
+                  color: '#2C3E50',
+                  margin: '0 0 16px 0'
+                }}>
+                  🛠️ Available Items
+                </h3>
+
+                {/* Shelf with Items */}
+                <div style={{
+                  background: 'linear-gradient(135deg, #F8F9FA 0%, #E9ECEF 100%)',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  marginBottom: '14px',
+                  border: '2px dashed #B0BEC5',
+                  boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)'
+                }}>
+                  <div style={{
+                    textAlign: 'center',
+                    marginBottom: '12px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#666'
+                  }}>
+                    Shelf
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    position: 'relative',
+                    minHeight: '140px'
+                  }}>
+                    <img 
+                      src={shelfImg} 
+                      alt="Shelf" 
+                      style={{
+                        width: '100%',
+                        maxWidth: '120px',
+                        height: 'auto',
+                        objectFit: 'contain',
+                        filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.15))'
+                      }}
+                    />
+                    
+                    {!hasPot && (
+                      <div 
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, 'empty-pot')}
+                        className="draggable-item"
+                        style={{
+                          position: 'absolute',
+                          top: '70px',
+                          animation: step === 0 ? 'gentleFloat 2s infinite ease-in-out' : 'none',
+                          width: '60px'
+                        }}
+                      >
+                        <img 
+                          src={cookingPotImg} 
+                          alt="Cooking Pot" 
+                          style={{
+                            width: '100%',
+                            height: 'auto',
+                            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2))'
+                          }}
+                        />
+                      </div>
+                    )}
+                    
+                    {step >= 1 && !hasRiceInPot && (
+                      <div 
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, 'rice-container')}
+                        className="draggable-item"
+                        style={{
+                          position: 'absolute',
+                          top: '20px',
+                          animation: step === 1 ? 'gentleFloat 2s infinite ease-in-out' : 'none'
+                        }}
+                      >
+                        <svg width="45" height="50" viewBox="0 0 50 55">
+                          <rect x="5" y="8" width="40" height="45" fill="#C4A574" rx="3"/>
+                          <rect x="5" y="8" width="40" height="6" fill="#D4B584" rx="2"/>
+                          <rect x="10" y="18" width="30" height="22" fill="#F5E6D3" rx="2"/>
+                          <text x="25" y="32" textAnchor="middle" fill="#8B7355" fontSize="10" fontWeight="bold" fontFamily="Arial">RICE</text>
+                          <circle cx="15" cy="24" r="1.5" fill="#F0F0F0"/>
+                          <circle cx="20" cy="26" r="1.5" fill="#F0F0F0"/>
+                          <circle cx="18" cy="22" r="1.5" fill="#F0F0F0"/>
+                          <circle cx="30" cy="24" r="1.5" fill="#F0F0F0"/>
+                          <circle cx="35" cy="26" r="1.5" fill="#F0F0F0"/>
+                          <circle cx="32" cy="22" r="1.5" fill="#F0F0F0"/>
+                          <path d="M 5 8 L 5 3 Q 25 0, 45 3 L 45 8" fill="#B49464"/>
+                          <ellipse cx="25" cy="3" rx="20" ry="3" fill="#A08454"/>
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Quick Tips */}
+                <div style={{
+                  backgroundColor: '#E3F2FD',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  fontSize: '13px',
+                  color: '#1565C0',
+                  lineHeight: 1.6
+                }}>
+                  <div style={{ fontWeight: '700', marginBottom: '8px' }}>💡 Tip:</div>
+                  <div>Drag and drop items to the highlighted areas. Follow the instructions on the left to complete each step!</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Fixed Bottom Action Bar */}
+          <Box sx={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: 'rgba(255, 255, 255, 0.98)',
+            backdropFilter: 'blur(10px)',
+            borderTop: '2px solid #E0E0E0',
+            padding: '16px 24px',
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 2,
+            boxShadow: '0 -4px 20px rgba(0,0,0,0.08)',
+            zIndex: 50
+          }}>
+            <Button
+              onClick={resetGame}
+              variant="contained"
+              startIcon={<RotateCcw size={20} />}
+              sx={{
+                backgroundColor: '#4CAF50',
+                color: 'white',
+                borderRadius: '12px',
+                fontSize: '15px',
+                padding: '12px 28px',
+                textTransform: 'none',
+                fontWeight: '700',
+                boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
+                '&:hover': { 
+                  backgroundColor: '#45A049',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 6px 16px rgba(76, 175, 80, 0.4)'
+                },
+                transition: 'all 0.3s ease'
+              }}
+            >
+              Reset Game
+            </Button>
+            
+            <Button
+              onClick={() => navigate('/homepage')}
+              variant="contained"
+              startIcon={<Home size={20} />}
+              sx={{
+                backgroundColor: '#F44336',
+                color: 'white',
+                borderRadius: '12px',
+                fontSize: '15px',
+                padding: '12px 28px',
+                textTransform: 'none',
+                fontWeight: '700',
+                boxShadow: '0 4px 12px rgba(244, 67, 54, 0.3)',
+                '&:hover': { 
+                  backgroundColor: '#E53935',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 6px 16px rgba(244, 67, 54, 0.4)'
+                },
+                transition: 'all 0.3s ease'
+              }}
+            >
+              Exit to Home
+            </Button>
+
+            {riceOnPlate && (
               <Button
-                onClick={resetGame}
-                variant="contained"
-                sx={{
-                  backgroundColor: '#FF9800',
-                  borderRadius: '25px',
-                  '&:hover': { backgroundColor: '#F57C00' }
-                }}
-                startIcon={<RotateCcwIcon />}
-              >
-                Reset
-              </Button>
-              <Button
-                onClick={goToHomepage}
+                onClick={() => navigate('/lesson/cooking/level-5')}
                 variant="contained"
                 sx={{
                   backgroundColor: '#2196F3',
-                  borderRadius: '25px',
-                  '&:hover': { backgroundColor: '#1976D2' }
+                  color: 'white',
+                  borderRadius: '12px',
+                  fontSize: '15px',
+                  padding: '12px 28px',
+                  textTransform: 'none',
+                  fontWeight: '700',
+                  boxShadow: '0 4px 12px rgba(33, 150, 243, 0.3)',
+                  '&:hover': { 
+                    backgroundColor: '#1E88E5',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 6px 16px rgba(33, 150, 243, 0.4)'
+                  },
+                  transition: 'all 0.3s ease'
                 }}
               >
-                Home
+                Next Level →
               </Button>
-            </Box>
-          </div>
+            )}
+          </Box>
+
+          {/* Success Modal */}
+          {showSuccess && (
+            <div style={{
+              position: 'fixed', 
+              top: 0, 
+              left: 0, 
+              right: 0, 
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.6)', 
+              display: 'flex',
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              zIndex: 1000,
+              backdropFilter: 'blur(5px)'
+            }}>
+              <div style={{
+                backgroundColor: '#FFFFFF', 
+                borderRadius: '24px', 
+                padding: '48px',
+                maxWidth: '480px', 
+                width: '90%',
+                textAlign: 'center',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+                animation: 'successBounce 0.6s ease-out'
+              }}>
+                <div style={{ 
+                  fontSize: '96px', 
+                  marginBottom: '20px',
+                  animation: 'gentleFloat 2s infinite ease-in-out'
+                }}>
+                  🏆
+                </div>
+                
+                <h2 style={{
+                  color: '#2C3E50', 
+                  fontSize: '36px', 
+                  margin: '0 0 16px 0',
+                  fontWeight: '700'
+                }}>Congratulations!</h2>
+                
+                <div style={{
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  marginBottom: '24px', 
+                  gap: '8px'
+                }}>
+                  {[...Array(3)].map((_, i) => (
+                    <Star 
+                      key={i} 
+                      size={40} 
+                      fill="#FFD54F" 
+                      color="#FFC107"
+                      style={{
+                        animation: `successBounce 0.6s ease-out ${i * 0.1}s`
+                      }}
+                    />
+                  ))}
+                </div>
+                
+                <p style={{
+                  fontSize: '20px', 
+                  color: '#666', 
+                  lineHeight: 1.6,
+                  marginBottom: '32px'
+                }}>
+                  You successfully cooked delicious rice!<br/>
+                  Perfect job following all the steps! 🍚
+                </p>
+
+                {progressSaving && (
+                  <Box sx={{ mb: 3, color: '#2196F3' }}>
+                    <CircularProgress size={20} sx={{ mr: 1 }} />
+                    <Typography variant="body1" component="span" fontWeight="600">Saving progress...</Typography>
+                  </Box>
+                )}
+                
+                {progressSaved && (
+                  <Box sx={{ mb: 3, color: '#4CAF50' }}>
+                    <Typography variant="body1" fontWeight="600">✓ Progress saved successfully!</Typography>
+                  </Box>
+                )}
+                
+                <div style={{ 
+                  display: 'flex', 
+                  gap: '12px', 
+                  justifyContent: 'center',
+                  flexWrap: 'wrap'
+                }}>
+                  <Button 
+                    onClick={() => navigate('/lesson/cooking/level-5')}
+                    variant="contained"
+                    sx={{ 
+                      backgroundColor: '#4CAF50',
+                      borderRadius: '12px',
+                      padding: '14px 32px',
+                      fontSize: '16px',
+                      fontWeight: '700',
+                      boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
+                      '&:hover': { 
+                        backgroundColor: '#45A049',
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 6px 16px rgba(76, 175, 80, 0.4)'
+                      }
+                    }}
+                  >
+                    Next Level
+                  </Button>
+                  
+                  <Button
+                    onClick={resetGame}
+                    variant="outlined"
+                    sx={{ 
+                      borderColor: '#4CAF50',
+                      color: '#4CAF50',
+                      borderWidth: '2px',
+                      borderRadius: '12px',
+                      padding: '14px 32px',
+                      fontSize: '16px',
+                      fontWeight: '700',
+                      '&:hover': {
+                        borderWidth: '2px',
+                        borderColor: '#45A049',
+                        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                        transform: 'translateY(-2px)'
+                      }
+                    }}
+                  >
+                    Play Again
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </Box>
       </Box>
-
-      {/* Feedback Message */}
-      {showFeedback && (
-        <Box sx={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          zIndex: 50,
-          background: 'linear-gradient(90deg, #4CAF50, #66BB6A)',
-          color: 'white',
-          padding: '20px 32px',
-          borderRadius: '20px',
-          fontSize: '20px',
-          fontWeight: 'bold',
-          boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
-        }}>
-          {feedback}
-        </Box>
-      )}
-
-      {/* Success Dialog */}
-      <Dialog
-        open={isComplete}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: { 
-            borderRadius: '20px',
-            backgroundColor: 'rgba(255, 248, 220, 0.98)',
-            border: '4px solid #4CAF50'
-          }
-        }}
-      >
-        <DialogTitle sx={{ textAlign: 'center', py: 3 }}>
-          <EmojiEventsIcon sx={{ fontSize: 100, color: '#4CAF50', mb: 2 }} />
-          <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#2E7D32' }}>
-            Good Job!
-          </Typography>
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-            {[...Array(3)].map((_, i) => (
-              <StarIcon key={i} sx={{ color: '#FFCA3A', fontSize: 50, mx: 0.5 }} />
-            ))}
-          </Box>
-        </DialogTitle>
-        <DialogContent sx={{ textAlign: 'center', py: 2 }}>
-          <Typography variant="h5" sx={{ 
-            fontWeight: 'bold', 
-            color: '#FF9800', 
-            mb: 2,
-            fontSize: '1.8rem'
-          }}>
-            Perfect! 🍳
-          </Typography>
-          <Typography variant="body1" sx={{ 
-            color: '#2E7D32', 
-            lineHeight: 1.6, 
-            mb: 2,
-            fontSize: '1.1rem'
-          }}>
-            You collected all the ingredients needed to make a delicious fried egg! 
-            You gathered the egg, oil, salt, and butter - everything a chef needs!
-          </Typography>
-          <Typography variant="body2" sx={{ 
-            color: '#666', 
-            fontStyle: 'italic',
-            fontSize: '1rem'
-          }}>
-            Now you're ready to cook! Remember to always ask an adult to help when using the stove.
-          </Typography>
-          
-          {progressSaving && (
-            <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(33, 150, 243, 0.9)', borderRadius: '12px', color: 'white' }}>
-              <CircularProgress size={16} sx={{ mr: 1, color: 'white' }} />
-              <Typography variant="body2">Saving your progress...</Typography>
-            </Box>
-          )}
-          
-          {progressSaved && (
-            <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(76, 175, 80, 0.9)', borderRadius: '12px', color: 'white' }}>
-              <CheckCircleIcon sx={{ mr: 1, fontSize: 20 }} />
-              <Typography variant="body2">Progress saved successfully!</Typography>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: 'center', pb: 3, gap: 2 }}>
-          <Button 
-            onClick={continueToNextLevel}
-            disabled={progressSaving}
-            variant="contained"
-            size="large"
-            sx={{ 
-              backgroundColor: '#4CAF50',
-              borderRadius: '15px',
-              minWidth: '120px'
-            }}
-          >
-            {progressSaving ? 'Saving...' : 'Next Level'}
-          </Button>
-          <Button 
-            onClick={resetGame}
-            variant="outlined"
-            size="large"
-            sx={{ 
-              borderColor: '#FF9800', 
-              color: '#FF9800',
-              borderRadius: '15px',
-              minWidth: '120px',
-              borderWidth: '2px',
-              '&:hover': {
-                borderWidth: '2px',
-                backgroundColor: 'rgba(255, 152, 0, 0.1)'
-              }
-            }}
-          >
-            Play Again
-          </Button>
-          <Button 
-            onClick={goToHomepage}
-            variant="contained"
-            size="large"
-            sx={{ 
-              backgroundColor: '#2196F3',
-              borderRadius: '15px',
-              minWidth: '120px'
-            }}
-          >
-            Home
-          </Button>
-        </DialogActions>
-      </Dialog>
     </div>
   );
 }
