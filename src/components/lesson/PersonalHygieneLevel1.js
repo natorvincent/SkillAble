@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Box, 
   Typography, 
@@ -23,22 +23,22 @@ import {
 } from '../../services/progressService';
 
 // Images
-import successGif from "../../assets/hygieneLevel1/roblox.gif"
-import bathroomBg from "../../assets/hygieneLevel1/bg.png"
-import teethImg from "../../assets/hygienelevel2/before_teeth.png"
-import afterTeethImg from "../../assets/hygienelevel2/after_teeth.png"
-import blob1Img from "../../assets/hygienelevel2/blob1.png"
-import blob2Img from "../../assets/hygienelevel2/blob2.png"
-import toothbrushImg from "../../assets/hygienelevel2/toothbrush.png"
-import toothpasteImg from "../../assets/hygienelevel2/toothpaste.png"
-import toothbrushWithPasteImg from "../../assets/hygienelevel2/with_paste.png"
-import waterCupImg from "../../assets/hygienelevel2/water.png"
+import successGif from "../../assets/hygienelevel1/roblox.gif"
+import bathroomBg from "../../assets/hygienelevel1/bg.png"
+import sinkImg from "../../assets/hygienelevel1/sink.png"
+import faucetImg from "../../assets/hygienelevel1/onfaucet.png"
+import leftHandImg from "../../assets/hygienelevel1/lefthand.png"
+import rightHandImg from "../../assets/hygienelevel1/righthand.png"
+import germsImg from "../../assets/hygienelevel1/germ.png"
+import mudImg from "../../assets/hygienelevel1/mud.png"
+import soapImg from "../../assets/hygienelevel1/soap.png"
+import wetHandsImg from "../../assets/hygienelevel1/wethands.png"
 
 // Audio files
-import backgroundMusic from "../../assets/hygieneLevel1/background-music.mp3"
-import correctSound from "../../assets/hygieneLevel1/correct-sound.mp3"
-import incorrectSound from "../../assets/hygieneLevel1/incorrect-sound.mp3"
-import successSound from "../../assets/hygieneLevel1/success-sound.mp3"
+import backgroundMusic from "../../assets/hygienelevel1/background-music.mp3"
+import correctSound from "../../assets/hygienelevel1/correct-sound.mp3"
+import incorrectSound from "../../assets/hygienelevel1/incorrect-sound.mp3"
+import successSound from "../../assets/hygienelevel1/success-sound.mp3"
 
 export default function PersonalHygieneLevel1() {
   const navigate = useNavigate();
@@ -60,65 +60,57 @@ export default function PersonalHygieneLevel1() {
   const [showStartScreen, setShowStartScreen] = useState(true);
   const [starAnimationStage, setStarAnimationStage] = useState(0);
   const [confettiPieces, setConfettiPieces] = useState([]);
-  const [difficulty, setDifficulty] = useState('easy');
-  const [difficultyLoading, setDifficultyLoading] = useState(true);
 
-  // Game states for brushing sequence
-  const [gameStep, setGameStep] = useState(1); // 1: apply paste, 2: brush, 3: rinse
-  const [toothpasteApplied, setToothpasteApplied] = useState(false);
+  // Game states for brushing sequence (start at faucet step)
+  const [gameStep, setGameStep] = useState(1); // 1: turn on faucet, 2: brush
+  const [faucetOn, setFaucetOn] = useState(false); // Track if faucet has been turned on
+  const [step2Completed, setStep2Completed] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [draggedItem, setDraggedItem] = useState(null);
-  const [toothbrushPosition, setToothbrushPosition] = useState({ x: 0, y: 0 });
-  const [bubbles, setBubbles] = useState([]);
+  const [draggedItem, setDraggedItem] = useState(null); // 'left' | 'right' | 'toothbrush' | null
+  const [dragPos, setDragPos] = useState({ x: 0, y: 0 }); // client coords while dragging
   const [teethBubbles, setTeethBubbles] = useState([]); // Bubbles that stay on teeth
-  const [remainingPlaque, setRemainingPlaque] = useState([
-    { id: 1, x: 25, y: 20, width: 120, height: 80, removed: false },
-    { id: 2, x: 70, y: 20, width: 100, height: 80, removed: false },
-    { id: 3, x: 15, y: 65, width: 60, height: 65, removed: false },
-    { id: 4, x: 75, y: 20, width: 100, height: 75, removed: false },
-    { id: 5, x: 50, y: 35, width: 80, height: 55, removed: false }
-  ]);
-  const [waterCupVisible, setWaterCupVisible] = useState(false);
   
-  // New animation states
-  const [pasteSliding, setPasteSliding] = useState(false);
-  const [sparkles, setSparkles] = useState([]);
-  const [showSparkleEffect, setShowSparkleEffect] = useState(false);
+  // Scratch card effect states
+  const [scratchMarks, setScratchMarks] = useState([]);
+  const [scratchedPercentage, setScratchedPercentage] = useState(0);
+  const teethContainerRef = useRef(null);
+  const [teethCoverage, setTeethCoverage] = useState(new Set()); // Track grid cells that have been brushed
+  
+  const initializeGerms = () => ([ // keep this for reset
+    { id: 'germ1', x: 30, y: 50, image: germsImg, size: 50, removed: false },
+    { id: 'germ2', x: 65, y: 58, image: germsImg, size: 60, removed: false },
+    { id: 'germ3', x: 70, y: 78, image: germsImg, size: 50, removed: false },
+    { id: 'germ4', x: 20, y: 75, image: germsImg, size: 80, removed: false },
+    { id: 'germ5', x: 80, y: 65, image: germsImg, size: 50, removed: false }
+  ]);
+  
+  // state to hold the germ blobs so you can render/update them
+  const [germBlobs, setGermBlobs] = useState(initializeGerms());
+  const [soapPlaced, setSoapPlaced] = useState(false);
+  const [leftHandWet, setLeftHandWet] = useState(false);
+  const [rightHandWet, setRightHandWet] = useState(false);
+  const [showWetHands, setShowWetHands] = useState(false);
+
+  // Helper to check if drop position (relative percent inside container) is over faucet area
+  const isOverFaucetArea = (relX, relY) => {
+    // approximate faucet area used earlier (tune if needed)
+    return relX >= 64 && relX <= 92 && relY >= 4 && relY <= 22;
+  };
 
   const handleStartGame = () => {
     setShowStartScreen(false);
   };
 
-  const fetchAssignedDifficulty = async () => {
-    try {
-      const studentId = getStudentId();
-      if (!studentId || !lessonId) {
-        console.log('Missing studentId or lessonId for difficulty fetch');
-        setDifficultyLoading(false);
-        return;
-      }
-
-      const response = await fetch(`http://localhost:8080/api/difficulty/student-difficulty/${studentId}/${lessonId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setDifficulty(data.difficulty || 'easy');
-        console.log('Fetched assigned difficulty:', data.difficulty);
-      } else {
-        console.log('No assigned difficulty found, using default: easy');
-        setDifficulty('easy');
-      }
-    } catch (error) {
-      console.error('Error fetching assigned difficulty:', error);
-      setDifficulty('easy');
-    } finally {
-      setDifficultyLoading(false);
-    }
+  const handleTurnOnFaucet = () => {
+    // Turn on faucet visual
+    setFaucetOn(true);
+    // Wait a moment, then advance to brushing step
+    setTimeout(() => {
+      setGameStep(2);
+      // small reward/feedback
+      setScore(prev => Math.max(prev, 5));
+      playSoundEffect('correct');
+    }, 500);
   };
 
   const getStudentId = () => {
@@ -163,150 +155,106 @@ export default function PersonalHygieneLevel1() {
     }
   };
 
-  // Create sparkle effects
-  const createSparkles = () => {
-    const sparkleArray = [];
-    for (let i = 0; i < 20; i++) {
-      sparkleArray.push({
-        id: i,
-        x: Math.random() * 300 + 50, // Around toothbrush area
-        y: Math.random() * 300 + 100,
-        size: Math.random() * 8 + 4,
-        delay: Math.random() * 0.5,
-        color: ['#FFD700', '#FFF700', '#87CEEB', '#FFB6C1', '#90EE90'][Math.floor(Math.random() * 5)]
-      });
-    }
-    setSparkles(sparkleArray);
-    setShowSparkleEffect(true);
-    
-    // Hide sparkles after animation
-    setTimeout(() => {
-      setShowSparkleEffect(false);
-      setSparkles([]);
-    }, 2000);
-  };
 
   // Game mechanics
-  const handleToothpasteDrag = (e) => {
-    if (gameStep !== 1) return;
-    e.dataTransfer.setData('text/plain', 'toothpaste');
-    setDraggedItem('toothpaste');
-  };
-
-  const handleToothbrushDrop = (e) => {
-    e.preventDefault();
-    if (gameStep === 1 && draggedItem === 'toothpaste') {
-      // Start paste sliding animation
-      setPasteSliding(true);
-      
-      // After sliding animation completes
-      setTimeout(() => {
-        setToothpasteApplied(true);
-        setPasteSliding(false);
-        setGameStep(2);
-        playSoundEffect('correct');
-        setScore(20); // 20% for applying toothpaste
-        
-        // Create sparkle effect after paste is applied
-        createSparkles();
-      }, 800); // Match the sliding animation duration
-    }
-  };
-
-  const handleToothbrushMouseDown = (e) => {
-    if (gameStep !== 2 || !toothpasteApplied) return;
-    setIsDragging(true);
-    setDraggedItem('toothbrush');
-    const rect = e.currentTarget.getBoundingClientRect();
-    setToothbrushPosition({ x: e.clientX, y: e.clientY });
-  };
-
   const handleMouseMove = (e) => {
-    if (!isDragging || draggedItem !== 'toothbrush') return;
-    
-    setToothbrushPosition({ x: e.clientX, y: e.clientY });
-    
-    // Check collision with plaque and create bubbles at teeth
-    const teethContainer = document.querySelector('[data-teeth-container]');
-    if (teethContainer) {
-      const containerRect = teethContainer.getBoundingClientRect();
-      const relativeX = ((e.clientX - containerRect.left) / containerRect.width) * 100;
-      const relativeY = ((e.clientY - containerRect.top) / containerRect.height) * 100;
+    if (!isDragging) return;
+    setDragPos({ x: e.clientX, y: e.clientY });
+  };
 
-      // Create bubbles on teeth surface when brushing with improved styling
-      if (Math.random() < 0.4) {
-        const newTeethBubble = {
-          id: Date.now() + Math.random(),
-          x: relativeX,
-          y: relativeY,
-          size: Math.random() * 16 + 10,
-          opacity: 0.9,
-          color: 'white' // Pure white for proper foam appearance
-        };
-        setTeethBubbles(prev => [...prev, newTeethBubble]);
+  const handleMouseUp = (e) => {
+    if (isDragging && draggedItem === 'hands-group') {
+      // detect drop over faucet area relative to container
+      const teethContainer = teethContainerRef.current;
+      if (teethContainer) {
+        const containerRect = teethContainer.getBoundingClientRect();
+        const relativeX = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+        const relativeY = ((e.clientY - containerRect.top) / containerRect.height) * 100;
+
+        if (isOverFaucetArea(relativeX, relativeY)) {
+          // both hands become wet when group is dropped on faucet
+          setLeftHandWet(true);
+          setRightHandWet(true);
+
+          // show wet hands popup for ~2s, give feedback, then advance to soap step
+          setShowWetHands(true);
+          playSoundEffect('correct');
+          setTimeout(() => {
+            setShowWetHands(false);
+            setGameStep(3); // move to Apply Soap step
+          }, 2000);
+
+          // optional small score reward for completing this interaction
+          setScore(prev => Math.max(prev, Math.min(100, prev + 10)));
+        }
+      }
+    }
+
+    // existing per-item drop logic (keep for backward compatibility)
+    if (isDragging && (draggedItem === 'left' || draggedItem === 'right')) {
+      // detect drop over faucet area relative to container
+      const teethContainer = teethContainerRef.current;
+      if (teethContainer) {
+        const containerRect = teethContainer.getBoundingClientRect();
+        const relativeX = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+        const relativeY = ((e.clientY - containerRect.top) / containerRect.height) * 100;
+
+        if (isOverFaucetArea(relativeX, relativeY)) {
+          if (draggedItem === 'left') setLeftHandWet(true);
+          if (draggedItem === 'right') setRightHandWet(true);
+        }
       }
 
-      setRemainingPlaque(prev => prev.map(plaque => {
-        if (plaque.removed) return plaque;
-        
-        // Check collision
-        if (relativeX >= plaque.x && relativeX <= plaque.x + (plaque.width / containerRect.width * 100) &&
-            relativeY >= plaque.y && relativeY <= plaque.y + (plaque.height / containerRect.height * 100)) {
-          if (!plaque.removed) {
+      setTimeout(() => {
+        if (leftHandWet || rightHandWet) {
+          const nowLeft = (draggedItem === 'left') ? true : leftHandWet;
+          const nowRight = (draggedItem === 'right') ? true : rightHandWet;
+          if (nowLeft && nowRight) {
+            setShowWetHands(true);
             playSoundEffect('correct');
-            // Update score based on plaque removed
-            setScore(prev => Math.min(prev + 15, 95)); // Max 95% before rinsing
+            setTimeout(() => {
+              setShowWetHands(false);
+              setGameStep(3); // move to Apply Soap step
+            }, 2000);
           }
-          return { ...plaque, removed: true };
         }
-        return plaque;
-      }));
+      }, 50);
     }
-  };
 
-  const handleMouseUp = () => {
     setIsDragging(false);
     setDraggedItem(null);
-    
-    // Check if all plaque is removed
-    const allPlaqueRemoved = remainingPlaque.every(plaque => plaque.removed);
-    if (allPlaqueRemoved && gameStep === 2) {
-      setGameStep(3);
-      setWaterCupVisible(true);
+    // Restore germs if hands-group drag ends and still in step 2
+    if (draggedItem === 'hands-group' && gameStep === 2) {
+      setGermBlobs(initializeGerms());
     }
   };
 
-  const handleWaterCupDrag = (e) => {
-    if (gameStep !== 3) return;
-    e.dataTransfer.setData('text/plain', 'water');
-    setDraggedItem('water');
+  // New: start dragging the grouped hands (fix missing handler)
+  const startDragHandsGroup = (e) => {
+    if (gameStep !== 2) return; // only draggable during step 2
+    // support mouse and touch events
+    const clientX = e.clientX ?? (e.touches && e.touches[0] && e.touches[0].clientX);
+    const clientY = e.clientY ?? (e.touches && e.touches[0] && e.touches[0].clientY);
+    if (clientX == null || clientY == null) return;
+    e.preventDefault && e.preventDefault();
+    setIsDragging(true);
+    setDraggedItem('hands-group');
+    setDragPos({ x: clientX, y: clientY });
+    // Keep germs visible - they'll move with the hands
   };
 
-  const handleMouthDrop = (e) => {
-    e.preventDefault();
-    if (gameStep === 3 && draggedItem === 'water') {
-      setScore(100);
-      setGameCompleted(true);
-      setShowSuccess(true);
-      playSoundEffect('success');
-      
-      // Clear all teeth bubbles when rinsing
-      setTeethBubbles([]);
-    }
-  };
-
-  // Bubble animation cleanup
+  // Clean up old scratch marks to prevent memory issues - but only when not actively playing
   useEffect(() => {
-    const interval = setInterval(() => {
-      setBubbles(prev => prev.map(bubble => ({
-        ...bubble,
-        life: bubble.life - 0.02,
-        y: bubble.y - 1
-      })).filter(bubble => bubble.life > 0));
-    }, 50);
+    const cleanup = setInterval(() => {
+      // Only clean up if we're not in the brushing step to prevent marks from disappearing during gameplay
+      if (gameStep !== 2) {
+        const now = Date.now();
+        setScratchMarks(prev => prev.filter(mark => now - mark.timestamp < 60000)); // Keep marks for 60 seconds
+      }
+    }, 10000); // Check every 10 seconds instead of 5
 
-    return () => clearInterval(interval);
-  }, []);
+    return () => clearInterval(cleanup);
+  }, [gameStep]);
 
   useEffect(() => {
     const fetchUserProgress = async () => {
@@ -338,18 +286,17 @@ export default function PersonalHygieneLevel1() {
       try {
         setLoading(true);
         
-        await fetchAssignedDifficulty();
+        // Set lesson data directly
+        setLesson({
+          id: lessonId || 1,
+          title: "Brushing Teeth",
+          description: "Learn proper tooth brushing technique!",
+          level: 1
+        });
         
-        setTimeout(() => {
-          setLesson({
-            id: lessonId || 1,
-            title: "Brushing Teeth",
-            description: "Learn proper tooth brushing technique!",
-            level: 1
-          });
-          setLoading(false);
-        }, 1000);
+        setLoading(false);
       } catch (err) {
+        console.error('Error in fetchData:', err);
         setError('Something went wrong');
         setLoading(false);
       }
@@ -374,10 +321,9 @@ export default function PersonalHygieneLevel1() {
         studentId: studentId,
         lessonId: parseInt(lessonId, 10),
         score: score,
-        maxScore: 100, // Will be updated based on actual game mechanics
+        maxScore: 100,
         completed: true,
-        starsEarned: getStarRating(),
-        difficulty: difficulty
+        starsEarned: getStarRating()
       };
       
       console.log('Saving progress for student:', studentId, progressData);
@@ -393,6 +339,7 @@ export default function PersonalHygieneLevel1() {
     }
   };
 
+  // Reset game state
   const resetGame = () => {
     setShowFeedback(false);
     setShowSuccess(false);
@@ -403,30 +350,27 @@ export default function PersonalHygieneLevel1() {
     
     // Reset game states
     setGameStep(1);
-    setToothpasteApplied(false);
+    setFaucetOn(false);
+    setStep2Completed(false);
     setIsDragging(false);
     setDraggedItem(null);
-    setToothbrushPosition({ x: 0, y: 0 });
-    setBubbles([]);
-    setTeethBubbles([]);
-    setWaterCupVisible(false);
-    setPasteSliding(false);
-    setSparkles([]);
-    setShowSparkleEffect(false);
-    setRemainingPlaque([
-      { id: 1, x: 25, y: 20, width: 120, height: 80, removed: false },
-      { id: 2, x: 70, y: 20, width: 100, height: 80, removed: false },
-      { id: 3, x: 15, y: 65, width: 60, height: 65, removed: false },
-      { id: 4, x: 75, y: 20, width: 100, height: 75, removed: false },
-      { id: 5, x: 50, y: 35, width: 80, height: 55, removed: false }
-    ]);
-    
-    if (audioRef && !audioPlaying) {
-      audioRef.play().then(() => {
-        setAudioPlaying(true);
-      }).catch(error => {
-        console.log('Audio play failed:', error);
-      });
+    // remove soap when resetting
+    setSoapPlaced(false);
+    setLeftHandWet(false);
+    setRightHandWet(false);
+
+    // Try to resume background audio if available
+    if (audioRef) {
+      try {
+        // if audio was paused, play it; otherwise leave as is
+        audioRef.play().then(() => {
+          setAudioPlaying(true);
+        }).catch(() => {
+          // ignore play errors (autoplay restrictions)
+        });
+      } catch (err) {
+        // ignore
+      }
     }
   };
 
@@ -580,7 +524,7 @@ export default function PersonalHygieneLevel1() {
             textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
             textAlign: 'center'
           }}>
-            Brush Your Teeth
+            Handwashing
           </Typography>
           
           <Typography variant="h4" sx={{ 
@@ -593,7 +537,7 @@ export default function PersonalHygieneLevel1() {
             maxWidth: '600px',
             px: 2
           }}>
-            Learn how to brush your teeth properly to keep them clean and healthy!
+            Learn how to wash your hands properly to keep them clean and healthy!
           </Typography>
           
           <Stack direction="row" spacing={3}>
@@ -617,7 +561,7 @@ export default function PersonalHygieneLevel1() {
                 }
               }}
             >
-              Start Brushing!
+              Start!
             </Button>
           </Stack>
         </Box>
@@ -625,7 +569,7 @@ export default function PersonalHygieneLevel1() {
     );
   }
 
-  if (loading || difficultyLoading) {
+  if (loading) {
     return (
       <div style={{
         minHeight: "100vh",
@@ -716,7 +660,7 @@ export default function PersonalHygieneLevel1() {
       <Container maxWidth="xl" sx={{ py: 1 }}>
         {/* Progress bar and instructions - positioned with higher z-index */}
         <Box 
-          sx={{ 
+          sx={{
             position: 'relative',
             zIndex: 1010,
             mb: 2
@@ -733,7 +677,7 @@ export default function PersonalHygieneLevel1() {
               borderRadius: '10px',
               boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
             }}>
-              Step {gameStep}/3: {gameStep === 1 ? 'Apply Toothpaste' : gameStep === 2 ? 'Brush Teeth' : 'Rinse'}
+              Step {gameStep}/3: {gameStep === 1 ? 'Turn on faucet' : gameStep === 2 ? 'Wet Hands' : 'Rinse'}
             </Typography>
             
             <Chip 
@@ -827,9 +771,7 @@ export default function PersonalHygieneLevel1() {
             fontSize: '1rem',
             boxShadow: '0 4px 15px rgba(25, 130, 196, 0.4)'
           }}>
-            {gameStep === 1 && 'Drag the toothpaste to the toothbrush!'}
-            {gameStep === 2 && 'Drag the toothbrush to clean all the plaque!'}
-            {gameStep === 3 && 'Drag the water cup to your mouth to rinse!'}
+            {!gameCompleted ? 'Drag hands to sink to wet hands!' : 'Well done!'}
           </Typography>
         </Box>
 
@@ -861,134 +803,6 @@ export default function PersonalHygieneLevel1() {
           />
         ))}
 
-        {/* Floating bubbles */}
-        {bubbles.map(bubble => (
-          <Box
-            key={bubble.id}
-            sx={{
-              position: 'fixed',
-              left: bubble.x,
-              top: bubble.y,
-              width: bubble.size,
-              height: bubble.size,
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              borderRadius: '50%',
-              pointerEvents: 'none',
-              zIndex: 1000,
-              opacity: bubble.life,
-              transform: 'translate(-50%, -50%)',
-              animation: 'bubble 1s ease-out',
-              '@keyframes bubble': {
-                '0%': { transform: 'translate(-50%, -50%) scale(0)' },
-                '50%': { transform: 'translate(-50%, -50%) scale(1.2)' },
-                '100%': { transform: 'translate(-50%, -50%) scale(1)' }
-              }
-            }}
-          />
-        ))}
-
-        {/* Sparkle effects */}
-        {showSparkleEffect && sparkles.map(sparkle => (
-          <Box
-            key={sparkle.id}
-            sx={{
-              position: 'fixed',
-              left: `${sparkle.x}px`,
-              top: `${sparkle.y}px`,
-              width: `${sparkle.size}px`,
-              height: `${sparkle.size}px`,
-              backgroundColor: sparkle.color,
-              borderRadius: '50%',
-              pointerEvents: 'none',
-              zIndex: 1002,
-              animation: `sparkle 2s ease-out ${sparkle.delay}s`,
-              transform: 'translate(-50%, -50%)',
-              boxShadow: `0 0 ${sparkle.size * 2}px ${sparkle.color}`,
-              '@keyframes sparkle': {
-                '0%': {
-                  opacity: 0,
-                  transform: 'translate(-50%, -50%) scale(0) rotate(0deg)',
-                },
-                '50%': {
-                  opacity: 1,
-                  transform: 'translate(-50%, -50%) scale(1.5) rotate(180deg)',
-                },
-                '100%': {
-                  opacity: 0,
-                  transform: 'translate(-50%, -50%) scale(0) rotate(360deg)',
-                }
-              }
-            }}
-          />
-        ))}
-
-        {/* Sliding toothpaste animation */}
-        {pasteSliding && (
-          <Box
-            sx={{
-              position: 'fixed',
-              left: '85%',
-              top: '30%',
-              transform: 'translateY(-50%)',
-              zIndex: 1003,
-              animation: 'slideToothpaste 0.8s ease-in-out',
-              '@keyframes slideToothpaste': {
-                '0%': {
-                  left: '85%',
-                  opacity: 1,
-                  transform: 'translateY(-50%) scale(1)'
-                },
-                '50%': {
-                  left: '50%',
-                  opacity: 0.8,
-                  transform: 'translateY(-50%) scale(0.8)'
-                },
-                '100%': {
-                  left: '15%',
-                  opacity: 0,
-                  transform: 'translateY(-50%) scale(0.5)'
-                }
-              }
-            }}
-          >
-            <img 
-              src={toothpasteImg} 
-              alt="Sliding toothpaste" 
-              style={{
-                width: '200px',
-                height: '200px',
-                objectFit: 'contain',
-                filter: 'brightness(1.2) drop-shadow(0 0 10px rgba(255,255,255,0.5))'
-              }}
-            />
-          </Box>
-        )}
-
-        {/* Dragging toothbrush */}
-        {isDragging && draggedItem === 'toothbrush' && (
-          <Box
-            sx={{
-              position: 'fixed',
-              left: toothbrushPosition.x,
-              top: toothbrushPosition.y,
-              transform: 'translate(-50%, -50%)',
-              zIndex: 1001,
-              pointerEvents: 'none'
-            }}
-          >
-            <img 
-              src={toothbrushWithPasteImg} 
-              alt="Toothbrush with paste" 
-              style={{
-                width: '300px',
-                height: '300px',
-                objectFit: 'contain',
-                filter: 'brightness(1.1)'
-              }}
-            />
-          </Box>
-        )}
-
         {!gameCompleted && (
           <Box 
             sx={{ 
@@ -1014,38 +828,11 @@ export default function PersonalHygieneLevel1() {
                 width: '100%'
               }}
             >
-              {/* Toothbrush on the left */}
-              {!isDragging && (
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    left: '5%',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    zIndex: 3,
-                    transition: 'all 0.3s ease'
-                  }}
-                  onDrop={handleToothbrushDrop}
-                  onDragOver={(e) => e.preventDefault()}
-                  onMouseDown={handleToothbrushMouseDown}
-                >
-                  <img 
-                    src={toothpasteApplied ? toothbrushWithPasteImg : toothbrushImg} 
-                    alt="Toothbrush" 
-                    style={{
-                      width: '300px',
-                      height: '300px',
-                      objectFit: 'contain',
-                      filter: toothpasteApplied ? 'brightness(1.2) drop-shadow(0 0 15px rgba(144, 190, 109, 0.6))' : 'brightness(1.1)',
-                      cursor: gameStep === 2 ? 'grab' : 'default',
-                      transition: 'filter 0.3s ease'
-                    }}
-                  />
-                </Box>
-              )}
-
-              {/* Central teeth container with body background */}
+              
+            
+              {/* Central teeth container with scratch card effect */}
               <Box
+                ref={teethContainerRef}
                 data-teeth-container
                 sx={{
                   width: '650px',
@@ -1058,140 +845,159 @@ export default function PersonalHygieneLevel1() {
                   position: 'relative',
                   overflow: 'visible'
                 }}
-                onDrop={gameStep === 3 ? handleMouthDrop : undefined}
                 onDragOver={(e) => e.preventDefault()}
-              >
-                
-                {/* Teeth image - in front of body */}
-                <img 
-                  src={gameCompleted ? afterTeethImg : teethImg} 
-                  alt="Teeth" 
-                  style={{
-                    width: '650px',
-                    height: '600px',
-                    objectFit: 'contain',
-                    filter: gameCompleted ? 'brightness(1.1) drop-shadow(0 0 20px rgba(255, 255, 255, 0.5))' : 'brightness(1)',
-                    transition: 'filter 0.5s ease',
-                    position: 'relative',
-                    zIndex: 1
-                  }}
-                />
+                // removed container-level mousedown that caused accidental drags
+                >
 
-                {/* Plaque blobs - only show if not removed */}
-                {remainingPlaque.map((plaque, index) => {
-                  if (plaque.removed) return null;
-                  
-                  const blobImages = [blob1Img, blob2Img, blob1Img, blob2Img, blob1Img];
-                  const filters = [
-                    'none',
-                    'hue-rotate(-15deg) saturate(1.1)',
-                    'hue-rotate(40deg) saturate(0.9)',
-                    'hue-rotate(60deg) saturate(1.1)',
-                    'none'
-                  ];
-                  
-                  return (
-                    <img 
-                      key={plaque.id}
-                      src={blobImages[index]}
-                      alt={`Plaque ${plaque.id}`}
-                      style={{
+                {/* Show sink before turn-on; once faucetOn or game moves past step 1, show faucet image in same position so it replaces the sink */}
+                { (faucetOn || gameStep > 1 || step2Completed || gameCompleted) ? (
+                  <img
+                    src={faucetImg}
+                    alt="Faucet"
+                    // keep click enabled only if still in pre-click state
+                    onClick={!faucetOn && gameStep === 1 ? handleTurnOnFaucet : undefined}
+                    style={{
+                      width: '650px',
+                      height: '600px',
+                      objectFit: 'contain',
+                      cursor: !faucetOn && gameStep === 1 ? 'pointer' : 'default',
+                      boxShadow: 'none',
+                      filter: (step2Completed || gameCompleted) ? 'brightness(1.1) drop-shadow(0 0 20px rgba(255, 255, 255, 0.5))' : 'brightness(1)',
+                      transition: 'all 0.3s ease',
+                      position: 'relative',
+                      zIndex: 3
+                    }}
+                  />
+                ) : null}
+                {/* render sink when faucet image not shown */}
+                { (faucetOn || gameStep > 1 || step2Completed || gameCompleted) ? null : (
+                  <Box
+                    component="img"
+                    src={sinkImg}
+                    alt="Sink"
+                    onClick={gameStep === 1 && !faucetOn ? handleTurnOnFaucet : undefined}
+                    sx={{
+                      width: '650px',
+                      height: '600px',
+                      objectFit: 'contain',
+                      cursor: gameStep === 1 && !faucetOn ? 'pointer' : 'default',
+                      boxShadow: 'none',
+                      transition: 'transform 200ms ease',
+                      position: 'relative',
+                      zIndex: 3,
+                      ...(gameStep === 1 && !faucetOn ? {
+                        '&:hover': {
+                          transform: 'scale(1.06)'
+                        }
+                      } : {})
+                    }}
+                  />
+                )}
+ 
+                {/* Render germ blobs over the container (use x/y percent and size px) */}
+                {!(isDragging && draggedItem === 'hands-group') &&
+                  germBlobs.filter(b => !b.removed).map(b => (
+                    <Box
+                      key={b.id}
+                      component="img"
+                      src={b.image}
+                      alt={`germ-${b.id}`}
+                      draggable={false}
+                      sx={{
                         position: 'absolute',
-                        width: `${plaque.width}px`,
-                        height: `${plaque.height}px`,
-                        top: `${plaque.y}%`,
-                        left: `${plaque.x}%`,
-                        objectFit: 'contain',
-                        opacity: 0.85,
-                        zIndex: 2,
-                        filter: filters[index],
-                        transition: 'opacity 0.3s ease'
+                        left: `${b.x}%`,
+                        top: `${b.y}%`,
+                        width: `${b.size}px`,
+                        height: 'auto',
+                        transform: 'translate(-50%, -50%)',
+                        zIndex: 6,
+                        pointerEvents: 'none',
+                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.25))'
                       }}
                     />
-                  );
-                })}
-              </Box>
-              
-              {/* Toothpaste on the right - only show in step 1 and when not sliding */}
-              {gameStep === 1 && !pasteSliding && (
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    right: '5%',
-                    top: '30%',
-                    transform: 'translateY(-50%)',
-                    zIndex: 3
-                  }}
-                >
-                  <img 
-                    src={toothpasteImg} 
-                    alt="Toothpaste" 
-                    style={{
-                      width: '300px',
-                      height: '300px',
-                      objectFit: 'contain',
-                      filter: 'brightness(1.1)',
-                      cursor: 'grab'
-                    }}
-                    draggable
-                    onDragStart={handleToothpasteDrag}
-                  />
-                </Box>
-              )}
+                  ))
+                }
 
-              {/* Water cup - only show in step 3 */}
-              {waterCupVisible && gameStep === 3 && (
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    right: '5%',
-                    top: '30%',
-                    transform: 'translateY(-50%)',
-                    zIndex: 3
-                  }}
-                >
-                  <img 
-                    src={waterCupImg} 
-                    alt="Water Cup" 
-                    style={{
-                      width: '200px',
-                      height: '200px',
-                      objectFit: 'contain',
-                      filter: 'brightness(1.1)',
-                      cursor: 'grab'
-                    }}
-                    draggable
-                    onDragStart={handleWaterCupDrag}
-                  />
-                </Box>
-              )}
-            </Box>
-          </Box>
-        )}
+                {/* Left and right hands shown side-by-side during step 1 and step 2 */}
+                {(gameStep === 1 || gameStep === 2) && !(isDragging && draggedItem === 'hands-group') && (
+                  <Box
+                    // interactive hands wrapper: enable pointer events and start dragging when in step 2
+                    onMouseDown={startDragHandsGroup}
+                    sx={{
+                      position: 'absolute',
+                      bottom: '0%',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      zIndex: 4,
+                      display: 'flex',
+                      gap: 2,
+                      alignItems: 'center',
+                      pointerEvents: gameStep === 2 ? 'auto' : 'none',
+                      cursor: gameStep === 2 ? 'grab' : 'default',
+                      userSelect: 'none'
+                    }}>
+                     {/* Left hand wrapper */}
+                     <Box sx={{ position: 'relative', width: 400, height: 'auto', display: 'inline-block' }}>
+                       <Box component="img" src={leftHandImg} alt="Left Hand" draggable={false}
+                         sx={{ width: '100%', height: 'auto', display: 'block' }} />
+                       <Box component="img" src={mudImg} alt="Mud on left hand" draggable={false}
+                         sx={{ position: 'absolute', left: '60%', bottom: '18%', transform: 'translate(-50%, 0)', width: 165, height: 'auto', zIndex: 7, pointerEvents: 'none' }} />
+                     </Box>
+   
+                      {/* Right hand wrapper */}
+                      <Box sx={{ position: 'relative', width: 400, height: 'auto', display: 'inline-block' }}>
+                        <Box component="img" src={rightHandImg} alt="Right Hand" draggable={false}
+                          sx={{ width: '100%', height: 'auto', display: 'block' }} />
+                        <Box component="img" src={mudImg} alt="Mud on right hand" draggable={false}
+                          sx={{ position: 'absolute', left: '45%', bottom: '35%', transform: 'translate(-50%, 0)', width: 120, height: 'auto', zIndex: 7, pointerEvents: 'none' }} />
+                        {soapPlaced && (
+                          <Box component="img" src={soapImg} alt="Soap on right hand" draggable={false}
+                            sx={{ position: 'absolute', left: '40%', bottom: '28%', transform: 'translate(-50%, 0)', width: 130, height: 'auto', zIndex: 8, pointerEvents: 'none' }} />
+                        )}
+                      </Box>
+                    </Box>
+                  )}
+               </Box>
+             </Box>
+           </Box>
+         )}
 
-        <Stack direction="row" spacing={4} justifyContent="center" sx={{ mt: 8, mb: 8 }}>
+        {/* Upper-left fixed action buttons (reset / home) */}
+        <Box sx={{
+          position: 'fixed',
+          top: 18,
+          left: 18,
+          zIndex: 1020,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2
+        }}>
           <Button 
             variant="contained"
             onClick={resetGame}
             sx={{ 
               background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
               color: 'white',
-              px: 6,
-              py: 2,
-              borderRadius: '25px',
+              width: 64,
+              height: 64,
+              minWidth: 64,
+              borderRadius: '12px',
               fontFamily: 'Poppins, sans-serif',
               fontWeight: '700',
-              fontSize: '1.3rem',
+              fontSize: '1.25rem',
               textTransform: 'none',
-              boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
+              boxShadow: '0 8px 18px rgba(255, 89, 94, 0.35)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               '&:hover': {
                 background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
-                transform: 'translateY(-2px)',
-                boxShadow: '0 12px 30px rgba(255, 89, 94, 0.7)'
+                transform: 'translateY(-2px)'
               }
             }}
+            aria-label="Reset"
           >
-            Start Over
+            🔄
           </Button>
           
           <Button 
@@ -1200,24 +1006,28 @@ export default function PersonalHygieneLevel1() {
             sx={{ 
               background: 'linear-gradient(135deg, #1982C4 0%, #1568A0 100%)',
               color: 'white',
-              px: 6,
-              py: 2,
-              borderRadius: '25px',
+              width: 64,
+              height: 64,
+              minWidth: 64,
+              borderRadius: '12px',
               fontFamily: 'Poppins, sans-serif',
               fontWeight: '700',
-              fontSize: '1.3rem',
+              fontSize: '1.25rem',
               textTransform: 'none',
-              boxShadow: '0 10px 25px rgba(25, 130, 196, 0.5)',
+              boxShadow: '0 8px 18px rgba(25, 130, 196, 0.35)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               '&:hover': {
                 background: 'linear-gradient(135deg, #42A5F5 0%, #1982C4 100%)',
-                transform: 'translateY(-2px)',
-                boxShadow: '0 12px 30px rgba(25, 130, 196, 0.7)'
+                transform: 'translateY(-2px)'
               }
             }}
+            aria-label="Home"
           >
-            Go Home
+            🏠
           </Button>
-        </Stack>
+        </Box>
         
         {/* Success Dialog */}
         <Dialog
@@ -1299,20 +1109,6 @@ export default function PersonalHygieneLevel1() {
               Sparkling Clean Teeth!
             </Typography>
             
-            <Chip 
-              label={`${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)} Level Completed!`}
-              sx={{
-                backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '1.1rem',
-                fontFamily: 'Poppins, sans-serif',
-                mb: 4,
-                px: 3,
-                py: 1
-              }}
-            />
-            
             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
               {[...Array(3)].map((_, i) => {
                 const isActive = i < getStarRating();
@@ -1365,7 +1161,7 @@ export default function PersonalHygieneLevel1() {
               maxWidth: '800px',
               textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
             }}>
-              Excellent brushing technique! Your teeth are now clean and healthy!
+              Perfect brushing technique! Your teeth are now sparkling clean and healthy!
             </Typography>
             
             {progressSaving && (
@@ -1451,6 +1247,112 @@ export default function PersonalHygieneLevel1() {
             </Box>
           </Box>
         </Dialog>
+
+        {/* Wet hands popup (temporary image) */}
+        {showWetHands && (
+          <Box sx={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 2000,
+            pointerEvents: 'none'
+          }}>
+            <Box
+              component="img"
+              src={wetHandsImg}
+              alt="Wet Hands"
+              sx={{
+                width: '300px',
+                height: 'auto',
+                opacity: 0.9,
+                pointerEvents: 'none',
+                animation: 'fadeInOut 2s ease-in-out',
+                '@keyframes fadeInOut': {
+                  '0%': { opacity: 0 },
+                  '50%': { opacity: 1 },
+                  '100%': { opacity: 0 }
+                }
+              }}
+            />
+          </Box>
+        )}
+
+        {/* Render dragged hand at cursor (floating) - inserted in JSX later */}
+        {isDragging && draggedItem === 'hands-group' && (
+          <Box
+            sx={{
+              position: 'fixed',
+              left: `${dragPos.x}px`,
+              top: `${dragPos.y}px`,
+              pointerEvents: 'none',
+              zIndex: 1500,
+              transform: 'translate(-50%, -50%)',
+              opacity: 0.95,
+              display: 'flex',
+              gap: 6,
+              alignItems: 'center',
+              filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.3))'
+            }}
+          >
+            {/* Left hand with mud overlay */}
+            <Box sx={{ position: 'relative', width: 350, height: 'auto', display: 'inline-block' }}>
+              <Box component="img" src={leftHandImg} alt="drag-left-hand" draggable={false} sx={{ width: '100%', height: 'auto', display: 'block' }} />
+              <Box component="img" src={mudImg} alt="drag-mud-left" draggable={false}
+                sx={{
+                  position: 'absolute',
+                  left: '60%',
+                  bottom: '18%',
+                  transform: 'translate(-50%, 0)',
+                  width: 165,
+                  height: 'auto',
+                  zIndex: 7,
+                  pointerEvents: 'none'
+                }}
+              />
+            </Box>
+            {/* Right hand with mud overlay */}
+            <Box sx={{ position: 'relative', width: 350, height: 'auto', display: 'inline-block' }}>
+              <Box component="img" src={rightHandImg} alt="drag-right-hand" draggable={false} sx={{ width: '100%', height: 'auto', display: 'block' }} />
+              <Box component="img" src={mudImg} alt="drag-mud-right" draggable={false}
+                sx={{
+                  position: 'absolute',
+                  left: '45%',
+                  bottom: '35%',
+                  transform: 'translate(-50%, 0)',
+                  width: 120,
+                  height: 'auto',
+                  zIndex: 7,
+                  pointerEvents: 'none'
+                }}
+              />
+              {soapPlaced && (
+                <Box component="img" src={soapImg} alt="Soap on right hand" draggable={false}
+                  sx={{ position: 'absolute', left: '40%', bottom: '28%', transform: 'translate(-50%, 0)', width: 130, height: 'auto', zIndex: 8, pointerEvents: 'none' }} />
+              )}
+            </Box>
+          </Box>
+        )}
+        {/* keep other dragged-item previews if needed (fallback) */}
+        {isDragging && (draggedItem === 'left' || draggedItem === 'right') && (
+          <Box
+            component="img"
+            src={draggedItem === 'left' ? leftHandImg : rightHandImg}
+            alt={`${draggedItem} hand`}
+            sx={{
+              position: 'fixed',
+              left: `${dragPos.x}px`,
+              top: `${dragPos.y}px`,
+              width: '150px',
+              height: 'auto',
+              pointerEvents: 'none',
+              zIndex: 1500,
+              transform: 'translate(-50%, -50%)',
+              opacity: 0.9,
+              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))'
+            }}
+          />
+        )}
       </Container>
     </div>
   );
