@@ -1,17 +1,12 @@
-FROM maven:3.9-eclipse-temurin-17 AS build
-
+# Build stage
+FROM maven:3.9.6-eclipse-temurin-17 AS builder
 WORKDIR /app
-
-COPY pom.xml .
-RUN mvn dependency:go-offline -B
-
-COPY src ./src
+COPY . .
 RUN mvn clean package -DskipTests
 
+# Run stage
 FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
-
-# FIXED: Check what JAR file is actually created
-COPY --from=build /app/target/Skill-Able-*.jar app.jar
-
+COPY --from=builder /app/target/*.jar app.jar
+EXPOSE 10000
 ENTRYPOINT ["java", "-jar", "app.jar"]
