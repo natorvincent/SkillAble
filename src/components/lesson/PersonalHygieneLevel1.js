@@ -32,13 +32,22 @@ import rightHandImg from "../../assets/hygienelevel1/righthand.png"
 import germsImg from "../../assets/hygienelevel1/germ.png"
 import mudImg from "../../assets/hygienelevel1/mud.png"
 import soapImg from "../../assets/hygienelevel1/soap.png"
-import wetHandsImg from "../../assets/hygienelevel1/wethands.png"
+import wetHandsImg from "../../assets/hygienelevel1/wash.gif"
 
 // Audio files
 import backgroundMusic from "../../assets/hygienelevel1/background-music.mp3"
 import correctSound from "../../assets/hygienelevel1/correct-sound.mp3"
 import incorrectSound from "../../assets/hygienelevel1/incorrect-sound.mp3"
 import successSound from "../../assets/hygienelevel1/success-sound.mp3"
+
+// Video files
+import scrubVideo from "../../assets/hygienelevel1/scrub1.mp4"
+import scrubVideo2 from "../../assets/hygienelevel1/scrub2.mp4"
+import scrubVideo3 from "../../assets/hygienelevel1/scrub3.mp4"
+import scrubVideo4 from "../../assets/hygienelevel1/scrub4.mp4"
+import scrubVideo5 from "../../assets/hygienelevel1/scrub5.mp4"
+import scrubVideo6 from "../../assets/hygienelevel1/scrub6.mp4"
+import scrubVideo7 from "../../assets/hygienelevel1/scrub7.mp4"
 
 export default function PersonalHygieneLevel1() {
   const navigate = useNavigate();
@@ -48,7 +57,6 @@ export default function PersonalHygieneLevel1() {
   const [error, setError] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [score, setScore] = useState(0);
   const [gameCompleted, setGameCompleted] = useState(false);
   const [progressSaving, setProgressSaving] = useState(false);
   const [progressSaved, setProgressSaved] = useState(false);
@@ -61,8 +69,11 @@ export default function PersonalHygieneLevel1() {
   const [starAnimationStage, setStarAnimationStage] = useState(0);
   const [confettiPieces, setConfettiPieces] = useState([]);
 
+  // Add state to track when to hide all images
+  const [hideAllImages, setHideAllImages] = useState(false);
+
   // Game states for brushing sequence (start at faucet step)
-  const [gameStep, setGameStep] = useState(1); // 1: turn on faucet, 2: brush
+  const [gameStep, setGameStep] = useState(1); // 1: turn on faucet, 2: wet hands, 3: apply soap, 4: rub hands, 5: rinse hands
   const [faucetOn, setFaucetOn] = useState(false); // Track if faucet has been turned on
   const [step2Completed, setStep2Completed] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -75,6 +86,18 @@ export default function PersonalHygieneLevel1() {
   const [scratchedPercentage, setScratchedPercentage] = useState(0);
   const teethContainerRef = useRef(null);
   const [teethCoverage, setTeethCoverage] = useState(new Set()); // Track grid cells that have been brushed
+  
+  // New states for step 4
+  const [showScrubVideo, setShowScrubVideo] = useState(false);
+  const [isHandHovered, setIsHandHovered] = useState(false);
+  const [handsRubbed, setHandsRubbed] = useState(false);
+  const [currentScrubVideoIndex, setCurrentScrubVideoIndex] = useState(0);
+
+  // New states for step 5
+  const [step5Completed, setStep5Completed] = useState(false);
+  
+  // Create array of all scrub videos
+  const scrubVideos = [scrubVideo, scrubVideo2, scrubVideo3, scrubVideo4, scrubVideo5, scrubVideo6, scrubVideo7];
   
   const initializeGerms = () => ([ // keep this for reset
     { id: 'germ1', x: 30, y: 50, image: germsImg, size: 50, removed: false },
@@ -92,9 +115,13 @@ export default function PersonalHygieneLevel1() {
   const [showWetHands, setShowWetHands] = useState(false);
 
   // Helper to check if drop position (relative percent inside container) is over faucet area
-  const isOverFaucetArea = (relX, relY) => {
-    // approximate faucet area used earlier (tune if needed)
-    return relX >= 64 && relX <= 92 && relY >= 4 && relY <= 22;
+   const isOverFaucetArea = (relX, relY) => {
+    return relX >= 45 && relX <= 100 && relY >= 0 && relY <= 45;
+  };
+
+  // Helper to check if click position is in soap area (upper right of faucet)
+  const isInSoapArea = (relX, relY) => {
+    return relX >= 65 && relX <= 98 && relY >= 3 && relY <= 30;
   };
 
   const handleStartGame = () => {
@@ -107,10 +134,39 @@ export default function PersonalHygieneLevel1() {
     // Wait a moment, then advance to brushing step
     setTimeout(() => {
       setGameStep(2);
-      // small reward/feedback
-      setScore(prev => Math.max(prev, 5));
       playSoundEffect('correct');
     }, 500);
+  };
+
+  // New function to handle soap application
+  const handleApplySoap = (e) => {
+    if (gameStep !== 3) return;
+    
+    const teethContainer = teethContainerRef.current;
+    if (teethContainer) {
+      const containerRect = teethContainer.getBoundingClientRect();
+      const relativeX = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+      const relativeY = ((e.clientY - containerRect.top) / containerRect.height) * 100;
+
+      if (isInSoapArea(relativeX, relativeY)) {
+        // Place soap on right hand directly
+        setSoapPlaced(true);
+        playSoundEffect('correct');
+        
+        // Advance to step 4 after a short delay
+        setTimeout(() => {
+          setGameStep(4);
+        }, 1000);
+      }
+    }
+  };
+
+  // New function to handle hand rubbing in step 4
+  const handleHandRub = () => {
+    if (gameStep !== 4 || handsRubbed) return;
+  
+    setShowScrubVideo(true);
+    playSoundEffect('correct');
   };
 
   const getStudentId = () => {
@@ -155,7 +211,6 @@ export default function PersonalHygieneLevel1() {
     }
   };
 
-
   // Game mechanics
   const handleMouseMove = (e) => {
     if (!isDragging) return;
@@ -172,20 +227,38 @@ export default function PersonalHygieneLevel1() {
         const relativeY = ((e.clientY - containerRect.top) / containerRect.height) * 100;
 
         if (isOverFaucetArea(relativeX, relativeY)) {
-          // both hands become wet when group is dropped on faucet
-          setLeftHandWet(true);
-          setRightHandWet(true);
+          if (gameStep === 2) {
+            // Step 2: Wet hands
+            setLeftHandWet(true);
+            setRightHandWet(true);
 
-          // show wet hands popup for ~2s, give feedback, then advance to soap step
-          setShowWetHands(true);
-          playSoundEffect('correct');
-          setTimeout(() => {
-            setShowWetHands(false);
-            setGameStep(3); // move to Apply Soap step
-          }, 2000);
-
-          // optional small score reward for completing this interaction
-          setScore(prev => Math.max(prev, Math.min(100, prev + 10)));
+            // Hide all images and show wet hands popup for ~2s, give feedback, then advance to soap step
+            setHideAllImages(true);
+            setShowWetHands(true);
+            playSoundEffect('correct');
+            setTimeout(() => {
+              setShowWetHands(false);
+              setHideAllImages(false); // Bring images back
+              setGameStep(3); // move to Apply Soap step
+            }, 2000);
+          } else if (gameStep === 5) {
+            // Step 5: Rinse clean hands - show success
+            setHideAllImages(true);
+            setShowWetHands(true);
+            playSoundEffect('correct');
+            setTimeout(() => {
+              setShowWetHands(false);
+              setHideAllImages(false);
+              setStep5Completed(true);
+              
+              // Show success after a short delay
+              setTimeout(() => {
+                setShowSuccess(true);
+                playSoundEffect('success');
+                setGameCompleted(true);
+              }, 1000);
+            }, 2000);
+          }
         }
       }
     }
@@ -210,10 +283,12 @@ export default function PersonalHygieneLevel1() {
           const nowLeft = (draggedItem === 'left') ? true : leftHandWet;
           const nowRight = (draggedItem === 'right') ? true : rightHandWet;
           if (nowLeft && nowRight) {
+            setHideAllImages(true);
             setShowWetHands(true);
             playSoundEffect('correct');
             setTimeout(() => {
               setShowWetHands(false);
+              setHideAllImages(false); // Bring images back
               setGameStep(3); // move to Apply Soap step
             }, 2000);
           }
@@ -231,7 +306,7 @@ export default function PersonalHygieneLevel1() {
 
   // New: start dragging the grouped hands (fix missing handler)
   const startDragHandsGroup = (e) => {
-    if (gameStep !== 2) return; // only draggable during step 2
+    if (gameStep !== 2 && gameStep !== 5) return; // only draggable during step 2 and 5
     // support mouse and touch events
     const clientX = e.clientX ?? (e.touches && e.touches[0] && e.touches[0].clientX);
     const clientY = e.clientY ?? (e.touches && e.touches[0] && e.touches[0].clientY);
@@ -268,7 +343,6 @@ export default function PersonalHygieneLevel1() {
         console.log('Fetching progress for student:', studentId, 'lesson:', lessonId);
         const progressResponse = await getStudentLessonProgress(studentId, lessonId);
         if (progressResponse) {
-          setScore(progressResponse.score || 0);
           console.log('Loaded existing progress:', progressResponse);
         } else {
           console.log('No existing progress found - starting fresh');
@@ -289,8 +363,8 @@ export default function PersonalHygieneLevel1() {
         // Set lesson data directly
         setLesson({
           id: lessonId || 1,
-          title: "Brushing Teeth",
-          description: "Learn proper tooth brushing technique!",
+          title: "Handwashing",
+          description: "Learn proper handwashing technique!",
           level: 1
         });
         
@@ -320,10 +394,8 @@ export default function PersonalHygieneLevel1() {
       const progressData = {
         studentId: studentId,
         lessonId: parseInt(lessonId, 10),
-        score: score,
-        maxScore: 100,
         completed: true,
-        starsEarned: getStarRating()
+        starsEarned: 3 // Always give 3 stars when completed
       };
       
       console.log('Saving progress for student:', studentId, progressData);
@@ -343,10 +415,10 @@ export default function PersonalHygieneLevel1() {
   const resetGame = () => {
     setShowFeedback(false);
     setShowSuccess(false);
-    setScore(0);
     setGameCompleted(false);
     setProgressSaved(false);
     setProgressSaving(false);
+    setHideAllImages(false); // Reset image visibility
     
     // Reset game states
     setGameStep(1);
@@ -358,6 +430,13 @@ export default function PersonalHygieneLevel1() {
     setSoapPlaced(false);
     setLeftHandWet(false);
     setRightHandWet(false);
+    // Reset step 4 states
+    setShowScrubVideo(false);
+    setIsHandHovered(false);
+    setHandsRubbed(false);
+    setCurrentScrubVideoIndex(0); // Reset to first video
+    // Reset step 5 state
+    setStep5Completed(false);
 
     // Try to resume background audio if available
     if (audioRef) {
@@ -375,10 +454,8 @@ export default function PersonalHygieneLevel1() {
   };
 
   const getStarRating = () => {
-    if (score >= 90) return 3;
-    if (score >= 70) return 2;
-    if (score >= 50) return 1;
-    return 0;
+    // Always return 3 stars when game is completed
+    return gameCompleted ? 3 : 0;
   };
 
   const handleContinue = async () => {
@@ -419,7 +496,7 @@ export default function PersonalHygieneLevel1() {
       const timer = setTimeout(animateStars, 1000);
       return () => clearTimeout(timer);
     }
-  }, [showSuccess, score]);
+  }, [showSuccess, gameCompleted]);
 
   useEffect(() => {
     const audio = new Audio(backgroundMusic);
@@ -677,26 +754,27 @@ export default function PersonalHygieneLevel1() {
               borderRadius: '10px',
               boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
             }}>
-              Step {gameStep}/3: {gameStep === 1 ? 'Turn on faucet' : gameStep === 2 ? 'Wet Hands' : 'Rinse'}
+              Step {gameStep}/5: {gameStep === 1 ? 'Turn on faucet' : gameStep === 2 ? 'Wet Hands' : gameStep === 3 ? 'Apply Soap' : gameStep === 4 ? 'Rub Hands' : 'Rinse Hands'}
             </Typography>
             
-            <Chip 
-              label={`Score: ${score}/100`} 
+            <Chip  
+              label="Completed!" 
               sx={{
-                backgroundColor: '#FF595E',
+                backgroundColor: '#90BE6D',
                 color: 'white',
                 fontWeight: 'bold',
                 fontSize: '0.9rem',
                 fontFamily: 'Poppins, sans-serif',
                 borderRadius: '15px',
-                boxShadow: '0 4px 15px rgba(255, 89, 94, 0.4)'
+                boxShadow: '0 4px 15px rgba(144, 190, 109, 0.4)',
+                display: gameCompleted ? 'flex' : 'none'
               }}
             />
           </Stack>
           <Box sx={{ maxWidth: '800px', mx: 'auto' }}>
             <LinearProgress 
               variant="determinate" 
-              value={score} 
+              value={(gameStep / 5) * 100} 
               sx={{ 
                 height: 8, 
                 borderRadius: '10px',
@@ -763,17 +841,98 @@ export default function PersonalHygieneLevel1() {
             color: 'white', 
             fontWeight: 'bold',
             fontFamily: 'Poppins, sans-serif',
-            backgroundColor: 'rgba(25, 130, 196, 0.9)',
+            backgroundColor: gameStep === 3 ? '#FF9800' : 'rgba(25, 130, 196, 0.9)',
             display: 'inline-block',
             px: 3,
             py: 1,
             borderRadius: '15px',
             fontSize: '1rem',
-            boxShadow: '0 4px 15px rgba(25, 130, 196, 0.4)'
+            boxShadow: gameStep === 3 ? '0 4px 15px rgba(255, 152, 0, 0.4)' : '0 4px 15px rgba(25, 130, 196, 0.4)'
           }}>
-            {!gameCompleted ? 'Drag hands to sink to wet hands!' : 'Well done!'}
+            {gameStep === 1 ? 'Click the sink to turn on water!' : 
+             gameStep === 2 ? 'Drag hands to sink to wet hands!' :
+             gameStep === 3 ? 'Click the soap dispenser (upper right) to get soap!' :
+             gameStep === 4 ? 'Click on hands to rub them together!' :
+             'Drag clean hands to sink to rinse!'}
           </Typography>
         </Box>
+
+        {/* Scrub Video Overlay */}
+        {showScrubVideo && (
+          <Box sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000
+          }}>
+            <Box sx={{ 
+              position: 'relative', 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center',
+              maxWidth: '90%',
+              maxHeight: '90%'
+            }}>
+              <video
+                key={scrubVideos[currentScrubVideoIndex]} // Use the current video URL as key
+                autoPlay
+                muted
+                loop
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '80%',
+                  borderRadius: '15px',
+                  boxShadow: '0 0 30px rgba(255, 255, 255, 0.5)'
+                }}
+              >
+                <source src={scrubVideos[currentScrubVideoIndex]} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+              
+              {/* NEXT/FINISH Button */}
+              <Button
+                variant="contained"
+                onClick={() => {
+                  if (currentScrubVideoIndex < scrubVideos.length - 1) {
+                    // If not the last video, go to next video
+                    setCurrentScrubVideoIndex(prev => prev + 1);
+                  } else {
+                    // If on the last video (scrub7.mp4), proceed to step 5
+                    setShowScrubVideo(false);
+                    setHandsRubbed(true);
+                    setGameStep(5); // Move to step 5 instead of showing success
+                  }
+                }}
+                sx={{
+                  mt: 3,
+                  background: 'linear-gradient(135deg, #90BE6D 0%, #7BA05B 100%)',
+                  color: 'white',
+                  px: 6,
+                  py: 2,
+                  borderRadius: '25px',
+                  fontFamily: 'Poppins, sans-serif',
+                  fontWeight: '700',
+                  fontSize: '1.2rem',
+                  textTransform: 'none',
+                  boxShadow: '0 8px 20px rgba(144, 190, 109, 0.5)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #A8D08D 0%, #90BE6D 100%)',
+                    transform: 'translateY(-2px)'
+                  }
+                }}
+              >
+                {currentScrubVideoIndex < scrubVideos.length - 1 ? 'NEXT' : 'FINISH'}
+              </Button>
+            </Box>
+          </Box>
+        )}
 
         {/* Teeth bubbles - bubbles that stay on teeth surface with improved styling */}
         {teethBubbles.map(bubble => (
@@ -803,7 +962,8 @@ export default function PersonalHygieneLevel1() {
           />
         ))}
 
-        {!gameCompleted && (
+        {/* Conditionally render game content based on hideAllImages state */}
+        {!hideAllImages && !gameCompleted && (
           <Box 
             sx={{ 
               display: 'flex',
@@ -854,16 +1014,16 @@ export default function PersonalHygieneLevel1() {
                   <img
                     src={faucetImg}
                     alt="Faucet"
-                    // keep click enabled only if still in pre-click state
-                    onClick={!faucetOn && gameStep === 1 ? handleTurnOnFaucet : undefined}
+                    // Add click handler for step 3 to apply soap
+                    onClick={gameStep === 3 ? handleApplySoap : undefined}
                     style={{
                       width: '650px',
                       height: '600px',
                       objectFit: 'contain',
-                      cursor: !faucetOn && gameStep === 1 ? 'pointer' : 'default',
+                      cursor: gameStep === 3 ? 'pointer' : 'default',
                       boxShadow: 'none',
                       filter: (step2Completed || gameCompleted) ? 'brightness(1.1) drop-shadow(0 0 20px rgba(255, 255, 255, 0.5))' : 'brightness(1)',
-                      transition: 'all 0.3s ease',
+                      transition: 'all 0.5s ease',
                       position: 'relative',
                       zIndex: 3
                     }}
@@ -895,7 +1055,7 @@ export default function PersonalHygieneLevel1() {
                 )}
  
                 {/* Render germ blobs over the container (use x/y percent and size px) */}
-                {!(isDragging && draggedItem === 'hands-group') &&
+                {!(isDragging && draggedItem === 'hands-group') && !showWetHands && gameStep < 5 &&
                   germBlobs.filter(b => !b.removed).map(b => (
                     <Box
                       key={b.id}
@@ -919,10 +1079,13 @@ export default function PersonalHygieneLevel1() {
                 }
 
                 {/* Left and right hands shown side-by-side during step 1 and step 2 */}
-                {(gameStep === 1 || gameStep === 2) && !(isDragging && draggedItem === 'hands-group') && (
+                {(gameStep === 1 || gameStep === 2 || gameStep === 3 || gameStep === 4 || gameStep === 5) && !(isDragging && draggedItem === 'hands-group') && !showWetHands && (
                   <Box
-                    // interactive hands wrapper: enable pointer events and start dragging when in step 2
-                    onMouseDown={startDragHandsGroup}
+                    // interactive hands wrapper: enable pointer events and start dragging when in step 2 or 5
+                    onMouseDown={(gameStep === 2 || gameStep === 5) ? startDragHandsGroup : undefined}
+                    onClick={gameStep === 4 ? handleHandRub : undefined}
+                    onMouseEnter={gameStep === 4 ? () => setIsHandHovered(true) : undefined}
+                    onMouseLeave={gameStep === 4 ? () => setIsHandHovered(false) : undefined}
                     sx={{
                       position: 'absolute',
                       bottom: '0%',
@@ -932,29 +1095,63 @@ export default function PersonalHygieneLevel1() {
                       display: 'flex',
                       gap: 2,
                       alignItems: 'center',
-                      pointerEvents: gameStep === 2 ? 'auto' : 'none',
-                      cursor: gameStep === 2 ? 'grab' : 'default',
-                      userSelect: 'none'
+                      pointerEvents: (gameStep === 2 || gameStep === 4 || gameStep === 5) ? 'auto' : 'none',
+                      cursor: (gameStep === 2 || gameStep === 5) ? 'grab' : (gameStep === 4 ? 'pointer' : 'default'),
+                      userSelect: 'none',
+                      transition: 'all 0.3s ease',
+                      transform: gameStep === 4 && isHandHovered ? 'translateX(-50%) scale(1.1)' : 'translateX(-50%) scale(1)'
                     }}>
                      {/* Left hand wrapper */}
                      <Box sx={{ position: 'relative', width: 400, height: 'auto', display: 'inline-block' }}>
                        <Box component="img" src={leftHandImg} alt="Left Hand" draggable={false}
                          sx={{ width: '100%', height: 'auto', display: 'block' }} />
-                       <Box component="img" src={mudImg} alt="Mud on left hand" draggable={false}
-                         sx={{ position: 'absolute', left: '60%', bottom: '18%', transform: 'translate(-50%, 0)', width: 165, height: 'auto', zIndex: 7, pointerEvents: 'none' }} />
+                       {/* Only show mud in steps 1-4, not in step 5 */}
+                       {gameStep < 5 && (
+                         <Box component="img" src={mudImg} alt="Mud on left hand" draggable={false}
+                           sx={{ position: 'absolute', left: '60%', bottom: '18%', transform: 'translate(-50%, 0)', width: 165, height: 'auto', zIndex: 7, pointerEvents: 'none' }} />
+                       )}
                      </Box>
    
-                      {/* Right hand wrapper */}
-                      <Box sx={{ position: 'relative', width: 400, height: 'auto', display: 'inline-block' }}>
-                        <Box component="img" src={rightHandImg} alt="Right Hand" draggable={false}
-                          sx={{ width: '100%', height: 'auto', display: 'block' }} />
+                    {/* Right hand wrapper */}
+                    <Box sx={{ position: 'relative', width: 400, height: 'auto', display: 'inline-block' }}>
+                      <Box component="img" src={rightHandImg} alt="Right Hand" draggable={false}
+                        sx={{ width: '100%', height: 'auto', display: 'block' }} />
+                      {/* Only show mud in steps 1-4, not in step 5 */}
+                      {gameStep < 5 && (
                         <Box component="img" src={mudImg} alt="Mud on right hand" draggable={false}
                           sx={{ position: 'absolute', left: '45%', bottom: '35%', transform: 'translate(-50%, 0)', width: 120, height: 'auto', zIndex: 7, pointerEvents: 'none' }} />
-                        {soapPlaced && (
-                          <Box component="img" src={soapImg} alt="Soap on right hand" draggable={false}
-                            sx={{ position: 'absolute', left: '40%', bottom: '28%', transform: 'translate(-50%, 0)', width: 130, height: 'auto', zIndex: 8, pointerEvents: 'none' }} />
-                        )}
-                      </Box>
+                      )}
+                      {/* Show soap only in steps 3-4, not in step 5 */}
+                      {soapPlaced && gameStep < 5 && (
+                        <Box component="img" src={soapImg} alt="Soap on right hand" draggable={false}
+                          sx={{ 
+                            position: 'absolute', 
+                            left: '40%', 
+                            bottom: '28%', 
+                            transform: 'translate(-50%, 0)', 
+                            width: 130, 
+                            height: 'auto', 
+                            zIndex: 8, 
+                            pointerEvents: 'none',
+                            animation: 'soapAppear 0.5s ease-out',
+                            '@keyframes soapAppear': {
+                              '0%': {
+                                transform: 'translate(-50%, 0) scale(0)',
+                                opacity: 0
+                              },
+                              '70%': {
+                                transform: 'translate(-50%, 0) scale(1.1)',
+                                opacity: 1
+                              },
+                              '100%': {
+                                transform: 'translate(-50%, 0) scale(1)',
+                                opacity: 1
+                              }
+                            }
+                          }} 
+                        />
+                      )}
+                    </Box>
                     </Box>
                   )}
                </Box>
@@ -1106,7 +1303,7 @@ export default function PersonalHygieneLevel1() {
               textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
               mb: 2
             }}>
-              Sparkling Clean Teeth!
+              Sparkling Clean Hands!
             </Typography>
             
             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
@@ -1144,15 +1341,6 @@ export default function PersonalHygieneLevel1() {
                 );
               })}
             </Box>
-            <Typography variant="h4" sx={{ 
-              fontWeight: 'bold',
-              color: 'white',
-              mb: 3,
-              fontFamily: 'Poppins, sans-serif',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
-            }}>
-              Score: {score}/100
-            </Typography>
             <Typography variant="h6" sx={{ 
               color: 'white',
               fontFamily: 'Inter, sans-serif',
@@ -1161,7 +1349,7 @@ export default function PersonalHygieneLevel1() {
               maxWidth: '800px',
               textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
             }}>
-              Perfect brushing technique! Your teeth are now sparkling clean and healthy!
+              Perfect handwashing technique! Your hands are now sparkling clean and healthy!
             </Typography>
             
             {progressSaving && (
@@ -1219,7 +1407,7 @@ export default function PersonalHygieneLevel1() {
                   }
                 }}
               >
-                Brush Again
+                Wash Again
               </Button>
               <Button 
                 variant="contained"
@@ -1248,7 +1436,7 @@ export default function PersonalHygieneLevel1() {
           </Box>
         </Dialog>
 
-        {/* Wet hands popup (temporary image) */}
+        {/* Wet hands popup (temporary image) - shown on top when everything else is hidden */}
         {showWetHands && (
           <Box sx={{
             position: 'fixed',
@@ -1263,23 +1451,33 @@ export default function PersonalHygieneLevel1() {
               src={wetHandsImg}
               alt="Wet Hands"
               sx={{
-                width: '300px',
+                width: '600px',
                 height: 'auto',
-                opacity: 0.9,
                 pointerEvents: 'none',
-                animation: 'fadeInOut 2s ease-in-out',
-                '@keyframes fadeInOut': {
-                  '0%': { opacity: 0 },
-                  '50%': { opacity: 1 },
-                  '100%': { opacity: 0 }
+                animation: 'bounceIn 1.2s ease-out',
+                '@keyframes bounceIn': {
+                  '0%': {
+                    transform: 'scale(0.8)',
+                    opacity: 0.8
+                  },
+                  '50%': {
+                    transform: 'scale(1.1)'
+                  },
+                  '70%': {
+                    transform: 'scale(0.95)'
+                  },
+                  '100%': {
+                    transform: 'scale(1)',
+                    opacity: 1
+                  }
                 }
               }}
             />
           </Box>
         )}
 
-        {/* Render dragged hand at cursor (floating) - inserted in JSX later */}
-        {isDragging && draggedItem === 'hands-group' && (
+        {/* Render dragged hand at cursor (floating) - only show when not hiding images */}
+        {!hideAllImages && isDragging && draggedItem === 'hands-group' && (
           <Box
             sx={{
               position: 'fixed',
@@ -1298,43 +1496,51 @@ export default function PersonalHygieneLevel1() {
             {/* Left hand with mud overlay */}
             <Box sx={{ position: 'relative', width: 350, height: 'auto', display: 'inline-block' }}>
               <Box component="img" src={leftHandImg} alt="drag-left-hand" draggable={false} sx={{ width: '100%', height: 'auto', display: 'block' }} />
-              <Box component="img" src={mudImg} alt="drag-mud-left" draggable={false}
-                sx={{
-                  position: 'absolute',
-                  left: '60%',
-                  bottom: '18%',
-                  transform: 'translate(-50%, 0)',
-                  width: 165,
-                  height: 'auto',
-                  zIndex: 7,
-                  pointerEvents: 'none'
-                }}
-              />
+              {/* Only show mud in steps 1-4, not in step 5 */}
+              {gameStep < 5 && (
+                <Box component="img" src={mudImg} alt="drag-mud-left" draggable={false}
+                  sx={{
+                    position: 'absolute',
+                    left: '60%',
+                    bottom: '18%',
+                    transform: 'translate(-50%, 0)',
+                    width: 165,
+                    height: 'auto',
+                    zIndex: 7,
+                    pointerEvents: 'none'
+                  }}
+                />
+              )}
             </Box>
             {/* Right hand with mud overlay */}
             <Box sx={{ position: 'relative', width: 350, height: 'auto', display: 'inline-block' }}>
               <Box component="img" src={rightHandImg} alt="drag-right-hand" draggable={false} sx={{ width: '100%', height: 'auto', display: 'block' }} />
-              <Box component="img" src={mudImg} alt="drag-mud-right" draggable={false}
-                sx={{
-                  position: 'absolute',
-                  left: '45%',
-                  bottom: '35%',
-                  transform: 'translate(-50%, 0)',
-                  width: 120,
-                  height: 'auto',
-                  zIndex: 7,
-                  pointerEvents: 'none'
-                }}
-              />
-              {soapPlaced && (
+              {/* Only show mud in steps 1-4, not in step 5 */}
+              {gameStep < 5 && (
+                <Box component="img" src={mudImg} alt="drag-mud-right" draggable={false}
+                  sx={{
+                    position: 'absolute',
+                    left: '45%',
+                    bottom: '35%',
+                    transform: 'translate(-50%, 0)',
+                    width: 120,
+                    height: 'auto',
+                    zIndex: 7,
+                    pointerEvents: 'none'
+                  }}
+                />
+              )}
+              {/* Show soap only in steps 3-4, not in step 5 */}
+              {soapPlaced && gameStep < 5 && (
                 <Box component="img" src={soapImg} alt="Soap on right hand" draggable={false}
                   sx={{ position: 'absolute', left: '40%', bottom: '28%', transform: 'translate(-50%, 0)', width: 130, height: 'auto', zIndex: 8, pointerEvents: 'none' }} />
               )}
             </Box>
           </Box>
         )}
+        
         {/* keep other dragged-item previews if needed (fallback) */}
-        {isDragging && (draggedItem === 'left' || draggedItem === 'right') && (
+        {!hideAllImages && isDragging && (draggedItem === 'left' || draggedItem === 'right') && (
           <Box
             component="img"
             src={draggedItem === 'left' ? leftHandImg : rightHandImg}
