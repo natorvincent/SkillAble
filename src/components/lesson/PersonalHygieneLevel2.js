@@ -24,6 +24,7 @@ import {
 
 // Images
 // import successGif from "../../assets/hygienelevel1/roblox.gif"
+// import bathroomBg from "../../assets/hygienelevel2/bg.png"
 import bathroomBg from "../../assets/hygienelevel2/bg.png"
 import teethImg from "../../assets/hygienelevel2/before_teeth.png"
 import afterTeethImg from "../../assets/hygienelevel2/after_teeth.png"
