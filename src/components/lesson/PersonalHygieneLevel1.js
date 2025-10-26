@@ -35,6 +35,7 @@ import soapImg from "../../assets/hygienelevel1/soap.png"
 import wetHandsImg from "../../assets/hygienelevel1/wash.gif"
 
 // Audio files
+
 import backgroundMusic from "../../assets/hygienelevel1/background-music.mp3"
 import correctSound from "../../assets/hygienelevel1/correct-sound.mp3"
 import incorrectSound from "../../assets/hygienelevel1/incorrect-sound.mp3"
