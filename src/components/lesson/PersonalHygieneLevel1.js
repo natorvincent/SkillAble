@@ -22,7 +22,8 @@ import {
   saveStudentLessonProgress,
 } from '../../services/progressService';
 
-// Images
+
+
 // import successGif from "../../assets/hygienelevel1/roblox.gif"
 import bathroomBg from "../../assets/hygienelevel1/bg.png"
 import sinkImg from "../../assets/hygienelevel1/sink.png"
