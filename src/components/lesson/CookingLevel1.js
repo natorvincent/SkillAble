@@ -78,6 +78,17 @@ export default function FriedEggLevel1() {
   const progressPercentage = (collectedIngredients.length / correctIngredients.length) * 100;
   const allCollected = collectedIngredients.length === correctIngredients.length;
 
+  // Positions for ingredients inside the pan
+  const getPanIngredientPosition = (index, total) => {
+    const positions = [
+      { top: '30%', left: '30%', rotation: -5 },  // Egg - center left
+      { top: '25%', right: '30%', rotation: 5 },   // Oil - center right  
+      { top: '60%', left: '40%', rotation: -3 },   // Salt - bottom left
+      { top: '55%', right: '40%', rotation: 3 }    // Butter - bottom right
+    ];
+    return positions[index] || { top: '50%', left: '50%', rotation: 0 };
+  };
+
   // Get student ID from localStorage
   const getStudentId = () => {
     const studentId = localStorage.getItem('studentId');
@@ -276,15 +287,16 @@ export default function FriedEggLevel1() {
     }, 300);
   };
 
+  // IMPROVED: Higher ingredient positions for better visibility
   const getIngredientPosition = (index) => {
     const positions = [
-      { bottom: '12%', left: '8%' },
-      { bottom: '22%', right: '10%' },
-      { bottom: '16%', left: '72%' },
-      { bottom: '28%', right: '58%' },
-      { bottom: '10%', left: '42%' },
-      { bottom: '24%', right: '35%' },
-      { bottom: '14%', left: '86%' }
+      { bottom: '22%', left: '8%' },    // Higher up
+      { bottom: '32%', right: '10%' },   // Higher up
+      { bottom: '26%', left: '72%' },    // Higher up
+      { bottom: '38%', right: '58%' },   // Higher up
+      { bottom: '20%', left: '42%' },    // Higher up
+      { bottom: '34%', right: '35%' },   // Higher up
+      { bottom: '24%', left: '86%' }     // Higher up
     ];
     return positions[index];
   };
@@ -384,7 +396,13 @@ export default function FriedEggLevel1() {
               Choose the ingredients needed for cooking a fried egg
             </p>
 
-            <div style={{ maxWidth: '500px', margin: '0 auto' }}>
+            {/* IMPROVED: Progress bar with better z-index handling */}
+            <div style={{ 
+              maxWidth: '500px', 
+              margin: '0 auto',
+              position: 'relative',
+              zIndex: 5 // Lower z-index to stay behind interactive elements
+            }}>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
                 <h2 style={{ 
                   fontSize: '24px', 
@@ -404,7 +422,8 @@ export default function FriedEggLevel1() {
                 borderRadius: '25px', 
                 border: '3px solid rgba(255, 255, 255, 0.3)', 
                 overflow: 'hidden', 
-                boxShadow: '0 6px 20px rgba(33, 150, 243, 0.4)' 
+                boxShadow: '0 6px 20px rgba(33, 150, 243, 0.4)',
+                zIndex: 5
               }}>
                 <div style={{ 
                   position: 'absolute', 
@@ -581,6 +600,7 @@ export default function FriedEggLevel1() {
               INGREDIENT INVENTORY
             </div>
 
+            {/* IMPROVED: Frying pan with actual ingredient icons */}
             <div
               data-pan="true"
               onDragOver={handleDragOver}
@@ -604,28 +624,88 @@ export default function FriedEggLevel1() {
                 boxShadow: allCollected 
                   ? 'inset 0 12px 24px rgba(0,0,0,0.4), 0 0 60px rgba(255, 215, 0, 0.8)' 
                   : 'inset 0 12px 24px rgba(0,0,0,0.4), 0 0 40px rgba(76, 175, 80, 0.6), 0 0 80px rgba(76, 175, 80, 0.4)',
-                zIndex: 5,
+                zIndex: 20, // Higher z-index to stay above progress bar
                 transition: 'all 0.3s',
-                animation: allCollected ? 'none' : 'panPulse 2s ease-in-out infinite'
+                animation: allCollected ? 'none' : 'panPulse 2s ease-in-out infinite',
+                overflow: 'hidden'
               }}
             >
-              <div style={{ 
-                fontSize: '130px', 
-                marginBottom: '12px', 
-                filter: 'drop-shadow(3px 3px 8px rgba(0,0,0,0.6))' 
-              }}>
-                🍳
-              </div>
-              <div style={{ 
-                color: 'white', 
-                fontSize: '20px', 
-                fontWeight: 'bold', 
-                textShadow: '2px 2px 6px rgba(0,0,0,0.9)' 
-              }}>
-                {allCollected ? '✨ Perfect! ✨' : 'Drag here'}
-              </div>
+              {/* Display collected ingredients inside the pan */}
+              {collectedIngredients.map((ingredient, index) => {
+                const position = getPanIngredientPosition(index, collectedIngredients.length);
+                return (
+                  <div
+                    key={ingredient.id}
+                    style={{
+                      position: 'absolute',
+                      ...position,
+                      width: '60px',
+                      height: '60px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      animation: 'ingredientPopIn 0.5s ease-out forwards',
+                      transform: `rotate(${position.rotation}deg)`,
+                      zIndex: 21
+                    }}
+                  >
+                    <img 
+                      src={ingredient.image}
+                      alt={ingredient.name}
+                      style={{ 
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain',
+                        filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.5))',
+                      }}
+                    />
+                  </div>
+                );
+              })}
+
+              {/* Default pan content when no ingredients */}
+              {collectedIngredients.length === 0 && (
+                <>
+                  <div style={{ 
+                    fontSize: '130px', 
+                    marginBottom: '12px', 
+                    filter: 'drop-shadow(3px 3px 8px rgba(0,0,0,0.6))',
+                    zIndex: 21
+                  }}>
+                    🍳
+                  </div>
+                  <div style={{ 
+                    color: 'white', 
+                    fontSize: '20px', 
+                    fontWeight: 'bold', 
+                    textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
+                    zIndex: 21
+                  }}>
+                    Drag here
+                  </div>
+                </>
+              )}
+
+              {/* Success message when all collected */}
+              {allCollected && (
+                <div style={{ 
+                  position: 'absolute',
+                  bottom: '20px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  color: 'white', 
+                  fontSize: '20px', 
+                  fontWeight: 'bold', 
+                  textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
+                  zIndex: 21,
+                  animation: 'pulse 2s infinite'
+                }}>
+                  ✨ Perfect! ✨
+                </div>
+              )}
             </div>
 
+            {/* IMPROVED: Ingredients with higher z-index and better positioning */}
             {allIngredients.filter(ing => !collectedIngredients.some(c => c.id === ing.id)).map((ingredient, index) => {
               const position = getIngredientPosition(index);
               const isHovered = hoveredIngredient === ingredient.id;
@@ -650,7 +730,7 @@ export default function FriedEggLevel1() {
                     cursor: 'grab',
                     userSelect: 'none',
                     transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                    zIndex: isHovered ? 30 : 20,
+                    zIndex: isHovered ? 30 : 25, // Higher z-index than pan
                     padding: '12px',
                     background: isHovered 
                       ? 'rgba(255, 255, 255, 0.25)' 
@@ -702,28 +782,52 @@ export default function FriedEggLevel1() {
                     }}
                   />
                   
-                  <div style={{ 
-                    position: 'absolute', 
-                    top: '-5px', 
-                    right: '-5px', 
-                    width: '28px', 
-                    height: '28px', 
-                    borderRadius: '50%', 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    backgroundColor: ingredient.isCorrect 
-                      ? 'rgba(76, 175, 80, 0.95)' 
-                      : 'rgba(244, 67, 54, 0.95)', 
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.3)', 
-                    border: '2px solid rgba(255, 255, 255, 0.9)', 
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    color: 'white',
-                    zIndex: 3
-                  }}>
-                    {ingredient.isCorrect ? '✓' : '✗'}
-                  </div>
+                  {/* IMPROVED: Clearer visual feedback - only show checkmark when collected */}
+                  {collectedIngredients.some(c => c.id === ingredient.id) ? (
+                    <div style={{ 
+                      position: 'absolute', 
+                      top: '-5px', 
+                      right: '-5px', 
+                      width: '28px', 
+                      height: '28px', 
+                      borderRadius: '50%', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      backgroundColor: 'rgba(76, 175, 80, 0.95)', 
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.3)', 
+                      border: '2px solid rgba(255, 255, 255, 0.9)', 
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                      color: 'white',
+                      zIndex: 3
+                    }}>
+                      ✓
+                    </div>
+                  ) : (
+                    <div style={{ 
+                      position: 'absolute', 
+                      top: '-5px', 
+                      right: '-5px', 
+                      width: '28px', 
+                      height: '28px', 
+                      borderRadius: '50%', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      backgroundColor: ingredient.isCorrect 
+                        ? 'rgba(76, 175, 80, 0.3)'  // Dimmer for uncollected correct items
+                        : 'rgba(244, 67, 54, 0.3)', // Dimmer for wrong items
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.2)', 
+                      border: '2px solid rgba(255, 255, 255, 0.5)', 
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                      color: 'rgba(255, 255, 255, 0.7)',
+                      zIndex: 3
+                    }}>
+                      {ingredient.isCorrect ? '?' : '✗'}
+                    </div>
+                  )}
                   
                   {isHovered && (
                     <div style={{ 
@@ -739,7 +843,8 @@ export default function FriedEggLevel1() {
                       fontWeight: 'bold', 
                       whiteSpace: 'nowrap', 
                       boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
-                      animation: 'fadeInDown 0.3s ease-out'
+                      animation: 'fadeInDown 0.3s ease-out',
+                      zIndex: 35 // Highest z-index for tooltips
                     }}>
                       {ingredient.name}
                       <div style={{
@@ -748,7 +853,10 @@ export default function FriedEggLevel1() {
                         marginTop: '2px',
                         opacity: 0.9
                       }}>
-                        {ingredient.isCorrect ? '✓ Correct' : '✗ Wrong'}
+                        {collectedIngredients.some(c => c.id === ingredient.id) 
+                          ? '✓ Collected' 
+                          : ingredient.isCorrect ? '✓ Needed' : '✗ Not needed'
+                        }
                       </div>
                     </div>
                   )}
@@ -763,7 +871,7 @@ export default function FriedEggLevel1() {
             bottom: '20px',
             left: '50%',
             transform: 'translateX(-50%)',
-            zIndex: 100,
+            zIndex: 100, // Highest z-index for controls
             display: 'flex',
             gap: 2,
             backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -910,6 +1018,9 @@ export default function FriedEggLevel1() {
           <span style={{ fontSize: '18px', fontWeight: 'bold' }}>Wrong! Try again.</span>
         </div>
       )}
+
+      {/* Correct Animation */}
+      {showCorrectAnimation && (
         <>
           {confettiPieces.map((piece) => (
             <div 
@@ -1153,6 +1264,20 @@ export default function FriedEggLevel1() {
           0% { transform: scale(0.8); opacity: 0; }
           50% { transform: scale(1.05); }
           100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes ingredientPopIn {
+          0% { 
+            transform: scale(0) rotate(0deg);
+            opacity: 0;
+          }
+          70% { 
+            transform: scale(1.1) rotate(var(--rotation, 0deg));
+            opacity: 0.8;
+          }
+          100% { 
+            transform: scale(1) rotate(var(--rotation, 0deg));
+            opacity: 1;
+          }
         }
       `}</style>
     </div>

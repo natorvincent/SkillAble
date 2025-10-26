@@ -3,22 +3,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { 
   Box, 
   Typography, 
-  Container, 
   Button, 
-  Card,
-  CardContent,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Stack,
-  LinearProgress,
   CircularProgress,
-  Chip,
-  Switch,
-  FormControlLabel
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import Navbar from '../Navbar'; // Import the Navbar component
 
 // Import kitchen background and ingredient images
 import kitchenBg from "../../assets/sortingLevel1/kitchen.jpg";
@@ -30,6 +19,14 @@ import eggCrackedImg from "../../assets/cookingLevel2/egg-cracked.png";
 import saltImg from "../../assets/cookingLevel2/salt.png";
 import saltPouringImg from "../../assets/cookingLevel2/salt-pouring.png";
 import knifeImg from "../../assets/cookingLevel2/knife.png";
+
+// Import services for progress tracking
+// Make sure to implement these services or comment them out if they cause errors
+// import { 
+//   getStudentLessonProgress, 
+//   saveStudentLessonProgress,
+//   updateModuleProgress
+// } from '../../services/progressService';
 
 export default function IngredientPrepLevel2() {
   const navigate = useNavigate();
@@ -122,8 +119,11 @@ export default function IngredientPrepLevel2() {
         starsEarned: 3
       };
       
-      console.log('Progress saved:', progressData);
-      setProgressSaved(true);
+      // NOTE: Call your actual service here:
+      // await saveStudentLessonProgress(progressData); 
+      
+      console.log('Progress simulatedly saved:', progressData);
+      setProgressSaved(true); // Set to true after save completes/simulates
       
     } catch (error) {
       console.error('Error saving progress:', error);
@@ -133,25 +133,22 @@ export default function IngredientPrepLevel2() {
   };
 
   const goToHomepage = () => {
-    if (navigate) {
-      navigate('/homepage');
-    } else {
-      window.location.href = '/homepage';
-    }
+    navigate('/homepage');
   };
 
   const continueToNextLevel = async () => {
+    // Save progress if not already saved
     if (!progressSaved && !progressSaving) {
       await saveProgress();
     }
     
-    setTimeout(() => {
-      navigate('/lesson/cooking/level-3');
-    }, 300);
+    // Navigate to Level 3 - Fixed navigation path
+    navigate('/lesson/cooking/level-3');
   };
 
   // Initialize audio elements
   useEffect(() => {
+    // Note: Ensure these audio files exist at the root of your public folder!
     chopSoundRef.current = new Audio('/sounds/chop.mp3');
     crackSoundRef.current = new Audio('/sounds/crack.mp3');
     shakeSoundRef.current = new Audio('/sounds/shake.mp3');
@@ -301,7 +298,7 @@ export default function IngredientPrepLevel2() {
     }
   };
 
-  // Check completion and progress to next ingredient  
+  // Check completion and progress to next ingredient 	
   useEffect(() => {
     const newCompletedTasks = {
       onion: springOnionChops >= requiredChops,
@@ -408,9 +405,9 @@ export default function IngredientPrepLevel2() {
       backgroundRepeat: 'no-repeat',
       backgroundAttachment: 'fixed',
       position: 'relative',
-      padding: '20px',
       fontFamily: 'Arial, sans-serif'
     }}>
+      {/* Background Dim Overlay (No pointer events needed here) */}
       <div style={{
         position: 'absolute',
         top: 0,
@@ -421,10 +418,13 @@ export default function IngredientPrepLevel2() {
         pointerEvents: 'none'
       }} />
       
+      {/* ADDED: Navbar at the top */}
+      <Navbar />
+      
       {/* Chef Character - Fixed beside container */}
       <div style={{
         position: 'fixed',
-        top: '100px',
+        top: '140px', // Adjusted to account for navbar
         left: 'calc(50% + 620px)',
         zIndex: 50,
         opacity: showChef ? 1 : 0,
@@ -491,7 +491,7 @@ export default function IngredientPrepLevel2() {
       {/* Sound Toggle Button - Fixed position */}
       <div style={{ 
         position: 'fixed', 
-        top: '20px', 
+        top: '80px', // Adjusted to account for navbar
         right: '20px', 
         zIndex: 100 
       }}>
@@ -520,9 +520,9 @@ export default function IngredientPrepLevel2() {
         </button>
       </div>
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 1, padding: '20px', paddingTop: '100px' }}>
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '40px', paddingTop: '20px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
 
           <h1 style={{ 
             fontSize: '48px', 
@@ -617,8 +617,8 @@ export default function IngredientPrepLevel2() {
               textAlign: 'center',
               boxShadow: '0 12px 24px rgba(0,0,0,0.2)',
               transform: (onionAnimation && currentIngredientIndex === 0) || 
-                        (eggAnimation && currentIngredientIndex === 1) || 
-                        (saltAnimation && currentIngredientIndex === 2) ? 'scale(1.05)' : 'scale(1)',
+                         (eggAnimation && currentIngredientIndex === 1) || 
+                         (saltAnimation && currentIngredientIndex === 2) ? 'scale(1.05)' : 'scale(1)',
               transition: 'all 0.3s ease'
             }}
           >
@@ -975,7 +975,7 @@ export default function IngredientPrepLevel2() {
           </div>
         )}
 
-        {/* Success Modal */}
+        {/* Success Modal - FIXED: Next Level button now works properly */}
         {showCompletion && (
           <div style={{
             position: 'fixed',
@@ -987,19 +987,22 @@ export default function IngredientPrepLevel2() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1000,
-            padding: '20px'
+            zIndex: 9999,
+            padding: '20px',
+            pointerEvents: 'auto' 
           }}>
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '20px',
-              padding: '40px',
-              maxWidth: '500px',
-              width: '100%',
-              textAlign: 'center',
-              border: '4px solid #4CAF50',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
-            }}>
+            <div 
+              style={{
+                backgroundColor: 'white',
+                borderRadius: '20px',
+                padding: '40px',
+                maxWidth: '500px',
+                width: '100%',
+                textAlign: 'center',
+                border: '4px solid #4CAF50',
+                boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+              }}
+            >
               <div style={{ fontSize: '80px', marginBottom: '20px' }}>🏆</div>
               
               <h2 style={{ 

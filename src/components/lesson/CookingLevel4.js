@@ -41,19 +41,27 @@ export default function RiceCookerSimulator() {
   const [progressSaved, setProgressSaved] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
 
   const panRef = useRef(null);
 
   const riceCookingSteps = [
-    { id: 0, instruction: "🍲 Drag pot to counter" },
-    { id: 1, instruction: "🌾 Add rice to pot" },
-    { id: 2, instruction: "🚰 Rinse at sink (2-3x)" },
-    { id: 3, instruction: "💧 Add perfect water" },
-    { id: 4, instruction: "⚡ Place in cooker" },
-    { id: 5, instruction: "🔥 Start cooking" },
-    { id: 6, instruction: "⏱️ Wait patiently" },
-    { id: 7, instruction: "🥄 Serve the rice" }
+    { id: 0, instruction: "🍲 Drag pot to counter", focus: 'setup' },
+    { id: 1, instruction: "🌾 Add rice to pot", focus: 'setup' },
+    { id: 2, instruction: "🚰 Rinse rice at sink", focus: 'preparation' },
+    { id: 3, instruction: "💧 Add perfect water", focus: 'preparation' },
+    { id: 4, instruction: "⚡ Place in cooker", focus: 'cooking' },
+    { id: 5, instruction: "🔥 Start cooking", focus: 'cooking' },
+    { id: 6, instruction: "⏱️ Wait patiently", focus: 'cooking' },
+    { id: 7, instruction: "🥄 Serve the rice", focus: 'serving' }
   ];
+
+  // Determine current phase for focus management
+  const currentPhase = riceCookingSteps[currentStep]?.focus || 'setup';
+  const isSetupPhase = currentPhase === 'setup';
+  const isPreparationPhase = currentPhase === 'preparation';
+  const isCookingPhase = currentPhase === 'cooking';
+  const isServingPhase = currentPhase === 'serving';
 
   useEffect(() => {
     let interval;
@@ -89,6 +97,22 @@ export default function RiceCookerSimulator() {
     }
     return () => clearInterval(interval);
   }, [isResting]);
+
+  // Update current step based on game state
+  useEffect(() => {
+    let step = 0;
+    if (!potOnTable) step = 0;
+    else if (!riceInPot) step = 1;
+    else if (rinseCount < 2) step = 2;
+    else if (!waterAmount) step = 3;
+    else if (!potInCooker) step = 4;
+    else if (!isCooking && cookingProgress === 0) step = 5;
+    else if (isCooking || isResting) step = 6;
+    else if (cookingProgress === 100 && !isServed) step = 7;
+    else step = 7;
+    
+    setCurrentStep(step);
+  }, [potOnTable, riceInPot, rinseCount, waterAmount, potInCooker, isCooking, cookingProgress, isResting, isServed]);
 
   const saveProgress = async () => {
     if (progressSaving || progressSaved) return;
@@ -151,6 +175,8 @@ export default function RiceCookerSimulator() {
   const handleDragStart = (e, item) => {
     setDraggedItem(item);
     e.dataTransfer.effectAllowed = 'move';
+    // Hide instruction when dragging starts
+    setShowFeedback(false);
   };
 
   const handleDragOver = (e, zone) => {
@@ -188,7 +214,7 @@ export default function RiceCookerSimulator() {
       setTimeout(() => {
         setRinseCount(prev => prev + 1);
         setShowWaterSplash(false);
-        showFeedbackMessage(`Rinsed ${rinseCount + 1} time${rinseCount + 1 !== 1 ? 's' : ''}!`);
+        showFeedbackMessage(`Rice rinsed ${rinseCount + 1} time${rinseCount + 1 !== 1 ? 's' : ''}!`);
         if (rinseCount + 1 >= 2) {
           setShowSparkles(true);
           setTimeout(() => setShowSparkles(false), 1000);
@@ -249,7 +275,7 @@ export default function RiceCookerSimulator() {
     const newMistakes = [];
     
     if (rinseCount < 2) {
-      newMistakes.push(`Only rinsed ${rinseCount} time${rinseCount !== 1 ? 's' : ''} (needed 2-3 times)`);
+      newMistakes.push(`Only rinsed ${rinseCount} time${rinseCount !== 1 ? 's' : ''} (should rinse 2-3 times)`);
     }
     
     if (waterAmount === 'low') {
@@ -297,18 +323,7 @@ export default function RiceCookerSimulator() {
     setShowSparkles(false);
     setShowSteam(false);
     setProgressSaved(false);
-  };
-
-  const getCurrentStep = () => {
-    if (!potOnTable) return 0;
-    if (!riceInPot) return 1;
-    if (rinseCount < 2) return 2;
-    if (!waterAmount) return 3;
-    if (!potInCooker) return 4;
-    if (!isCooking && cookingProgress === 0) return 5;
-    if (isCooking || isResting) return 6;
-    if (cookingProgress === 100 && !isServed) return 7;
-    return 7;
+    setCurrentStep(0);
   };
 
   const DraggableItem = ({ type, isActive, isCompleted, children, style = {} }) => (
@@ -556,6 +571,30 @@ export default function RiceCookerSimulator() {
                 >
                   Home
                 </Button>
+
+                <Button
+                  onClick={() => navigate('/lesson/cooking/level-5')}
+                  variant="contained"
+                  startIcon={<span>🚀</span>}
+                  sx={{ 
+                    backgroundColor: '#4CAF50',
+                    borderRadius: '12px',
+                    padding: '14px 28px',
+                    fontSize: '15px',
+                    fontWeight: '700',
+                    textTransform: 'none',
+                    boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
+                    '&:hover': { 
+                      backgroundColor: '#45a049',
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 6px 16px rgba(76, 175, 80, 0.4)'
+                    },
+                    animation: 'pulse 2s infinite',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  Next Level
+                </Button>
               </div>
             </div>
           </Box>
@@ -650,6 +689,10 @@ export default function RiceCookerSimulator() {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
           }
+          @keyframes focusPulse {
+            0%, 100% { transform: scale(1); border-color: #FF9800; }
+            50% { transform: scale(1.02); border-color: #FFC107; }
+          }
           .draggable {
             cursor: grab;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -672,6 +715,15 @@ export default function RiceCookerSimulator() {
             border-width: 4px !important;
             transform: scale(1.02);
             animation: glow 1s infinite;
+          }
+          .focused-area {
+            animation: focusPulse 2s infinite;
+            border-width: 3px !important;
+          }
+          .dimmed-area {
+            opacity: 0.5;
+            filter: grayscale(0.3);
+            transition: all 0.3s ease;
           }
         `}
       </style>
@@ -707,17 +759,20 @@ export default function RiceCookerSimulator() {
             </p>
           </div>
 
+          {/* Current Instruction - Enhanced with better visibility */}
           <div style={{
             background: 'rgba(255, 255, 255, 0.95)',
-            padding: '12px 20px',
+            padding: '16px 24px',
             textAlign: 'center',
             borderRadius: '16px',
             marginBottom: '16px',
             width: '100%',
             maxWidth: '900px',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.15)',
             animation: 'slideIn 0.6s ease-out',
-            border: '2px solid rgba(102, 126, 234, 0.2)'
+            border: '3px solid #FF9800',
+            position: 'relative',
+            zIndex: 10
           }}>
             <div style={{ 
               display: 'flex', 
@@ -727,32 +782,33 @@ export default function RiceCookerSimulator() {
               flexWrap: 'wrap'
             }}>
               <span style={{ 
-                fontSize: '16px', 
+                fontSize: '18px', 
                 color: '#764ba2', 
-                fontWeight: '600',
+                fontWeight: '700',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px'
+                gap: '10px'
               }}>
-                <span style={{ fontSize: '20px' }}>👉</span>
-                {riceCookingSteps[getCurrentStep()]?.instruction || "Your rice is ready!"}
+                <span style={{ fontSize: '24px', animation: 'pulse 2s infinite' }}>👉</span>
+                {riceCookingSteps[currentStep]?.instruction || "Your rice is ready!"}
               </span>
-              {getCurrentStep() < 8 && (
+              {currentStep < 8 && (
                 <span style={{ 
-                  background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                  background: 'linear-gradient(135deg, #FF9800, #F57C00)',
                   color: 'white',
-                  padding: '6px 14px',
+                  padding: '8px 16px',
                   borderRadius: '20px',
-                  fontSize: '13px',
-                  fontWeight: '700',
-                  boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)'
+                  fontSize: '14px',
+                  fontWeight: '800',
+                  boxShadow: '0 4px 12px rgba(255, 152, 0, 0.4)'
                 }}>
-                  Step {getCurrentStep() + 1}/8
+                  Step {currentStep + 1}/8
                 </span>
               )}
             </div>
           </div>
 
+          {/* Progress Bar */}
           <div style={{
             background: 'white',
             borderRadius: '16px',
@@ -766,7 +822,7 @@ export default function RiceCookerSimulator() {
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', alignItems: 'center' }}>
               <span style={{ fontWeight: '700', color: '#764ba2', fontSize: '15px' }}>Cooking Progress:</span>
               <span style={{ color: '#667eea', fontWeight: '700', fontSize: '15px' }}>
-                {getCurrentStep()}/8 steps completed
+                {currentStep}/8 steps completed
               </span>
             </div>
             <div style={{
@@ -779,7 +835,7 @@ export default function RiceCookerSimulator() {
               <div style={{
                 background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
                 height: '100%',
-                width: `${(getCurrentStep() / 8) * 100}%`,
+                width: `${(currentStep / 8) * 100}%`,
                 transition: 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
                 borderRadius: '10px',
                 boxShadow: '0 0 10px rgba(102, 126, 234, 0.5)'
@@ -794,23 +850,25 @@ export default function RiceCookerSimulator() {
             width: '100%',
             maxWidth: '1200px'
           }}>
-            {/* Tools & Ingredients Panel - Made narrower */}
+            {/* Tools & Ingredients Panel - Phase-based styling */}
             <div style={{
               background: 'white',
               borderRadius: '16px',
               padding: '18px',
-              border: '2px solid rgba(102, 126, 234, 0.25)',
+              border: isSetupPhase ? '3px solid #FF9800' : '2px solid rgba(102, 126, 234, 0.25)',
               height: 'fit-content',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-              animation: 'slideIn 0.8s ease-out'
+              boxShadow: isSetupPhase ? '0 8px 25px rgba(255, 152, 0, 0.3)' : '0 4px 16px rgba(0,0,0,0.1)',
+              animation: isSetupPhase ? 'focusPulse 2s infinite' : 'slideIn 0.8s ease-out',
+              opacity: isSetupPhase ? 1 : 0.7,
+              transition: 'all 0.3s ease'
             }}>
               <h3 style={{ 
                 margin: '0 0 14px 0', 
-                color: '#667eea',
+                color: isSetupPhase ? '#FF9800' : '#667eea',
                 textAlign: 'center',
                 fontSize: '15px',
                 fontWeight: '800',
-                borderBottom: '2px solid rgba(102, 126, 234, 0.25)',
+                borderBottom: `2px solid ${isSetupPhase ? 'rgba(255, 152, 0, 0.3)' : 'rgba(102, 126, 234, 0.25)'}`,
                 paddingBottom: '10px',
                 display: 'flex',
                 alignItems: 'center',
@@ -818,18 +876,18 @@ export default function RiceCookerSimulator() {
                 gap: '6px'
               }}>
                 <span style={{ fontSize: '20px' }}>🧰</span>
-                Tools & Items
+                {isSetupPhase ? 'ACTIVE: Tools & Items' : 'Tools & Items'}
               </h3>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
                 {!potOnTable && (
                   <DraggableItem 
                     type="pot"
-                    isActive={getCurrentStep() === 0}
+                    isActive={currentStep === 0}
                     isCompleted={potOnTable}
                     style={{ width: '100%', height: '65px', textAlign: 'center' }}
                   >
-                    <div style={{ fontSize: '42px' }}>🍲</div>
+                    <div style={{ fontSize: '36px' }}>🍲</div>
                     <div style={{ fontSize: '11px', fontWeight: 'bold', marginTop: '4px' }}>Cooking Pot</div>
                   </DraggableItem>
                 )}
@@ -837,11 +895,11 @@ export default function RiceCookerSimulator() {
                 {potOnTable && !riceInPot && (
                   <DraggableItem 
                     type="rice"
-                    isActive={getCurrentStep() === 1}
+                    isActive={currentStep === 1}
                     isCompleted={riceInPot}
                     style={{ width: '100%', height: '65px', textAlign: 'center' }}
                   >
-                    <div style={{ fontSize: '42px' }}>🌾</div>
+                    <div style={{ fontSize: '36px' }}>🌾</div>
                     <div style={{ fontSize: '11px', fontWeight: 'bold', marginTop: '4px' }}>Uncooked Rice</div>
                   </DraggableItem>
                 )}
@@ -852,10 +910,11 @@ export default function RiceCookerSimulator() {
                     borderRadius: '14px',
                     padding: '14px',
                     textAlign: 'center',
-                    border: '2px solid rgba(59, 130, 246, 0.4)',
-                    boxShadow: '0 4px 12px rgba(59, 130, 246, 0.2)',
-                    animation: rinseCount < 2 ? 'pulse 2s infinite' : 'none',
-                    width: '100%'
+                    border: isPreparationPhase ? '3px solid #3b82f6' : '2px solid rgba(59, 130, 246, 0.4)',
+                    boxShadow: isPreparationPhase ? '0 6px 20px rgba(59, 130, 246, 0.3)' : '0 4px 12px rgba(59, 130, 246, 0.2)',
+                    animation: isPreparationPhase ? 'focusPulse 2s infinite' : 'none',
+                    width: '100%',
+                    opacity: isPreparationPhase ? 1 : 0.8
                   }}>
                     <div style={{ fontSize: '40px', marginBottom: '8px' }}>
                       🍲💧
@@ -864,7 +923,7 @@ export default function RiceCookerSimulator() {
                       Rinse at Sink
                     </div>
                     <div style={{ fontSize: '11px', color: '#6b7280', fontWeight: '600' }}>
-                      {rinseCount}/2-3 times
+                      Rinsed: {rinseCount}/2-3 times
                     </div>
                   </div>
                 )}
@@ -886,7 +945,7 @@ export default function RiceCookerSimulator() {
                     
                     <DraggableItem 
                       type="water-low"
-                      isActive={getCurrentStep() === 3 && !waterAmount}
+                      isActive={currentStep === 3 && !waterAmount}
                       isCompleted={waterAmount === 'low'}
                       style={{ width: '100%', height: '58px', textAlign: 'center' }}
                     >
@@ -896,7 +955,7 @@ export default function RiceCookerSimulator() {
                     
                     <DraggableItem 
                       type="water-perfect"
-                      isActive={getCurrentStep() === 3 && !waterAmount}
+                      isActive={currentStep === 3 && !waterAmount}
                       isCompleted={waterAmount === 'perfect'}
                       style={{ width: '100%', height: '58px', textAlign: 'center' }}
                     >
@@ -906,7 +965,7 @@ export default function RiceCookerSimulator() {
                     
                     <DraggableItem 
                       type="water-high"
-                      isActive={getCurrentStep() === 3 && !waterAmount}
+                      isActive={currentStep === 3 && !waterAmount}
                       isCompleted={waterAmount === 'high'}
                       style={{ width: '100%', height: '58px', textAlign: 'center' }}
                     >
@@ -919,17 +978,17 @@ export default function RiceCookerSimulator() {
                 {cookingProgress === 100 && !isResting && !isServed && (
                   <DraggableItem 
                     type="paddle"
-                    isActive={getCurrentStep() === 7}
+                    isActive={currentStep === 7}
                     isCompleted={isServed}
                     style={{ width: '100%', height: '65px', textAlign: 'center' }}
                   >
-                    <div style={{ fontSize: '42px' }}>🥄</div>
+                    <div style={{ fontSize: '36px' }}>🥄</div>
                     <div style={{ fontSize: '11px', fontWeight: 'bold', marginTop: '4px' }}>Rice Paddle</div>
                   </DraggableItem>
                 )}
               </div>
 
-              {/* Progress Checklist */}
+              {/* Progress Checklist - Simplified */}
               <div style={{
                 marginTop: '20px',
                 paddingTop: '16px',
@@ -944,12 +1003,12 @@ export default function RiceCookerSimulator() {
                   alignItems: 'center',
                   gap: '6px'
                 }}>
-                  ✅ Checklist
+                  ✅ Progress
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   <ChecklistItem completed={potOnTable} text="Pot on counter" />
                   <ChecklistItem completed={riceInPot} text="Rice added" />
-                  <ChecklistItem completed={rinseCount >= 2} text={`Rinsed ${rinseCount}x ${rinseCount >= 2 ? '✓' : ''}`} />
+                  <ChecklistItem completed={rinseCount >= 2} text={`Rice rinsed ${rinseCount >= 2 ? '✓' : ''}`} />
                   <ChecklistItem completed={waterAmount !== null} text="Water added" />
                   <ChecklistItem completed={potInCooker} text="In cooker" />
                   <ChecklistItem completed={cookingProgress === 100} text="Cooked" />
@@ -964,7 +1023,7 @@ export default function RiceCookerSimulator() {
               flexDirection: 'column',
               gap: '14px'
             }}>
-              {/* Cooking Station Banner - Enhanced */}
+              {/* Cooking Station Banner */}
               <div style={{
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 padding: '10px 20px',
@@ -988,17 +1047,17 @@ export default function RiceCookerSimulator() {
                 gridTemplateColumns: '1fr 1fr',
                 gap: '14px'
               }}>
-                {/* Kitchen Counter */}
+                {/* Kitchen Counter - Phase-based styling */}
                 <div
                   onDragOver={(e) => handleDragOver(e, potOnTable ? 'pot-on-table' : 'table')}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, potOnTable ? 'pot-on-table' : 'table')}
-                  className={`drop-zone ${(hoveredZone === 'table' || hoveredZone === 'pot-on-table') ? 'hovered' : ''}`}
+                  className={`drop-zone ${(hoveredZone === 'table' || hoveredZone === 'pot-on-table') ? 'hovered' : ''} ${isSetupPhase ? 'focused-area' : ''} ${!isSetupPhase && !isPreparationPhase ? 'dimmed-area' : ''}`}
                   style={{
                     background: 'linear-gradient(135deg, #ffffff 0%, #f9fafb 100%)',
                     borderRadius: '18px',
                     padding: '32px',
-                    border: getCurrentStep() === 0 || getCurrentStep() === 1 || getCurrentStep() === 3 ? '3px dashed #FF9800' : '3px dashed #d1d5db',
+                    border: isSetupPhase ? '3px dashed #FF9800' : '3px dashed #d1d5db',
                     minHeight: '260px',
                     display: 'flex',
                     flexDirection: 'column',
@@ -1006,7 +1065,8 @@ export default function RiceCookerSimulator() {
                     justifyContent: 'center',
                     boxShadow: '0 6px 24px rgba(0,0,0,0.12)',
                     position: 'relative',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    transition: 'all 0.3s ease'
                   }}
                 >
                   <div style={{
@@ -1015,10 +1075,11 @@ export default function RiceCookerSimulator() {
                     left: '16px',
                     fontSize: '16px',
                     fontWeight: '700',
-                    color: '#6b7280',
+                    color: isSetupPhase ? '#FF9800' : '#6b7280',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px'
+                    gap: '6px',
+                    transition: 'all 0.3s ease'
                   }}>
                     <span style={{ fontSize: '22px' }}>🪵</span>
                     Counter
@@ -1159,7 +1220,7 @@ export default function RiceCookerSimulator() {
                               gap: '5px',
                               justifyContent: 'center'
                             }}>
-                              {rinseCount >= 2 ? '✓' : '⚠️'} Rinsed {rinseCount}x
+                              {rinseCount >= 2 ? '✓' : '⚠️'} Rinsed {rinseCount} time{rinseCount !== 1 ? 's' : ''}
                             </div>
                           )}
                           {waterAmount && (
@@ -1187,7 +1248,7 @@ export default function RiceCookerSimulator() {
                               borderRadius: '8px',
                               marginTop: '4px'
                             }}>
-                              👆 Drag to sink
+                              👆 Drag to sink to rinse
                             </div>
                           )}
                           {riceInPot && waterAmount === null && rinseCount >= 2 && (
@@ -1204,7 +1265,7 @@ export default function RiceCookerSimulator() {
                               borderRadius: '8px',
                               marginTop: '4px'
                             }}>
-                              💧 Add water
+                              💧 Add water now
                             </div>
                           )}
                           {waterAmount && !potInCooker && (
@@ -1221,7 +1282,7 @@ export default function RiceCookerSimulator() {
                               borderRadius: '8px',
                               marginTop: '4px'
                             }}>
-                              👆 To cooker
+                              👆 Drag to rice cooker
                             </div>
                           )}
                         </div>
@@ -1231,28 +1292,32 @@ export default function RiceCookerSimulator() {
 
                   {!potOnTable && (
                     <div style={{
-                      fontSize: '14px',
-                      color: '#9ca3af',
-                      fontStyle: 'italic',
+                      fontSize: '16px',
+                      color: '#FF9800',
+                      fontWeight: '700',
                       textAlign: 'center',
-                      animation: 'pulse 2s infinite'
+                      animation: 'pulse 2s infinite',
+                      backgroundColor: '#FFF8E1',
+                      padding: '12px 20px',
+                      borderRadius: '12px',
+                      border: '2px solid #FFE082'
                     }}>
-                      👆 Drag pot here
+                      👆 Drop cooking pot here
                     </div>
                   )}
                 </div>
 
-                {/* Kitchen Sink */}
+                {/* Kitchen Sink - Phase-based styling */}
                 <div
                   onDragOver={(e) => handleDragOver(e, 'sink')}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, 'sink')}
-                  className={`drop-zone ${hoveredZone === 'sink' ? 'hovered' : ''}`}
+                  className={`drop-zone ${hoveredZone === 'sink' ? 'hovered' : ''} ${isPreparationPhase ? 'focused-area' : ''} ${!isPreparationPhase ? 'dimmed-area' : ''}`}
                   style={{
                     background: 'linear-gradient(135deg, #ffffff 0%, #dbeafe 100%)',
                     borderRadius: '18px',
                     padding: '32px',
-                    border: getCurrentStep() === 2 ? '3px dashed #FF9800' : '3px dashed #3b82f6',
+                    border: isPreparationPhase ? '3px dashed #3b82f6' : '3px dashed #d1d5db',
                     minHeight: '260px',
                     display: 'flex',
                     flexDirection: 'column',
@@ -1260,7 +1325,8 @@ export default function RiceCookerSimulator() {
                     justifyContent: 'center',
                     boxShadow: '0 6px 24px rgba(0,0,0,0.12)',
                     position: 'relative',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    transition: 'all 0.3s ease'
                   }}
                 >
                   <div style={{
@@ -1269,10 +1335,11 @@ export default function RiceCookerSimulator() {
                     left: '16px',
                     fontSize: '16px',
                     fontWeight: '700',
-                    color: '#1e40af',
+                    color: isPreparationPhase ? '#1e40af' : '#6b7280',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px'
+                    gap: '6px',
+                    transition: 'all 0.3s ease'
                   }}>
                     <span style={{ fontSize: '22px' }}>🚰</span>
                     Sink
@@ -1346,16 +1413,16 @@ export default function RiceCookerSimulator() {
                         backgroundColor: '#dbeafe',
                         padding: '12px 18px',
                         borderRadius: '14px',
-                        border: '2px solid #3b82f6',
-                        animation: 'pulse 2s infinite',
+                        border: isPreparationPhase ? '3px solid #3b82f6' : '2px solid #3b82f6',
+                        animation: isPreparationPhase ? 'pulse 2s infinite' : 'none',
                         boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)'
                       }}>
                         <div style={{ fontSize: '28px', marginBottom: '6px' }}>👇</div>
                         <div style={{ fontSize: '14px', fontWeight: '700', color: '#1e40af' }}>
-                          Drop here!
+                          Drop pot here to rinse!
                         </div>
                         <div style={{ fontSize: '12px', color: '#3b82f6', marginTop: '4px' }}>
-                          {rinseCount}/2-3 rinses
+                          Rinsed: {rinseCount}/2-3 times
                         </div>
                       </div>
                     ) : rinseCount >= 2 && waterAmount === null ? (
@@ -1366,11 +1433,11 @@ export default function RiceCookerSimulator() {
                         border: '2px solid #10b981',
                         color: '#059669'
                       }}>
-                        ✓ Rinsed {rinseCount}x
+                        ✓ Rice rinsed {rinseCount} times
                       </div>
                     ) : (
                       <div style={{ color: '#64748b', fontStyle: 'italic', fontSize: '12px' }}>
-                        Rinse rice here
+                        Rinse rice here (2-3 times)
                       </div>
                     )}
                   </div>
@@ -1383,17 +1450,17 @@ export default function RiceCookerSimulator() {
                 gridTemplateColumns: '1fr 1fr',
                 gap: '14px'
               }}>
-                {/* Rice Cooker */}
+                {/* Rice Cooker - Phase-based styling */}
                 <div
                   onDragOver={(e) => handleDragOver(e, 'cooker')}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, 'cooker')}
-                  className={`drop-zone ${hoveredZone === 'cooker' ? 'hovered' : ''}`}
+                  className={`drop-zone ${hoveredZone === 'cooker' ? 'hovered' : ''} ${isCookingPhase ? 'focused-area' : ''} ${!isCookingPhase ? 'dimmed-area' : ''}`}
                   style={{
                     background: 'linear-gradient(135deg, #ffffff 0%, #fef2f2 100%)',
                     borderRadius: '18px',
                     padding: '28px',
-                    border: getCurrentStep() === 4 ? '3px dashed #FF9800' : '3px dashed #ef4444',
+                    border: isCookingPhase ? '3px dashed #ef4444' : '3px dashed #d1d5db',
                     minHeight: '320px',
                     display: 'flex',
                     flexDirection: 'column',
@@ -1401,7 +1468,8 @@ export default function RiceCookerSimulator() {
                     justifyContent: 'center',
                     boxShadow: '0 6px 24px rgba(0,0,0,0.12)',
                     position: 'relative',
-                    overflow: 'hidden'
+                    overflow: 'hidden',
+                    transition: 'all 0.3s ease'
                   }}
                 >
                   <div style={{
@@ -1410,10 +1478,11 @@ export default function RiceCookerSimulator() {
                     left: '16px',
                     fontSize: '16px',
                     fontWeight: '700',
-                    color: '#991b1b',
+                    color: isCookingPhase ? '#991b1b' : '#6b7280',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px'
+                    gap: '6px',
+                    transition: 'all 0.3s ease'
                   }}>
                     <span style={{ fontSize: '22px' }}>⚡</span>
                     Rice Cooker
@@ -1544,24 +1613,25 @@ export default function RiceCookerSimulator() {
                   )}
                 </div>
 
-                {/* Serving Area */}
+                {/* Serving Area - Phase-based styling */}
                 <div
                   onDragOver={(e) => handleDragOver(e, 'serving-area')}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, 'serving-area')}
-                  className={`drop-zone ${hoveredZone === 'serving-area' ? 'hovered' : ''}`}
+                  className={`drop-zone ${hoveredZone === 'serving-area' ? 'hovered' : ''} ${isServingPhase ? 'focused-area' : ''} ${!isServingPhase ? 'dimmed-area' : ''}`}
                   style={{
                     background: 'linear-gradient(135deg, #ffffff 0%, #fef3c7 100%)',
                     borderRadius: '18px',
                     padding: '28px',
-                    border: getCurrentStep() === 7 ? '3px dashed #FF9800' : '3px dashed #f59e0b',
+                    border: isServingPhase ? '3px dashed #f59e0b' : '3px dashed #d1d5db',
                     minHeight: '320px',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
                     boxShadow: '0 6px 24px rgba(0,0,0,0.12)',
-                    position: 'relative'
+                    position: 'relative',
+                    transition: 'all 0.3s ease'
                   }}
                 >
                   <div style={{
@@ -1570,13 +1640,14 @@ export default function RiceCookerSimulator() {
                     left: '16px',
                     fontSize: '16px',
                     fontWeight: '700',
-                    color: '#92400e',
+                    color: isServingPhase ? '#92400e' : '#6b7280',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px'
+                    gap: '6px',
+                    transition: 'all 0.3s ease'
                   }}>
                     <span style={{ fontSize: '22px' }}>🍽️</span>
-                    Serving
+                    Serving Area
                   </div>
 
                   <svg width="140" height="140" viewBox="0 0 160 160">
@@ -1609,11 +1680,11 @@ export default function RiceCookerSimulator() {
                       textAlign: 'center',
                       animation: 'pulse 2s infinite',
                       backgroundColor: '#fef3c7',
-                      padding: '10px 16px',
+                      padding: '12px 18px',
                       borderRadius: '12px',
-                      border: '2px solid #fbbf24'
+                      border: '3px solid #fbbf24'
                     }}>
-                      🥄 Drag paddle here!
+                      🥄 Drag rice paddle here to serve!
                     </div>
                   )}
 
@@ -1628,7 +1699,7 @@ export default function RiceCookerSimulator() {
                       padding: '10px 16px',
                       borderRadius: '12px'
                     }}>
-                      ⏱️ Resting...
+                      ⏱️ Rice is resting...
                     </div>
                   )}
                 </div>
@@ -1637,7 +1708,7 @@ export default function RiceCookerSimulator() {
           </div>
         </Box>
 
-        {/* Control Buttons - Enhanced */}
+        {/* Single Control Bar - Enhanced with Next Level button */}
         <Box sx={{
           position: 'fixed',
           bottom: 16,

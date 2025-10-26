@@ -1,38 +1,108 @@
-import React, { useState } from 'react';
-import { Sparkles, RotateCcw, Home, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Sparkles, RotateCcw, CheckCircle, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 // Import images for Level 5 cooking game
 import forkImg from "../../assets/cookingLevel5/fork.png";
 import friedEggImg from "../../assets/cookingLevel5/fried-egg.png";
-import plateImg from "../../assets/cookingLevel5/plate.png";
-import spoonImg from "../../assets/cookingLevel5/spoon.png";
 import springOnionChoppedImg from "../../assets/cookingLevel5/spring-onion-chopped.png";
+import spoonImg from "../../assets/cookingLevel5/spoon.png";
 
-const PlatingGame = () => {
+const CookingLevel5 = () => {
+  const navigate = useNavigate();
   const [placedItems, setPlacedItems] = useState({});
   const [draggedItem, setDraggedItem] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [confetti, setConfetti] = useState([]);
   const [sparkles, setSparkles] = useState([]);
   const [justPlaced, setJustPlaced] = useState(null);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [showOrderError, setShowOrderError] = useState(false);
 
-  const availableItems = [
-    { id: 'rice', emoji: '🍚', name: 'Rice', color: '#fef3c7', tipIndex: 0 },
-    { id: 'egg', img: friedEggImg, name: 'Fried Egg', color: '#fed7aa', tipIndex: 1 },
-    { id: 'spoon', img: spoonImg, name: 'Spoon', color: '#e5e7eb', tipIndex: 3 },
-    { id: 'fork', img: forkImg, name: 'Fork', color: '#e5e7eb', tipIndex: 3 },
-    { id: 'garnish', img: springOnionChoppedImg, name: 'Garnish', color: '#d1fae5', tipIndex: 2 }
+  const foodItems = [
+    { id: 'rice', emoji: '🍚', name: 'Rice', color: '#fef3c7', tipIndex: 0, isEssential: true, scale: 2.5, zIndex: 1 },
+    { id: 'egg', img: friedEggImg, name: 'Fried Egg', color: '#fed7aa', tipIndex: 1, isEssential: true, scale: 3.0, zIndex: 2 },
+    { id: 'garnish', img: springOnionChoppedImg, name: 'Garnish', color: '#d1fae5', tipIndex: 2, isEssential: true, scale: 2.0, zIndex: 3 }
   ];
+
+  const toolItems = [
+    { id: 'spoon', img: spoonImg, name: 'Spoon', color: '#e5e7eb', tipIndex: 3, isEssential: false, scale: 1.5, zIndex: 4 },
+    { id: 'fork', img: forkImg, name: 'Fork', color: '#e5e7eb', tipIndex: 3, isEssential: false, scale: 1.5, zIndex: 4 }
+  ];
+
+  const allItems = [...foodItems, ...toolItems];
 
   const tips = [
-    { icon: '🍚', text: 'Place rice in the center of the plate', relatedItems: ['rice'] },
-    { icon: '🍳', text: 'Add the fried egg on top of the rice', relatedItems: ['egg'] },
-    { icon: '🌿', text: 'Garnish adds color and freshness', relatedItems: ['garnish'] },
-    { icon: '🥄', text: 'Don\'t forget utensils on the side!', relatedItems: ['spoon', 'fork'] }
+    { icon: '🍚', text: 'Place rice in the center of the plate', relatedItems: ['rice'], step: 0 },
+    { icon: '🍳', text: 'Add the fried egg on top of the rice', relatedItems: ['egg'], step: 1 },
+    { icon: '🌿', text: 'Garnish adds color and freshness', relatedItems: ['garnish'], step: 2 },
+    { icon: '🥄', text: 'Don\'t forget utensils on the side!', relatedItems: ['spoon', 'fork'], step: 3 }
   ];
+
+  // Calculate optimal positions for centered plating
+  const getOptimalPosition = (itemId, allPlacedItems) => {
+    const plateCenter = { x: 50, y: 50 };
+    
+    // If no items placed yet, center the first item
+    if (Object.keys(allPlacedItems).length === 0) {
+      return plateCenter;
+    }
+
+    // For rice - always center
+    if (itemId === 'rice') {
+      return plateCenter;
+    }
+
+    // For egg - center on top of rice
+    if (itemId === 'egg' && allPlacedItems.rice) {
+      return { x: plateCenter.x, y: plateCenter.y - 5 };
+    }
+
+    // For garnish - position above the egg/rice combo
+    if (itemId === 'garnish' && allPlacedItems.rice) {
+      return { x: plateCenter.x, y: plateCenter.y - 15 };
+    }
+
+    // For utensils - position on sides
+    if (itemId === 'spoon') {
+      return { x: 25, y: 70 };
+    }
+    if (itemId === 'fork') {
+      return { x: 75, y: 70 };
+    }
+
+    // Default fallback - slight random offset from center
+    return {
+      x: plateCenter.x + (Math.random() - 0.5) * 10,
+      y: plateCenter.y + (Math.random() - 0.5) * 10
+    };
+  };
+
+  // Update current step based on placed items
+  useEffect(() => {
+    if (placedItems.rice && !placedItems.egg) setCurrentStep(1);
+    else if (placedItems.rice && placedItems.egg && !placedItems.garnish) setCurrentStep(2);
+    else if (placedItems.rice && placedItems.egg && placedItems.garnish) setCurrentStep(3);
+    else setCurrentStep(0);
+  }, [placedItems]);
 
   const handleDragStart = (e, item) => {
     if (placedItems[item.id]) return;
+    
+    // Check if item can be placed based on order
+    if (item.id === 'egg' && !placedItems.rice) {
+      e.preventDefault();
+      setShowOrderError(true);
+      setTimeout(() => setShowOrderError(false), 2000);
+      return;
+    }
+    if (item.id === 'garnish' && (!placedItems.rice || !placedItems.egg)) {
+      e.preventDefault();
+      setShowOrderError(true);
+      setTimeout(() => setShowOrderError(false), 2000);
+      return;
+    }
+
     setDraggedItem(item);
     e.dataTransfer.effectAllowed = 'move';
   };
@@ -41,25 +111,36 @@ const PlatingGame = () => {
     e.preventDefault();
     if (!draggedItem || placedItems[draggedItem.id]) return;
 
+    // Final order check
+    if (draggedItem.id === 'egg' && !placedItems.rice) return;
+    if (draggedItem.id === 'garnish' && (!placedItems.rice || !placedItems.egg)) return;
+
     const rect = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
+    // Use optimal position for better visual arrangement
+    const optimalPosition = getOptimalPosition(draggedItem.id, placedItems);
+    const finalPosition = draggedItem.isEssential ? optimalPosition : { x, y };
+
     const newPlacedItems = {
       ...placedItems,
-      [draggedItem.id]: { x, y, item: draggedItem }
+      [draggedItem.id]: { 
+        x: finalPosition.x, 
+        y: finalPosition.y, 
+        item: draggedItem 
+      }
     };
 
     setPlacedItems(newPlacedItems);
-
     setJustPlaced(draggedItem.id);
     setTimeout(() => setJustPlaced(null), 1000);
-
-    createSparkles(x, y);
+    createSparkles(finalPosition.x, finalPosition.y);
     setDraggedItem(null);
 
-    // Check if all 5 items are now placed
-    if (Object.keys(newPlacedItems).length === availableItems.length) {
+    // Check if all essential items are placed
+    const essentialItemsPlaced = foodItems.every(item => newPlacedItems[item.id]);
+    if (essentialItemsPlaced) {
       setTimeout(() => {
         triggerConfetti();
         setShowSuccess(true);
@@ -88,7 +169,8 @@ const PlatingGame = () => {
   };
 
   const handleStartPlating = () => {
-    if (Object.keys(placedItems).length === availableItems.length) {
+    const essentialItemsPlaced = foodItems.every(item => placedItems[item.id]);
+    if (essentialItemsPlaced) {
       triggerConfetti();
       setShowSuccess(true);
     }
@@ -100,6 +182,7 @@ const PlatingGame = () => {
     setConfetti([]);
     setSparkles([]);
     setJustPlaced(null);
+    setCurrentStep(0);
   };
 
   const triggerConfetti = () => {
@@ -120,609 +203,747 @@ const PlatingGame = () => {
     return tip.relatedItems.some(itemId => placedItems[itemId]);
   };
 
-  const allItemsPlaced = Object.keys(placedItems).length === availableItems.length;
+  const isItemAvailable = (item) => {
+    if (placedItems[item.id]) return false;
+    if (item.id === 'egg' && !placedItems.rice) return false;
+    if (item.id === 'garnish' && (!placedItems.rice || !placedItems.egg)) return false;
+    return true;
+  };
+
+  const essentialItemsPlaced = foodItems.every(item => placedItems[item.id]);
+  const allItemsPlaced = allItems.every(item => placedItems[item.id]);
+
+  // Check if we have a complete dish for special centering
+  const hasCompleteDish = placedItems.rice && placedItems.egg && placedItems.garnish;
 
   return (
     <div style={{
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #f5f3ef 0%, #e8dcc4 50%, #f5f3ef 100%)',
-      padding: '24px',
-      fontFamily: 'system-ui, -apple-system, sans-serif'
+      padding: '20px',
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+      display: 'flex',
+      flexDirection: 'column'
     }}>
       
+      {/* Header - Compact */}
       <div style={{
         background: 'white',
-        borderRadius: '20px',
-        padding: '28px',
-        marginBottom: '24px',
-        boxShadow: '0 8px 20px rgba(0, 0, 0, 0.12)',
-        border: '2px solid #e8dcc4'
+        borderRadius: '16px',
+        padding: '20px',
+        marginBottom: '20px',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+        border: '2px solid #e8dcc4',
+        flexShrink: 0
       }}>
         <h2 style={{
-          fontSize: '24px',
+          fontSize: '20px',
           fontWeight: '800',
           color: '#4a5568',
-          marginBottom: '20px',
+          marginBottom: '16px',
           textAlign: 'center',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '12px'
+          gap: '10px'
         }}>
-          <span style={{ fontSize: '28px' }}>🎨</span>
-          Drag Items to Your Plate
-          <span style={{ fontSize: '28px' }}>🎨</span>
+          <span style={{ fontSize: '24px' }}>🎨</span>
+          Level 5: Perfect Plating
+          <span style={{ fontSize: '24px' }}>🎨</span>
         </h2>
+        
+        {/* Current Instruction */}
         <div style={{
-          display: 'flex',
-          gap: '20px',
-          justifyContent: 'center',
-          flexWrap: 'wrap'
+          background: 'linear-gradient(135deg, #FF9800, #F57C00)',
+          color: 'white',
+          padding: '12px 20px',
+          borderRadius: '12px',
+          textAlign: 'center',
+          marginBottom: '16px',
+          boxShadow: '0 3px 8px rgba(255, 152, 0, 0.4)',
+          animation: 'pulse 2s infinite'
         }}>
-          {availableItems.map((item) => {
-            const isPlaced = placedItems[item.id];
-            return (
-              <div
-                key={item.id}
-                draggable={!isPlaced}
-                onDragStart={(e) => handleDragStart(e, item)}
-                style={{
-                  background: isPlaced 
-                    ? 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)' 
-                    : `linear-gradient(135deg, ${item.color} 0%, ${item.color}dd 100%)`,
-                  borderRadius: '16px',
-                  padding: '20px 28px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '10px',
-                  cursor: isPlaced ? 'not-allowed' : 'grab',
-                  boxShadow: isPlaced 
-                    ? '0 2px 8px rgba(0, 0, 0, 0.08)' 
-                    : '0 6px 16px rgba(0, 0, 0, 0.15)',
-                  opacity: isPlaced ? 0.5 : 1,
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  minWidth: '110px',
-                  userSelect: 'none',
-                  border: isPlaced ? '3px solid #10b981' : '3px solid transparent',
-                  transform: isPlaced ? 'scale(0.95)' : 'scale(1)',
-                  position: 'relative',
-                  overflow: 'visible'
-                }}
-                onMouseEnter={(e) => {
-                  if (!isPlaced) {
-                    e.currentTarget.style.transform = 'translateY(-6px) scale(1.05)';
-                    e.currentTarget.style.boxShadow = '0 12px 24px rgba(0, 0, 0, 0.2)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isPlaced) {
-                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.15)';
-                  }
-                }}
-              >
-                {item.img ? (
-                  <img 
-                    src={item.img} 
-                    alt={item.name} 
-                    style={{ 
-                      width: '70px', 
-                      height: '70px', 
-                      objectFit: 'contain',
-                      marginBottom: '4px'
-                    }} 
-                  />
-                ) : (
-                  <div style={{ fontSize: '56px', marginBottom: '4px' }}>{item.emoji}</div>
-                )}
-                <span style={{
-                  fontSize: '15px',
-                  fontWeight: '700',
-                  color: '#374151'
-                }}>
-                  {item.name}
-                </span>
-                {isPlaced && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '-8px',
-                    right: '-8px',
-                    background: 'linear-gradient(135deg, #10b981, #059669)',
-                    borderRadius: '50%',
-                    width: '32px',
-                    height: '32px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
-                    animation: 'popIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)'
-                  }}>
-                    <CheckCircle size={20} color="white" />
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          <div style={{ 
+            fontSize: '16px', 
+            fontWeight: '700',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px'
+          }}>
+            <span style={{ fontSize: '20px' }}>👉</span>
+            {currentStep === 0 && "Start by placing the rice on the plate"}
+            {currentStep === 1 && "Now add the fried egg on top"}
+            {currentStep === 2 && "Garnish with spring onions"}
+            {currentStep === 3 && "Add utensils to complete the plating"}
+            <span style={{ fontSize: '20px' }}>👈</span>
+          </div>
         </div>
       </div>
 
+      {/* Main Content Area - Horizontal Layout */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: '320px 1fr',
-        gap: '24px',
-        maxWidth: '1400px',
-        margin: '0 auto'
+        display: 'flex',
+        gap: '20px',
+        flex: '1',
+        minHeight: '0'
       }}>
         
+        {/* Left Panel - Ingredients & Tools */}
         <div style={{
-          background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-          borderRadius: '20px',
-          padding: '24px',
-          boxShadow: '0 8px 20px rgba(0, 0, 0, 0.12)',
-          height: 'fit-content',
-          border: '3px solid #fbbf24'
+          flex: '0 0 300px',
+          background: 'white',
+          borderRadius: '16px',
+          padding: '20px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          border: '2px solid #e8dcc4',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '20px'
         }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '14px',
-            padding: '14px',
-            marginBottom: '20px',
-            textAlign: 'center',
-            boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
-          }}>
+          
+          {/* Food Items */}
+          <div>
             <h3 style={{
-              fontSize: '24px',
-              fontWeight: '900',
-              color: '#d97706',
-              margin: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px'
+              fontSize: '16px',
+              fontWeight: '700',
+              color: '#4a5568',
+              marginBottom: '12px',
+              textAlign: 'center'
             }}>
-              <Sparkles size={22} />
-              TIPS
-              <Sparkles size={22} />
+              🍽️ Ingredients
             </h3>
-          </div>
-
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '14px'
-          }}>
-            {tips.map((tip, index) => {
-              const isCompleted = isTipCompleted(tip);
-              return (
-                <div
-                  key={index}
-                  style={{
-                    background: index % 2 === 0 
-                      ? 'linear-gradient(135deg, #ffffff 0%, #fefcf8 100%)'
-                      : 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
-                    borderRadius: '14px',
-                    padding: '16px',
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '14px',
-                    boxShadow: '0 3px 10px rgba(0, 0, 0, 0.08)',
-                    border: isCompleted ? '2px solid #10b981' : '2px solid #fef3c7',
-                    transition: 'all 0.3s ease',
-                    position: 'relative',
-                    overflow: 'hidden'
-                  }}
-                >
-                  {isCompleted && (
-                    <div style={{
-                      position: 'absolute',
-                      top: '8px',
-                      right: '8px',
-                      background: 'linear-gradient(135deg, #10b981, #059669)',
-                      borderRadius: '50%',
-                      width: '24px',
-                      height: '24px',
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px'
+            }}>
+              {foodItems.map((item) => {
+                const isPlaced = placedItems[item.id];
+                const isAvailable = isItemAvailable(item);
+                
+                return (
+                  <div
+                    key={item.id}
+                    draggable={isAvailable && !isPlaced}
+                    onDragStart={(e) => handleDragStart(e, item)}
+                    style={{
+                      background: isPlaced 
+                        ? 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)' 
+                        : isAvailable
+                        ? `linear-gradient(135deg, ${item.color} 0%, ${item.color}dd 100%)`
+                        : 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)',
+                      borderRadius: '12px',
+                      padding: '16px',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
-                      animation: 'popIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)'
+                      gap: '12px',
+                      cursor: isPlaced ? 'not-allowed' : (isAvailable ? 'grab' : 'not-allowed'),
+                      boxShadow: isPlaced 
+                        ? '0 1px 4px rgba(0, 0, 0, 0.08)' 
+                        : isAvailable
+                        ? '0 3px 8px rgba(0, 0, 0, 0.15)'
+                        : '0 1px 4px rgba(0, 0, 0, 0.08)',
+                      opacity: isPlaced ? 0.5 : (isAvailable ? 1 : 0.4),
+                      transition: 'all 0.3s ease',
+                      userSelect: 'none',
+                      border: isPlaced ? '2px solid #10b981' : (isAvailable ? '2px solid transparent' : '2px dashed #9ca3af'),
+                      position: 'relative',
+                      filter: isAvailable ? 'none' : 'grayscale(0.8)'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (isAvailable && !isPlaced) {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 6px 12px rgba(0, 0, 0, 0.2)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (isAvailable && !isPlaced) {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 3px 8px rgba(0, 0, 0, 0.15)';
+                      }
+                    }}
+                  >
+                    {item.img ? (
+                      <img 
+                        src={item.img} 
+                        alt={item.name} 
+                        style={{ 
+                          width: '40px', 
+                          height: '40px', 
+                          objectFit: 'contain'
+                        }} 
+                      />
+                    ) : (
+                      <div style={{ fontSize: '32px' }}>{item.emoji}</div>
+                    )}
+                    <span style={{
+                      fontSize: '14px',
+                      fontWeight: '700',
+                      color: isAvailable ? '#374151' : '#9ca3af',
+                      flex: '1'
                     }}>
-                      <CheckCircle size={16} color="white" />
-                    </div>
-                  )}
-                  <div style={{
-                    fontSize: '36px',
-                    flexShrink: 0,
-                    filter: isCompleted ? 'grayscale(0)' : 'grayscale(30%)',
-                    transition: 'filter 0.3s ease'
-                  }}>
-                    {tip.icon}
+                      {item.name}
+                    </span>
+                    {isPlaced && (
+                      <CheckCircle size={16} color="#10b981" />
+                    )}
+                    {!isAvailable && !isPlaced && (
+                      <span style={{ color: '#6b7280', fontSize: '12px' }}>⏳</span>
+                    )}
                   </div>
-                  <p style={{
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    color: isCompleted ? '#065f46' : '#4b5563',
-                    margin: 0,
-                    lineHeight: '1.6',
-                    flex: 1,
-                    paddingRight: isCompleted ? '24px' : '0'
-                  }}>
-                    {tip.text}
-                  </p>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
 
-          <div style={{
-            marginTop: '20px',
-            background: 'white',
-            borderRadius: '14px',
-            padding: '18px',
-            textAlign: 'center',
-            boxShadow: '0 4px 10px rgba(0, 0, 0, 0.08)',
-            border: '2px solid #fef3c7'
-          }}>
-            <div style={{
-              fontSize: '15px',
+          {/* Tool Items */}
+          <div>
+            <h3 style={{
+              fontSize: '16px',
               fontWeight: '700',
-              color: '#6b7280',
-              marginBottom: '10px'
+              color: '#4a5568',
+              marginBottom: '12px',
+              textAlign: 'center',
+              opacity: essentialItemsPlaced ? 1 : 0.6
             }}>
-              Progress
-            </div>
+              🥄 Utensils
+            </h3>
             <div style={{
-              fontSize: '38px',
-              fontWeight: '900',
-              color: allItemsPlaced ? '#10b981' : '#f59e0b',
-              transition: 'all 0.3s ease'
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              opacity: essentialItemsPlaced ? 1 : 0.6,
+              transition: 'all 0.3s ease',
+              filter: essentialItemsPlaced ? 'none' : 'grayscale(0.7)'
             }}>
-              {Object.keys(placedItems).length} / {availableItems.length}
-            </div>
-            <div style={{
-              fontSize: '13px',
-              color: '#6b7280',
-              marginTop: '6px',
-              fontWeight: '600'
-            }}>
-              {allItemsPlaced ? '✨ All items placed! ✨' : '🎯 Keep going!'}
+              {toolItems.map((item) => {
+                const isPlaced = placedItems[item.id];
+                
+                return (
+                  <div
+                    key={item.id}
+                    draggable={essentialItemsPlaced && !isPlaced}
+                    onDragStart={(e) => handleDragStart(e, item)}
+                    style={{
+                      background: isPlaced 
+                        ? 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)' 
+                        : essentialItemsPlaced
+                        ? `linear-gradient(135deg, ${item.color} 0%, ${item.color}dd 100%)`
+                        : 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)',
+                      borderRadius: '12px',
+                      padding: '16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      cursor: isPlaced ? 'not-allowed' : (essentialItemsPlaced ? 'grab' : 'not-allowed'),
+                      boxShadow: isPlaced 
+                        ? '0 1px 4px rgba(0, 0, 0, 0.08)' 
+                        : essentialItemsPlaced
+                        ? '0 3px 8px rgba(0, 0, 0, 0.15)'
+                        : '0 1px 4px rgba(0, 0, 0, 0.08)',
+                      opacity: isPlaced ? 0.5 : (essentialItemsPlaced ? 1 : 0.4),
+                      transition: 'all 0.3s ease',
+                      userSelect: 'none',
+                      border: isPlaced ? '2px solid #10b981' : (essentialItemsPlaced ? '2px solid transparent' : '2px dashed #9ca3af'),
+                      position: 'relative'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (essentialItemsPlaced && !isPlaced) {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 6px 12px rgba(0, 0, 0, 0.2)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (essentialItemsPlaced && !isPlaced) {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 3px 8px rgba(0, 0, 0, 0.15)';
+                      }
+                    }}
+                  >
+                    <img 
+                      src={item.img} 
+                      alt={item.name} 
+                      style={{ 
+                        width: '40px', 
+                        height: '40px', 
+                        objectFit: 'contain'
+                      }} 
+                    />
+                    <span style={{
+                      fontSize: '14px',
+                      fontWeight: '700',
+                      color: essentialItemsPlaced ? '#374151' : '#9ca3af',
+                      flex: '1'
+                    }}>
+                      {item.name}
+                    </span>
+                    {isPlaced && (
+                      <CheckCircle size={16} color="#10b981" />
+                    )}
+                    {!essentialItemsPlaced && !isPlaced && (
+                      <span style={{ 
+                        color: '#6b7280', 
+                        fontSize: '10px',
+                        textAlign: 'center',
+                        lineHeight: '1.2'
+                      }}>
+                        Complete food first
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
 
+        {/* Center Panel - Plate Area */}
         <div style={{
+          flex: '1',
+          background: 'white',
+          borderRadius: '16px',
+          padding: '20px',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          border: '2px solid #e8dcc4',
           display: 'flex',
           flexDirection: 'column',
-          gap: '24px'
+          minHeight: '0'
         }}>
-          
-          <div style={{
-            background: 'linear-gradient(135deg, #8b4513 0%, #a0522d 50%, #8b4513 100%)',
-            borderRadius: '20px',
-            padding: '48px',
-            boxShadow: '0 12px 32px rgba(0, 0, 0, 0.25)',
-            border: '4px solid #654321',
-            position: 'relative'
+          <h3 style={{
+            fontSize: '16px',
+            fontWeight: '700',
+            color: '#4a5568',
+            marginBottom: '16px',
+            textAlign: 'center'
           }}>
-            
+            🍽️ Your Plate
+          </h3>
+          
+          <div
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            style={{
+              position: 'relative',
+              background: 'linear-gradient(135deg, #f8f4e9 0%, #e8dfc8 100%)',
+              border: '3px dashed #d4c29e',
+              borderRadius: '50%',
+              width: '100%',
+              height: '100%',
+              minHeight: '400px',
+              maxHeight: '500px',
+              margin: '0 auto',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              flex: '1'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, #f5f0e1 0%, #e0d6bb 100%)';
+              e.currentTarget.style.borderColor = '#c4b08a';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, #f8f4e9 0%, #e8dfc8 100%)';
+              e.currentTarget.style.borderColor = '#d4c29e';
+            }}
+          >
+            {/* Plate rim */}
             <div style={{
               position: 'absolute',
               top: '20px',
               left: '20px',
-              fontSize: '36px',
-              opacity: 0.5,
-              animation: 'float 3s ease-in-out infinite'
-            }}>
-              🌸
-            </div>
-            <div style={{
-              position: 'absolute',
-              top: '20px',
               right: '20px',
-              fontSize: '36px',
-              opacity: 0.5,
-              animation: 'float 3s ease-in-out infinite 1s'
-            }}>
-              🌸
-            </div>
-
-            <div
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              style={{
-                width: '100%',
-                maxWidth: '600px',
-                aspectRatio: '1',
-                margin: '0 auto',
-                borderRadius: '50%',
-                background: 'radial-gradient(circle at 30% 30%, #fdfbf7 0%, #f5f0e8 40%, #e8dcc4 100%)',
-                boxShadow: draggedItem 
-                  ? 'inset 0 4px 20px rgba(0, 0, 0, 0.15), 0 12px 40px rgba(0, 0, 0, 0.25), 0 0 40px rgba(251, 191, 36, 0.6), 0 0 80px rgba(251, 191, 36, 0.3)'
-                  : 'inset 0 4px 20px rgba(0, 0, 0, 0.15), 0 12px 40px rgba(0, 0, 0, 0.25)',
-                border: draggedItem ? '14px solid #fbbf24' : '12px solid #d4c4a8',
-                position: 'relative',
-                cursor: 'copy',
-                transition: 'all 0.3s ease',
-                animation: draggedItem ? 'plateGlow 2s ease-in-out infinite' : 'none'
-              }}
-            >
+              bottom: '20px',
+              border: '3px solid #c4b08a',
+              borderRadius: '50%',
+              pointerEvents: 'none'
+            }} />
+            
+            {/* Drop hint text */}
+            {Object.keys(placedItems).length === 0 && (
               <div style={{
-                position: 'absolute',
-                inset: '20px',
-                borderRadius: '50%',
-                border: '3px solid #e8dcc4',
-                opacity: 0.6
-              }}></div>
-              
-              <div style={{
-                position: 'absolute',
-                inset: '40px',
-                borderRadius: '50%',
-                border: '2px solid #f5f0e8',
-                opacity: 0.4
-              }}></div>
+                color: '#9ca3af',
+                fontSize: '16px',
+                fontWeight: '600',
+                textAlign: 'center',
+                pointerEvents: 'none',
+                padding: '20px'
+              }}>
+                Drag ingredients here to start plating!
+              </div>
+            )}
 
-              {Object.keys(placedItems).length === 0 && (
-                <div style={{
+            {/* Placed Items with Enhanced Scaling */}
+            {Object.values(placedItems).map((placed) => (
+              <div
+                key={placed.item.id}
+                style={{
                   position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  textAlign: 'center',
-                  pointerEvents: 'none'
-                }}>
-                  <div style={{
+                  left: `${placed.x}%`,
+                  top: `${placed.y}%`,
+                  transform: `translate(-50%, -50%) scale(${placed.item.scale})`,
+                  transition: 'all 0.3s ease',
+                  zIndex: placed.item.zIndex,
+                  animation: justPlaced === placed.item.id ? 'popIn 0.5s ease-out' : 'none',
+                  filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.3))'
+                }}
+              >
+                {placed.item.emoji ? (
+                  <div style={{ 
                     fontSize: '64px',
-                    marginBottom: '12px',
-                    opacity: 0.5,
-                    animation: 'bounce 2s ease-in-out infinite'
+                    textShadow: '2px 2px 4px rgba(0,0,0,0.2)'
                   }}>
-                    🍽️
+                    {placed.item.emoji}
                   </div>
-                  <div style={{
-                    fontSize: '18px',
-                    fontWeight: '800',
-                    color: '#9ca3af',
-                    animation: 'pulse 2s infinite',
-                    textShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                  }}>
-                    Drop items here
-                  </div>
-                </div>
-              )}
+                ) : (
+                  <img 
+                    src={placed.item.img} 
+                    alt={placed.item.name}
+                    style={{
+                      width: '120px',
+                      height: '120px',
+                      objectFit: 'contain'
+                    }}
+                  />
+                )}
+              </div>
+            ))}
 
-              {Object.entries(placedItems).map(([itemId, position]) => (
-                <div
-                  key={itemId}
-                  style={{
-                    position: 'absolute',
-                    left: `${position.x}%`,
-                    top: `${position.y}%`,
-                    transform: 'translate(-50%, -50%)',
-                    filter: 'drop-shadow(0 6px 12px rgba(0, 0, 0, 0.3))',
-                    animation: justPlaced === itemId 
-                      ? 'placeItemBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)' 
-                      : 'none',
-                    cursor: 'move'
-                  }}
-                >
-                  {position.item.img ? (
-                    <img 
-                      src={position.item.img} 
-                      alt={position.item.name} 
-                      style={{ 
-                        width: '140px', 
-                        height: '140px', 
-                        objectFit: 'contain'
-                      }} 
-                    />
-                  ) : (
-                    <div style={{ fontSize: '120px' }}>{position.item.emoji}</div>
-                  )}
-                </div>
-              ))}
+            {/* Visual guide for complete dish */}
+            {hasCompleteDish && (
+              <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '60%',
+                height: '60%',
+                border: '2px dashed rgba(16, 185, 129, 0.3)',
+                borderRadius: '50%',
+                pointerEvents: 'none',
+                animation: 'pulse 2s infinite'
+              }} />
+            )}
 
-              {sparkles.map((sparkle) => (
-                <Sparkles
-                  key={sparkle.id}
-                  style={{
-                    position: 'absolute',
-                    left: `${sparkle.x}%`,
-                    top: `${sparkle.y}%`,
-                    color: '#fbbf24',
-                    animation: `sparkleFloat 0.8s ease-out ${sparkle.delay}s forwards`,
-                    pointerEvents: 'none'
-                  }}
-                  size={24}
-                />
-              ))}
-
-              {confetti.map((conf) => (
-                <div
-                  key={conf.id}
-                  style={{
-                    position: 'absolute',
-                    left: `${conf.left}%`,
-                    top: '-10%',
-                    width: '12px',
-                    height: '12px',
-                    background: ['#fbbf24', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6'][conf.id % 5],
-                    borderRadius: '50%',
-                    animation: `fall ${conf.duration}s linear ${conf.delay}s forwards`,
-                    transform: `rotate(${conf.rotation}deg)`,
-                    opacity: 0
-                  }}
-                />
-              ))}
-            </div>
+            {/* Sparkles Animation */}
+            {sparkles.map((sparkle) => (
+              <div
+                key={sparkle.id}
+                style={{
+                  position: 'absolute',
+                  left: `${sparkle.x}%`,
+                  top: `${sparkle.y}%`,
+                  fontSize: '24px',
+                  animation: `sparkleAnimation 1s ease-out ${sparkle.delay}s forwards`,
+                  pointerEvents: 'none',
+                  zIndex: 10
+                }}
+              >
+                ✨
+              </div>
+            ))}
           </div>
 
-          <div style={{
-            display: 'flex',
-            gap: '16px',
-            justifyContent: 'center'
-          }}>
-            <button
-              onClick={handleStartPlating}
-              disabled={!allItemsPlaced || showSuccess}
-              style={{
-                background: allItemsPlaced && !showSuccess 
-                  ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' 
-                  : 'linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%)',
-                color: 'white',
-                padding: '18px 52px',
-                borderRadius: '16px',
-                fontSize: '19px',
-                fontWeight: '800',
-                border: 'none',
-                cursor: allItemsPlaced && !showSuccess ? 'pointer' : 'not-allowed',
-                boxShadow: allItemsPlaced && !showSuccess 
-                  ? '0 6px 16px rgba(16, 185, 129, 0.4)' 
-                  : '0 2px 8px rgba(0, 0, 0, 0.1)',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px'
-              }}
-              onMouseEnter={(e) => {
-                if (allItemsPlaced && !showSuccess) {
-                  e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
-                  e.currentTarget.style.boxShadow = '0 10px 24px rgba(16, 185, 129, 0.5)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (allItemsPlaced && !showSuccess) {
-                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(16, 185, 129, 0.4)';
-                }
-              }}
-            >
-              <Sparkles size={22} />
-              {showSuccess ? 'Completed!' : 'Complete Plating'}
-            </button>
-
-            <button
-              onClick={handleReset}
-              style={{
-                background: 'white',
-                color: '#6b7280',
-                padding: '18px 48px',
-                borderRadius: '16px',
-                fontSize: '19px',
-                fontWeight: '800',
-                border: '3px solid #e5e7eb',
-                cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-3px)';
-                e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.15)';
-                e.currentTarget.style.borderColor = '#9ca3af';
-                e.currentTarget.style.color = '#374151';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
-                e.currentTarget.style.borderColor = '#e5e7eb';
-                e.currentTarget.style.color = '#6b7280';
-              }}
-            >
-              <RotateCcw size={20} />
-              Reset
-            </button>
-          </div>
-
-          {showSuccess && (
+          {/* Plate Completion Status */}
+          {hasCompleteDish && (
             <div style={{
-              background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-              borderRadius: '20px',
-              padding: '36px',
+              marginTop: '16px',
+              padding: '12px',
+              background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)',
+              borderRadius: '10px',
               textAlign: 'center',
-              boxShadow: '0 12px 32px rgba(0, 0, 0, 0.15)',
-              border: '4px solid #fbbf24',
-              animation: 'slideUp 0.5s ease-out'
+              border: '2px solid #10b981'
             }}>
-              <div style={{ fontSize: '72px', marginBottom: '20px', animation: 'bounce 1s ease-in-out' }}>🎉</div>
-              <h2 style={{
-                fontSize: '40px',
-                fontWeight: '900',
-                color: '#d97706',
-                margin: '0 0 12px 0'
-              }}>
-                Nice presentation, Chef!
-              </h2>
-              <p style={{
-                fontSize: '20px',
-                color: '#92400e',
+              <div style={{
+                fontSize: '14px',
                 fontWeight: '700',
-                margin: 0
+                color: '#065f46',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
               }}>
-                Your dish looks absolutely delicious! 🌟
-              </p>
+                <CheckCircle size={16} />
+                Perfect plating! Ready to serve ✅
+              </div>
             </div>
           )}
         </div>
+
+        {/* Right Panel - Tips & Controls */}
+        <div style={{
+          flex: '0 0 280px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '20px'
+        }}>
+          
+          {/* Tips Panel */}
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '20px',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+            border: '2px solid #e8dcc4',
+            flex: '1'
+          }}>
+            <h3 style={{
+              fontSize: '16px',
+              fontWeight: '700',
+              color: '#4a5568',
+              marginBottom: '16px',
+              textAlign: 'center'
+            }}>
+              💡 Plating Tips
+            </h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {tips.map((tip, index) => {
+                const isCompleted = isTipCompleted(tip);
+                const isCurrent = currentStep === tip.step;
+                
+                return (
+                  <div
+                    key={index}
+                    style={{
+                      background: isCompleted 
+                        ? 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)'
+                        : isCurrent
+                        ? 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)'
+                        : 'linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)',
+                      padding: '12px',
+                      borderRadius: '10px',
+                      border: isCompleted 
+                        ? '2px solid #10b981'
+                        : isCurrent
+                        ? '2px solid #f59e0b'
+                        : '2px solid #e5e7eb',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px'
+                    }}>
+                      <span style={{ fontSize: '18px' }}>{tip.icon}</span>
+                      <span style={{
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        color: isCompleted ? '#065f46' : (isCurrent ? '#92400e' : '#4b5563'),
+                        lineHeight: '1.3'
+                      }}>
+                        {tip.text}
+                      </span>
+                      {isCompleted && (
+                        <CheckCircle size={14} color="#10b981" style={{ marginLeft: 'auto', flexShrink: 0 }} />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Control Buttons */}
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '20px',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+            border: '2px solid #e8dcc4',
+            flexShrink: 0
+          }}>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px'
+            }}>
+              <button
+                onClick={handleStartPlating}
+                disabled={!essentialItemsPlaced || showSuccess}
+                style={{
+                  background: essentialItemsPlaced && !showSuccess 
+                    ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' 
+                    : 'linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%)',
+                  color: 'white',
+                  padding: '14px 20px',
+                  borderRadius: '12px',
+                  fontSize: '15px',
+                  fontWeight: '700',
+                  border: 'none',
+                  cursor: essentialItemsPlaced && !showSuccess ? 'pointer' : 'not-allowed',
+                  boxShadow: essentialItemsPlaced && !showSuccess 
+                    ? '0 4px 12px rgba(16, 185, 129, 0.4)' 
+                    : '0 2px 6px rgba(0, 0, 0, 0.1)',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+                onMouseEnter={(e) => {
+                  if (essentialItemsPlaced && !showSuccess) {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(16, 185, 129, 0.5)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (essentialItemsPlaced && !showSuccess) {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.4)';
+                  }
+                }}
+              >
+                <Sparkles size={18} />
+                {showSuccess ? 'Completed!' : 'FINISH PLATING'}
+              </button>
+
+              {showSuccess && (
+                <button
+                  onClick={() => navigate('/lesson/cooking/level-6')}
+                  style={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white',
+                    padding: '14px 20px',
+                    borderRadius: '12px',
+                    fontSize: '15px',
+                    fontWeight: '700',
+                    border: 'none',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)',
+                    transition: 'all 0.3s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    animation: 'pulse 2s infinite'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 6px 16px rgba(102, 126, 234, 0.5)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
+                  }}
+                >
+                  Next Level
+                  <ArrowRight size={18} />
+                </button>
+              )}
+
+              <button
+                onClick={handleReset}
+                style={{
+                  background: 'white',
+                  color: '#6b7280',
+                  padding: '12px 20px',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  fontWeight: '700',
+                  border: '2px solid #e5e7eb',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                  e.currentTarget.style.borderColor = '#9ca3af';
+                  e.currentTarget.style.color = '#374151';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.1)';
+                  e.currentTarget.style.borderColor = '#e5e7eb';
+                  e.currentTarget.style.color = '#6b7280';
+                }}
+              >
+                <RotateCcw size={16} />
+                Reset
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
+      {/* Confetti Animation */}
+      {confetti.map((conf) => (
+        <div
+          key={conf.id}
+          style={{
+            position: 'fixed',
+            top: '-20px',
+            left: `${conf.left}%`,
+            fontSize: '20px',
+            animation: `confettiFall ${conf.duration}s ease-out ${conf.delay}s forwards`,
+            zIndex: 1000,
+            pointerEvents: 'none'
+          }}
+        >
+          🎉
+        </div>
+      ))}
+
+      {/* Order Error Message */}
+      {showOrderError && (
+        <div style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+          color: 'white',
+          padding: '16px 24px',
+          borderRadius: '12px',
+          fontSize: '16px',
+          fontWeight: '700',
+          zIndex: 2000,
+          boxShadow: '0 8px 24px rgba(239, 68, 68, 0.5)',
+          animation: 'bounceIn 0.4s ease-out',
+          border: '2px solid rgba(255, 255, 255, 0.3)',
+          textAlign: 'center'
+        }}>
+          🧑‍🍳 Remember to place the Rice first, chef!
+        </div>
+      )}
+
       <style>{`
+        @keyframes bounceIn {
+          0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+          50% { transform: translate(-50%, -50%) scale(1.05); }
+          70% { transform: translate(-50%, -50%) scale(0.9); }
+          100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
         @keyframes pulse {
           0%, 100% { opacity: 0.5; }
           50% { opacity: 1; }
         }
-        @keyframes bounce {
-          0%, 100% { transform: translate(-50%, -50%) translateY(0); }
-          50% { transform: translate(-50%, -50%) translateY(-10px); }
-        }
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
-        }
-        @keyframes placeItemBounce {
-          0% { transform: translate(-50%, -50%) scale(0) rotate(-180deg); }
-          50% { transform: translate(-50%, -50%) scale(1.3) rotate(10deg); }
-          70% { transform: translate(-50%, -50%) scale(0.9) rotate(-5deg); }
-          100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
-        }
         @keyframes popIn {
-          0% { transform: scale(0); opacity: 0; }
-          50% { transform: scale(1.2); }
-          100% { transform: scale(1); opacity: 1; }
-        }
-        @keyframes sparkleFloat {
           0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-          50% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
-          100% { transform: translate(-50%, -50%) translateY(-30px) scale(0); opacity: 0; }
+          50% { transform: translate(-50%, -50%) scale(1.2); }
+          100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
         }
-        @keyframes fall {
-          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-          100% { transform: translateY(700px) rotate(720deg); opacity: 0; }
+        @keyframes sparkleAnimation {
+          0% { transform: scale(0); opacity: 0; }
+          50% { transform: scale(1.2); opacity: 1; }
+          100% { transform: scale(0); opacity: 0; }
         }
-        @keyframes slideUp {
-          0% { transform: translateY(30px); opacity: 0; }
-          100% { transform: translateY(0); opacity: 1; }
-        }
-        @keyframes plateGlow {
-          0%, 100% { 
-            box-shadow: inset 0 4px 20px rgba(0, 0, 0, 0.15), 
-                        0 12px 40px rgba(0, 0, 0, 0.25), 
-                        0 0 40px rgba(251, 191, 36, 0.6), 
-                        0 0 80px rgba(251, 191, 36, 0.3); 
-          }
-          50% { 
-            box-shadow: inset 0 4px 20px rgba(0, 0, 0, 0.15), 
-                        0 12px 40px rgba(0, 0, 0, 0.25), 
-                        0 0 60px rgba(251, 191, 36, 0.8), 
-                        0 0 120px rgba(251, 191, 36, 0.4); 
-          }
+        @keyframes confettiFall {
+          0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
         }
       `}</style>
     </div>
   );
 };
 
-export default PlatingGame;
+export default CookingLevel5;
