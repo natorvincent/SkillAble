@@ -27,7 +27,7 @@ import {
 } from '../../services/progressService';
 
 // Images - Nail care images
-// import successGif from "../../assets/hygienelevel1/roblox.gif"
+// import successGif from "../../assets/hygieneLevel1/roblox.gif"
 import backgroundImg from "../../assets/hygienelevel3/room.png"
 
 // Hand images
@@ -48,10 +48,10 @@ import characterCatProud from "../../assets/hygienelevel3/cat_proud.png" // Prou
 import nailClippingVideo from "../../assets/hygienelevel3/trim.mp4"
 
 // Audio files
-import backgroundMusic from "../../assets/hygienelevel1/background-music.mp3"
-import correctSound from "../../assets/hygienelevel1/correct-sound.mp3"
-import incorrectSound from "../../assets/hygienelevel1/incorrect-sound.mp3"
-import successSound from "../../assets/hygienelevel1/success-sound.mp3"
+import backgroundMusic from "../../assets/hygieneLevel1/background-music.mp3"
+import correctSound from "../../assets/hygieneLevel1/correct-sound.mp3"
+import incorrectSound from "../../assets/hygieneLevel1/incorrect-sound.mp3"
+import successSound from "../../assets/hygieneLevel1/success-sound.mp3"
 
 // Sparkle Animation Component
 const SparkleAnimation = ({ position }) => {

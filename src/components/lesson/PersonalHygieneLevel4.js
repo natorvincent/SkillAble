@@ -27,7 +27,7 @@ import {
 } from '../../services/progressService';
 
 // Images - Import all the hygiene level 4 images
-// import successGif from "../../assets/hygienelevel1/roblox.gif"
+// import successGif from "../../assets/hygieneLevel1/roblox.gif"
 import backgroundImg from "../../assets/hygienelevel4/bg.png"
 import showerBasketImg from "../../assets/hygienelevel4/showerbasket.png"
 import towelImg from "../../assets/hygienelevel4/towel.png"

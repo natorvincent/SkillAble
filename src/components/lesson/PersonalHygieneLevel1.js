@@ -24,15 +24,15 @@ import {
 
 // Images
 // import successGif from "../../assets/hygienelevel1/roblox.gif"
-import bathroomBg from "../../assets/hygienelevel1/bg.png"
-import sinkImg from "../../assets/hygienelevel1/sink.png"
-import faucetImg from "../../assets/hygienelevel1/onfaucet.png"
-import leftHandImg from "../../assets/hygienelevel1/lefthand.png"
-import rightHandImg from "../../assets/hygienelevel1/righthand.png"
-import germsImg from "../../assets/hygienelevel1/germ.png"
-import mudImg from "../../assets/hygienelevel1/mud.png"
-import soapImg from "../../assets/hygienelevel1/soap.png"
-import wetHandsImg from "../../assets/hygienelevel1/wash.gif"
+import bathroomBg from "../../assets/hygieneLevel1/bg.png"
+import sinkImg from "../../assets/hygieneLevel1/sink.png"
+import faucetImg from "../../assets/hygieneLevel1/onfaucet.png"
+import leftHandImg from "../../assets/hygieneLevel1/lefthand.png"
+import rightHandImg from "../../assets/hygieneLevel1/righthand.png"
+import germsImg from "../../assets/hygieneLevel1/germ.png"
+import mudImg from "../../assets/hygieneLevel1/mud.png"
+import soapImg from "../../assets/hygieneLevel1/soap.png"
+import wetHandsImg from "../../assets/hygieneLevel1/wash.gif"
 
 import characterCatWorried from "../../assets/hygienelevel3/cat_worried.png"
 import characterCatHelpful from "../../assets/hygienelevel3/cat_helpful.png"
@@ -40,19 +40,19 @@ import characterCatExcited from "../../assets/hygienelevel3/cat_excited.png"
 // import characterCatDefault from "../../assets/hygienelevel3/cat.png"
 
 // Audio files
-import backgroundMusic from "../../assets/hygienelevel1/background-music.mp3"
-import correctSound from "../../assets/hygienelevel1/correct-sound.mp3"
-import incorrectSound from "../../assets/hygienelevel1/incorrect-sound.mp3"
-import successSound from "../../assets/hygienelevel1/success-sound.mp3"
+import backgroundMusic from "../../assets/hygieneLevel1/background-music.mp3"
+import correctSound from "../../assets/hygieneLevel1/correct-sound.mp3"
+import incorrectSound from "../../assets/hygieneLevel1/incorrect-sound.mp3"
+import successSound from "../../assets/hygieneLevel1/success-sound.mp3"
 
 // Video files
-import scrubVideo from "../../assets/hygienelevel1/scrub1.mp4"
-import scrubVideo2 from "../../assets/hygienelevel1/scrub2.mp4"
-import scrubVideo3 from "../../assets/hygienelevel1/scrub3.mp4"
-import scrubVideo4 from "../../assets/hygienelevel1/scrub4.mp4"
-import scrubVideo5 from "../../assets/hygienelevel1/scrub5.mp4"
-import scrubVideo6 from "../../assets/hygienelevel1/scrub6.mp4"
-import scrubVideo7 from "../../assets/hygienelevel1/scrub7.mp4"
+import scrubVideo from "../../assets/hygieneLevel1/scrub1.mp4"
+import scrubVideo2 from "../../assets/hygieneLevel1/scrub2.mp4"
+import scrubVideo3 from "../../assets/hygieneLevel1/scrub3.mp4"
+import scrubVideo4 from "../../assets/hygieneLevel1/scrub4.mp4"
+import scrubVideo5 from "../../assets/hygieneLevel1/scrub5.mp4"
+import scrubVideo6 from "../../assets/hygieneLevel1/scrub6.mp4"
+import scrubVideo7 from "../../assets/hygieneLevel1/scrub7.mp4"
 
 
 export default function PersonalHygieneLevel1() {

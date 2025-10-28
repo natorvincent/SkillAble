@@ -23,7 +23,7 @@ import {
 } from '../../services/progressService';
 
 // Images
-// import successGif from "../../assets/hygienelevel1/roblox.gif"
+// import successGif from "../../assets/hygieneLevel1/roblox.gif"
 import bathroomBg from "../../assets/hygienelevel2/bg.png"
 import teethImg from "../../assets/hygienelevel2/before_teeth.png"
 import afterTeethImg from "../../assets/hygienelevel2/after_teeth.png"
@@ -41,10 +41,10 @@ import waterCupImg from "../../assets/hygienelevel2/water.png"
 // import characterCatDefault from "../../assets/hygienelevel3/cat.png"
 
 // Audio files
-import backgroundMusic from "../../assets/hygienelevel1/background-music.mp3"
-import correctSound from "../../assets/hygienelevel1/correct-sound.mp3"
-import incorrectSound from "../../assets/hygienelevel1/incorrect-sound.mp3"
-import successSound from "../../assets/hygienelevel1/success-sound.mp3"
+import backgroundMusic from "../../assets/hygieneLevel1/background-music.mp3"
+import correctSound from "../../assets/hygieneLevel1/correct-sound.mp3"
+import incorrectSound from "../../assets/hygieneLevel1/incorrect-sound.mp3"
+import successSound from "../../assets/hygieneLevel1/success-sound.mp3"
 
 export default function PersonalHygieneLevel1() {
   const navigate = useNavigate();
