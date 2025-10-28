@@ -49,7 +49,7 @@ const AdminRoute = ({ children }) => {
       try {
         // If we're not sure, verify with the API
         console.log("Verifying admin status with API...");
-        const response = await fetch(`http://localhost:8080/api/admin/check?email=${encodeURIComponent(email)}`, {
+        const response = await fetch(`https://skillable-pdv0.onrender.com/api/admin/check?email=${encodeURIComponent(email)}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'

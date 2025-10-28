@@ -165,7 +165,7 @@ function StudentDashboard() {
   const fetchUserProfile = async (email) => {
     try {
       console.log("Fetching user profile for:", email);
-      const response = await fetch(`http://localhost:8080/api/students/profile?email=${email}`, {
+      const response = await fetch(`https://skillable-pdv0.onrender.com/api/students/profile?email=${email}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json"
@@ -206,7 +206,7 @@ function StudentDashboard() {
       const userEmail = localStorage.getItem("userEmail");
       
       console.log("Fetching available modules...");
-      const availableResponse = await fetch("http://localhost:8080/api/modules/available", {
+      const availableResponse = await fetch("https://skillable-pdv0.onrender.com/api/modules/available", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -266,7 +266,7 @@ function StudentDashboard() {
 
     try {
       const userEmail = localStorage.getItem("userEmail");
-      const response = await fetch("http://localhost:8080/api/students/update", {
+      const response = await fetch("https://skillable-pdv0.onrender.com/api/students/update", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -326,8 +326,8 @@ function StudentDashboard() {
 
       const endpoint =
         tempSelectedRole === "STUDENT"
-          ? "http://localhost:8080/api/students/set-role"
-          : "http://localhost:8080/api/teachers/set-role";
+          ? "https://skillable-pdv0.onrender.com/api/students/set-role"
+          : "https://skillable-pdv0.onrender.com/api/teachers/set-role";
 
       const response = await fetch(endpoint, {
         method: "POST",

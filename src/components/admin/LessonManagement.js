@@ -227,7 +227,7 @@ const LessonManagement = () => {
 
   const fetchLessons = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/lessons');
+      const response = await fetch('https://skillable-pdv0.onrender.com/api/lessons');
       if (response.ok) {
         const data = await response.json();
         setLessons(data);
@@ -244,7 +244,7 @@ const LessonManagement = () => {
 
   const fetchModules = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/modules');
+      const response = await fetch('https://skillable-pdv0.onrender.com/api/modules');
       if (response.ok) {
         const data = await response.json();
         setModules(data);
@@ -379,8 +379,8 @@ const LessonManagement = () => {
       };
 
       const url = editingLesson 
-        ? `http://localhost:8080/api/lessons/${editingLesson.id}`
-        : 'http://localhost:8080/api/lessons';
+        ? `https://skillable-pdv0.onrender.com/api/lessons/${editingLesson.id}`
+        : 'https://skillable-pdv0.onrender.com/api/lessons';
       
       const method = editingLesson ? 'PUT' : 'POST';
 
@@ -412,7 +412,7 @@ const LessonManagement = () => {
 
   const handleDelete = async () => {
     try {
-      const response = await fetch(`http://localhost:8080/api/lessons/${selectedLesson.id}`, {
+      const response = await fetch(`https://skillable-pdv0.onrender.com/api/lessons/${selectedLesson.id}`, {
         method: 'DELETE'
       });
 

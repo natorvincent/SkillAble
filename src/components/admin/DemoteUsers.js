@@ -33,7 +33,7 @@ const DemoteUsers = () => {
   const [demoting, setDemoting] = useState(false);
 
   // Base URL for API
-  const API_BASE_URL = 'http://localhost:8080/api';
+  const API_BASE_URL = 'https://skillable-pdv0.onrender.com/api';
   
   // Get the auth token from localStorage
   const getAuthToken = () => localStorage.getItem('token');

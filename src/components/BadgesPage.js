@@ -25,7 +25,7 @@ function BadgesPage() {
       if (studentId) {
         // Try to fetch badges from your new backend endpoint first
         try {
-          const badgesResponse = await fetch(`http://localhost:8080/api/badges/student/${studentId}`, {
+          const badgesResponse = await fetch(`https://skillable-pdv0.onrender.com/api/badges/student/${studentId}`, {
             method: "GET",
             headers: {
               "Content-Type": "application/json"

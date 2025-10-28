@@ -73,13 +73,13 @@ function Navbar() {
 
       // Determine which endpoint to call based on stored role
       if (isAdmin) {
-        apiEndpoint = `http://localhost:8080/api/admin/profile?email=${userEmail}`;
+        apiEndpoint = `https://skillable-pdv0.onrender.com/api/admin/profile?email=${userEmail}`;
         detectedRole = "ADMIN";
       } else if (userRole === "TEACHER") {
-        apiEndpoint = `http://localhost:8080/api/teachers/profile?email=${userEmail}`;
+        apiEndpoint = `https://skillable-pdv0.onrender.com/api/teachers/profile?email=${userEmail}`;
         detectedRole = "TEACHER";
       } else {
-        apiEndpoint = `http://localhost:8080/api/students/profile?email=${userEmail}`;
+        apiEndpoint = `https://skillable-pdv0.onrender.com/api/students/profile?email=${userEmail}`;
         detectedRole = "STUDENT";
       }
 
