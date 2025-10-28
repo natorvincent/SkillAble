@@ -24,7 +24,7 @@ import {
 
 // Images
 // import successGif from "../../assets/hygienelevel1/roblox.gif"
-import bathroomBg from "../../assets/hygienelevel1/bg.png"
+import bathroomBg from "../../assets/hygienelevel1/bg-copy.png"
 import sinkImg from "../../assets/hygienelevel1/sink.png"
 import faucetImg from "../../assets/hygienelevel1/onfaucet.png"
 import leftHandImg from "../../assets/hygienelevel1/lefthand.png"
@@ -37,7 +37,7 @@ import wetHandsImg from "../../assets/hygienelevel1/wash.gif"
 import characterCatWorried from "../../assets/hygienelevel3/cat_worried.png"
 import characterCatHelpful from "../../assets/hygienelevel3/cat_helpful.png"
 import characterCatExcited from "../../assets/hygienelevel3/cat_excited.png"
-import characterCatDefault from "../../assets/hygienelevel3/cat.png"
+// import characterCatDefault from "../../assets/hygienelevel3/cat.png"
 
 // Audio files
 import backgroundMusic from "../../assets/hygienelevel1/background-music.mp3"
