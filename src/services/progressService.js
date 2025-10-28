@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8080/api/progress';
+const API_BASE_URL = 'https://skillable-pdv0.onrender.com/api/progress';
 
 // Add a simple cache to prevent duplicate API calls
 const progressCache = new Map();

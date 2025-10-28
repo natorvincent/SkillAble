@@ -114,7 +114,7 @@ function StudentProgress() {
   const fetchStudentsProgress = async () => {
     try {
       const teacherEmail = localStorage.getItem("userEmail");
-      const response = await fetch(`http://localhost:8080/api/progress/teacher/${teacherEmail}/students-progress`, {
+      const response = await fetch(`https://skillable-pdv0.onrender.com/api/progress/teacher/${teacherEmail}/students-progress`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json"
@@ -138,7 +138,7 @@ function StudentProgress() {
 
   const fetchLessons = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/lessons', {
+      const response = await fetch('https://skillable-pdv0.onrender.com/api/lessons', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -157,7 +157,7 @@ function StudentProgress() {
   const fetchStudentDifficulties = async (studentId) => {
     setLoadingDifficulties(true);
     try {
-      const response = await fetch(`http://localhost:8080/api/difficulty/student-difficulties/${studentId}`, {
+      const response = await fetch(`https://skillable-pdv0.onrender.com/api/difficulty/student-difficulties/${studentId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -278,7 +278,7 @@ function StudentProgress() {
     setLoadingDetail(true);
     try {
       const teacherEmail = localStorage.getItem("userEmail");
-      const response = await fetch(`http://localhost:8080/api/progress/teacher/${teacherEmail}/student/${studentId}/detailed`, {
+      const response = await fetch(`https://skillable-pdv0.onrender.com/api/progress/teacher/${teacherEmail}/student/${studentId}/detailed`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json"
@@ -322,7 +322,7 @@ function StudentProgress() {
     setSavingDifficulties(true);
     try {
       const promises = Object.entries(studentDifficulties).map(([lessonId, difficulty]) => {
-        return fetch('http://localhost:8080/api/difficulty/set-student-difficulty', {
+        return fetch('https://skillable-pdv0.onrender.com/api/difficulty/set-student-difficulty', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'

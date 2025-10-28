@@ -47,7 +47,7 @@ const StudentDifficultyPage = () => {
 
   const fetchStudentData = async () => {
     try {
-      const response = await fetch(`http://localhost:8080/api/students/${studentId}`, {
+      const response = await fetch(`https://skillable-pdv0.onrender.com/api/students/${studentId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -74,7 +74,7 @@ const StudentDifficultyPage = () => {
     setLoading(true);
     try {
       // Fetch all lessons
-      const lessonsResponse = await fetch('http://localhost:8080/api/lessons', {
+      const lessonsResponse = await fetch('https://skillable-pdv0.onrender.com/api/lessons', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -86,7 +86,7 @@ const StudentDifficultyPage = () => {
         setLessons(lessonsData);
 
         // Fetch student difficulties for all lessons
-        const difficultiesResponse = await fetch(`http://localhost:8080/api/difficulty/student-difficulties/${studentId}`, {
+        const difficultiesResponse = await fetch(`https://skillable-pdv0.onrender.com/api/difficulty/student-difficulties/${studentId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json'
@@ -136,7 +136,7 @@ const StudentDifficultyPage = () => {
     setSaving(true);
     try {
       const promises = Object.entries(studentDifficulties).map(([lessonId, difficulty]) => {
-        return fetch('http://localhost:8080/api/difficulty/set-student-difficulty', {
+        return fetch('https://skillable-pdv0.onrender.com/api/difficulty/set-student-difficulty', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'

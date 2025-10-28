@@ -115,7 +115,7 @@ function ModuleDetails() {
       
       if (!studentId || !moduleId) return;
       
-      const response = await fetch(`http://localhost:8080/api/lessons/module/${moduleId}`, {
+      const response = await fetch(`https://skillable-pdv0.onrender.com/api/lessons/module/${moduleId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -152,7 +152,7 @@ function ModuleDetails() {
 
   const fetchModuleDetails = async () => {
     try {
-      const response = await fetch(`http://localhost:8080/api/modules/${moduleId}`, {
+      const response = await fetch(`https://skillable-pdv0.onrender.com/api/modules/${moduleId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -175,7 +175,7 @@ function ModuleDetails() {
 
   const fetchLessons = async () => {
     try {
-      const response = await fetch(`http://localhost:8080/api/lessons/module/${moduleId}`, {
+      const response = await fetch(`https://skillable-pdv0.onrender.com/api/lessons/module/${moduleId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
