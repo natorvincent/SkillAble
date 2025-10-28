@@ -345,22 +345,14 @@ function StudentDashboard() {
       setSavingRole(false);
 
       if (tempSelectedRole === "TEACHER") {
-        setSuccess("Role set to TEACHER. Redirecting to login...");
+        setSuccess("Role set to TEACHER. Redirecting to dashboard...");
         setOpenSnackbar(true);
         setIsRedirecting(true);
 
         setTimeout(() => {
-          console.log("Clearing auth data and redirecting to login");
-          // Clear ALL authentication data
-          localStorage.removeItem("token");
-          localStorage.removeItem("userEmail");
-          localStorage.removeItem("userRole");
-          localStorage.removeItem("studentId");
-          localStorage.removeItem("teacherId");
-          localStorage.removeItem("isAdmin");
-          
-          // Use window.location for hard redirect to ensure complete cleanup
-          window.location.href = "/login";
+          console.log("Redirecting to teacher dashboard");
+          // Redirect to teacher dashboard without clearing auth data
+          window.location.href = "/teacherdashboard";
         }, 1500);
       } else {
         setSuccess("Successfully registered as STUDENT!");
