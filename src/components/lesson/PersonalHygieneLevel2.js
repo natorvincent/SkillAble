@@ -35,13 +35,13 @@ import toothbrushWithPasteImg from "../../assets/hygienelevel2/with_paste.png"
 import waterCupImg from "../../assets/hygienelevel2/water.png"
 
 // Character images
-import characterCatWorried from "../../assets/hygienelevel3/cat_worried.png"
-import characterCatHelpful from "../../assets/hygienelevel3/cat_helpful.png"
-import characterCatExcited from "../../assets/hygienelevel3/cat_excited.png"
-import characterCatDefault from "../../assets/hygienelevel3/cat.png"
+// import characterCatWorried from "../../assets/hygienelevel3/cat_worried.png"
+// import characterCatHelpful from "../../assets/hygienelevel3/cat_helpful.png"
+// import characterCatExcited from "../../assets/hygienelevel3/cat_excited.png"
+// import characterCatDefault from "../../assets/hygienelevel3/cat.png"
 
 // Audio files
-import backgroundMusic from "../../assets/hygienelevel1/background-music.mp3"
+import backgroundMusic from "../../assets/hygienelevel1/background-music-copy.mp3"
 import correctSound from "../../assets/hygienelevel1/correct-sound.mp3"
 import incorrectSound from "../../assets/hygienelevel1/incorrect-sound.mp3"
 import successSound from "../../assets/hygienelevel1/success-sound.mp3"
