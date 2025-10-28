@@ -26,7 +26,8 @@ import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 
 // Import kitchen background
 import kitchenBg from "../../assets/sortingLevel1/kitchen.jpg";
-import chefImg from "../../assets/cookingLevel1/chef.png";
+// Import Baconardo
+import baconardoImg from "../../assets/cookingLevel3/Baconardo.png";
 
 // Import ingredient images
 import eggImg from "../../assets/cookingLevel1/egg.png";
@@ -58,8 +59,9 @@ export default function FriedEggLevel1() {
   const [hoveredIngredient, setHoveredIngredient] = useState(null);
   const [progressSaving, setProgressSaving] = useState(false);
   const [progressSaved, setProgressSaved] = useState(false);
-  const [chefMessage, setChefMessage] = useState('Find the 4 ingredients: egg, oil, salt, and butter!');
-  const [chefAnimation, setChefAnimation] = useState('idle');
+  const [baconardoMessage, setBaconardoMessage] = useState('Welcome to Fried Egg Basics! I\'m Chef Baconardo! 🥓');
+  const [baconardoAnimation, setBaconardoAnimation] = useState('idle');
+  const [showIntro, setShowIntro] = useState(true);
 
   const correctIngredients = [
     { id: 1, name: "EGG", image: eggImg, description: "Fresh egg for frying", isCorrect: true },
@@ -193,6 +195,18 @@ export default function FriedEggLevel1() {
     }, 2000);
   };
 
+  // Baconardo feedback functions
+  const showBaconardoFeedback = (message, animation = 'idle', duration = 3000) => {
+    setBaconardoMessage(message);
+    setBaconardoAnimation(animation);
+    setTimeout(() => {
+      if (!allCollected && animation !== 'celebrate') {
+        setBaconardoMessage(`Find the remaining ingredients! ${correctIngredients.length - collectedIngredients.length} more to go!`);
+      }
+      setBaconardoAnimation('idle');
+    }, duration);
+  };
+
   const handleDragStart = (e, ingredient) => {
     setDraggedItem(ingredient);
     e.dataTransfer.effectAllowed = 'move';
@@ -210,21 +224,15 @@ export default function FriedEggLevel1() {
         setWrongIngredientAlert(true);
         playSound('wrong');
         
-        // Chef feedback for wrong ingredient
-        setChefMessage(`❌ Oops! ${draggedItem.hint}`);
-        setChefAnimation('shake');
-        setTimeout(() => {
-          setChefMessage('Find the 4 ingredients: egg, oil, salt, and butter!');
-          setChefAnimation('idle');
-        }, 3000);
+        // Baconardo feedback for wrong ingredient
+        showBaconardoFeedback(`❌ Oops! ${draggedItem.hint}`, 'shake');
         
         setTimeout(() => setWrongIngredientAlert(false), 3000);
         setDraggedItem(null);
         return;
       }
       if (collectedIngredients.some(item => item.id === draggedItem.id)) {
-        setChefMessage('You already added that ingredient!');
-        setTimeout(() => setChefMessage('Find the 4 ingredients: egg, oil, salt, and butter!'), 2000);
+        showBaconardoFeedback('You already added that ingredient! Try a different one!', 'shake');
         setDraggedItem(null);
         return;
       }
@@ -232,22 +240,13 @@ export default function FriedEggLevel1() {
       triggerCorrectAnimation();
       playSound('correct');
       
-      // Chef feedback for correct ingredient
-      setChefMessage(`✅ Great job! ${draggedItem.name} is correct!`);
-      setChefAnimation('nod');
-      setTimeout(() => {
-        const remaining = correctIngredients.length - (collectedIngredients.length + 1);
-        if (remaining > 0) {
-          setChefMessage(`Excellent! ${remaining} more to go!`);
-        }
-        setChefAnimation('idle');
-      }, 2000);
+      // Baconardo feedback for correct ingredient
+      showBaconardoFeedback(`✅ Excellent! ${draggedItem.name} is perfect for fried eggs!`, 'nod');
       
       if (collectedIngredients.length + 1 === correctIngredients.length) {
         setTimeout(() => {
           setShowCelebration(true);
-          setChefMessage('🎉 Perfect! You found all ingredients!');
-          setChefAnimation('celebrate');
+          showBaconardoFeedback('🎉 Outstanding! You found all the perfect ingredients for a delicious fried egg!', 'celebrate', 5000);
           saveProgress();
         }, 1500);
       }
@@ -263,8 +262,7 @@ export default function FriedEggLevel1() {
     setWrongIngredientAlert(false);
     setProgressSaved(false);
     setProgressSaving(false);
-    setChefMessage('Find the 4 ingredients: egg, oil, salt, and butter!');
-    setChefAnimation('idle');
+    showBaconardoFeedback('Let\'s try again! Find egg, oil, salt, and butter for the perfect fried egg! 🍳', 'idle');
   };
 
   // Match Level 3 navigation functions
@@ -332,6 +330,94 @@ export default function FriedEggLevel1() {
       }}>
         <Navbar />
         
+        {/* Introduction Dialog with Chef Baconardo */}
+        <Dialog 
+          open={showIntro} 
+          maxWidth="md"
+          fullWidth
+          PaperProps={{
+            style: {
+              borderRadius: '20px',
+              background: 'linear-gradient(135deg, #FFF8E1, #FFECB3)',
+              border: '4px solid #FF9800'
+            }
+          }}
+        >
+          <DialogTitle style={{ 
+            textAlign: 'center', 
+            background: 'linear-gradient(45deg, #FF9800, #F57C00)',
+            color: 'white',
+            borderRadius: '15px 15px 0 0',
+            padding: '20px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px' }}>
+              <div style={{ fontSize: '40px' }}>👨‍🍳</div>
+              <h2 style={{ margin: 0, fontSize: '28px' }}>Welcome to Cooking Level 1!</h2>
+              <div style={{ fontSize: '40px' }}>🍳</div>
+            </div>
+          </DialogTitle>
+          
+          <DialogContent style={{ padding: '30px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '20px' }}>
+              <img 
+                src={baconardoImg} 
+                alt="Chef Baconardo" 
+                style={{ 
+                  width: '120px', 
+                  height: '120px', 
+                  objectFit: 'contain',
+                  borderRadius: '50%',
+                  border: '3px solid #FF9800'
+                }} 
+              />
+              <div>
+                <h3 style={{ color: '#E65100', marginBottom: '10px', fontSize: '24px' }}>
+                  Fried Egg Time! 🥓
+                </h3>
+                <p style={{ fontSize: '16px', lineHeight: '1.6', color: '#5D4037' }}>
+                  "Hello! I'm Chef Baconardo! Let's cook the perfect fried egg together! 
+                  I'll guide you through selecting the right ingredients. Look for egg, oil, salt, and butter!"
+                </p>
+              </div>
+            </div>
+
+            <div style={{ 
+              background: 'rgba(76, 175, 80, 0.1)', 
+              padding: '15px', 
+              borderRadius: '12px',
+              border: '2px solid rgba(76, 175, 80, 0.3)',
+              textAlign: 'center',
+              marginTop: '20px'
+            }}>
+              <p style={{ margin: 0, color: '#2E7D32', fontWeight: 'bold', fontSize: '16px' }}>
+                👉 I'll guide you through each step from the top-right corner!
+              </p>
+            </div>
+          </DialogContent>
+          
+          <DialogActions style={{ justifyContent: 'center', padding: '20px' }}>
+            <Button
+              onClick={() => setShowIntro(false)}
+              variant="contained"
+              size="large"
+              sx={{
+                backgroundColor: '#4CAF50',
+                borderRadius: '25px',
+                padding: '12px 40px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                '&:hover': {
+                  backgroundColor: '#45a049',
+                  transform: 'scale(1.05)'
+                },
+                transition: 'all 0.3s ease'
+              }}
+            >
+              🚀 Start Cooking!
+            </Button>
+          </DialogActions>
+        </Dialog>
+
         {/* Sound Toggle Button */}
         <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 100 }}>
           <button
@@ -375,27 +461,7 @@ export default function FriedEggLevel1() {
             width: '100%',
             maxWidth: '1200px'
           }}>
-            <h1 style={{ 
-              fontSize: '38px', 
-              fontWeight: 'bold', 
-              color: 'white', 
-              marginBottom: '6px',
-              textShadow: '3px 3px 6px rgba(0,0,0,0.8)',
-              letterSpacing: '1px'
-            }}>
-              🍳 Level 1: Fried Egg Basics
-            </h1>
-            <p style={{
-              fontSize: '15px',
-              color: 'rgba(255, 255, 255, 0.95)',
-              fontStyle: 'italic',
-              marginBottom: '10px',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-              fontWeight: '500'
-            }}>
-              Choose the ingredients needed for cooking a fried egg
-            </p>
-
+      
             {/* IMPROVED: Progress bar with better z-index handling */}
             <div style={{ 
               maxWidth: '500px', 
@@ -503,7 +569,7 @@ export default function FriedEggLevel1() {
             height: '700px', 
             margin: '0 auto 100px'
           }}>
-            {/* Chef Character with Speech Bubble - Upper Right, Larger */}
+            {/* Chef Baconardo Character with Speech Bubble - Upper Right, Larger */}
             <div style={{
               position: 'absolute',
               right: '25px',
@@ -513,10 +579,10 @@ export default function FriedEggLevel1() {
               flexDirection: 'row',
               alignItems: 'flex-start',
               gap: '15px',
-              animation: chefAnimation === 'idle' ? 'chefIdle 3s ease-in-out infinite' : 
-                         chefAnimation === 'nod' ? 'chefNod 0.5s ease-out' :
-                         chefAnimation === 'shake' ? 'chefShake 0.5s ease-out' :
-                         'chefCelebrate 1s ease-out'
+              animation: baconardoAnimation === 'idle' ? 'baconardoIdle 3s ease-in-out infinite' : 
+                         baconardoAnimation === 'nod' ? 'baconardoNod 0.5s ease-out' :
+                         baconardoAnimation === 'shake' ? 'baconardoShake 0.5s ease-out' :
+                         'baconardoCelebrate 1s ease-out'
             }}>
               {/* Speech Bubble - Softer, more transparent */}
               <div style={{
@@ -539,7 +605,7 @@ export default function FriedEggLevel1() {
                   textAlign: 'left',
                   textShadow: '0 1px 2px rgba(255, 255, 255, 0.8)'
                 }}>
-                  {chefMessage}
+                  {baconardoMessage}
                 </p>
                 {/* Speech Bubble Triangle - Softer style */}
                 <div style={{
@@ -555,10 +621,10 @@ export default function FriedEggLevel1() {
                 }} />
               </div>
               
-              {/* Chef Character Image - 25% Bigger */}
+              {/* Chef Baconardo Character Image */}
               <img 
-                src={chefImg}
-                alt="Chef Instructor"
+                src={baconardoImg}
+                alt="Chef Baconardo"
                 style={{
                   width: '110px',
                   height: '110px',
@@ -566,11 +632,10 @@ export default function FriedEggLevel1() {
                   filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3))',
                   cursor: 'pointer',
                   transition: 'transform 0.3s ease',
-                  transform: 'scaleX(-1)',
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.transform = 'scaleX(-1) scale(1.15)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'scaleX(-1) scale(1)'}
-                title="Your cooking instructor!"
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.15)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                title="Chef Baconardo - Your cooking instructor!"
               />
             </div>
 
@@ -610,8 +675,8 @@ export default function FriedEggLevel1() {
                 left: '50%',
                 top: '45%',
                 transform: 'translate(-50%, -50%)',
-                width: '340px',
-                height: '340px',
+                width: '280px',
+                height: '280px',
                 background: allCollected 
                   ? 'radial-gradient(circle, #FFD700, #FFA500)' 
                   : 'radial-gradient(circle, #3F3F3F, #1A1A1A)',
@@ -721,6 +786,7 @@ export default function FriedEggLevel1() {
                     if (!ingredient.isCorrect) {
                       setWrongIngredientAlert(true);
                       playSound('wrong');
+                      showBaconardoFeedback(`❌ ${ingredient.hint}`, 'shake');
                       setTimeout(() => setWrongIngredientAlert(false), 3000);
                     }
                   }}
@@ -882,7 +948,7 @@ export default function FriedEggLevel1() {
             border: '2px solid rgba(255, 255, 255, 0.5)'
           }}>
             <Button
-              onClick={() => setChefMessage('Drag only egg, oil, salt, and butter to the pan. Avoid milk, bread, and cheese!')}
+              onClick={() => showBaconardoFeedback('Look for egg, oil, salt, and butter! Avoid milk, bread, and cheese! Remember: simple is delicious! 🥓', 'nod')}
               variant="contained"
               size="medium"
               startIcon={<span style={{ fontSize: '18px' }}>💡</span>}
@@ -1242,20 +1308,20 @@ export default function FriedEggLevel1() {
           70% { transform: translateY(-25px) scale(1.15); }
           100% { transform: translateY(-20px) scale(1.15); }
         }
-        @keyframes chefIdle {
+        @keyframes baconardoIdle {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-3px); }
         }
-        @keyframes chefNod {
+        @keyframes baconardoNod {
           0%, 100% { transform: translateY(0) rotate(0deg); }
           50% { transform: translateY(3px) rotate(3deg); }
         }
-        @keyframes chefShake {
+        @keyframes baconardoShake {
           0%, 100% { transform: translateY(0) rotate(0deg); }
           25% { transform: translateY(0) rotate(-3deg); }
           75% { transform: translateY(0) rotate(3deg); }
         }
-        @keyframes chefCelebrate {
+        @keyframes baconardoCelebrate {
           0%, 100% { transform: translateY(0) scale(1); }
           25% { transform: translateY(-8px) scale(1.1) rotate(-8deg); }
           75% { transform: translateY(-8px) scale(1.1) rotate(8deg); }

@@ -5,13 +5,17 @@ import {
   Typography, 
   Button, 
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import Navbar from '../Navbar'; // Import the Navbar component
+import Navbar from '../Navbar';
 
 // Import kitchen background and ingredient images
 import kitchenBg from "../../assets/sortingLevel1/kitchen.jpg";
-import chefImg from "../../assets/cookingLevel1/chef.png";
+import baconardoImg from "../../assets/cookingLevel3/Baconardo.png";
 import springOnionImg from "../../assets/cookingLevel2/spring-onion.png";
 import springOnionChoppedImg from "../../assets/cookingLevel2/spring-onion-chopped.png";
 import eggImg from "../../assets/cookingLevel2/egg.png";
@@ -20,15 +24,7 @@ import saltImg from "../../assets/cookingLevel2/salt.png";
 import saltPouringImg from "../../assets/cookingLevel2/salt-pouring.png";
 import knifeImg from "../../assets/cookingLevel2/knife.png";
 
-// Import services for progress tracking
-// Make sure to implement these services or comment them out if they cause errors
-// import { 
-//   getStudentLessonProgress, 
-//   saveStudentLessonProgress,
-//   updateModuleProgress
-// } from '../../services/progressService';
-
-export default function IngredientPrepLevel2() {
+export default function CookingLevel2() {
   const navigate = useNavigate();
   const { moduleId, lessonId } = useParams();
 
@@ -59,7 +55,12 @@ export default function IngredientPrepLevel2() {
   const [saltAnimation, setSaltAnimation] = useState(false);
   const [knifeChop, setKnifeChop] = useState(false);
   const [onionPieces, setOnionPieces] = useState([]);
-  const [showChef, setShowChef] = useState(true);
+  
+  // Baconardo states - ALWAYS VISIBLE
+  const [showBaconardo, setShowBaconardo] = useState(true);
+  const [showIntro, setShowIntro] = useState(true);
+  const [baconardoMessage, setBaconardoMessage] = useState('Welcome to Ingredient Preparation! I\'m Chef Baconardo! 🥓');
+  const [baconardoAnimation, setBaconardoAnimation] = useState('idle');
   
   // Progress tracking
   const [completedTasks, setCompletedTasks] = useState({
@@ -123,7 +124,7 @@ export default function IngredientPrepLevel2() {
       // await saveStudentLessonProgress(progressData); 
       
       console.log('Progress simulatedly saved:', progressData);
-      setProgressSaved(true); // Set to true after save completes/simulates
+      setProgressSaved(true);
       
     } catch (error) {
       console.error('Error saving progress:', error);
@@ -137,18 +138,15 @@ export default function IngredientPrepLevel2() {
   };
 
   const continueToNextLevel = async () => {
-    // Save progress if not already saved
     if (!progressSaved && !progressSaving) {
       await saveProgress();
     }
     
-    // Navigate to Level 3 - Fixed navigation path
     navigate('/lesson/cooking/level-3');
   };
 
   // Initialize audio elements
   useEffect(() => {
-    // Note: Ensure these audio files exist at the root of your public folder!
     chopSoundRef.current = new Audio('/sounds/chop.mp3');
     crackSoundRef.current = new Audio('/sounds/crack.mp3');
     shakeSoundRef.current = new Audio('/sounds/shake.mp3');
@@ -174,19 +172,27 @@ export default function IngredientPrepLevel2() {
     };
   }, []);
 
-  // Handle scroll to hide/show chef
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 100) {
-        setShowChef(false);
-      } else {
-        setShowChef(true);
-      }
-    };
+  // REMOVED SCROLL EFFECT - Baconardo will always be visible
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  // Baconardo introduction for each ingredient
+  useEffect(() => {
+    if (!showIntro) {
+      const messages = [
+        "🥬 First, let's chop the spring onion! Tap it repeatedly to chop it into small pieces. Be careful with the knife!",
+        "🥚 Now, let's crack the egg! Tap once to crack it into the bowl. We need it ready for cooking!",
+        "🧂 Finally, let's season with salt! Tap to shake the salt shaker. Not too much, just enough for flavor!"
+      ];
+      
+      if (currentIngredientIndex < messages.length) {
+        setBaconardoMessage(messages[currentIngredientIndex]);
+        setBaconardoAnimation('nod');
+        
+        setTimeout(() => {
+          setBaconardoAnimation('idle');
+        }, 4000);
+      }
+    }
+  }, [currentIngredientIndex, showIntro]);
 
   // Play sound effect helper function
   const playSound = (audioRef) => {
@@ -202,7 +208,7 @@ export default function IngredientPrepLevel2() {
     }
   };
 
-  // Synthesized sound using Web Audio API (fallback when audio files aren't available)
+  // Synthesized sound using Web Audio API
   const playSynthSound = (type) => {
     if (isMuted) return;
     try {
@@ -235,10 +241,9 @@ export default function IngredientPrepLevel2() {
         oscillator.start();
         oscillator.stop(audioContext.currentTime + 0.2);
       } else if (type === 'success') {
-        // Success sound - cheerful ascending notes
-        oscillator.frequency.setValueAtTime(523, audioContext.currentTime); // C5
-        oscillator.frequency.exponentialRampToValueAtTime(659, audioContext.currentTime + 0.1); // E5
-        oscillator.frequency.exponentialRampToValueAtTime(784, audioContext.currentTime + 0.2); // G5
+        oscillator.frequency.setValueAtTime(523, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(659, audioContext.currentTime + 0.1);
+        oscillator.frequency.exponentialRampToValueAtTime(784, audioContext.currentTime + 0.2);
         gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
         oscillator.start();
@@ -253,6 +258,15 @@ export default function IngredientPrepLevel2() {
   const toggleMute = () => {
     setIsMuted(!isMuted);
   };
+
+  // Baconardo feedback functions
+  const showBaconardoFeedback = (message, animation = 'idle', duration = 3000) => {
+    setBaconardoMessage(message);
+    setBaconardoAnimation(animation);
+    setTimeout(() => {
+      setBaconardoAnimation('idle');
+    }, duration);
+  };
   
   // Ingredients data
   const ingredients = [
@@ -263,7 +277,8 @@ export default function IngredientPrepLevel2() {
       afterImage: springOnionChoppedImg,
       actionText: 'Tap to Chop',
       progressText: `${springOnionChops}/${requiredChops} chops`,
-      encouragement: 'Keep chopping!'
+      encouragement: 'Keep chopping!',
+      intro: "🥬 This is a spring onion! We need to chop it finely to add fresh flavor to our dish. Tap repeatedly to chop!"
     },
     {
       id: 'egg', 
@@ -272,7 +287,8 @@ export default function IngredientPrepLevel2() {
       afterImage: eggCrackedImg,
       actionText: 'Tap to Crack',
       progressText: eggCracked ? 'Cracked into bowl' : 'Ready to crack',
-      encouragement: 'Crack into bowl!'
+      encouragement: 'Crack into bowl!',
+      intro: "🥚 Here's our egg! We need to crack it carefully into the bowl. Tap once to crack it open!"
     },
     {
       id: 'salt',
@@ -281,7 +297,8 @@ export default function IngredientPrepLevel2() {
       afterImage: saltPouringImg,
       actionText: 'Tap to Shake',
       progressText: `${saltShakes}/${requiredShakes} shakes`,
-      encouragement: 'Season well!'
+      encouragement: 'Season well!',
+      intro: "🧂 This is salt! It brings out all the delicious flavors. Tap to shake just the right amount!"
     }
   ];
 
@@ -298,7 +315,7 @@ export default function IngredientPrepLevel2() {
     }
   };
 
-  // Check completion and progress to next ingredient 	
+  // Check completion and progress to next ingredient
   useEffect(() => {
     const newCompletedTasks = {
       onion: springOnionChops >= requiredChops,
@@ -310,24 +327,27 @@ export default function IngredientPrepLevel2() {
     
     if (currentIngredientIndex === 0 && newCompletedTasks.onion && !completedTasks.onion) {
       playSound(successSoundRef);
-      playSynthSound('success'); // Fallback synthesized sound
+      playSynthSound('success');
       setShowConfetti(true);
+      showBaconardoFeedback("🎉 Perfect chopping! The spring onion is ready! Moving to the egg...", 'celebrate');
       setTimeout(() => {
         setShowConfetti(false);
         setCurrentIngredientIndex(1);
       }, 2000);
     } else if (currentIngredientIndex === 1 && newCompletedTasks.egg && !completedTasks.egg) {
       playSound(successSoundRef);
-      playSynthSound('success'); // Fallback synthesized sound
+      playSynthSound('success');
       setShowConfetti(true);
+      showBaconardoFeedback("🎊 Excellent cracking! The egg is ready! Now for seasoning...", 'celebrate');
       setTimeout(() => {
         setShowConfetti(false);
         setCurrentIngredientIndex(2);
       }, 2000);
     } else if (currentIngredientIndex === 2 && newCompletedTasks.salt && !completedTasks.salt) {
       playSound(successSoundRef);
-      playSynthSound('success'); // Fallback synthesized sound
+      playSynthSound('success');
       setShowConfetti(true);
+      showBaconardoFeedback("🏆 Amazing work! All ingredients are prepared! You're becoming a real chef!", 'celebrate', 5000);
       setTimeout(() => {
         setShowConfetti(false);
         setShowCompletion(true);
@@ -343,7 +363,7 @@ export default function IngredientPrepLevel2() {
     if (currentIngredientIndex === 0) {
       // Onion chopping with pieces animation
       playSound(chopSoundRef);
-      playSynthSound('chop'); // Fallback synthesized sound
+      playSynthSound('chop');
       setOnionAnimation(true);
       setKnifeChop(true);
       
@@ -359,23 +379,48 @@ export default function IngredientPrepLevel2() {
       setOnionPieces(prev => [...prev, newPiece]);
       setSpringOnionChops(prev => prev + 1);
       
+      // Baconardo feedback during chopping
+      const chopMessages = [
+        "Great chop! Keep going!",
+        "You're doing fantastic!",
+        "Almost there!",
+        "Perfect knife skills!",
+        "One more chop should do it!"
+      ];
+      if (springOnionChops < requiredChops - 1) {
+        showBaconardoFeedback(chopMessages[springOnionChops % chopMessages.length], 'nod');
+      }
+      
       setTimeout(() => {
         setOnionAnimation(false);
         setKnifeChop(false);
       }, 300);
     } else if (currentIngredientIndex === 1) {
       playSound(crackSoundRef);
-      playSynthSound('crack'); // Fallback synthesized sound
+      playSynthSound('crack');
       setEggAnimation(true);
+      showBaconardoFeedback("🥚 Perfect crack! The egg is ready for cooking!", 'nod');
       setTimeout(() => {
         setEggCracked(true);
         setEggAnimation(false);
       }, 500);
     } else if (currentIngredientIndex === 2) {
       playSound(shakeSoundRef);
-      playSynthSound('shake'); // Fallback synthesized sound
+      playSynthSound('shake');
       setSaltAnimation(true);
       setSaltShakes(prev => prev + 1);
+      
+      // Baconardo feedback during shaking
+      const shakeMessages = [
+        "Good seasoning!",
+        "Just a bit more!",
+        "Perfect amount!",
+        "You've got the touch!"
+      ];
+      if (saltShakes < requiredShakes - 1) {
+        showBaconardoFeedback(shakeMessages[saltShakes % shakeMessages.length], 'nod');
+      }
+      
       setTimeout(() => setSaltAnimation(false), 400);
     }
   };
@@ -391,6 +436,7 @@ export default function IngredientPrepLevel2() {
     setProgressSaved(false);
     setProgressSaving(false);
     setOnionPieces([]);
+    showBaconardoFeedback("Let's start fresh! Remember: chop the onion, crack the egg, and shake the salt! 🍳", 'idle');
   };
 
   const completedCount = Object.values(completedTasks).filter(Boolean).length;
@@ -407,7 +453,7 @@ export default function IngredientPrepLevel2() {
       position: 'relative',
       fontFamily: 'Arial, sans-serif'
     }}>
-      {/* Background Dim Overlay (No pointer events needed here) */}
+      {/* Background Dim Overlay */}
       <div style={{
         position: 'absolute',
         top: 0,
@@ -418,32 +464,109 @@ export default function IngredientPrepLevel2() {
         pointerEvents: 'none'
       }} />
       
-      {/* ADDED: Navbar at the top */}
+      {/* Navbar */}
       <Navbar />
       
-      {/* Chef Character - Fixed beside container */}
+      {/* Introduction Dialog with Chef Baconardo */}
+      <Dialog 
+        open={showIntro} 
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          style: {
+            borderRadius: '20px',
+            background: 'linear-gradient(135deg, #FFF8E1, #FFECB3)',
+            border: '4px solid #FF9800'
+          }
+        }}
+      >
+        <DialogTitle style={{ 
+          textAlign: 'center', 
+          background: 'linear-gradient(45deg, #FF9800, #F57C00)',
+          color: 'white',
+          borderRadius: '15px 15px 0 0',
+          padding: '20px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px' }}>
+            <div style={{ fontSize: '40px' }}>👨‍🍳</div>
+            <h2 style={{ margin: 0, fontSize: '28px' }}>Welcome to Cooking Level 2!</h2>
+            <div style={{ fontSize: '40px' }}>🔪</div>
+          </div>
+        </DialogTitle>
+        
+        <DialogContent style={{ padding: '30px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '20px' }}>
+            <img 
+              src={baconardoImg} 
+              alt="Chef Baconardo" 
+              style={{ 
+                width: '120px', 
+                height: '120px', 
+                objectFit: 'contain',
+                borderRadius: '50%',
+                border: '3px solid #FF9800'
+              }} 
+            />
+            <div>
+              <h3 style={{ color: '#E65100', marginBottom: '10px', fontSize: '24px' }}>
+                Time to Prep! 🥓
+              </h3>
+              <p style={{ fontSize: '16px', lineHeight: '1.6', color: '#5D4037' }}>
+                "Hello again! I'm Chef Baconardo! Now that we have our ingredients, let's prepare them for cooking! 
+                We'll chop the spring onion, crack the egg, and season with salt. I'll guide you through each step!"
+              </p>
+            </div>
+          </div>
+
+          <div style={{ 
+            background: 'rgba(76, 175, 80, 0.1)', 
+            padding: '15px', 
+            borderRadius: '12px',
+            border: '2px solid rgba(76, 175, 80, 0.3)',
+            textAlign: 'center',
+            marginTop: '20px'
+          }}>
+            <p style={{ margin: 0, color: '#2E7D32', fontWeight: 'bold', fontSize: '16px' }}>
+              👉 I'll guide you through each preparation step from the top-right corner!
+            </p>
+          </div>
+        </DialogContent>
+        
+        <DialogActions style={{ justifyContent: 'center', padding: '20px' }}>
+          <Button
+            onClick={() => setShowIntro(false)}
+            variant="contained"
+            size="large"
+            sx={{
+              backgroundColor: '#4CAF50',
+              borderRadius: '25px',
+              padding: '12px 40px',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              '&:hover': {
+                backgroundColor: '#45a049',
+                transform: 'scale(1.05)'
+              },
+              transition: 'all 0.3s ease'
+            }}
+          >
+            🚀 Start Preparing!
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Chef Baconardo Character - Fixed beside container - ALWAYS VISIBLE */}
       <div style={{
         position: 'fixed',
-        top: '140px', // Adjusted to account for navbar
+        top: '140px',
         left: 'calc(50% + 620px)',
         zIndex: 50,
-        opacity: showChef ? 1 : 0,
-        transform: showChef ? 'translateX(0)' : 'translateX(20px)',
+        opacity: 1, // Always visible
+        transform: 'translateX(0)', // Always in position
         transition: 'all 0.3s ease',
-        pointerEvents: showChef ? 'auto' : 'none'
+        pointerEvents: 'auto' // Always interactive
       }}>
-        <img 
-          src={chefImg}
-          alt="Chef"
-          style={{
-            width: '120px',
-            height: '120px',
-            objectFit: 'contain',
-            filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))'
-          }}
-        />
-        
-        {/* Chef's Message Bubble */}
+        {/* Baconardo's Message Bubble */}
         <div style={{
           position: 'absolute',
           top: '0',
@@ -453,7 +576,10 @@ export default function IngredientPrepLevel2() {
           borderRadius: '20px',
           border: '3px solid #FF8F00',
           width: '280px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+          animation: baconardoAnimation === 'idle' ? 'baconardoIdle 3s ease-in-out infinite' : 
+                    baconardoAnimation === 'nod' ? 'baconardoNod 0.5s ease-out' :
+                    baconardoAnimation === 'celebrate' ? 'baconardoCelebrate 1s ease-out' : 'none'
         }}>
           <p style={{
             margin: 0,
@@ -462,7 +588,7 @@ export default function IngredientPrepLevel2() {
             fontWeight: '500',
             lineHeight: '1.5'
           }}>
-            <span style={{ fontSize: '16px' }}>👨‍🍳</span> <strong>Chef's Tip:</strong> Tap each ingredient to prepare it! Chop the spring onion, crack the egg, and shake the salt. Watch as your ingredients get ready for cooking!
+            {baconardoMessage}
           </p>
           {/* Speech bubble pointer */}
           <div style={{
@@ -486,12 +612,29 @@ export default function IngredientPrepLevel2() {
             borderLeft: '10px solid rgba(255, 255, 255, 0.95)'
           }} />
         </div>
+
+        <img 
+          src={baconardoImg}
+          alt="Chef Baconardo"
+          style={{
+            width: '120px',
+            height: '120px',
+            objectFit: 'contain',
+            filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))',
+            cursor: 'pointer',
+            animation: baconardoAnimation === 'idle' ? 'baconardoIdle 3s ease-in-out infinite' : 
+                      baconardoAnimation === 'nod' ? 'baconardoNod 0.5s ease-out' :
+                      baconardoAnimation === 'celebrate' ? 'baconardoCelebrate 1s ease-out' : 'none'
+          }}
+          onClick={() => showBaconardoFeedback("I'm Chef Baconardo! Let me help you prepare these ingredients. Follow my guidance for perfect preparation! 🥓", 'nod')}
+          title="Click me for cooking tips! - Chef Baconardo"
+        />
       </div>
 
       {/* Sound Toggle Button - Fixed position */}
       <div style={{ 
         position: 'fixed', 
-        top: '80px', // Adjusted to account for navbar
+        top: '80px',
         right: '20px', 
         zIndex: 100 
       }}>
@@ -523,7 +666,6 @@ export default function IngredientPrepLevel2() {
       <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 1, padding: '20px', paddingTop: '100px' }}>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-
           <h1 style={{ 
             fontSize: '48px', 
             fontWeight: 'bold', 
@@ -875,6 +1017,19 @@ export default function IngredientPrepLevel2() {
           border: '2px solid rgba(255, 255, 255, 0.5)'
         }}>
           <Button
+            onClick={() => showBaconardoFeedback(currentIngredient.intro, 'nod')}
+            variant="contained"
+            size="medium"
+            sx={{
+              backgroundColor: '#2196F3',
+              borderRadius: '20px',
+              minWidth: '100px',
+              '&:hover': { backgroundColor: '#1976D2' }
+            }}
+          >
+            💡 Help
+          </Button>
+          <Button
             onClick={resetGame}
             variant="contained"
             size="medium"
@@ -892,10 +1047,10 @@ export default function IngredientPrepLevel2() {
             variant="contained"
             size="medium"
             sx={{
-              backgroundColor: '#2196F3',
+              backgroundColor: '#9C27B0',
               borderRadius: '20px',
               minWidth: '100px',
-              '&:hover': { backgroundColor: '#1976D2' }
+              '&:hover': { backgroundColor: '#7B1FA2' }
             }}
           >
             🏠 Home
@@ -941,41 +1096,10 @@ export default function IngredientPrepLevel2() {
                 }}
               />
             ))}
-            <style>{`
-              @keyframes confettiFall {
-                0% {
-                  transform: translateY(-10px) rotate(0deg);
-                  opacity: 1;
-                }
-                100% {
-                  transform: translateY(100vh) rotate(720deg);
-                  opacity: 0;
-                }
-              }
-              @keyframes pulse {
-                0% { transform: scale(1); }
-                50% { transform: scale(1.2); }
-                100% { transform: scale(1); }
-              }
-              @keyframes pieceAppear {
-                0% {
-                  transform: scale(0) rotate(0deg);
-                  opacity: 0;
-                }
-                50% {
-                  transform: scale(1.2) rotate(180deg);
-                  opacity: 1;
-                }
-                100% {
-                  transform: scale(1) rotate(360deg);
-                  opacity: 1;
-                }
-              }
-            `}</style>
           </div>
         )}
 
-        {/* Success Modal - FIXED: Next Level button now works properly */}
+        {/* Success Modal */}
         {showCompletion && (
           <div style={{
             position: 'fixed',
@@ -1112,6 +1236,56 @@ export default function IngredientPrepLevel2() {
           </div>
         )}
       </div>
+
+      <style>{`
+        @keyframes confettiFall {
+          0% {
+            transform: translateY(-10px) rotate(0deg);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(100vh) rotate(720deg);
+            opacity: 0;
+          }
+        }
+        @keyframes pulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.2); }
+          100% { transform: scale(1); }
+        }
+        @keyframes pieceAppear {
+          0% {
+            transform: scale(0) rotate(0deg);
+            opacity: 0;
+          }
+          50% {
+            transform: scale(1.2) rotate(180deg);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(1) rotate(360deg);
+            opacity: 1;
+          }
+        }
+        @keyframes baconardoIdle {
+          0%, 100% { transform: translateY(0) scale(1); }
+          25% { transform: translateY(-4px) scale(1.02); }
+          50% { transform: translateY(-2px) scale(1.01); }
+          75% { transform: translateY(-3px) scale(1.015); }
+        }
+        @keyframes baconardoNod {
+          0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+          25% { transform: translateY(5px) rotate(2deg) scale(1.05); }
+          50% { transform: translateY(8px) rotate(4deg) scale(1.08); }
+          75% { transform: translateY(5px) rotate(2deg) scale(1.05); }
+        }
+        @keyframes baconardoCelebrate {
+          0%, 100% { transform: translateY(0) scale(1) rotate(0deg); }
+          25% { transform: translateY(-15px) scale(1.2) rotate(-10deg); }
+          50% { transform: translateY(-20px) scale(1.25) rotate(0deg); }
+          75% { transform: translateY(-15px) scale(1.2) rotate(10deg); }
+        }
+      `}</style>
     </div>
   );
 }

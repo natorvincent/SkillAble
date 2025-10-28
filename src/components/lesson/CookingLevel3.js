@@ -4,7 +4,7 @@ import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import Navbar from '../Navbar';
 
 // Import kitchen background
-import kitchenBg from "../../assets/sortingLevel1/kitchen.jpg";
+import kitchenBg from "../../assets/cookingLevel3/bgkitchen.jpg";
 
 // Import images for Level 3 cooking game
 import oilImg from "../../assets/cookingLevel3/oil.png";
@@ -17,6 +17,9 @@ import cookedEggImg from "../../assets/cookingLevel3/cooked-egg.png";
 import fryingPanImg from "../../assets/cookingLevel3/frying-pan.png";
 import plugImg from "../../assets/cookingLevel3/plug.png";
 import outletImg from "../../assets/cookingLevel3/outlet.png";
+
+// Import Baconardo asset
+import baconardoImg from "../../assets/cookingLevel3/Baconardo.png";
 
 // Progress service imports
 import { 
@@ -47,8 +50,9 @@ const CookingLevel3 = () => {
     feedbackMessage: '',
     showFeedback: false,
     showCookedEggPrompt: false,
-    // New state for panel focus
-    setupPhase: true
+    setupPhase: true,
+    showBaconardoIntro: true,
+    baconardoTalking: true
   });
 
   const [progressSaving, setProgressSaving] = useState(false);
@@ -62,7 +66,7 @@ const CookingLevel3 = () => {
     { id: 0, instruction: "🔌 Drag the power plug to the electrical outlet" },
     { id: 1, instruction: "⚡ Click the main power switch to turn on the stove" },
     { id: 2, instruction: "🔥 Adjust the heat dial to MEDIUM" },
-    { id: 3, instruction: "🍳 Drag the frying pan onto the burner" },
+    { id: 3, instruction: "🍳 Drag the frying pan onto the stove" },
     { id: 4, instruction: "🔴 Click the burner button to start heating" },
     { id: 5, instruction: "🫗 Drag the cooking oil to the frying pan" },
     { id: 6, instruction: "🧈 Drag the butter to the pan" },
@@ -70,6 +74,22 @@ const CookingLevel3 = () => {
     { id: 8, instruction: "🧂 Drag the salt to season the egg" },
     { id: 9, instruction: "🥄 Drag the spatula over the pan to scramble the egg" },
     { id: 10, instruction: "🌿 Drag the spring onion to garnish" }
+  ];
+
+  // Baconardo's guidance messages for each step
+  const baconardoMessages = [
+    "Hi there! I'm Baconardo, your cooking coach! Let's make some amazing scrambled eggs! First, we need power - drag the plug to the outlet!",
+    "Great! Now let's turn on the stove power. Click the main power switch!",
+    "Perfect! Now set the heat to MEDIUM - it's the best temperature for fluffy eggs!",
+    "Excellent! Now place the frying pan on the stove - drag it over!",
+    "Awesome! Click the burner button to start heating up the pan!",
+    "The pan is heating up! Now add some cooking oil - drag the oil bottle to the pan!",
+    "Wonderful! Let's add butter for extra flavor. Drag the butter to the pan!",
+    "Now for the main ingredient! Drag the egg to the pan to crack it open!",
+    "Perfect! Let's season it with some salt. Drag the salt shaker to the pan!",
+    "Time to cook! Drag the spatula to scramble the egg in the pan!",
+    "Almost done! Let's garnish with spring onion for freshness and color!",
+    "CONGRATULATIONS! You've made perfect scrambled eggs! You're a real chef now! 🎉"
   ];
 
   // Determine current phase
@@ -101,8 +121,8 @@ const CookingLevel3 = () => {
       ...updates,
       stepsCompleted: newStepsCompleted,
       currentStep: stepIndex + 1,
-      // Update setup phase state when moving to cooking phase
-      setupPhase: stepIndex + 1 <= 4
+      setupPhase: stepIndex + 1 <= 4,
+      baconardoTalking: true
     }));
 
     if (newStepsCompleted.every(step => step)) {
@@ -132,9 +152,9 @@ const CookingLevel3 = () => {
     if (dragItem === 'plug' && target === 'outlet' && gameState.currentStep === 0) {
       completeStep(0, { stovePluggedIn: true });
       showFeedback("Great! The stove is now connected to power!");
-    } else if (dragItem === 'pan' && target === 'burner' && gameState.currentStep === 3) {
+    } else if (dragItem === 'pan' && target === 'stove' && gameState.currentStep === 3) {
       completeStep(3, { panOnStove: true });
-      showFeedback("Nice! Your pan is properly positioned!");
+      showFeedback("Nice! Your pan is properly positioned at the center!");
     } else if (dragItem === 'oil' && target === 'pan' && gameState.currentStep === 5 && gameState.panOnStove) {
       completeStep(5, { showOil: true });
       showFeedback("Perfect! Oil added to the pan!");
@@ -182,8 +202,16 @@ const CookingLevel3 = () => {
   const handleBurnerClick = () => {
     if (gameState.currentStep === 4 && gameState.panOnStove && gameState.heatLevel === 'MEDIUM') {
       completeStep(4, { burnerOn: true });
-      showFeedback("Great! The burner is heating up!");
+      showFeedback("Great! The stove is heating up! The pan will now glow.");
     }
+  };
+
+  const handleBaconardoClick = () => {
+    setGameState(prev => ({ ...prev, baconardoTalking: !prev.baconardoTalking }));
+  };
+
+  const closeBaconardoIntro = () => {
+    setGameState(prev => ({ ...prev, showBaconardoIntro: false, baconardoTalking: true }));
   };
 
   const resetGame = () => {
@@ -205,7 +233,9 @@ const CookingLevel3 = () => {
       feedbackMessage: '',
       showFeedback: false,
       showCookedEggPrompt: false,
-      setupPhase: true
+      setupPhase: true,
+      showBaconardoIntro: false,
+      baconardoTalking: true
     });
     setProgressSaved(false);
   };
@@ -263,6 +293,24 @@ const CookingLevel3 = () => {
       )}
     </div>
   );
+
+  // Calculate pan glow based on burner state and heat level
+  const getPanGlowStyle = () => {
+    if (!gameState.burnerOn || !gameState.panOnStove) {
+      return {};
+    }
+
+    const baseGlow = {
+      boxShadow: gameState.heatLevel === 'HIGH' 
+        ? '0 0 40px rgba(255, 87, 34, 0.8), 0 0 60px rgba(255, 152, 0, 0.6), 0 0 80px rgba(255, 193, 7, 0.4), 0 6px 20px rgba(0,0,0,0.4)'
+        : gameState.heatLevel === 'MEDIUM'
+        ? '0 0 30px rgba(255, 152, 0, 0.7), 0 0 50px rgba(255, 193, 7, 0.5), 0 0 70px rgba(255, 235, 59, 0.3), 0 6px 20px rgba(0,0,0,0.4)'
+        : '0 0 20px rgba(255, 193, 7, 0.6), 0 0 40px rgba(255, 235, 59, 0.4), 0 6px 20px rgba(0,0,0,0.4)',
+      animation: 'panGlow 1.5s infinite alternate'
+    };
+
+    return baseGlow;
+  };
 
   return (
     <div style={{
@@ -346,8 +394,220 @@ const CookingLevel3 = () => {
             50% { transform: scale(1.02); }
             100% { transform: scale(1); }
           }
+          @keyframes panGlow {
+            0% { 
+              box-shadow: 
+                0 0 30px rgba(255, 152, 0, 0.7), 
+                0 0 50px rgba(255, 193, 7, 0.5), 
+                0 0 70px rgba(255, 235, 59, 0.3),
+                0 6px 20px rgba(0,0,0,0.4);
+            }
+            100% { 
+              box-shadow: 
+                0 0 40px rgba(255, 152, 0, 0.9), 
+                0 0 60px rgba(255, 193, 7, 0.7), 
+                0 0 80px rgba(255, 235, 59, 0.5),
+                0 6px 20px rgba(0,0,0,0.4);
+            }
+          }
+          @keyframes panHeatPulse {
+            0%, 100% { 
+              background: linear-gradient(45deg, #37474F, #546E7A);
+              border-color: #263238;
+            }
+            50% { 
+              background: linear-gradient(45deg, #455A64, #607D8B);
+              border-color: #FF9800;
+            }
+          }
+          @keyframes buttonGlow {
+            0%, 100% { 
+              box-shadow: 0 0 20px rgba(255, 152, 0, 0.6);
+            }
+            50% { 
+              box-shadow: 0 0 30px rgba(255, 152, 0, 0.9), 0 0 40px rgba(255, 193, 7, 0.6);
+            }
+          }
+          @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+          }
+          @keyframes speechBubble {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+          }
         `}
         </style>
+
+        {/* Baconardo Introduction Modal */}
+        {gameState.showBaconardoIntro && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            background: 'rgba(0,0,0,0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 3000
+          }}>
+            <div style={{
+              background: 'linear-gradient(135deg, #FFF8E1, #FFECB3)',
+              padding: '40px',
+              borderRadius: '20px',
+              textAlign: 'center',
+              border: '4px solid #FF9800',
+              maxWidth: '500px',
+              position: 'relative'
+            }}>
+              <div style={{
+                width: '120px',
+                height: '120px',
+                margin: '0 auto 20px',
+                borderRadius: '50%',
+                overflow: 'hidden',
+                border: '4px solid #FF9800',
+                animation: 'pulse 2s infinite'
+              }}>
+                <img 
+                  src={baconardoImg} 
+                  alt="Baconardo" 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              </div>
+              
+              <h2 style={{ color: '#E65100', marginBottom: '15px', fontSize: '32px' }}>
+                Meet Baconardo! 🥓
+              </h2>
+              
+              <p style={{ color: '#5D4037', marginBottom: '25px', fontSize: '18px', lineHeight: '1.6' }}>
+                "Hi there! I'm <strong>Baconardo</strong>, your personal cooking coach! I'll guide you through making the most delicious scrambled eggs you've ever tasted! Ready to become a master chef?"
+              </p>
+              
+              <p style={{ color: '#795548', marginBottom: '30px', fontSize: '16px', fontStyle: 'italic' }}>
+                I'll be here in the top right corner to help you every step of the way. Click on me anytime for tips!
+              </p>
+
+              <Button
+                onClick={closeBaconardoIntro}
+                variant="contained"
+                sx={{
+                  backgroundColor: '#4CAF50',
+                  borderRadius: '20px',
+                  padding: '12px 30px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  '&:hover': { backgroundColor: '#45a049' }
+                }}
+              >
+                Let's Start Cooking! 🍳
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Baconardo Character - Top Right */}
+        <div style={{
+          position: 'fixed',
+          top: '80px',
+          right: '20px',
+          zIndex: 100,
+          cursor: 'pointer'
+        }}>
+          <div
+            onClick={handleBaconardoClick}
+            style={{
+              position: 'relative',
+              animation: 'float 3s ease-in-out infinite'
+            }}
+          >
+            {/* Baconardo Character */}
+            <div style={{
+              width: '120px',
+              height: '120px',
+              borderRadius: '50%',
+              overflow: 'hidden',
+              border: '3px solid #FF9800',
+              background: 'linear-gradient(135deg, #FFECB3, #FFE0B2)',
+              boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
+              marginBottom: '10px'
+            }}>
+              <img 
+                src={baconardoImg} 
+                alt="Baconardo" 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            </div>
+
+            {/* Speech Bubble */}
+            {gameState.baconardoTalking && (
+              <div style={{
+                position: 'absolute',
+                top: '-60',
+                left: '-250px',
+                width: '280px',
+                background: 'white',
+                borderRadius: '20px',
+                padding: '15px',
+                boxShadow: '0 8px 25px rgba(29, 14, 14, 0.3)',
+                border: '3px solid #FF9800',
+                animation: 'speechBubble 2s ease-in-out infinite'
+              }}>
+                <div style={{
+                  position: 'absolute',
+                  top: '50%',
+                  right: '-12px',
+                  transform: 'translateY(-50%)',
+                  width: 0,
+                  height: 0,
+                  borderLeft: '12px solid #FF9800',
+                  borderTop: '8px solid transparent',
+                  borderBottom: '8px solid transparent'
+                }} />
+                <p style={{
+                  margin: 0,
+                  fontSize: '14px',
+                  color: '#5D4037',
+                  fontWeight: '500',
+                  lineHeight: '1.4'
+                }}>
+                  {baconardoMessages[gameState.currentStep]}
+                </p>
+                <div style={{
+                  fontSize: '10px',
+                  color: '#FF9800',
+                  textAlign: 'right',
+                  marginTop: '5px',
+                  fontWeight: 'bold'
+                }}>
+                  - Baconardo
+                </div>
+              </div>
+            )}
+
+            {/* Click Me Indicator */}
+            {!gameState.baconardoTalking && (
+              <div style={{
+                position: 'absolute',
+                top: '-50',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                background: '#FF9800',
+                color: 'white',
+                padding: '4px 8px',
+                borderRadius: '10px',
+                fontSize: '10px',
+                fontWeight: 'bold',
+                whiteSpace: 'nowrap',
+                animation: 'pulse 1.5s infinite'
+              }}>
+                Click me! 👆
+              </div>
+            )}
+          </div>
+        </div>
         
         <Box sx={{
           flex: 1,
@@ -360,45 +620,7 @@ const CookingLevel3 = () => {
           alignItems: 'center'
         }}>
 
-          <div style={{
-            background: 'linear-gradient(45deg, #FF9800, #F57C00)',
-            color: 'white',
-            padding: '20px',
-            textAlign: 'center',
-            borderRadius: '15px',
-            marginBottom: '20px',
-            width: '100%',
-            maxWidth: '800px'
-          }}>
-            <h1 style={{ margin: '0 0 8px 0', fontSize: '32px' }}>Level 3: Scrambled Eggs - Complete Setup</h1>
-          </div>
-
-          <div style={{
-            background: 'rgba(255, 152, 0, 0.1)',
-            padding: '15px',
-            textAlign: 'center',
-            borderRadius: '10px',
-            marginBottom: '15px',
-            width: '100%',
-            maxWidth: '900px'
-          }}>
-            <p style={{ margin: '0', fontSize: '16px', color: '#E65100', fontWeight: '500' }}>
-              {eggRecipeSteps[gameState.currentStep]?.instruction || "Your scrambled egg is ready!"} 
-              {gameState.currentStep < 11 && (
-                <span style={{ 
-                  background: '#FF9800',
-                  color: 'white',
-                  padding: '4px 12px',
-                  borderRadius: '12px',
-                  fontSize: '14px',
-                  marginLeft: '10px'
-                }}>
-                  Step {gameState.currentStep + 1}/11
-                </span>
-              )}
-            </p>
-          </div>
-
+          {/* Progress Bar */}
           <div style={{
             background: 'white',
             borderRadius: '12px',
@@ -429,6 +651,7 @@ const CookingLevel3 = () => {
             </div>
           </div>
 
+          {/* Main Game Area */}
           <div style={{
             display: 'flex',
             justifyContent: 'space-around',
@@ -437,7 +660,8 @@ const CookingLevel3 = () => {
             width: '100%',
             maxWidth: '1200px'
           }}>
-            {/* Setup Panel - Enhanced with phase-based styling */}
+            
+            {/* Setup Panel */}
             <div style={{
               background: 'white',
               borderRadius: '15px',
@@ -487,12 +711,14 @@ const CookingLevel3 = () => {
               </div>
             </div>
 
-            {/* Cooking Station */}
+            {/* Cooking Station - Centered */}
             <div style={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '20px'
+              gap: '20px',
+              flex: 1,
+              maxWidth: '500px'
             }}>
               <div style={{
                 background: 'white',
@@ -575,201 +801,357 @@ const CookingLevel3 = () => {
                 )}
               </div>
 
-              {/* Stove */}
-              <div style={{ position: 'relative', width: '320px', marginBottom: '100px' }}>
+              {/* Stove with Centered Pan */}
+              <div style={{ 
+                position: 'relative', 
+                width: '400px', 
+                height: '300px',
+                marginBottom: '140px'
+              }}>
+                {/* Stove Base */}
                 <div style={{
-                  width: '320px',
-                  height: '200px',
+                  width: '100%',
+                  height: '220px',
                   background: 'linear-gradient(45deg, #424242, #616161)',
-                  borderRadius: '10px',
+                  borderRadius: '15px',
                   position: 'relative',
-                  boxShadow: '0 6px 20px rgba(0,0,0,0.3)',
+                  boxShadow: '0 8px 25px rgba(0,0,0,0.4)',
                   border: '3px solid #333',
-                  padding: '15px'
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}>
                   <div style={{
                     position: 'absolute',
-                    top: '-25px',
+                    top: '-30px',
                     left: '50%',
                     transform: 'translateX(-50%)',
-                    background: 'rgba(66, 66, 66, 0.9)',
+                    background: 'rgba(66, 66, 66, 0.95)',
                     color: 'white',
-                    padding: '4px 12px',
-                    borderRadius: '12px',
-                    fontSize: '12px',
-                    fontWeight: 'bold'
+                    padding: '8px 20px',
+                    borderRadius: '15px',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    border: '3px solid #FF9800',
+                    boxShadow: '0 4px 15px rgba(255, 152, 0, 0.4)'
                   }}>
-                    ELECTRIC STOVE
+                    🍳 ELECTRIC STOVE
                   </div>
 
-                  {/* Power Switch */}
+                  {/* Main Power Switch - More Visible */}
                   <button
                     onClick={handleStoveClick}
                     disabled={gameState.currentStep !== 1 || !gameState.stovePluggedIn}
                     style={{
                       position: 'absolute',
-                      top: '15px',
-                      right: '15px',
-                      width: '65px',
-                      height: '32px',
-                      borderRadius: '16px',
+                      top: '25px',
+                      left: '25px',
+                      width: '80px',
+                      height: '40px',
+                      borderRadius: '20px',
                       border: gameState.currentStep === 1 ? '3px solid #FF9800' : '2px solid #757575',
                       background: gameState.powerOn ? 'linear-gradient(45deg, #4CAF50, #66BB6A)' : '#9E9E9E',
                       cursor: gameState.currentStep === 1 && gameState.stovePluggedIn ? 'pointer' : 'not-allowed',
-                      fontSize: '11px',
+                      fontSize: '14px',
                       fontWeight: 'bold',
                       color: 'white',
-                      opacity: gameState.stovePluggedIn ? 1 : 0.5
+                      opacity: gameState.stovePluggedIn ? 1 : 0.5,
+                      transition: 'all 0.3s ease',
+                      boxShadow: gameState.currentStep === 1 ? '0 0 20px rgba(255, 152, 0, 0.6)' : 'none',
+                      animation: gameState.currentStep === 1 ? 'buttonGlow 2s infinite' : 'none'
                     }}
                   >
-                    {gameState.powerOn ? 'ON ⚡' : 'OFF'}
+                    {gameState.powerOn ? 'ON ⚡' : 'POWER'}
                   </button>
 
-                  {/* Burner Button */}
+                  {/* Prominent Burner Button - Very Visible */}
                   <button
                     onClick={handleBurnerClick}
                     disabled={gameState.currentStep !== 4 || !gameState.panOnStove}
                     style={{
                       position: 'absolute',
-                      top: '15px',
-                      right: '95px',
-                      width: '55px',
-                      height: '55px',
+                      top: '25px',
+                      right: '25px',
+                      width: '100px',
+                      height: '100px',
                       borderRadius: '50%',
-                      border: gameState.currentStep === 4 ? '3px solid #FF9800' : '2px solid #757575',
-                      background: gameState.burnerOn ? 'linear-gradient(45deg, #FF5722, #F44336)' : '#9E9E9E',
+                      border: gameState.currentStep === 4 ? '4px solid #FF9800' : '3px solid #757575',
+                      background: gameState.burnerOn 
+                        ? 'linear-gradient(135deg, #FF5722, #F44336, #D32F2F)'
+                        : 'linear-gradient(135deg, #9E9E9E, #757575)',
                       cursor: gameState.currentStep === 4 && gameState.panOnStove ? 'pointer' : 'not-allowed',
-                      fontSize: '10px',
+                      fontSize: '14px',
                       fontWeight: 'bold',
                       color: 'white',
                       opacity: gameState.panOnStove ? 1 : 0.5,
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      justifyContent: 'center'
+                      justifyContent: 'center',
+                      transition: 'all 0.3s ease',
+                      boxShadow: gameState.currentStep === 4 
+                        ? '0 0 30px rgba(255, 152, 0, 0.8), 0 8px 25px rgba(0,0,0,0.4)'
+                        : '0 4px 15px rgba(0,0,0,0.3)',
+                      animation: gameState.currentStep === 4 ? 'buttonGlow 1.5s infinite' : 'none'
                     }}
                   >
-                    <div style={{ fontSize: '20px' }}>🔥</div>
-                    <div>{gameState.burnerOn ? 'ON' : 'OFF'}</div>
+                    <div style={{ 
+                      fontSize: '32px',
+                      marginBottom: '5px',
+                      filter: gameState.burnerOn ? 'drop-shadow(0 0 8px rgba(255,255,255,0.8))' : 'none'
+                    }}>
+                      {gameState.burnerOn ? '🔥' : '⚡'}
+                    </div>
+                    <div style={{ 
+                      fontSize: '12px',
+                      textShadow: gameState.burnerOn ? '0 0 10px rgba(255,255,255,0.8)' : 'none'
+                    }}>
+                      {gameState.burnerOn ? 'HEATING!' : 'START HEAT'}
+                    </div>
                   </button>
 
-                  {/* Burner Coil - Centered */}
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '45px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: '110px',
-                    height: '110px',
-                    background: gameState.burnerOn 
-                      ? gameState.heatLevel === 'HIGH' 
-                        ? 'radial-gradient(circle, #D32F2F 20%, #B71C1C 50%, #424242 80%)'
-                        : gameState.heatLevel === 'MEDIUM'
-                        ? 'radial-gradient(circle, #FF5722 20%, #D84315 50%, #424242 80%)'
-                        : 'radial-gradient(circle, #FF9800 20%, #F57C00 50%, #424242 80%)'
-                      : 'radial-gradient(circle, #616161 20%, #424242 50%, #212121 80%)',
-                    borderRadius: '50%',
-                    border: '3px solid #212121',
-                    boxShadow: gameState.burnerOn 
-                      ? gameState.heatLevel === 'HIGH'
-                        ? '0 0 40px rgba(211, 47, 47, 0.9), inset 0 0 30px rgba(255, 152, 0, 0.5)'
-                        : gameState.heatLevel === 'MEDIUM'
-                        ? '0 0 30px rgba(255, 87, 34, 0.8), inset 0 0 20px rgba(255, 152, 0, 0.4)'
-                        : '0 0 20px rgba(255, 152, 0, 0.6), inset 0 0 15px rgba(255, 152, 0, 0.3)'
-                      : '0 2px 5px rgba(0,0,0,0.3)',
-                    transition: 'all 0.5s ease',
-                    zIndex: 3
-                  }}>
-                    <div style={{
-                      position: 'absolute',
-                      inset: '15px',
-                      borderRadius: '50%',
-                      border: gameState.burnerOn 
-                        ? gameState.heatLevel === 'HIGH' ? '4px solid #FF6F00' : gameState.heatLevel === 'MEDIUM' ? '4px solid #FF9800' : '4px solid #FFB74D'
-                        : '4px solid #616161',
-                      opacity: gameState.burnerOn ? 1 : 0.6,
-                      animation: gameState.burnerOn ? 'flicker 0.8s infinite alternate' : 'none'
-                    }} />
-                    <div style={{
-                      position: 'absolute',
-                      inset: '30px',
-                      borderRadius: '50%',
-                      border: gameState.burnerOn 
-                        ? gameState.heatLevel === 'HIGH' ? '3px solid #FFAB40' : gameState.heatLevel === 'MEDIUM' ? '3px solid #FFAB40' : '3px solid #FFCC80'
-                        : '3px solid #757575',
-                      opacity: gameState.burnerOn ? 0.8 : 0.5,
-                      animation: gameState.burnerOn ? 'flicker 0.6s infinite alternate 0.2s' : 'none'
-                    }} />
-                  </div>
+                  {/* Centered Pan Area */}
+                  {gameState.panOnStove ? (
+                    <div
+                      ref={panRef}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, 'pan')}
+                      style={{
+                        width: '180px',
+                        height: '180px',
+                        background: gameState.burnerOn 
+                          ? 'linear-gradient(45deg, #455A64, #607D8B)'
+                          : 'linear-gradient(45deg, #37474F, #546E7A)',
+                        borderRadius: '50%',
+                        border: gameState.burnerOn ? '4px solid #FF9800' : '4px solid #263238',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        overflow: 'visible',
+                        ...(gameState.burnerOn ? getPanGlowStyle() : {}),
+                        zIndex: 5,
+                        transition: 'all 0.5s ease',
+                        animation: gameState.burnerOn ? 'panHeatPulse 2s infinite' : 'none',
+                        position: 'relative'
+                      }}
+                    >
+                      <div style={{
+                        position: 'absolute',
+                        top: '-45px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        background: 'rgba(55, 71, 79, 0.95)',
+                        color: 'white',
+                        padding: '8px 16px',
+                        borderRadius: '12px',
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        whiteSpace: 'nowrap',
+                        border: '2px solid #FF9800',
+                        boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
+                      }}>
+                        🥘 DROP INGREDIENTS HERE
+                      </div>
 
-                  {/* Enhanced Heat Glow */}
-                  {gameState.burnerOn && gameState.panOnStove && (
-                    <div style={{
-                      position: 'absolute',
-                      bottom: '85px',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      width: gameState.heatLevel === 'HIGH' ? '170px' : gameState.heatLevel === 'MEDIUM' ? '150px' : '130px',
-                      height: gameState.heatLevel === 'HIGH' ? '90px' : gameState.heatLevel === 'MEDIUM' ? '70px' : '55px',
-                      background: gameState.heatLevel === 'HIGH' 
-                        ? 'radial-gradient(ellipse at center, rgba(211, 47, 47, 0.8) 0%, rgba(255, 87,34, 0.6) 30%, rgba(255, 152, 0, 0.4) 60%, transparent 90%)'
-                        : gameState.heatLevel === 'MEDIUM'
-                        ? 'radial-gradient(ellipse at center, rgba(255, 152, 0, 0.7) 0%, rgba(255, 87, 34, 0.5) 30%, rgba(255, 183, 77, 0.3) 60%, transparent 90%)'
-                        : 'radial-gradient(ellipse at center, rgba(255, 183, 77, 0.6) 0%, rgba(255, 152, 0, 0.4) 30%, rgba(255, 204, 128, 0.2) 60%, transparent 90%)',
-                      borderRadius: '50%',
-                      animation: gameState.heatLevel === 'HIGH' ? 'flicker 0.5s infinite alternate' : gameState.heatLevel === 'MEDIUM' ? 'flicker 0.8s infinite alternate' : 'flicker 1.2s infinite alternate',
-                      filter: 'blur(10px)',
-                      pointerEvents: 'none',
-                      zIndex: 5
-                    }} />
+                      {/* Cooking Visual Effects */}
+                      {gameState.showOil && (
+                        <div style={{
+                          width: '90%',
+                          height: '90%',
+                          background: 'radial-gradient(circle, #FFE082 50%, #FFC107 80%)',
+                          borderRadius: '50%',
+                          position: 'absolute',
+                          opacity: 0.7,
+                          animation: 'oilShimmer 2s ease-in'
+                        }} />
+                      )}
+
+                      {gameState.showButter && (
+                        <div style={{
+                          width: '35%',
+                          height: '35%',
+                          background: 'radial-gradient(circle, #FFF176 30%, #FFD54F 80%)',
+                          borderRadius: '50%',
+                          position: 'absolute',
+                          top: '30%',
+                          left: '35%',
+                          opacity: 0.8,
+                          animation: 'butterMelt 1.5s ease-out'
+                        }} />
+                      )}
+
+                      {gameState.eggInPan && !gameState.eggCooked && (
+                        <div style={{
+                          width: '70%',
+                          height: '70%',
+                          background: 'radial-gradient(circle, #FFFFFF 20%, #FFF176 40%, #FFE082 80%)',
+                          borderRadius: '60% 40% 40% 60%',
+                          position: 'absolute',
+                          animation: 'eggCrack 0.8s ease-out'
+                        }} />
+                      )}
+
+                      {gameState.saltAdded && (
+                        <div style={{
+                          position: 'absolute',
+                          width: '100%',
+                          height: '100%',
+                          background: 'radial-gradient(circle, transparent 60%, rgba(255,255,255,0.3) 65%, transparent 70%)',
+                          borderRadius: '50%',
+                          animation: 'saltSprinkle 1s ease-out'
+                        }} />
+                      )}
+
+                      {gameState.eggCooked && (
+                        <img 
+                          src={cookedEggImg} 
+                          alt="Cooked Egg" 
+                          style={{
+                            width: '80%',
+                            height: '80%',
+                            position: 'absolute',
+                            objectFit: 'contain',
+                            animation: 'eggScramble 1.2s ease-out'
+                          }} 
+                        />
+                      )}
+
+                      {gameState.springOnionAdded && (
+                        <div style={{
+                          position: 'absolute',
+                          width: '60%',
+                          height: '60%',
+                          background: 'repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(76, 175, 80, 0.6) 3px, rgba(76, 175, 80, 0.6) 6px)',
+                          borderRadius: '50%',
+                          animation: 'springOnionSprinkle 1s ease-out'
+                        }} />
+                      )}
+
+                      {/* Sizzle Effect */}
+                      {gameState.burnerOn && (gameState.showOil || gameState.eggInPan) && (
+                        <>
+                          <div style={{
+                            position: 'absolute',
+                            width: '6px',
+                            height: '6px',
+                            background: 'white',
+                            borderRadius: '50%',
+                            top: '20%',
+                            left: '30%',
+                            animation: 'sizzle 0.8s infinite',
+                            boxShadow: '0 0 6px rgba(255,255,255,0.9)'
+                          }} />
+                          <div style={{
+                            position: 'absolute',
+                            width: '5px',
+                            height: '5px',
+                            background: 'white',
+                            borderRadius: '50%',
+                            top: '40%',
+                            right: '25%',
+                            animation: 'sizzle 1.2s infinite 0.3s',
+                            boxShadow: '0 0 5px rgba(255,255,255,0.9)'
+                          }} />
+                          <div style={{
+                            position: 'absolute',
+                            width: '5px',
+                            height: '5px',
+                            background: 'white',
+                            borderRadius: '50%',
+                            bottom: '30%',
+                            left: '40%',
+                            animation: 'sizzle 1s infinite 0.6s',
+                            boxShadow: '0 0 5px rgba(255,255,255,0.9)'
+                          }} />
+                        </>
+                      )}
+
+                      {/* Pan Handle */}
+                      <div style={{
+                        position: 'absolute',
+                        right: '-70px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        width: '70px',
+                        height: '15px',
+                        background: 'linear-gradient(45deg, #5D4037, #795548)',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 10px rgba(0,0,0,0.4)'
+                      }} />
+                    </div>
+                  ) : (
+                    /* Drop Zone for Pan */
+                    <div
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, 'stove')}
+                      style={{
+                        width: '200px',
+                        height: '200px',
+                        border: '4px dashed #FF9800',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        background: 'rgba(255, 152, 0, 0.1)',
+                        animation: 'pulse 2s infinite',
+                        fontSize: '50px',
+                        color: '#FF9800'
+                      }}
+                    >
+                      ⬇️
+                    </div>
                   )}
                 </div>
 
-                {/* Heat Dial - Improved with better state indication */}
+                {/* Heat Control Panel */}
                 <div style={{
                   position: 'absolute',
-                  bottom: '-85px',
+                  bottom: '-120px',
                   left: '50%',
                   transform: 'translateX(-50%)',
                   background: 'rgba(66, 66, 66, 0.95)',
-                  padding: '12px 20px',
-                  borderRadius: '12px',
+                  padding: '20px 30px',
+                  borderRadius: '20px',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '10px',
+                  gap: '15px',
                   alignItems: 'center',
-                  boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
+                  boxShadow: '0 8px 25px rgba(0,0,0,0.4)',
+                  border: '3px solid #FF9800',
+                  minWidth: '300px'
                 }}>
                   <div style={{ 
-                    fontSize: '11px', 
+                    fontSize: '18px', 
                     color: 'white', 
                     fontWeight: 'bold',
                     letterSpacing: '1px',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px'
+                    gap: '12px',
+                    marginBottom: '10px'
                   }}>
-                    HEAT LEVEL
+                    🔥 HEAT LEVEL
                     {gameState.heatLevel && (
                       <span style={{ 
-                        fontSize: '16px',
-                        color: gameState.heatLevel === 'HIGH' ? '#FF5722' : gameState.heatLevel === 'MEDIUM' ? '#FF9800' : '#FFB74D'
+                        fontSize: '20px',
+                        color: gameState.heatLevel === 'HIGH' ? '#FF5722' : gameState.heatLevel === 'MEDIUM' ? '#FF9800' : '#FFB74D',
+                        textShadow: '0 0 10px rgba(255,255,255,0.5)'
                       }}>
                         {gameState.heatLevel === 'HIGH' ? '🔥🔥🔥' : gameState.heatLevel === 'MEDIUM' ? '🔥🔥' : '🔥'}
                       </span>
                     )}
                   </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', width: '100%' }}>
                     {['LOW', 'MEDIUM', 'HIGH'].map(level => (
                       <button
                         key={level}
                         onClick={() => handleHeatDialClick(level)}
                         disabled={gameState.currentStep !== 2 || !gameState.powerOn}
                         style={{
-                          padding: '8px 12px',
-                          fontSize: '10px',
+                          padding: '12px 18px',
+                          fontSize: '14px',
                           fontWeight: 'bold',
-                          borderRadius: '8px',
+                          borderRadius: '12px',
                           border: gameState.heatLevel === level ? '3px solid #4CAF50' : '2px solid #757575',
                           background: gameState.heatLevel === level 
                             ? level === 'HIGH' ? 'linear-gradient(45deg, #FF5722, #D32F2F)' 
@@ -779,24 +1161,27 @@ const CookingLevel3 = () => {
                           color: 'white',
                           cursor: gameState.currentStep === 2 && gameState.powerOn ? 'pointer' : 'not-allowed',
                           opacity: gameState.powerOn ? 1 : 0.5,
-                          boxShadow: gameState.currentStep === 2 && level === 'MEDIUM' && gameState.powerOn ? '0 0 12px rgba(255, 152, 0, 0.6)' : 'none',
+                          boxShadow: gameState.currentStep === 2 && level === 'MEDIUM' && gameState.powerOn ? '0 0 20px rgba(255, 152, 0, 0.8)' : 'none',
                           transition: 'all 0.3s ease',
-                          minWidth: '55px'
+                          minWidth: '80px',
+                          flex: 1
                         }}
                       >
                         {level}
                       </button>
                     ))}
                   </div>
-                  {/* Heat Level Bar - Only visible when stove is functional */}
+                  
+                  {/* Heat Level Visual Indicator */}
                   {gameState.powerOn && gameState.heatLevel && (
                     <div style={{
                       width: '100%',
-                      height: '6px',
+                      height: '10px',
                       background: '#424242',
-                      borderRadius: '3px',
-                      marginTop: '5px',
-                      overflow: 'hidden'
+                      borderRadius: '5px',
+                      marginTop: '10px',
+                      overflow: 'hidden',
+                      boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3)'
                     }}>
                       <div style={{
                         width: gameState.heatLevel === 'HIGH' ? '100%' : gameState.heatLevel === 'MEDIUM' ? '66%' : '33%',
@@ -806,253 +1191,30 @@ const CookingLevel3 = () => {
                           : gameState.heatLevel === 'MEDIUM'
                           ? 'linear-gradient(90deg, #FF9800, #F57C00)'
                           : 'linear-gradient(90deg, #FFB74D, #FFA726)',
-                        borderRadius: '3px',
-                        transition: 'width 0.3s ease'
+                        borderRadius: '5px',
+                        transition: 'width 0.3s ease',
+                        boxShadow: '0 0 10px rgba(255, 152, 0, 0.5)'
                       }} />
                     </div>
                   )}
+                  
                   {gameState.currentStep === 2 && gameState.powerOn && (
                     <div style={{
-                      fontSize: '9px',
+                      fontSize: '12px',
                       color: '#FFD54F',
                       textAlign: 'center',
-                      marginTop: '2px'
+                      marginTop: '8px',
+                      fontWeight: 'bold',
+                      textShadow: '0 0 5px rgba(0,0,0,0.5)'
                     }}>
                       💡 Tip: Medium heat is best for eggs!
                     </div>
                   )}
                 </div>
-
-                {/* Pan on Stove */}
-                {gameState.panOnStove && (
-                  <div
-                    ref={panRef}
-                    onDragOver={handleDragOver}
-                    onDrop={(e) => handleDrop(e, 'pan')}
-                    style={{
-                      position: 'absolute',
-                      bottom: '100px',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      width: '150px',
-                      height: '150px',
-                      background: 'linear-gradient(45deg, #37474F, #546E7A)',
-                      borderRadius: '50%',
-                      border: '4px solid #263238',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      overflow: 'visible',
-                      boxShadow: gameState.burnerOn 
-                        ? '0 6px 20px rgba(0,0,0,0.4), 0 0 30px rgba(255, 152, 0, 0.3)'
-                        : '0 6px 20px rgba(0,0,0,0.4)',
-                      zIndex: 10,
-                      transition: 'box-shadow 0.3s ease'
-                    }}
-                  >
-                    {/* Heat Reflection Glow Around Pan Edge */}
-                    {gameState.burnerOn && (
-                      <div style={{
-                        position: 'absolute',
-                        inset: '-8px',
-                        borderRadius: '50%',
-                        background: gameState.heatLevel === 'HIGH'
-                          ? 'radial-gradient(circle, transparent 60%, rgba(255, 87, 34, 0.4) 70%, rgba(255, 152, 0, 0.6) 85%, transparent 100%)'
-                          : gameState.heatLevel === 'MEDIUM'
-                          ? 'radial-gradient(circle, transparent 60%, rgba(255, 152, 0, 0.3) 70%, rgba(255, 183, 77, 0.5) 85%, transparent 100%)'
-                          : 'radial-gradient(circle, transparent 60%, rgba(255, 183, 77, 0.2) 70%, rgba(255, 204, 128, 0.4) 85%, transparent 100%)',
-                        animation: 'flicker 1.5s infinite alternate',
-                        pointerEvents: 'none',
-                        zIndex: -1
-                      }} />
-                    )}
-
-                    <div style={{
-                      position: 'absolute',
-                      top: '-35px',
-                      background: 'rgba(55, 71, 79, 0.9)',
-                      color: 'white',
-                      padding: '4px 10px',
-                      borderRadius: '10px',
-                      fontSize: '11px',
-                      fontWeight: 'bold',
-                      whiteSpace: 'nowrap'
-                    }}>
-                      DROP INGREDIENTS HERE
-                    </div>
-
-                    {/* Oil Pouring Animation */}
-                    {gameState.currentStep === 5 && isDragging && dragItem === 'oil' && (
-                      <div style={{
-                        position: 'absolute',
-                        top: '-30px',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        width: '4px',
-                        height: '30px',
-                        background: 'linear-gradient(to bottom, transparent 0%, #FFC107 50%, #FFD54F 100%)',
-                        animation: 'oilPour 0.5s infinite',
-                        borderRadius: '2px'
-                      }} />
-                    )}
-
-                    {gameState.showOil && (
-                      <div style={{
-                        width: '90%',
-                        height: '90%',
-                        background: 'radial-gradient(circle, #FFE082 50%, #FFC107 80%)',
-                        borderRadius: '50%',
-                        position: 'absolute',
-                        opacity: 0.7,
-                        animation: 'oilShimmer 2s ease-in'
-                      }} />
-                    )}
-
-                    {gameState.showButter && (
-                      <div style={{
-                        width: '35%',
-                        height: '35%',
-                        background: 'radial-gradient(circle, #FFF176 30%, #FFD54F 80%)',
-                        borderRadius: '50%',
-                        position: 'absolute',
-                        top: '30%',
-                        left: '35%',
-                        opacity: 0.8,
-                        animation: 'butterMelt 1.5s ease-out'
-                      }} />
-                    )}
-
-                    {gameState.eggInPan && !gameState.eggCooked && (
-                      <div style={{
-                        width: '70%',
-                        height: '70%',
-                        background: 'radial-gradient(circle, #FFFFFF 20%, #FFF176 40%, #FFE082 80%)',
-                        borderRadius: '60% 40% 40% 60%',
-                        position: 'absolute',
-                        animation: 'eggCrack 0.8s ease-out'
-                      }} />
-                    )}
-
-                    {gameState.saltAdded && (
-                      <div style={{
-                        position: 'absolute',
-                        width: '100%',
-                        height: '100%',
-                        background: 'radial-gradient(circle, transparent 60%, rgba(255,255,255,0.3) 65%, transparent 70%)',
-                        borderRadius: '50%',
-                        animation: 'saltSprinkle 1s ease-out'
-                      }} />
-                    )}
-
-                    {gameState.eggCooked && (
-                      <img 
-                        src={cookedEggImg} 
-                        alt="Cooked Egg" 
-                        style={{
-                          width: '80%',
-                          height: '80%',
-                          position: 'absolute',
-                          objectFit: 'contain',
-                          animation: 'eggScramble 1.2s ease-out'
-                        }} 
-                      />
-                    )}
-
-                    {gameState.springOnionAdded && (
-                      <div style={{
-                        position: 'absolute',
-                        width: '60%',
-                        height: '60%',
-                        background: 'repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(76, 175, 80, 0.6) 3px, rgba(76, 175, 80, 0.6) 6px)',
-                        borderRadius: '50%',
-                        animation: 'springOnionSprinkle 1s ease-out'
-                      }} />
-                    )}
-
-                    {/* Enhanced Sizzle Effect */}
-                    {gameState.burnerOn && (gameState.showOil || gameState.eggInPan) && (
-                      <>
-                        <div style={{
-                          position: 'absolute',
-                          width: '5px',
-                          height: '5px',
-                          background: 'white',
-                          borderRadius: '50%',
-                          top: '20%',
-                          left: '30%',
-                          animation: 'sizzle 0.8s infinite',
-                          boxShadow: '0 0 4px rgba(255,255,255,0.8)'
-                        }} />
-                        <div style={{
-                          position: 'absolute',
-                          width: '4px',
-                          height: '4px',
-                          background: 'white',
-                          borderRadius: '50%',
-                          top: '40%',
-                          right: '25%',
-                          animation: 'sizzle 1.2s infinite 0.3s',
-                          boxShadow: '0 0 3px rgba(255,255,255,0.8)'
-                        }} />
-                        <div style={{
-                          position: 'absolute',
-                          width: '4px',
-                          height: '4px',
-                          background: 'white',
-                          borderRadius: '50%',
-                          bottom: '30%',
-                          left: '40%',
-                          animation: 'sizzle 1s infinite 0.6s',
-                          boxShadow: '0 0 3px rgba(255,255,255,0.8)'
-                        }} />
-                      </>
-                    )}
-
-                    {/* Pan Handle */}
-                    <div style={{
-                      position: 'absolute',
-                      right: '-55px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      width: '55px',
-                      height: '10px',
-                      background: 'linear-gradient(45deg, #5D4037, #795548)',
-                      borderRadius: '5px',
-                      boxShadow: '0 2px 5px rgba(0,0,0,0.3)'
-                    }} />
-                  </div>
-                )}
-
-                {/* Drop Zone - Centered on Burner */}
-                {!gameState.panOnStove && gameState.currentStep === 3 && (
-                  <div
-                    onDragOver={handleDragOver}
-                    onDrop={(e) => handleDrop(e, 'burner')}
-                    style={{
-                      position: 'absolute',
-                      top: '35px',
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      width: '120px',
-                      height: '120px',
-                      border: '3px dashed #FF9800',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      background: 'rgba(255, 152, 0, 0.1)',
-                      animation: 'pulse 2s infinite',
-                      fontSize: '40px',
-                      zIndex: 8
-                    }}
-                  >
-                    ⬇️
-                  </div>
-                )}
               </div>
             </div>
 
-            {/* Ingredients and Tools - Enhanced with phase-based styling */}
+            {/* Ingredients and Tools Panel */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
               {/* Ingredients Panel */}
               <div style={{
@@ -1124,7 +1286,6 @@ const CookingLevel3 = () => {
                     <div style={{ fontSize: '10px', fontWeight: 'bold' }}>Salt</div>
                   </DraggableItem>
 
-                  {/* Improved Spring Onion - Better layout integration */}
                   <DraggableItem 
                     type="springOnion"
                     isActive={gameState.currentStep === 10}
@@ -1185,7 +1346,7 @@ const CookingLevel3 = () => {
             </div>
           </div>
 
-          {/* Control Buttons - Removed redundant Home button */}
+          {/* Control Buttons */}
           <Box sx={{
             position: 'fixed',
             bottom: 20,
@@ -1209,8 +1370,6 @@ const CookingLevel3 = () => {
             >
               🔄 Reset
             </Button>
-            
-            {/* Removed redundant Home button since it's in Navbar */}
 
             {gameState.stepsCompleted.every(step => step) && (
               <Button
@@ -1245,64 +1404,6 @@ const CookingLevel3 = () => {
               boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
             }}>
               {gameState.feedbackMessage}
-            </div>
-          )}
-
-          {/* Cooked Egg Prompt */}
-          {gameState.showCookedEggPrompt && (
-            <div style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              background: 'rgba(0,0,0,0.6)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1500
-            }}>
-              <div style={{
-                background: 'linear-gradient(135deg, #FFF8E1, #FFECB3)',
-                padding: '30px',
-                borderRadius: '20px',
-                textAlign: 'center',
-                border: '3px solid #FF9800',
-                maxWidth: '350px'
-              }}>
-                <h3 style={{ color: '#E65100', marginBottom: '20px', fontSize: '22px' }}>
-                  Look at your delicious egg!
-                </h3>
-                
-                <div style={{
-                  marginBottom: '20px',
-                  padding: '15px',
-                  background: 'white',
-                  borderRadius: '15px'
-                }}>
-                  <img src={cookedEggImg} alt="Cooked Egg" style={{ width: '120px', height: '120px', objectFit: 'contain' }} />
-                </div>
-                
-                <p style={{ color: '#5D4037', marginBottom: '25px', fontSize: '14px' }}>
-                  Your scrambled egg is perfectly fluffy and golden! The spatula helped mix everything together beautifully.
-                </p>
-                
-                <button
-                  onClick={() => setGameState(prev => ({ ...prev, showCookedEggPrompt: false }))}
-                  style={{
-                    background: 'linear-gradient(45deg, #4CAF50, #66BB6A)',
-                    color: 'white',
-                    border: 'none',
-                    padding: '10px 20px',
-                    borderRadius: '20px',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Continue Cooking!
-                </button>
-              </div>
             </div>
           )}
 
