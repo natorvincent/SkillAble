@@ -332,7 +332,7 @@ function AccountPage() {
 
       // If current password is correct, change the password
       const endpoint = userType === "TEACHER" 
-        ? `https://skillable-pdv0.onrender.com/teachers/change-password?email=${encodeURIComponent(email)}`
+        ? `https://skillable-pdv0.onrender.com/api/teachers/change-password?email=${encodeURIComponent(email)}`
         : `https://skillable-pdv0.onrender.com/api/students/change-password?email=${encodeURIComponent(email)}`;
 
       const response = await fetch(endpoint, {
