@@ -6,7 +6,6 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import StarIcon from '@mui/icons-material/Star';
 import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import { Box, Typography, Avatar } from '@mui/material';
-import { getStudentModuleProgressStats } from '../services/progressService';
 import avatarImage from '../assets/profile.png';
 
 function Navbar() {
@@ -15,14 +14,11 @@ function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
-  const [progressStats, setProgressStats] = useState(null);
-  const [moduleStats, setModuleStats] = useState(null);
   const dropdownRef = useRef(null);
   const isLogoutInProgress = useRef(false);
 
   useEffect(() => {
     const checkLoginStatus = () => {
-      // FIXED: Check for token + userEmail instead of isLoggedIn
       const token = localStorage.getItem('token');
       const userEmail = localStorage.getItem('userEmail');
       const loggedIn = !!(token && userEmail);
@@ -39,8 +35,6 @@ function Navbar() {
       } else if (isAuthPage) {
         // Clear profile data when on auth pages to prevent stale data
         setUserProfile(null);
-        setProgressStats(null);
-        setModuleStats(null);
       }
     };
     
@@ -77,7 +71,6 @@ function Navbar() {
       
       if (!userEmail) return;
 
-      let response;
       let apiEndpoint;
       let detectedRole = null;
 
@@ -95,7 +88,7 @@ function Navbar() {
 
       console.log("Fetching profile from:", apiEndpoint);
 
-      response = await fetch(apiEndpoint, {
+      const response = await fetch(apiEndpoint, {
         method: "GET",
         headers: {
           "Content-Type": "application/json"
@@ -114,8 +107,6 @@ function Navbar() {
       // Store the appropriate ID
       if (detectedRole === "STUDENT" && profileData.id) {
         localStorage.setItem('studentId', profileData.id);
-        // Only fetch progress stats for students
-        fetchProgressStats(profileData.id);
       } else if (detectedRole === "TEACHER" && profileData.id) {
         localStorage.setItem('teacherId', profileData.id);
       }
@@ -125,20 +116,7 @@ function Navbar() {
     }
   };
 
-  const fetchProgressStats = async (studentId) => {
-    try {
-      const storedStudentId = localStorage.getItem('studentId') || studentId;
-      
-      if (!storedStudentId) return;
-      
-      const progressResponse = await getStudentModuleProgressStats(storedStudentId, 1);
-      setProgressStats(progressResponse);
-      setModuleStats(progressResponse);
-    } catch (error) {
-      console.error('Error fetching progress stats:', error);
-      // Silently fail - don't throw the error
-    }
-  };
+  // REMOVED: fetchProgressStats function entirely
 
   const handleLogout = () => {
     if (isLogoutInProgress.current) return;
@@ -146,7 +124,7 @@ function Navbar() {
 
     setDropdownOpen(false);
     
-    // FIXED: Clear all authentication data consistently
+    // Clear all authentication data consistently
     localStorage.removeItem('token');
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userRole');
@@ -164,8 +142,6 @@ function Navbar() {
     
     setIsLoggedIn(false);
     setUserProfile(null);
-    setProgressStats(null);
-    setModuleStats(null);
     
     navigate('/login', { replace: true });
     
@@ -186,7 +162,7 @@ function Navbar() {
       navigate('/');
     }
     else {
-      // FIXED: Redirect to appropriate dashboard based on user role
+      // Redirect to appropriate dashboard based on user role
       const userRole = localStorage.getItem('userRole');
       if (userRole === 'TEACHER') {
         navigate('/teacherdashboard');
@@ -198,11 +174,6 @@ function Navbar() {
     }
   };
 
-  const handleBadgesClick = (e) => {
-    e.preventDefault();
-    navigate('/badges');
-  };
-
   const getHomeTarget = () => {
     const currentPath = location.pathname;
     
@@ -210,7 +181,7 @@ function Navbar() {
       return '/';
     }
     else {
-      // FIXED: Return appropriate dashboard based on user role
+      // Return appropriate dashboard based on user role
       const userRole = localStorage.getItem('userRole');
       if (userRole === 'TEACHER') {
         return '/teacherdashboard';
@@ -224,16 +195,12 @@ function Navbar() {
 
   const shouldShowProfileDropdown = () => {
     const currentPath = location.pathname;
-    console.log("Should show profile dropdown:", { 
-      isLoggedIn, 
-      currentPath,
-      userProfile 
-    });
     return isLoggedIn && currentPath !== '/' && currentPath !== '/login' && currentPath !== '/register';
   };
 
   const shouldShowProgressStats = () => {
-    return isLoggedIn && userProfile?.userType === "STUDENT" && progressStats && location.pathname !== '/' && location.pathname !== '/login' && location.pathname !== '/register';
+    // REMOVED: Progress stats display to reduce API calls
+    return false;
   };
 
   const shouldShowMyBadges = () => {
@@ -249,7 +216,6 @@ function Navbar() {
       const fullName = userProfile.name || "Teacher";
       return fullName.split(' ')[0];
     } else if (userProfile.userType === "ADMIN") {
-      // FIXED: Default to "Admin" for admin users
       return "Admin";
     }
     
@@ -273,80 +239,7 @@ function Navbar() {
       </ul>
 
       <div className="navbar-right">
-        {shouldShowProgressStats() && (
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 1.5, 
-            mr: 2,
-          }}>
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 1,
-              backgroundColor: 'white',
-              borderRadius: '25px',
-              padding: '8px 12px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              border: '1px solid rgba(0, 0, 0, 0.1)',
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                backgroundColor: '#f8f9fa',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                transform: 'translateY(-1px)'
-              }
-            }}>
-              <MenuBookIcon sx={{ color: '#4a6cf7', fontSize: 20 }} />
-              <Typography variant="body2" sx={{ color: '#333', fontWeight: 600 }}>
-                {progressStats?.completedLessons || 0}
-              </Typography>
-            </Box>
-            
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 1,
-              backgroundColor: 'white',
-              borderRadius: '25px',
-              padding: '8px 12px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              border: '1px solid rgba(0, 0, 0, 0.1)',
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                backgroundColor: '#f8f9fa',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                transform: 'translateY(-1px)'
-              }
-            }}>
-              <StarIcon sx={{ color: '#ffc107', fontSize: 20 }} />
-              <Typography variant="body2" sx={{ color: '#333', fontWeight: 600 }}>
-                {progressStats?.totalStars || 0}
-              </Typography>
-            </Box>
-
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 1,
-              backgroundColor: 'white',
-              borderRadius: '25px',
-              padding: '8px 12px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              border: '1px solid rgba(0, 0, 0, 0.1)',
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                backgroundColor: '#f8f9fa',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                transform: 'translateY(-1px)'
-              }
-            }}>
-              <AssignmentTurnedInIcon sx={{ color: '#48bb78', fontSize: 20 }} />
-              <Typography variant="body2" sx={{ color: '#333', fontWeight: 600 }}>
-                {progressStats?.completedModules || 0}
-              </Typography>
-            </Box>
-          </Box>
-        )}
+        {/* REMOVED: Progress stats display */}
 
         {shouldShowProfileDropdown() && (
           <div className="profile-dropdown" ref={dropdownRef}>

@@ -1,6 +1,6 @@
 // src/App.js
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import './App.css';
 import Login from './components/login-register/Login';
 import Register from './components/login-register/Register';
@@ -34,16 +34,16 @@ import ContactPage from './components/ContactPage';
 import StudentDashboard from './components/StudentDashboard';
 import TeacherDashboard from './components/TeacherDashboard';
 
-// Simplified localStorage hook without state to prevent re-renders
+// Custom hook to check auth status without causing re-renders
 function useAuthStatus() {
   const [authStatus, setAuthStatus] = useState(() => {
     const token = localStorage.getItem("token");
     const userEmail = localStorage.getItem("userEmail");
-    const userRole = localStorage.getItem("userRole"); // Use userRole instead of userType
+    const userRole = localStorage.getItem("userRole");
     return {
       isLoggedIn: !!(token && userEmail),
       isAdmin: localStorage.getItem("isAdmin") === "true",
-      userRole: userRole || "STUDENT" // Changed from userType to userRole
+      userRole: userRole || "STUDENT"
     };
   });
 
@@ -71,8 +71,34 @@ function useAuthStatus() {
   return authStatus;
 }
 
+// Component to handle route-specific logic
+function RouteHandler({ children, requireAuth = false, requireRole = null }) {
+  const { isLoggedIn, userRole } = useAuthStatus();
+  const location = useLocation();
+
+  // If auth is not required, just render the children
+  if (!requireAuth) {
+    return children;
+  }
+
+  // If auth is required but user is not logged in, redirect to login
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace state={{ from: location }} />;
+  }
+
+  // If specific role is required but user doesn't have it
+  if (requireRole && userRole !== requireRole) {
+    // Redirect to appropriate dashboard based on role
+    if (userRole === 'TEACHER') return <Navigate to="/teacherdashboard" replace />;
+    if (userRole === 'ADMIN') return <Navigate to="/admin" replace />;
+    return <Navigate to="/studentdashboard" replace />;
+  }
+
+  // User is authenticated and has required role (if any)
+  return children;
+}
+
 function App() {
-  const { isLoggedIn, isAdmin, userRole } = useAuthStatus(); // Changed from userType to userRole
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -81,14 +107,6 @@ function App() {
     }, 100);
     return () => clearTimeout(timer);
   }, []);
-
-  // Helper function to get appropriate dashboard redirect - FIXED
-  const getDashboardRedirect = () => {
-    if (isAdmin) return "/admin";
-    if (userRole === 'TEACHER') return "/teacherdashboard";
-    if (userRole === 'STUDENT') return "/studentdashboard";
-    return "/"; // Fallback to landing page
-  };
 
   // Don't render until loaded to prevent flash
   if (!isLoaded) {
@@ -104,193 +122,254 @@ function App() {
     );
   }
 
-  console.log("App.js Routing - Current state:", {
-    isLoggedIn,
-    userRole,
-    currentPath: window.location.pathname,
-    token: !!localStorage.getItem('token'),
-    userEmail: localStorage.getItem('userEmail')
-  });
-
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
-        
         {/* Public routes (accessible without login) */}
+        <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<AboutUsPage />} />
         <Route path="/contact" element={<ContactPage />} />
         
-        {/* Auth routes with FIXED navigation logic */}
+        {/* Auth routes */}
         <Route path="/login" element={
-          isLoggedIn ? <Navigate to={getDashboardRedirect()} replace /> : <Login />
+          <RouteHandler>
+            <Login />
+          </RouteHandler>
         } />
         
         <Route path="/register" element={
-          isLoggedIn ? <Navigate to={getDashboardRedirect()} replace /> : <Register />
+          <RouteHandler>
+            <Register />
+          </RouteHandler>
         } />
         
-        {/* Dashboard routes - REMOVED authentication checks to prevent loops */}
+        {/* Dashboard routes - NO authentication checks to prevent loops */}
         <Route path="/studentdashboard" element={<StudentDashboard />} />
         <Route path="/teacherdashboard" element={<TeacherDashboard />} />
         
-        {/* Legacy homepage route - redirect to appropriate dashboard */}
-        <Route path="/homepage" element={
-          isLoggedIn ? <Navigate to={getDashboardRedirect()} replace /> : <Navigate to="/login" replace />
-        } />
-        
+        {/* Protected routes */}
         <Route path="/account" element={
-          isLoggedIn ? <AccountPage /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <AccountPage />
+          </RouteHandler>
         } />
         
         <Route path="/badges" element={
-          isLoggedIn ? <BadgesPage /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <BadgesPage />
+          </RouteHandler>
         } />
 
         <Route path="/module/:moduleId" element={
-          isLoggedIn ? <ModuleDetails /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <ModuleDetails />
+          </RouteHandler>
         } />
 
         <Route path="/manageStudents" element={
-          isLoggedIn && userRole === 'TEACHER' ? <ManageStudents /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth requireRole="TEACHER">
+            <ManageStudents />
+          </RouteHandler>
         } />
         
         <Route path="/studentProgress" element={
-          isLoggedIn && userRole === 'TEACHER' ? <StudentProgress /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth requireRole="TEACHER">
+            <StudentProgress />
+          </RouteHandler>
         } />
 
-        {/* Cooking Routes - WITH lessonId parameter */}
+        {/* Cooking Routes */}
         <Route path="/lesson/cooking/level-1/:moduleId/:lessonId" element={
-          isLoggedIn ? <CookingLevel1 /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <CookingLevel1 />
+          </RouteHandler>
         } />
 
         <Route path="/lesson/cooking/level-2/:moduleId/:lessonId" element={
-          isLoggedIn ? <CookingLevel2 /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <CookingLevel2 />
+          </RouteHandler>
         } />
 
         <Route path="/lesson/cooking/level-3/:moduleId/:lessonId" element={
-          isLoggedIn ? <CookingLevel3 /> : <Navigate to="/login" replace /> 
+          <RouteHandler requireAuth>
+            <CookingLevel3 />
+          </RouteHandler>
         } />
 
         <Route path="/lesson/cooking/level-4/:moduleId/:lessonId" element={
-          isLoggedIn ? <CookingLevel4 /> : <Navigate to="/login" replace /> 
+          <RouteHandler requireAuth>
+            <CookingLevel4 />
+          </RouteHandler>
         } />
 
         <Route path="/lesson/cooking/level-5/:moduleId/:lessonId" element={
-          isLoggedIn ? <CookingLevel5 /> : <Navigate to="/login" replace /> 
+          <RouteHandler requireAuth>
+            <CookingLevel5 />
+          </RouteHandler>
         } />
 
-        {/* Cooking Routes - WITHOUT moduleId (fallback for backward compatibility) */}
+        {/* Cooking Routes - without moduleId */}
         <Route path="/lesson/cooking/level-1/:lessonId" element={
-          isLoggedIn ? <CookingLevel1 /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <CookingLevel1 />
+          </RouteHandler>
         } />
 
         <Route path="/lesson/cooking/level-2/:lessonId" element={
-          isLoggedIn ? <CookingLevel2 /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <CookingLevel2 />
+          </RouteHandler>
         } />
 
         <Route path="/lesson/cooking/level-3/:lessonId" element={
-          isLoggedIn ? <CookingLevel3 /> : <Navigate to="/login" replace /> 
+          <RouteHandler requireAuth>
+            <CookingLevel3 />
+          </RouteHandler>
         } />
 
         <Route path="/lesson/cooking/level-4/:lessonId" element={
-          isLoggedIn ? <CookingLevel4 /> : <Navigate to="/login" replace /> 
+          <RouteHandler requireAuth>
+            <CookingLevel4 />
+          </RouteHandler>
         } />
 
         <Route path="/lesson/cooking/level-5/:lessonId" element={
-          isLoggedIn ? <CookingLevel5 /> : <Navigate to="/login" replace /> 
+          <RouteHandler requireAuth>
+            <CookingLevel5 />
+          </RouteHandler>
         } />
 
-        {/* Cooking Routes - Fallback without parameters (redirects to default lesson) */}
+        {/* Cooking Routes - Fallback */}
         <Route path="/lesson/cooking/level-1" element={
-          isLoggedIn ? <Navigate to="/lesson/cooking/level-1/1/1" replace /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <Navigate to="/lesson/cooking/level-1/1/1" replace />
+          </RouteHandler>
         } />
 
         <Route path="/lesson/cooking/level-2" element={
-          isLoggedIn ? <Navigate to="/lesson/cooking/level-2/1/2" replace /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <Navigate to="/lesson/cooking/level-2/1/2" replace />
+          </RouteHandler>
         } />
           
         <Route path="/lesson/cooking/level-3" element={
-          isLoggedIn ? <Navigate to="/lesson/cooking/level-3/1/3" replace /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <Navigate to="/lesson/cooking/level-3/1/3" replace />
+          </RouteHandler>
         } />
 
         <Route path="/lesson/cooking/level-4" element={
-          isLoggedIn ? <Navigate to="/lesson/cooking/level-4/1/4" replace /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <Navigate to="/lesson/cooking/level-4/1/4" replace />
+          </RouteHandler>
         } />
           
         <Route path="/lesson/cooking/level-5" element={
-          isLoggedIn ? <Navigate to="/lesson/cooking/level-5/1/5" replace /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <Navigate to="/lesson/cooking/level-5/1/5" replace />
+          </RouteHandler>
         } />
 
-        {/* Original cooking route - redirect to level 1 */}
+        {/* Original cooking route */}
         <Route path="/lesson/cooking/:lessonId" element={
-          isLoggedIn ? <CookingLevel1 /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <CookingLevel1 />
+          </RouteHandler>
         } />
 
         {/* Household Chores Routes */}
         <Route path="/lesson/household-chores/level-1/:lessonId" element={
-          isLoggedIn ? <HouseholdLevel1 /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <HouseholdLevel1 />
+          </RouteHandler>
         } />
           
         <Route path="/lesson/household-chores/level-2/:lessonId" element={
-          isLoggedIn ? <HouseholdLevel2 /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <HouseholdLevel2 />
+          </RouteHandler>
         } />
 
         <Route path="/lesson/household-chores/level-3/:lessonId" element={
-          isLoggedIn ? <HouseholdLevel3 /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <HouseholdLevel3 />
+          </RouteHandler>
         } />
 
         <Route path="/lesson/household-chores/level-4/:lessonId" element={
-          isLoggedIn ? <HouseholdLevel4 /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <HouseholdLevel4 />
+          </RouteHandler>
         } />
 
         <Route path="/lesson/household-chores/:lessonId" element={
-          isLoggedIn ? <HouseholdLevel1 /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <HouseholdLevel1 />
+          </RouteHandler>
         } />
-
-
 
         {/* Personal Hygiene Level Routes */}
         <Route path="/lesson/hygiene/level-1/:lessonId" element={
-          isLoggedIn ? <PersonalHygieneLevel1 /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <PersonalHygieneLevel1 />
+          </RouteHandler>
         } />
 
         <Route path="/lesson/hygiene/level-2/:moduleId/:lessonId" element={
-          isLoggedIn ? <PersonalHygieneLevel2 /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <PersonalHygieneLevel2 />
+          </RouteHandler>
         } />
 
         <Route path="/lesson/hygiene/level-3/:moduleId/:lessonId" element={
-          isLoggedIn ? <PersonalHygieneLevel3 /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <PersonalHygieneLevel3 />
+          </RouteHandler>
         } />
 
-        {/* Generic hygiene route (backwards compatibility) */}
+        {/* Generic hygiene route */}
         <Route path="/lesson/hygiene/:lessonId" element={
-          isLoggedIn ? <PersonalHygieneLevel1 /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <PersonalHygieneLevel1 />
+          </RouteHandler>
         } />
 
         {/* Food Sorting Route */}
         <Route path="/lesson/food-sorting/level-1/:lessonId" element={
-          isLoggedIn ? <SortingLevel1 /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <SortingLevel1 />
+          </RouteHandler>
         } />
 
         <Route path="/lesson/food-sorting/level-2/:lessonId" element={
-          isLoggedIn ? <SortingLevel2 /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <SortingLevel2 />
+          </RouteHandler>
         } />
 
         <Route path="/lesson/food-sorting/level-3/:lessonId" element={
-          isLoggedIn ? <SortingLevel3 /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <SortingLevel3 />
+          </RouteHandler>
         } />
 
         <Route path="/lesson/food-sorting/level-4/:lessonId" element={
-          isLoggedIn ? <SortingLevel4 /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <SortingLevel4 />
+          </RouteHandler>
         } />
 
         <Route path="/lesson/food-sorting/level-5/:lessonId" element={
-          isLoggedIn ? <SortingLevel5 /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <SortingLevel5 />
+          </RouteHandler>
         } />
 
         <Route path="/lesson/food-sorting/:lessonId" element={
-          isLoggedIn ? <SortingLevel1 /> : <Navigate to="/login" replace />
+          <RouteHandler requireAuth>
+            <SortingLevel1 />
+          </RouteHandler>
          } />
         
         {/* Admin Routes */}
@@ -302,6 +381,9 @@ function App() {
             </AdminRoute>
           } 
         /> 
+        
+        {/* Legacy homepage route */}
+        <Route path="/homepage" element={<Navigate to="/" replace />} />
         
         {/* Catch-all route */}
         <Route path="*" element={<Navigate to="/" replace />} />
