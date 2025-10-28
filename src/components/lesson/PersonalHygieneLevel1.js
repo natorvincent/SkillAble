@@ -22,9 +22,8 @@ import {
   saveStudentLessonProgress,
 } from '../../services/progressService';
 
-
-
-// import successGif from "../../assets/hygienelevel1/roblox.gif"
+// Images
+import successGif from "../../assets/hygienelevel1/roblox.gif"
 import bathroomBg from "../../assets/hygienelevel1/bg.png"
 import sinkImg from "../../assets/hygienelevel1/sink.png"
 import faucetImg from "../../assets/hygienelevel1/onfaucet.png"
@@ -35,8 +34,12 @@ import mudImg from "../../assets/hygienelevel1/mud.png"
 import soapImg from "../../assets/hygienelevel1/soap.png"
 import wetHandsImg from "../../assets/hygienelevel1/wash.gif"
 
-// Audio files
+import characterCatWorried from "../../assets/hygienelevel3/cat_worried.png"
+import characterCatHelpful from "../../assets/hygienelevel3/cat_helpful.png"
+import characterCatExcited from "../../assets/hygienelevel3/cat_excited.png"
+import characterCatDefault from "../../assets/hygienelevel3/cat.png"
 
+// Audio files
 import backgroundMusic from "../../assets/hygienelevel1/background-music.mp3"
 import correctSound from "../../assets/hygienelevel1/correct-sound.mp3"
 import incorrectSound from "../../assets/hygienelevel1/incorrect-sound.mp3"
@@ -50,6 +53,7 @@ import scrubVideo4 from "../../assets/hygienelevel1/scrub4.mp4"
 import scrubVideo5 from "../../assets/hygienelevel1/scrub5.mp4"
 import scrubVideo6 from "../../assets/hygienelevel1/scrub6.mp4"
 import scrubVideo7 from "../../assets/hygienelevel1/scrub7.mp4"
+
 
 export default function PersonalHygieneLevel1() {
   const navigate = useNavigate();
@@ -74,8 +78,28 @@ export default function PersonalHygieneLevel1() {
   // Add state to track when to hide all images
   const [hideAllImages, setHideAllImages] = useState(false);
 
-  // Game states for brushing sequence (start at faucet step)
-  const [gameStep, setGameStep] = useState(1); // 1: turn on faucet, 2: wet hands, 3: apply soap, 4: rub hands, 5: rinse hands
+  // Add state for character introduction
+  const [showCharacterIntroduction, setShowCharacterIntroduction] = useState(false);
+  // Add state for hand introduction
+  const [showHandIntroduction, setShowHandIntroduction] = useState(false);
+  // Add state for sink introduction
+  const [showSinkIntroduction, setShowSinkIntroduction] = useState(false);
+  const [showStep2Introduction, setShowStep2Introduction] = useState(false);
+  // Add state for step 3 introduction
+  const [showStep3Introduction, setShowStep3Introduction] = useState(false);
+  // Add state for step 4 introduction
+  const [showStep4Introduction, setShowStep4Introduction] = useState(false);
+  // Add state for step 5 introduction
+  const [showStep5Introduction, setShowStep5Introduction] = useState(false);
+
+  // Scratch card effect states
+  const [scratchMarks, setScratchMarks] = useState([]);
+  const [scratchedPercentage, setScratchedPercentage] = useState(0);
+  const teethContainerRef = useRef(null);
+  const [teethCoverage, setTeethCoverage] = useState(new Set()); // Track grid cells that have been brushed
+
+  // Game states for brushing sequence (start at character introduction step)
+  const [gameStep, setGameStep] = useState(0); // 0: character introduction, 1: hand introduction, 2: turn on faucet, 3: wet hands, 4: apply soap, 5: rub hands, 6: rinse hands
   const [faucetOn, setFaucetOn] = useState(false); // Track if faucet has been turned on
   const [step2Completed, setStep2Completed] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -83,11 +107,9 @@ export default function PersonalHygieneLevel1() {
   const [dragPos, setDragPos] = useState({ x: 0, y: 0 }); // client coords while dragging
   const [teethBubbles, setTeethBubbles] = useState([]); // Bubbles that stay on teeth
   
-  // Scratch card effect states
-  const [scratchMarks, setScratchMarks] = useState([]);
-  const [scratchedPercentage, setScratchedPercentage] = useState(0);
-  const teethContainerRef = useRef(null);
-  const [teethCoverage, setTeethCoverage] = useState(new Set()); // Track grid cells that have been brushed
+  const [sinkTimer, setSinkTimer] = useState(10);
+  const [showSinkPulse, setShowSinkPulse] = useState(false);
+  const [sinkPulseScale, setSinkPulseScale] = useState(1);
   
   // New states for step 4
   const [showScrubVideo, setShowScrubVideo] = useState(false);
@@ -128,17 +150,62 @@ export default function PersonalHygieneLevel1() {
 
   const handleStartGame = () => {
     setShowStartScreen(false);
+    // Show character introduction first
+    setShowCharacterIntroduction(true);
+  };
+
+  // New function to handle character introduction completion
+  const handleCharacterIntroductionComplete = () => {
+    setShowCharacterIntroduction(false);
+    // Show hand introduction next
+    setShowHandIntroduction(true);
+  };
+
+  // New function to handle hand introduction completion
+  const handleHandIntroductionComplete = () => {
+    setShowHandIntroduction(false);
+    // Show sink introduction next
+    setShowSinkIntroduction(true);
+  };
+
+  // Add function to handle sink introduction completion
+  const handleSinkIntroductionComplete = () => {
+    setShowSinkIntroduction(false);
+    setGameStep(1); // Move to faucet step
   };
 
   const handleTurnOnFaucet = () => {
-    // Turn on faucet visual
-    setFaucetOn(true);
-    // Wait a moment, then advance to brushing step
-    setTimeout(() => {
-      setGameStep(2);
-      playSoundEffect('correct');
-    }, 500);
-  };
+  // Turn on faucet visual
+  setFaucetOn(true);
+  // Reset timer and animation states
+  setShowSinkPulse(false);
+  setSinkPulseScale(1);
+  // Wait a moment, then show step 2 introduction
+  setTimeout(() => {
+    setGameStep(2);
+    setShowStep2Introduction(true); // Show step 2 introduction
+    playSoundEffect('correct');
+  }, 500);
+};
+
+const handleStep2IntroductionComplete = () => {
+  setShowStep2Introduction(false);
+};
+
+// New function to handle step 3 introduction completion
+const handleStep3IntroductionComplete = () => {
+  setShowStep3Introduction(false);
+};
+
+// New function to handle step 4 introduction completion
+const handleStep4IntroductionComplete = () => {
+  setShowStep4Introduction(false);
+};
+
+// New function to handle step 5 introduction completion
+const handleStep5IntroductionComplete = () => {
+  setShowStep5Introduction(false);
+};
 
   // New function to handle soap application
   const handleApplySoap = (e) => {
@@ -155,9 +222,10 @@ export default function PersonalHygieneLevel1() {
         setSoapPlaced(true);
         playSoundEffect('correct');
         
-        // Advance to step 4 after a short delay
+        // Advance to step 4 after a short delay and show step 4 introduction
         setTimeout(() => {
           setGameStep(4);
+          setShowStep4Introduction(true);
         }, 1000);
       }
     }
@@ -242,6 +310,8 @@ export default function PersonalHygieneLevel1() {
               setShowWetHands(false);
               setHideAllImages(false); // Bring images back
               setGameStep(3); // move to Apply Soap step
+              // Show step 3 introduction after wetting hands
+              setShowStep3Introduction(true);
             }, 2000);
           } else if (gameStep === 5) {
             // Step 5: Rinse clean hands - show success
@@ -292,6 +362,8 @@ export default function PersonalHygieneLevel1() {
               setShowWetHands(false);
               setHideAllImages(false); // Bring images back
               setGameStep(3); // move to Apply Soap step
+              // Show step 3 introduction after wetting hands
+              setShowStep3Introduction(true);
             }, 2000);
           }
         }
@@ -381,37 +453,76 @@ export default function PersonalHygieneLevel1() {
     fetchData();
   }, [lessonId, moduleId]);
 
-  const saveProgress = async () => {
-    if (progressSaving || progressSaved) return;
+  useEffect(() => {
+  let timerInterval;
+  let animationInterval;
 
-    try {
-      setProgressSaving(true);
-      const studentId = getStudentId();
-      
-      if (!studentId || !lessonId) {
-        console.error('Cannot save progress - missing data:', { studentId, lessonId });
-        return;
-      }
-      
-      const progressData = {
-        studentId: studentId,
-        lessonId: parseInt(lessonId, 10),
-        completed: true,
-        starsEarned: 3 // Always give 3 stars when completed
-      };
-      
-      console.log('Saving progress for student:', studentId, progressData);
-      await saveStudentLessonProgress(studentId, lessonId, progressData);
-      
-      console.log('Progress saved successfully!');
-      setProgressSaved(true);
-      
-    } catch (error) {
-      console.error('Error saving progress:', error);
-    } finally {
-      setProgressSaving(false);
-    }
+  if (gameStep === 1 && !faucetOn) {
+    // Start the 10-second timer
+    setSinkTimer(10);
+    timerInterval = setInterval(() => {
+      setSinkTimer(prev => {
+        if (prev <= 1) {
+          clearInterval(timerInterval);
+          // Start pulsing animation when timer reaches 0
+          setShowSinkPulse(true);
+          // Start pulsing scale animation
+          let scale = 1;
+          animationInterval = setInterval(() => {
+            scale = scale === 1 ? 1.1 : 1;
+            setSinkPulseScale(scale);
+          }, 500); // Pulse every 500ms
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  } else {
+    // Reset when moving away from step 1 or faucet is turned on
+    setShowSinkPulse(false);
+    setSinkPulseScale(1);
+  }
+
+  return () => {
+    if (timerInterval) clearInterval(timerInterval);
+    if (animationInterval) clearInterval(animationInterval);
   };
+}, [gameStep, faucetOn]);
+
+  const saveProgress = async () => {
+  if (progressSaving || progressSaved) return;
+
+  try {
+    setProgressSaving(true);
+    const studentId = getStudentId();
+    
+    if (!studentId || !lessonId) {
+      console.error('Cannot save progress - missing data:', { studentId, lessonId });
+      return;
+    }
+    
+    // Create complete progress data with ALL required fields
+    const progressData = {
+      score: 100, // Add this - required by backend
+      maxScore: 100, // Add this - required by backend  
+      completed: true,
+      starsEarned: 3
+    };
+    
+    console.log('Saving progress for student:', studentId, 'lesson:', lessonId, 'data:', progressData);
+    
+    // Use the service function correctly
+    await saveStudentLessonProgress(studentId, parseInt(lessonId, 10), progressData);
+    
+    console.log('Progress saved successfully!');
+    setProgressSaved(true);
+    
+  } catch (error) {
+    console.error('Error saving progress:', error);
+  } finally {
+    setProgressSaving(false);
+  }
+};
 
   // Reset game state
   const resetGame = () => {
@@ -422,8 +533,17 @@ export default function PersonalHygieneLevel1() {
     setProgressSaving(false);
     setHideAllImages(false); // Reset image visibility
     
+    // Reset all popup states
+    setShowCharacterIntroduction(true); // Show Purrnando introduction again
+    setShowHandIntroduction(false); // Reset hand introduction
+    setShowSinkIntroduction(false); // Reset sink introduction
+    setShowStep2Introduction(false); // Reset step 2 introduction
+    setShowStep3Introduction(false); // Reset step 3 introduction
+    setShowStep4Introduction(false); // Reset step 4 introduction
+    setShowStep5Introduction(false); // Reset step 5 introduction
+    
     // Reset game states
-    setGameStep(1);
+    setGameStep(0); // Start with character introduction
     setFaucetOn(false);
     setStep2Completed(false);
     setIsDragging(false);
@@ -439,6 +559,14 @@ export default function PersonalHygieneLevel1() {
     setCurrentScrubVideoIndex(0); // Reset to first video
     // Reset step 5 state
     setStep5Completed(false);
+
+    // Reset timer states
+    setSinkTimer(10);
+    setShowSinkPulse(false);
+    setSinkPulseScale(1);
+
+    // Reset germs
+    setGermBlobs(initializeGerms());
 
     // Try to resume background audio if available
     if (audioRef) {
@@ -566,6 +694,1432 @@ export default function PersonalHygieneLevel1() {
       return () => clearTimeout(timer);
     }
   }, [showSuccess]);
+
+  // Character Introduction Popup Component
+  const CharacterIntroductionPopup = () => (
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 2000
+      }}
+    >
+      {/* Centered Cat Character */}
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        mb: 15,
+        position: 'relative'
+      }}>
+        <Box
+          component="img"
+          src={characterCatExcited}
+          alt="Purrnando the Cat"
+          sx={{
+            width: 400,
+            height: 400,
+            filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3))',
+            animation: 'bounceAndTilt 3s ease-in-out infinite',
+            '@keyframes bounceAndTilt': {
+              '0%': { 
+                transform: 'translateY(0px) rotate(0deg)',
+              },
+              '25%': { 
+                transform: 'translateY(-20px) rotate(5deg)',
+              },
+              '50%': { 
+                transform: 'translateY(0px) rotate(0deg)',
+              },
+              '75%': { 
+                transform: 'translateY(-10px) rotate(-5deg)',
+              },
+              '100%': { 
+                transform: 'translateY(0px) rotate(0deg)',
+              }
+            }
+          }}
+        />
+      </Box>
+      
+      {/* Popup at the bottom */}
+      <Paper
+        sx={{
+          position: 'fixed',
+          bottom: 50,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderRadius: '20px',
+          padding: 3,
+          maxWidth: '600px',
+          width: '90%',
+          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+          border: '3px solid #FFD166',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 3
+        }}
+      >
+        {/* Text content */}
+        <Box sx={{ flex: 1, textAlign: 'left' }}>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 'bold',
+              color: '#280B60',
+              mb: 1,
+              fontFamily: 'Poppins, sans-serif'
+            }}
+          >
+            Hi! I'm Purrnando! 🐱
+          </Typography>
+          
+          <Typography
+            variant="h6"
+            sx={{
+              color: '#333',
+              mb: 2,
+              fontFamily: 'Inter, sans-serif',
+              lineHeight: 1.4
+            }}
+          >
+            I'm here to help you learn how to wash your hands properly! 
+            Keeping your hands clean is super important for staying healthy.
+            Ready to learn with me?
+          </Typography>
+          
+          <Button
+            variant="contained"
+            onClick={handleCharacterIntroductionComplete}
+            sx={{
+              background: 'linear-gradient(135deg, #FFD166 0%, #FFB700 100%)',
+              color: '#280B60',
+              px: 4,
+              py: 1,
+              borderRadius: '20px',
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '700',
+              fontSize: '1.1rem',
+              textTransform: 'none',
+              boxShadow: '0 4px 15px rgba(255, 209, 102, 0.4)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #FFDC87 0%, #FFD166 100%)',
+                transform: 'translateY(-2px)'
+              }
+            }}
+          >
+            YES, LET'S GO! 🐾
+          </Button>
+        </Box>
+      </Paper>
+    </Box>
+  );
+
+  // Hand Introduction Popup Component
+  const HandIntroductionPopup = () => (
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 2000
+      }}
+    >
+      {/* Centered Hands with Germs and Mud */}
+      <Box sx={{ 
+        display: 'flex', 
+        gap: 8, 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        mb: 20,
+        position: 'relative'
+      }}>
+        {/* Left Hand with Mud and Germs */}
+        <Box sx={{ position: 'relative', width: 400, height: 400 }}>
+          <Box
+            component="img"
+            src={leftHandImg}
+            alt="Left Hand"
+            sx={{
+              width: '100%',
+              height: '100%',
+              filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3))',
+              animation: 'pulse 2s infinite',
+              '@keyframes pulse': {
+                '0%': { transform: 'scale(1)' },
+                '50%': { transform: 'scale(1.05)' },
+                '100%': { transform: 'scale(1)' }
+              }
+            }}
+          />
+          {/* Mud on left hand */}
+          <Box
+            component="img"
+            src={mudImg}
+            alt="Mud on left hand"
+            sx={{
+              position: 'absolute',
+              left: '60%',
+              bottom: '18%',
+              transform: 'translate(-50%, 0)',
+              width: 120,
+              height: 'auto',
+              zIndex: 7,
+              pointerEvents: 'none',
+              animation: 'wiggle 3s ease-in-out infinite',
+              '@keyframes wiggle': {
+                '0%': { transform: 'translate(-50%, 0) rotate(0deg)' },
+                '25%': { transform: 'translate(-50%, -5px) rotate(2deg)' },
+                '50%': { transform: 'translate(-50%, 0) rotate(0deg)' },
+                '75%': { transform: 'translate(-50%, 5px) rotate(-2deg)' },
+                '100%': { transform: 'translate(-50%, 0) rotate(0deg)' }
+              }
+            }}
+          />
+          {/* Germs on left hand */}
+          <Box
+            component="img"
+            src={germsImg}
+            alt="Germ on left hand"
+            sx={{
+              position: 'absolute',
+              left: '30%',
+              top: '40%',
+              width: 45,
+              height: 'auto',
+              zIndex: 8,
+              pointerEvents: 'none',
+              animation: 'float 4s ease-in-out infinite',
+              '@keyframes float': {
+                '0%': { transform: 'translateY(0px)' },
+                '50%': { transform: 'translateY(-8px)' },
+                '100%': { transform: 'translateY(0px)' }
+              }
+            }}
+          />
+          <Box
+            component="img"
+            src={germsImg}
+            alt="Germ on left hand"
+            sx={{
+              position: 'absolute',
+              left: '45%',
+              top: '60%',
+              width: 35,
+              height: 'auto',
+              zIndex: 8,
+              pointerEvents: 'none',
+              animation: 'float 3.5s ease-in-out infinite',
+              animationDelay: '0.5s',
+              '@keyframes float': {
+                '0%': { transform: 'translateY(0px)' },
+                '50%': { transform: 'translateY(-6px)' },
+                '100%': { transform: 'translateY(0px)' }
+              }
+            }}
+          />
+        </Box>
+
+        {/* Right Hand with Mud and Germs */}
+        <Box sx={{ position: 'relative', width: 400, height: 400 }}>
+          <Box
+            component="img"
+            src={rightHandImg}
+            alt="Right Hand"
+            sx={{
+              width: '100%',
+              height: '100%',
+              filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3))',
+              animation: 'pulse 2s infinite',
+              animationDelay: '0.5s',
+              '@keyframes pulse': {
+                '0%': { transform: 'scale(1)' },
+                '50%': { transform: 'scale(1.05)' },
+                '100%': { transform: 'scale(1)' }
+              }
+            }}
+          />
+          {/* Mud on right hand */}
+          <Box
+            component="img"
+            src={mudImg}
+            alt="Mud on right hand"
+            sx={{
+              position: 'absolute',
+              left: '45%',
+              bottom: '35%',
+              transform: 'translate(-50%, 0)',
+              width: 90,
+              height: 'auto',
+              zIndex: 7,
+              pointerEvents: 'none',
+              animation: 'wiggle 3.2s ease-in-out infinite',
+              animationDelay: '0.3s',
+              '@keyframes wiggle': {
+                '0%': { transform: 'translate(-50%, 0) rotate(0deg)' },
+                '25%': { transform: 'translate(-50%, -4px) rotate(-2deg)' },
+                '50%': { transform: 'translate(-50%, 0) rotate(0deg)' },
+                '75%': { transform: 'translate(-50%, 4px) rotate(2deg)' },
+                '100%': { transform: 'translate(-50%, 0) rotate(0deg)' }
+              }
+            }}
+          />
+          {/* Germs on right hand */}
+          <Box
+            component="img"
+            src={germsImg}
+            alt="Germ on right hand"
+            sx={{
+              position: 'absolute',
+              left: '65%',
+              top: '30%',
+              width: 50,
+              height: 'auto',
+              zIndex: 8,
+              pointerEvents: 'none',
+              animation: 'float 4.2s ease-in-out infinite',
+              animationDelay: '0.7s',
+              '@keyframes float': {
+                '0%': { transform: 'translateY(0px)' },
+                '50%': { transform: 'translateY(-7px)' },
+                '100%': { transform: 'translateY(0px)' }
+              }
+            }}
+          />
+          <Box
+            component="img"
+            src={germsImg}
+            alt="Germ on right hand"
+            sx={{
+              position: 'absolute',
+              left: '55%',
+              top: '55%',
+              width: 40,
+              height: 'auto',
+              zIndex: 8,
+              pointerEvents: 'none',
+              animation: 'float 3.8s ease-in-out infinite',
+              animationDelay: '1.2s',
+              '@keyframes float': {
+                '0%': { transform: 'translateY(0px)' },
+                '50%': { transform: 'translateY(-9px)' },
+                '100%': { transform: 'translateY(0px)' }
+              }
+            }}
+          />
+          <Box
+            component="img"
+            src={germsImg}
+            alt="Germ on right hand"
+            sx={{
+              position: 'absolute',
+              left: '35%',
+              top: '45%',
+              width: 30,
+              height: 'auto',
+              zIndex: 8,
+              pointerEvents: 'none',
+              animation: 'float 3.2s ease-in-out infinite',
+              animationDelay: '0.9s',
+              '@keyframes float': {
+                '0%': { transform: 'translateY(0px)' },
+                '50%': { transform: 'translateY(-5px)' },
+                '100%': { transform: 'translateY(0px)' }
+              }
+            }}
+          />
+        </Box>
+      </Box>
+      
+      {/* Popup at the bottom with Cat on left side */}
+      <Paper
+        sx={{
+          position: 'fixed',
+          bottom: 50,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderRadius: '20px',
+          padding: 3,
+          maxWidth: '600px',
+          width: '90%',
+          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+          border: '3px solid #FF595E',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 3
+        }}
+      >
+        {/* Cat on left side */}
+        <Box
+          component="img"
+          src={characterCatWorried}
+          alt="Cute Cat Helper"
+          sx={{
+            width: 100,
+            height: 'auto',
+            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+            animation: 'tilt 3s ease-in-out infinite',
+            '@keyframes tilt': {
+              '0%': { transform: 'rotate(0deg)' },
+              '25%': { transform: 'rotate(5deg)' },
+              '50%': { transform: 'rotate(0deg)' },
+              '75%': { transform: 'rotate(-5deg)' },
+              '100%': { transform: 'rotate(0deg)' }
+            }
+          }}
+        />
+        
+        {/* Text content */}
+        <Box sx={{ flex: 1, textAlign: 'left' }}>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 'bold',
+              color: '#280B60',
+              mb: 1,
+              fontFamily: 'Poppins, sans-serif'
+            }}
+          >
+            Oh no! You need to clean your hands!
+          </Typography>
+          
+          <Typography
+            variant="body1"
+            sx={{
+              color: '#333',
+              mb: 2,
+              fontSize: '1rem',
+              fontFamily: 'Inter, sans-serif',
+              lineHeight: 1.4
+            }}
+          >
+            Look at these dirty hands! They're covered in germs and mud and need a good wash. 
+            Let's learn how to make them clean and healthy!
+          </Typography>
+          
+          <Button
+            variant="contained"
+            onClick={handleHandIntroductionComplete}
+            sx={{
+              background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+              color: 'white',
+              px: 4,
+              py: 1,
+              borderRadius: '20px',
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '700',
+              fontSize: '1rem',
+              textTransform: 'none',
+              boxShadow: '0 4px 15px rgba(255, 89, 94, 0.4)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
+                transform: 'translateY(-2px)'
+              }
+            }}
+          >
+            LET'S CLEAN THEM!
+          </Button>
+        </Box>
+      </Paper>
+    </Box>
+  );
+
+  // Sink Introduction Popup Component
+  const SinkIntroductionPopup = () => (
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 2000
+      }}
+    >
+      {/* Centered Sink */}
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        mb: 15,
+        position: 'relative'
+      }}>
+        <Box
+          component="img"
+          src={sinkImg}
+          alt="Sink"
+          sx={{
+            width: 500,
+            height: 500,
+            filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3))',
+            animation: 'pulse 2s infinite',
+            '@keyframes pulse': {
+              '0%': { transform: 'scale(1)' },
+              '50%': { transform: 'scale(1.05)' },
+              '100%': { transform: 'scale(1)' }
+            }
+          }}
+        />
+      </Box>
+      
+      {/* Popup at the bottom with Cat on left side */}
+      <Paper
+        sx={{
+          position: 'fixed',
+          bottom: 50,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderRadius: '20px',
+          padding: 3,
+          maxWidth: '600px',
+          width: '90%',
+          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+          border: '3px solid #1982C4',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 3
+        }}
+      >
+        {/* Cat on left side */}
+        <Box
+          component="img"
+          src={characterCatHelpful}
+          alt="Cute Cat Helper"
+          sx={{
+            width: 100,
+            height: 'auto',
+            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+            animation: 'bounce 2s ease-in-out infinite',
+            '@keyframes bounce': {
+              '0%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-10px)' },
+              '100%': { transform: 'translateY(0px)' }
+            }
+          }}
+        />
+        
+        {/* Text content */}
+        <Box sx={{ flex: 1, textAlign: 'left' }}>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 'bold',
+              color: '#280B60',
+              mb: 1,
+              fontFamily: 'Poppins, sans-serif'
+            }}
+          >
+            This is the Sink!
+          </Typography>
+          
+          <Typography
+            variant="body1"
+            sx={{
+              color: '#333',
+              mb: 2,
+              fontSize: '1rem',
+              fontFamily: 'Inter, sans-serif',
+              lineHeight: 1.4
+            }}
+          >
+            This is where we'll wash our hands! Click on the sink to turn on the water 
+            and get ready to clean those dirty hands!
+          </Typography>
+          
+          <Button
+            variant="contained"
+            onClick={handleSinkIntroductionComplete}
+            sx={{
+              background: 'linear-gradient(135deg, #1982C4 0%, #1568A0 100%)',
+              color: 'white',
+              px: 4,
+              py: 1,
+              borderRadius: '20px',
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '700',
+              fontSize: '1rem',
+              textTransform: 'none',
+              boxShadow: '0 4px 15px rgba(25, 130, 196, 0.4)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #42A5F5 0%, #1982C4 100%)',
+                transform: 'translateY(-2px)'
+              }
+            }}
+          >
+            GOT IT!
+          </Button>
+        </Box>
+      </Paper>
+    </Box>
+  );
+
+  // Step 2 Introduction Popup Component
+  const Step2IntroductionPopup = () => (
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 2000
+      }}
+    >
+      {/* Centered Hands and Sink with Water */}
+      <Box sx={{ 
+        display: 'flex', 
+        gap: 8, 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        mb: 15,
+        position: 'relative'
+      }}>
+        {/* Hands */}
+        <Box sx={{ display: 'flex', gap: 4, position: 'relative', zIndex: 2 }}>
+          <Box
+            component="img"
+            src={leftHandImg}
+            alt="Left Hand"
+            sx={{
+              width: 300,
+              height: 'auto',
+              filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3))'
+            }}
+          />
+          <Box
+            component="img"
+            src={rightHandImg}
+            alt="Right Hand"
+            sx={{
+              width: 300,
+              height: 'auto',
+              filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3))'
+            }}
+          />
+        </Box>
+        
+        {/* Sink with Water */}
+        <Box sx={{ position: 'relative', zIndex: 1 }}>
+          <Box
+            component="img"
+            src={faucetImg}
+            alt="Sink with Running Water"
+            sx={{
+              width: 400,
+              height: 400,
+              filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3))'
+            }}
+          />
+        </Box>
+      </Box>
+      
+      {/* Arrow animation pointing from hands to sink */}
+      <Box sx={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: 200,
+        height: 50,
+        zIndex: 3
+      }}>
+        <Box
+          sx={{
+            width: '100%',
+            height: '4px',
+            backgroundColor: '#FFD700',
+            position: 'relative',
+            animation: 'arrowPulse 2s ease-in-out infinite',
+            '@keyframes arrowPulse': {
+              '0%': { 
+                transform: 'scaleX(0.8)',
+                opacity: 0.7
+              },
+              '50%': { 
+                transform: 'scaleX(1)',
+                opacity: 1
+              },
+              '100%': { 
+                transform: 'scaleX(0.8)',
+                opacity: 0.7
+              }
+            },
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              right: 0,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: 0,
+              height: 0,
+              borderLeft: '15px solid #FFD700',
+              borderTop: '10px solid transparent',
+              borderBottom: '10px solid transparent'
+            }
+          }}
+        />
+      </Box>
+      
+      {/* Popup at the bottom with Cat on left side */}
+      <Paper
+        sx={{
+          position: 'fixed',
+          bottom: 50,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderRadius: '20px',
+          padding: 3,
+          maxWidth: '600px',
+          width: '90%',
+          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+          border: '3px solid #90BE6D',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 3
+        }}
+      >
+        {/* Cat on left side */}
+        <Box
+          component="img"
+          src={characterCatHelpful}
+          alt="Cute Cat Helper"
+          sx={{
+            width: 100,
+            height: 'auto',
+            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+            animation: 'bounce 4s ease-in-out infinite',
+            '@keyframes bounce': {
+              '0%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-10px)' },
+              '100%': { transform: 'translateY(0px)' }
+            }
+          }}
+        />
+        
+        {/* Text content */}
+        <Box sx={{ flex: 1, textAlign: 'left' }}>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 'bold',
+              color: '#280B60',
+              mb: 1,
+              fontFamily: 'Poppins, sans-serif'
+            }}
+          >
+            Now Wet Your Hands!
+          </Typography>
+          
+          <Typography
+            variant="body1"
+            sx={{
+              color: '#333',
+              mb: 2,
+              fontSize: '1rem',
+              fontFamily: 'Inter, sans-serif',
+              lineHeight: 1.4
+            }}
+          >
+            Great! The water is running. Now drag your hands to the sink to wet them under the water. 
+            This is the first step to getting them clean!
+          </Typography>
+          
+          <Button
+            variant="contained"
+            onClick={handleStep2IntroductionComplete}
+            sx={{
+              background: 'linear-gradient(135deg, #90BE6D 0%, #7BA05B 100%)',
+              color: 'white',
+              px: 4,
+              py: 1,
+              borderRadius: '20px',
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '700',
+              fontSize: '1rem',
+              textTransform: 'none',
+              boxShadow: '0 4px 15px rgba(144, 190, 109, 0.4)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #A8D08D 0%, #90BE6D 100%)',
+                transform: 'translateY(-2px)'
+              }
+            }}
+          >
+            LET'S WET THEM!
+          </Button>
+        </Box>
+      </Paper>
+    </Box>
+  );
+
+  // Step 3 Introduction Popup Component
+  const Step3IntroductionPopup = () => (
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 2000
+      }}
+    >
+      {/* Centered Sink with Soap Area Highlighted */}
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        mb: 15,
+        position: 'relative'
+      }}>
+        <Box sx={{ position: 'relative' }}>
+          <Box
+            component="img"
+            src={faucetImg}
+            alt="Sink with Soap Dispenser"
+            sx={{
+              width: 500,
+              height: 500,
+              filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3))'
+            }}
+          />
+          
+          {/* Highlighted soap area */}
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '8%',
+              right: '15%',
+              width: '25%',
+              height: '20%',
+              border: '4px dashed #FFD700',
+              borderRadius: '15px',
+              backgroundColor: 'rgba(255, 215, 0, 0.2)',
+              animation: 'pulseHighlight 2s ease-in-out infinite',
+              '@keyframes pulseHighlight': {
+                '0%': { 
+                  borderColor: '#FFD700',
+                  backgroundColor: 'rgba(255, 215, 0, 0.2)'
+                },
+                '50%': { 
+                  borderColor: '#FFA500',
+                  backgroundColor: 'rgba(255, 215, 0, 0.4)'
+                },
+                '100%': { 
+                  borderColor: '#FFD700',
+                  backgroundColor: 'rgba(255, 215, 0, 0.2)'
+                }
+              }
+            }}
+          />
+          
+          {/* Soap icon inside highlighted area */}
+          <Box
+            component="img"
+            src={soapImg}
+            alt="Soap"
+            sx={{
+              position: 'absolute',
+              top: '12%',
+              right: '20%',
+              width: '15%',
+              height: 'auto',
+              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))',
+              animation: 'bounceSoap 2s ease-in-out infinite',
+              '@keyframes bounceSoap': {
+                '0%': { transform: 'translateY(0px)' },
+                '50%': { transform: 'translateY(-10px)' },
+                '100%': { transform: 'translateY(0px)' }
+              }
+            }}
+          />
+        </Box>
+      </Box>
+      
+      {/* Popup at the bottom with Cat on left side */}
+      <Paper
+        sx={{
+          position: 'fixed',
+          bottom: 50,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderRadius: '20px',
+          padding: 3,
+          maxWidth: '600px',
+          width: '90%',
+          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+          border: '3px solid #FF9800',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 3
+        }}
+      >
+        {/* Cat on left side */}
+        <Box
+          component="img"
+          src={characterCatHelpful}
+          alt="Cute Cat Helper"
+          sx={{
+            width: 100,
+            height: 'auto',
+            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+            animation: 'bounce 3s ease-in-out infinite',
+            '@keyframes bounce': {
+              '0%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-8px)' },
+              '100%': { transform: 'translateY(0px)' }
+            }
+          }}
+        />
+        
+        {/* Text content */}
+        <Box sx={{ flex: 1, textAlign: 'left' }}>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 'bold',
+              color: '#280B60',
+              mb: 1,
+              fontFamily: 'Poppins, sans-serif'
+            }}
+          >
+            Time for Soap!
+          </Typography>
+          
+          <Typography
+            variant="body1"
+            sx={{
+              color: '#333',
+              mb: 2,
+              fontSize: '1rem',
+              fontFamily: 'Inter, sans-serif',
+              lineHeight: 1.4
+            }}
+          >
+            Great! Your hands are wet. Now we need soap to clean away the germs and dirt. 
+            Click on the soap dispenser in the upper right corner to get some soap on your hands!
+          </Typography>
+          
+          <Button
+            variant="contained"
+            onClick={handleStep3IntroductionComplete}
+            sx={{
+              background: 'linear-gradient(135deg, #FF9800 0%, #F57C00 100%)',
+              color: 'white',
+              px: 4,
+              py: 1,
+              borderRadius: '20px',
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '700',
+              fontSize: '1rem',
+              textTransform: 'none',
+              boxShadow: '0 4px 15px rgba(255, 152, 0, 0.4)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #FFB74D 0%, #FF9800 100%)',
+                transform: 'translateY(-2px)'
+              }
+            }}
+          >
+            GET SOAP!
+          </Button>
+        </Box>
+      </Paper>
+    </Box>
+  );
+
+  // Step 4 Introduction Popup Component - NEW POPUP
+  const Step4IntroductionPopup = () => (
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 2000
+      }}
+    >
+      {/* Centered Hands with Soap */}
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        mb: 15,
+        position: 'relative'
+      }}>
+        <Box sx={{ display: 'flex', gap: 6, position: 'relative' }}>
+          {/* Left Hand with Soap */}
+          <Box sx={{ position: 'relative', width: 350, height: 'auto' }}>
+            <Box
+              component="img"
+              src={leftHandImg}
+              alt="Left Hand with Soap"
+              sx={{
+                width: '100%',
+                height: 'auto',
+                filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3))',
+                animation: 'pulseHands 2s ease-in-out infinite',
+                '@keyframes pulseHands': {
+                  '0%': { transform: 'scale(1)' },
+                  '50%': { transform: 'scale(1.05)' },
+                  '100%': { transform: 'scale(1)' }
+                }
+              }}
+            />
+            <Box
+              component="img"
+              src={soapImg}
+              alt="Soap"
+              sx={{
+                position: 'absolute',
+                left: '40%',
+                bottom: '25%',
+                width: '30%',
+                height: 'auto',
+                filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))',
+                animation: 'rotateSoap 3s ease-in-out infinite',
+                '@keyframes rotateSoap': {
+                  '0%': { transform: 'rotate(0deg)' },
+                  '25%': { transform: 'rotate(10deg)' },
+                  '50%': { transform: 'rotate(0deg)' },
+                  '75%': { transform: 'rotate(-10deg)' },
+                  '100%': { transform: 'rotate(0deg)' }
+                }
+              }}
+            />
+          </Box>
+
+          {/* Right Hand with Soap */}
+          <Box sx={{ position: 'relative', width: 350, height: 'auto' }}>
+            <Box
+              component="img"
+              src={rightHandImg}
+              alt="Right Hand with Soap"
+              sx={{
+                width: '100%',
+                height: 'auto',
+                filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3))',
+                animation: 'pulseHands 2s ease-in-out infinite',
+                animationDelay: '0.5s',
+                '@keyframes pulseHands': {
+                  '0%': { transform: 'scale(1)' },
+                  '50%': { transform: 'scale(1.05)' },
+                  '100%': { transform: 'scale(1)' }
+                }
+              }}
+            />
+            <Box
+              component="img"
+              src={soapImg}
+              alt="Soap"
+              sx={{
+                position: 'absolute',
+                left: '40%',
+                bottom: '25%',
+                width: '30%',
+                height: 'auto',
+                filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))',
+                animation: 'rotateSoap 3s ease-in-out infinite',
+                animationDelay: '1s',
+                '@keyframes rotateSoap': {
+                  '0%': { transform: 'rotate(0deg)' },
+                  '25%': { transform: 'rotate(10deg)' },
+                  '50%': { transform: 'rotate(0deg)' },
+                  '75%': { transform: 'rotate(-10deg)' },
+                  '100%': { transform: 'rotate(0deg)' }
+                }
+              }}
+            />
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Rubbing motion animation */}
+      <Box sx={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: 100,
+        height: 50,
+        zIndex: 3
+      }}>
+        <Box
+          sx={{
+            width: '100%',
+            height: '8px',
+            backgroundColor: '#4CAF50',
+            borderRadius: '4px',
+            position: 'relative',
+            animation: 'rubMotion 1.5s ease-in-out infinite',
+            '@keyframes rubMotion': {
+              '0%': { 
+                transform: 'translateX(-20px)',
+                opacity: 0.7
+              },
+              '50%': { 
+                transform: 'translateX(20px)',
+                opacity: 1
+              },
+              '100%': { 
+                transform: 'translateX(-20px)',
+                opacity: 0.7
+              }
+            }
+          }}
+        />
+      </Box>
+      
+      {/* Popup at the bottom with Cat on left side */}
+      <Paper
+        sx={{
+          position: 'fixed',
+          bottom: 50,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderRadius: '20px',
+          padding: 3,
+          maxWidth: '600px',
+          width: '90%',
+          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+          border: '3px solid #4CAF50',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 3
+        }}
+      >
+        {/* Cat on left side */}
+        <Box
+          component="img"
+          src={characterCatHelpful}
+          alt="Cute Cat Helper"
+          sx={{
+            width: 100,
+            height: 'auto',
+            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+            animation: 'bounce 3s ease-in-out infinite',
+            '@keyframes bounce': {
+              '0%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-8px)' },
+              '100%': { transform: 'translateY(0px)' }
+            }
+          }}
+        />
+        
+        {/* Text content */}
+        <Box sx={{ flex: 1, textAlign: 'left' }}>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 'bold',
+              color: '#280B60',
+              mb: 1,
+              fontFamily: 'Poppins, sans-serif'
+            }}
+          >
+            Time to Rub and Scrub!
+          </Typography>
+          
+          <Typography
+            variant="body1"
+            sx={{
+              color: '#333',
+              mb: 2,
+              fontSize: '1rem',
+              fontFamily: 'Inter, sans-serif',
+              lineHeight: 1.4
+            }}
+          >
+            Perfect! You've got soap on your hands. Now we need to rub them together to create a good lather. 
+            Click on your hands to start scrubbing and learn the proper technique!
+          </Typography>
+          
+          <Button
+            variant="contained"
+            onClick={handleStep4IntroductionComplete}
+            sx={{
+              background: 'linear-gradient(135deg, #4CAF50 0%, #45A049 100%)',
+              color: 'white',
+              px: 4,
+              py: 1,
+              borderRadius: '20px',
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '700',
+              fontSize: '1rem',
+              textTransform: 'none',
+              boxShadow: '0 4px 15px rgba(76, 175, 80, 0.4)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%)',
+                transform: 'translateY(-2px)'
+              }
+            }}
+          >
+            START SCRUBBING!
+          </Button>
+        </Box>
+      </Paper>
+    </Box>
+  );
+
+  // Step 5 Introduction Popup Component - NEW POPUP
+  const Step5IntroductionPopup = () => (
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 2000
+      }}
+    >
+      {/* Centered Clean Hands and Sink */}
+      <Box sx={{ 
+        display: 'flex', 
+        gap: 8, 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        mb: 15,
+        position: 'relative'
+      }}>
+        {/* Clean Hands (no mud or germs) */}
+        <Box sx={{ display: 'flex', gap: 4, position: 'relative', zIndex: 2 }}>
+          <Box
+            component="img"
+            src={leftHandImg}
+            alt="Clean Left Hand"
+            sx={{
+              width: 300,
+              height: 'auto',
+              filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3)) brightness(1.1)',
+              animation: 'sparkle 2s ease-in-out infinite',
+              '@keyframes sparkle': {
+                '0%': { filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3)) brightness(1.1)' },
+                '50%': { filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.6)) brightness(1.2)' },
+                '100%': { filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3)) brightness(1.1)' }
+              }
+            }}
+          />
+          <Box
+            component="img"
+            src={rightHandImg}
+            alt="Clean Right Hand"
+            sx={{
+              width: 300,
+              height: 'auto',
+              filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3)) brightness(1.1)',
+              animation: 'sparkle 2s ease-in-out infinite',
+              animationDelay: '0.5s',
+              '@keyframes sparkle': {
+                '0%': { filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3)) brightness(1.1)' },
+                '50%': { filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.6)) brightness(1.2)' },
+                '100%': { filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3)) brightness(1.1)' }
+              }
+            }}
+          />
+        </Box>
+        
+        {/* Sink with Water */}
+        <Box sx={{ position: 'relative', zIndex: 1 }}>
+          <Box
+            component="img"
+            src={faucetImg}
+            alt="Sink with Running Water"
+            sx={{
+              width: 400,
+              height: 400,
+              filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3))'
+            }}
+          />
+        </Box>
+      </Box>
+      
+      {/* Arrow animation pointing from hands to sink */}
+      <Box sx={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: 200,
+        height: 50,
+        zIndex: 3
+      }}>
+        <Box
+          sx={{
+            width: '100%',
+            height: '4px',
+            backgroundColor: '#2196F3',
+            position: 'relative',
+            animation: 'arrowPulse 2s ease-in-out infinite',
+            '@keyframes arrowPulse': {
+              '0%': { 
+                transform: 'scaleX(0.8)',
+                opacity: 0.7
+              },
+              '50%': { 
+                transform: 'scaleX(1)',
+                opacity: 1
+              },
+              '100%': { 
+                transform: 'scaleX(0.8)',
+                opacity: 0.7
+              }
+            },
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              right: 0,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: 0,
+              height: 0,
+              borderLeft: '15px solid #2196F3',
+              borderTop: '10px solid transparent',
+              borderBottom: '10px solid transparent'
+            }
+          }}
+        />
+      </Box>
+      
+      {/* Popup at the bottom with Cat on left side */}
+      <Paper
+        sx={{
+          position: 'fixed',
+          bottom: 50,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderRadius: '20px',
+          padding: 3,
+          maxWidth: '600px',
+          width: '90%',
+          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+          border: '3px solid #2196F3',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 3
+        }}
+      >
+        {/* Cat on left side */}
+        <Box
+          component="img"
+          src={characterCatExcited}
+          alt="Excited Cat Helper"
+          sx={{
+            width: 100,
+            height: 'auto',
+            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+            animation: 'happyDance 3s ease-in-out infinite',
+            '@keyframes happyDance': {
+              '0%': { transform: 'translateY(0px) rotate(0deg)' },
+              '25%': { transform: 'translateY(-10px) rotate(5deg)' },
+              '50%': { transform: 'translateY(0px) rotate(0deg)' },
+              '75%': { transform: 'translateY(-5px) rotate(-5deg)' },
+              '100%': { transform: 'translateY(0px) rotate(0deg)' }
+            }
+          }}
+        />
+        
+        {/* Text content */}
+        <Box sx={{ flex: 1, textAlign: 'left' }}>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 'bold',
+              color: '#280B60',
+              mb: 1,
+              fontFamily: 'Poppins, sans-serif'
+            }}
+          >
+            Final Rinse!
+          </Typography>
+          
+          <Typography
+            variant="body1"
+            sx={{
+              color: '#333',
+              mb: 2,
+              fontSize: '1rem',
+              fontFamily: 'Inter, sans-serif',
+              lineHeight: 1.4
+            }}
+          >
+            Excellent scrubbing! Your hands are now covered in soapy lather. 
+            The final step is to rinse off all the soap and dirt. 
+            Drag your clean hands to the sink to rinse them under the running water!
+          </Typography>
+          
+          <Button
+            variant="contained"
+            onClick={handleStep5IntroductionComplete}
+            sx={{
+              background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)',
+              color: 'white',
+              px: 4,
+              py: 1,
+              borderRadius: '20px',
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '700',
+              fontSize: '1rem',
+              textTransform: 'none',
+              boxShadow: '0 4px 15px rgba(33, 150, 243, 0.4)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #42A5F5 0%, #2196F3 100%)',
+                transform: 'translateY(-2px)'
+              }
+            }}
+          >
+            RINSE HANDS!
+          </Button>
+        </Box>
+      </Paper>
+    </Box>
+  );
 
   // Start screen
   if (showStartScreen) {
@@ -756,7 +2310,7 @@ export default function PersonalHygieneLevel1() {
               borderRadius: '10px',
               boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
             }}>
-              Step {gameStep}/5: {gameStep === 1 ? 'Turn on faucet' : gameStep === 2 ? 'Wet Hands' : gameStep === 3 ? 'Apply Soap' : gameStep === 4 ? 'Rub Hands' : 'Rinse Hands'}
+              Step {gameStep === 0 ? 'Introduction' : `${gameStep}/5`}: {gameStep === 0 ? 'Meet Purrnando!' : gameStep === 1 ? 'Turn on the faucet!' : gameStep === 2 ? 'Wet Hands' : gameStep === 3 ? 'Apply Soap' : gameStep === 4 ? 'Rub Hands' : gameStep === 5 ? 'Rinse Hands' : 'Rinse Hands'}
             </Typography>
             
             <Chip  
@@ -776,7 +2330,7 @@ export default function PersonalHygieneLevel1() {
           <Box sx={{ maxWidth: '800px', mx: 'auto' }}>
             <LinearProgress 
               variant="determinate" 
-              value={(gameStep / 5) * 100} 
+              value={((gameStep === 0 ? 0 : gameStep) / 5) * 100} 
               sx={{ 
                 height: 8, 
                 borderRadius: '10px',
@@ -843,21 +2397,43 @@ export default function PersonalHygieneLevel1() {
             color: 'white', 
             fontWeight: 'bold',
             fontFamily: 'Poppins, sans-serif',
-            backgroundColor: gameStep === 3 ? '#FF9800' : 'rgba(25, 130, 196, 0.9)',
+            backgroundColor: gameStep === 3 ? '#FF9800' : gameStep === 4 ? '#4CAF50' : gameStep === 5 ? '#2196F3' : 'rgba(25, 130, 196, 0.9)',
             display: 'inline-block',
             px: 3,
             py: 1,
             borderRadius: '15px',
             fontSize: '1rem',
-            boxShadow: gameStep === 3 ? '0 4px 15px rgba(255, 152, 0, 0.4)' : '0 4px 15px rgba(25, 130, 196, 0.4)'
+            boxShadow: gameStep === 3 ? '0 4px 15px rgba(255, 152, 0, 0.4)' : gameStep === 4 ? '0 4px 15px rgba(76, 175, 80, 0.4)' : gameStep === 5 ? '0 4px 15px rgba(33, 150, 243, 0.4)' : '0 4px 15px rgba(25, 130, 196, 0.4)'
           }}>
-            {gameStep === 1 ? 'Click the sink to turn on water!' : 
+            {gameStep === 0 ? 'Let\'s learn about handwashing!' : 
+             gameStep === 1 ? 'Click the sink to turn on water!' : 
              gameStep === 2 ? 'Drag hands to sink to wet hands!' :
              gameStep === 3 ? 'Click the soap dispenser (upper right) to get soap!' :
              gameStep === 4 ? 'Click on hands to rub them together!' :
              'Drag clean hands to sink to rinse!'}
           </Typography>
         </Box>
+
+        {/* Character Introduction Popup */}
+        {showCharacterIntroduction && <CharacterIntroductionPopup />}
+
+        {/* Hand Introduction Popup */}
+        {showHandIntroduction && <HandIntroductionPopup />}
+
+        {/* Sink Introduction Popup */}
+        {showSinkIntroduction && <SinkIntroductionPopup />}
+
+        {/* Step 2 Introduction Popup */}
+        {showStep2Introduction && <Step2IntroductionPopup />}
+
+        {/* Step 3 Introduction Popup */}
+        {showStep3Introduction && <Step3IntroductionPopup />}
+
+        {/* Step 4 Introduction Popup - NEW POPUP */}
+        {showStep4Introduction && <Step4IntroductionPopup />}
+
+        {/* Step 5 Introduction Popup - NEW POPUP */}
+        {showStep5Introduction && <Step5IntroductionPopup />}
 
         {/* Scrub Video Overlay */}
         {showScrubVideo && (
@@ -898,6 +2474,24 @@ export default function PersonalHygieneLevel1() {
                 Your browser does not support the video tag.
               </video>
               
+              {/* Video Description */}
+              <Typography variant="h6" sx={{ 
+                color: 'white', 
+                mt: 2, 
+                textAlign: 'center',
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: 'bold',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
+              }}>
+                {currentScrubVideoIndex === 0 && "Step 1: Rub palms together"}
+                {currentScrubVideoIndex === 1 && "Step 2: Back of hand and palm"}
+                {currentScrubVideoIndex === 2 && "Step 3: Between fingers"}
+                {currentScrubVideoIndex === 3 && "Step 4: Knuckle and palm"}
+                {currentScrubVideoIndex === 4 && "Step 5: Cleaning thumb"}
+                {currentScrubVideoIndex === 5 && "Step 6: Fingertips and palm"}
+                {currentScrubVideoIndex === 6 && "Step 7: Wrist"}
+              </Typography>
+              
               {/* NEXT/FINISH Button */}
               <Button
                 variant="contained"
@@ -909,7 +2503,9 @@ export default function PersonalHygieneLevel1() {
                     // If on the last video (scrub7.mp4), proceed to step 5
                     setShowScrubVideo(false);
                     setHandsRubbed(true);
-                    setGameStep(5); // Move to step 5 instead of showing success
+                    setGameStep(5); // Move to step 5
+                    // Show step 5 introduction after scrubbing
+                    setShowStep5Introduction(true);
                   }
                 }}
                 sx={{
@@ -936,36 +2532,8 @@ export default function PersonalHygieneLevel1() {
           </Box>
         )}
 
-        {/* Teeth bubbles - bubbles that stay on teeth surface with improved styling */}
-        {teethBubbles.map(bubble => (
-          <Box
-            key={bubble.id}
-            sx={{
-              position: 'absolute',
-              left: `${bubble.x}%`,
-              top: `${bubble.y}%`,
-              width: `${bubble.size}px`,
-              height: `${bubble.size}px`,
-              backgroundColor: 'white',
-              border: '1px solid rgba(173, 216, 230, 0.3)',
-              borderRadius: '50%',
-              pointerEvents: 'none',
-              zIndex: 10,
-              opacity: bubble.opacity,
-              transform: 'translate(-50%, -50%)',
-              boxShadow: '0 0 8px rgba(255, 255, 255, 0.6), inset 0 0 8px rgba(173, 216, 230, 0.2)',
-              animation: 'gentleBubble 3s ease-in-out infinite',
-              '@keyframes gentleBubble': {
-                '0%': { transform: 'translate(-50%, -50%) scale(1)' },
-                '50%': { transform: 'translate(-50%, -50%) scale(1.1)' },
-                '100%': { transform: 'translate(-50%, -50%) scale(1)' }
-              }
-            }}
-          />
-        ))}
-
         {/* Conditionally render game content based on hideAllImages state */}
-        {!hideAllImages && !gameCompleted && (
+        {!hideAllImages && !gameCompleted && !showCharacterIntroduction && !showHandIntroduction && !showSinkIntroduction && !showStep2Introduction && !showStep3Introduction && !showStep4Introduction && !showStep5Introduction && (
           <Box 
             sx={{ 
               display: 'flex',
@@ -1032,28 +2600,63 @@ export default function PersonalHygieneLevel1() {
                   />
                 ) : null}
                 {/* render sink when faucet image not shown */}
-                { (faucetOn || gameStep > 1 || step2Completed || gameCompleted) ? null : (
-                  <Box
-                    component="img"
-                    src={sinkImg}
-                    alt="Sink"
-                    onClick={gameStep === 1 && !faucetOn ? handleTurnOnFaucet : undefined}
-                    sx={{
-                      width: '650px',
-                      height: '600px',
-                      objectFit: 'contain',
-                      cursor: gameStep === 1 && !faucetOn ? 'pointer' : 'default',
-                      boxShadow: 'none',
-                      transition: 'transform 200ms ease',
-                      position: 'relative',
-                      zIndex: 3,
-                      ...(gameStep === 1 && !faucetOn ? {
-                        '&:hover': {
-                          transform: 'scale(1.06)'
-                        }
-                      } : {})
-                    }}
-                  />
+                {(faucetOn || gameStep > 1 || step2Completed || gameCompleted) ? null : (
+                  <Box sx={{ position: 'relative' }}>
+                    <Box
+                      component="img"
+                      src={sinkImg}
+                      alt="Sink"
+                      onClick={gameStep === 1 && !faucetOn ? handleTurnOnFaucet : undefined}
+                      sx={{
+                        width: '650px',
+                        height: '600px',
+                        objectFit: 'contain',
+                        cursor: gameStep === 1 && !faucetOn ? 'pointer' : 'default',
+                        transition: showSinkPulse 
+                          ? 'all 0.5s ease, transform 200ms ease, box-shadow 0.5s ease'
+                          : 'transform 200ms ease',
+                        position: 'relative',
+                        zIndex: 3,
+                        transform: showSinkPulse 
+                          ? `scale(${sinkPulseScale})`
+                          : (gameStep === 1 && !faucetOn ? 'scale(1.06)' : 'scale(1)'),
+                        ...(gameStep === 1 && !faucetOn ? {
+                          '&:hover': {
+                            transform: showSinkPulse ? `scale(${sinkPulseScale * 1.02})` : 'scale(1.06)'
+                          }
+                        } : {})
+                      }}
+                    />
+                    
+                    {/* Warning message when timer reaches 0 */}
+                    {showSinkPulse && (
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: '5%',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          //backgroundColor: 'rgba(255, 0, 0, 0.9)',
+                          color: 'white',
+                          padding: '10px 20px',
+                          borderRadius: '15px',
+                          fontSize: '1.2rem',
+                          fontWeight: 'bold',
+                          fontFamily: 'Poppins, sans-serif',
+                          zIndex: 4,
+                          textAlign: 'center',
+                          //boxShadow: '0 0 20px rgba(255, 0, 0, 0.7)',
+                          animation: 'fadeInOut 4s infinite',
+                          '@keyframes fadeInOut': {
+                            '0%': { opacity: 0.7 },
+                            '50%': { opacity: 1 },
+                            '100%': { opacity: 0.7 }
+                          }
+                        }}
+                      >
+                      </Box>
+                    )}
+                  </Box>
                 )}
  
                 {/* Render germ blobs over the container (use x/y percent and size px) */}
@@ -1433,6 +3036,42 @@ export default function PersonalHygieneLevel1() {
                 }}
               >
                 {progressSaving ? 'Saving...' : 'Continue'}
+              </Button>
+              <Button 
+                onClick={async () => {
+                  // Save progress first if not already saved
+                  if (!progressSaved && !progressSaving) {
+                    await saveProgress();
+                  }
+                  
+                  if (audioRef) {
+                    audioRef.pause();
+                    setAudioPlaying(false);
+                  }
+                  
+                  // Navigate to Personal Hygiene Level 2
+                  navigate(`/lesson/hygiene/level-2/${moduleId || 1}/${parseInt(lessonId) + 1 || 2}`);
+                }} 
+                variant="outlined"
+                sx={{ 
+                  borderColor: 'white',
+                  color: 'white',
+                  px: 4,
+                  py: 2,
+                  borderRadius: '25px',
+                  fontFamily: 'Poppins, sans-serif',
+                  fontWeight: '600',
+                  fontSize: '1.2rem',
+                  borderWidth: '2px',
+                  textTransform: 'none',
+                  '&:hover': {
+                    borderColor: 'white',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: '2px'
+                  }
+                }}
+              >
+                Next Level
               </Button>
             </Box>
           </Box>

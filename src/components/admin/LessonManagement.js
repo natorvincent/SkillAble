@@ -85,10 +85,26 @@ const LessonManagement = () => {
     },
     {
       value: 'PersonalHygieneLevel3',
-      label: 'Personal Hygiene Level 3 - Scenarios',
+      label: 'Personal Hygiene Level 3 - Nail Care',
       description: 'Apply hygiene knowledge to real-life situations',
       component: 'PersonalHygieneLevel3',
       path: '/lesson/hygiene/level-3',
+      icon: '🎭'
+    },
+    {
+      value: 'PersonalHygieneLevel4',
+      label: 'Personal Hygiene Level 4 - Shower',
+      description: 'Apply hygiene knowledge to real-life situations',
+      component: 'PersonalHygieneLevel4',
+      path: '/lesson/hygiene/level-4',
+      icon: '🎭'
+    },
+    {
+      value: 'PersonalHygieneLevel5',
+      label: 'Personal Hygiene Level 5 - DressUp',
+      description: 'Apply hygiene knowledge to real-life situations',
+      component: 'PersonalHygieneLevel5',
+      path: '/lesson/hygiene/level-5',
       icon: '🎭'
     },
     {

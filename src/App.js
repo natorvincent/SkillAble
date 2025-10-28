@@ -12,6 +12,8 @@ import ModuleDetails from './components/ModuleDetails';
 import PersonalHygieneLevel1 from './components/lesson/PersonalHygieneLevel1';
 import PersonalHygieneLevel2 from './components/lesson/PersonalHygieneLevel2';
 import PersonalHygieneLevel3 from './components/lesson/PersonalHygieneLevel3';
+import PersonalHygieneLevel4 from './components/lesson/PersonalHygieneLevel4';
+import PersonalHygieneLevel5 from './components/lesson/PersonalHygieneLevel5';
 import SortingLevel1 from './components/lesson/SortingLevel1'; 
 import SortingLevel2 from './components/lesson/SortingLevel2'; 
 import SortingLevel3 from './components/lesson/SortingLevel3'; 
@@ -325,6 +327,18 @@ function App() {
         <Route path="/lesson/hygiene/level-3/:moduleId/:lessonId" element={
           <RouteHandler requireAuth>
             <PersonalHygieneLevel3 />
+          </RouteHandler>
+        } />
+
+        <Route path="/lesson/hygiene/level-4/:moduleId/:lessonId" element={
+          <RouteHandler requireAuth>
+            <PersonalHygieneLevel4 />
+          </RouteHandler>
+        } />
+
+        <Route path="/lesson/hygiene/level-5/:moduleId/:lessonId" element={
+          <RouteHandler requireAuth>
+            <PersonalHygieneLevel5 />
           </RouteHandler>
         } />
 
