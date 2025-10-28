@@ -130,7 +130,7 @@ function Login() {
     try {
       console.log("Sending login request:", { email });
       
-      const response = await fetch("http://localhost:8080/api/auth/login", {
+      const response = await fetch("https://skillable-pdv0.onrender.com/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

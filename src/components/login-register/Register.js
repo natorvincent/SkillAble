@@ -88,7 +88,9 @@ function Register() {
       console.log("Sending registration request:", { email });
       
       // Call your Spring Boot register endpoint
-      const response = await fetch("http://localhost:8080/api/auth/register", {
+    // NEW CODE:
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+  const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
