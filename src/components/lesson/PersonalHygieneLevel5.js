@@ -23,7 +23,7 @@ import {
 } from '../../services/progressService';
 
 // Images - Replace these with your nail care images
-import successGif from "../../assets/hygienelevel1/roblox.gif"
+// import successGif from "../../assets/hygienelevel1/roblox.gif"
 import backgroundImg from "../../assets/hygienelevel3/room.png"
 
 // Audio files

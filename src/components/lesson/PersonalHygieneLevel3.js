@@ -27,7 +27,7 @@ import {
 } from '../../services/progressService';
 
 // Images - Nail care images
-import successGif from "../../assets/hygienelevel1/roblox.gif"
+// import successGif from "../../assets/hygienelevel1/roblox.gif"
 import backgroundImg from "../../assets/hygienelevel3/room.png"
 
 // Hand images
