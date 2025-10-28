@@ -24,7 +24,7 @@ import {
 
 // Images
 // import successGif from "../../assets/hygienelevel1/roblox.gif"
-import bathroomBg from "../../assets/hygienelevel1/bg-copy.png"
+import bathroomBg from "../../assets/hygienelevel1/bg.png"
 import sinkImg from "../../assets/hygienelevel1/sink.png"
 import faucetImg from "../../assets/hygienelevel1/onfaucet.png"
 import leftHandImg from "../../assets/hygienelevel1/lefthand.png"
