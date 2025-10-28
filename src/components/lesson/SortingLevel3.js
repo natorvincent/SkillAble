@@ -40,7 +40,7 @@ import kitchenBg from "../../assets/sortingLevel2/kitchen.jpg";
 
 export default function SortingLevel3() {
   const navigate = useNavigate();
-  const { moduleId, lessonId } = useParams();
+  const { lessonId } = useParams();
   const [currentItemIndex, setCurrentItemIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [gameCompleted, setGameCompleted] = useState(false);

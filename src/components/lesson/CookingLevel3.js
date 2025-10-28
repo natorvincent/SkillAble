@@ -30,7 +30,7 @@ import {
 
 const CookingLevel3 = () => {
   const navigate = useNavigate();
-  const { moduleId, lessonId } = useParams();
+  const { lessonId } = useParams();
 
   const [gameState, setGameState] = useState({
     currentStep: 0,

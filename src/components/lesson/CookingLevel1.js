@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
   Box, 
@@ -11,7 +11,6 @@ import {
   DialogContent,
   DialogActions,
   Stack,
-  LinearProgress,
   CircularProgress,
   Chip,
   Switch,
@@ -47,7 +46,7 @@ import {
 
 export default function FriedEggLevel1() {
   const navigate = useNavigate();
-  const { moduleId, lessonId } = useParams();
+  const { lessonId } = useParams();
 
   const [collectedIngredients, setCollectedIngredients] = useState([]);
   const [showCelebration, setShowCelebration] = useState(false);

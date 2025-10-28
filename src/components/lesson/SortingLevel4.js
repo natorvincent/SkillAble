@@ -42,7 +42,7 @@ import plateBg from "../../assets/sortingLevel4/platebg2.png";
 
 export default function SortingLevel4() {
   const navigate = useNavigate();
-  const { moduleId, lessonId } = useParams();
+  const { lessonId } = useParams();
   const [currentRecipeIndex, setCurrentRecipeIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [gameCompleted, setGameCompleted] = useState(false);

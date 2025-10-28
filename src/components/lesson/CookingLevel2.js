@@ -26,7 +26,7 @@ import knifeImg from "../../assets/cookingLevel2/knife.png";
 
 export default function CookingLevel2() {
   const navigate = useNavigate();
-  const { moduleId, lessonId } = useParams();
+  const { lessonId } = useParams();
 
   // Audio refs for sound effects
   const chopSoundRef = useRef(null);

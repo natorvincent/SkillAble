@@ -89,7 +89,6 @@ function StudentDashboard() {
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [openProfileModal, setOpenProfileModal] = useState(false);
   const [showRoleSelection, setShowRoleSelection] = useState(false);
-  const [selectedRole, setSelectedRole] = useState(null);
   const [tempSelectedRole, setTempSelectedRole] = useState(null);
   const [modules, setModules] = useState([]);
   const [moduleProgress, setModuleProgress] = useState({});
@@ -342,7 +341,6 @@ function StudentDashboard() {
 
       // Save role locally
       localStorage.setItem("userRole", tempSelectedRole);
-      setSelectedRole(tempSelectedRole);
       setShowRoleSelection(false);
       setSavingRole(false);
 

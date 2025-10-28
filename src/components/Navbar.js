@@ -2,9 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import './Navbar.css';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import MenuBookIcon from '@mui/icons-material/MenuBook';
-import StarIcon from '@mui/icons-material/Star';
-import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import { Box, Typography, Avatar } from '@mui/material';
 import avatarImage from '../assets/profile.png';
 
