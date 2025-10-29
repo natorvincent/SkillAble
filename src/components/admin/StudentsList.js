@@ -80,7 +80,7 @@
 
   try {
     const response = await fetch(
-      `${API_BASE_URL}/students/delete?email=${encodeURIComponent(selectedStudent.email)}`,
+      `${API_BASE_URL}/admin/students/delete?email=${encodeURIComponent(selectedStudent.email)}`,
       {
         method: "DELETE",
         headers: {
