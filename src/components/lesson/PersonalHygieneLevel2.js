@@ -19,7 +19,7 @@ import StarIcon from '@mui/icons-material/Star';
 import Loader from '../Loader';
 import { 
   getStudentLessonProgress, 
-  saveStudentLessonProgress,
+  saveStudentLessonProgress
 } from '../../services/progressService';
 
 // Images
@@ -41,12 +41,12 @@ import waterCupImg from "../../assets/hygienelevel2/water.png"
 // import characterCatDefault from "../../assets/hygienelevel3/cat.png"
 
 // Audio files
-import backgroundMusic from "../../assets/hygieneLevel1/background-music.mp3"
-import correctSound from "../../assets/hygieneLevel1/correct-sound.mp3"
-import incorrectSound from "../../assets/hygieneLevel1/incorrect-sound.mp3"
-import successSound from "../../assets/hygieneLevel1/success-sound.mp3"
+import backgroundMusic from "../../assets/hygienelevel1/background-music.mp3"
+import correctSound from "../../assets/hygienelevel1/correct-sound.mp3"
+import incorrectSound from "../../assets/hygienelevel1/incorrect-sound.mp3"
+import successSound from "../../assets/hygienelevel1/success-sound.mp3"
 
-export default function PersonalHygieneLevel1() {
+export default function PersonalHygieneLevel2() {
   const navigate = useNavigate();
   const { moduleId, lessonId } = useParams();
   const [lesson, setLesson] = useState(null);
@@ -101,29 +101,31 @@ export default function PersonalHygieneLevel1() {
   };
 
   const getStudentId = () => {
+  try {
     const studentId = localStorage.getItem('studentId');
-    const userRole = localStorage.getItem('userRole');
+    const userType = localStorage.getItem('userType');
     
-    console.log("Getting student ID - Role:", userRole, "ID:", studentId);
+    console.log('Retrieving student ID:', { studentId, userType });
     
-    if (userRole !== 'STUDENT') {
-      console.error('User is not a student:', userRole);
-      return null;
-    }
-    
-    if (!studentId || studentId === 'null') {
-      console.error('No student ID found in localStorage');
+    // Check if we have a valid student ID regardless of userType
+    if (!studentId || studentId === 'null' || studentId === 'undefined') {
+      console.warn('No student ID found in localStorage');
       return null;
     }
     
     const parsedId = parseInt(studentId, 10);
     if (isNaN(parsedId)) {
-      console.error('Invalid student ID format:', studentId);
+      console.warn('Invalid student ID format:', studentId);
       return null;
     }
     
+    console.log('Successfully retrieved student ID:', parsedId);
     return parsedId;
-  };
+  } catch (error) {
+    console.error('Error retrieving student ID:', error);
+    return null;
+  }
+};
 
   const playSoundEffect = (soundType) => {
     try {
@@ -481,34 +483,70 @@ export default function PersonalHygieneLevel1() {
   }, [lessonId, moduleId]);
 
   const saveProgress = async () => {
-    if (progressSaving || progressSaved) return;
-
+    if (progressSaving || progressSaved) {
+      console.log('Progress already saving or saved, skipping');
+      return;
+    }
+  
     try {
       setProgressSaving(true);
+      
+      // Get student ID with relaxed checking
       const studentId = getStudentId();
       
-      if (!studentId || !lessonId) {
-        console.error('Cannot save progress - missing data:', { studentId, lessonId });
+      console.log('Authentication check:', { 
+        studentId, 
+        userType: localStorage.getItem('userType'),
+        studentIdFromStorage: localStorage.getItem('studentId')
+      });
+      
+      if (!studentId) {
+        console.error('Cannot save progress: No valid student ID found');
+        
+        let errorMessage = 'Please log in to save your progress.\n\n';
+        errorMessage += `Debug Info:\n`;
+        errorMessage += `- User type: ${localStorage.getItem('userType') || 'Not set'}\n`;
+        errorMessage += `- Student ID: ${localStorage.getItem('studentId') || 'Not found'}`;
+        
+        alert(errorMessage);
+        setProgressSaving(false);
         return;
       }
       
+      if (!lessonId) {
+        console.error('Cannot save progress: No lesson ID available');
+        alert('Lesson ID is missing. Cannot save progress.');
+        setProgressSaving(false);
+        return;
+      }
+  
       const progressData = {
-        studentId: studentId,
-        lessonId: parseInt(lessonId, 10),
-        score: score,
-        maxScore: 100,
+        score: 100,
+        maxScore: 100,  
         completed: true,
-        starsEarned: getStarRating()
+        starsEarned: 3
       };
       
-      console.log('Saving progress for student:', studentId, progressData);
-      await saveStudentLessonProgress(studentId, lessonId, progressData);
+      console.log('Saving progress data:', progressData);
       
-      console.log('Progress saved successfully!');
+      const result = await saveStudentLessonProgress(
+        studentId, 
+        parseInt(lessonId, 10), 
+        progressData
+      );
+      
+      console.log('Progress save result:', result);
       setProgressSaved(true);
       
     } catch (error) {
       console.error('Error saving progress:', error);
+      
+      // Show user-friendly error message
+      if (error.message.includes('No student ID available')) {
+        alert('Please log in to save your progress.');
+      } else {
+        alert('Failed to save progress. Please try again.');
+      }
     } finally {
       setProgressSaving(false);
     }
@@ -563,19 +601,26 @@ export default function PersonalHygieneLevel1() {
   };
 
   const handleContinue = async () => {
-    if (!progressSaved && !progressSaving) {
-      await saveProgress();
-    }
-    
-    if (audioRef) {
-      audioRef.pause();
-      setAudioPlaying(false);
-    }
-    
-    setTimeout(() => {
-      navigate(-1);
-    }, 300);
-  };
+  console.log('Continue clicked, progress state:', { progressSaved, progressSaving });
+  
+  if (!progressSaved && !progressSaving) {
+    console.log('Saving progress before continue...');
+    await saveProgress();
+  } else if (progressSaving) {
+    console.log('Progress is currently saving, please wait...');
+    return;
+  }
+  
+  if (audioRef.current) {
+    audioRef.current.pause();
+    setAudioPlaying(false);
+  }
+  
+  console.log('Navigating back...');
+  setTimeout(() => {
+    navigate(-1);
+  }, 300);
+};
 
   const handleGoHome = () => {
     if (audioRef) {
@@ -1608,6 +1653,31 @@ export default function PersonalHygieneLevel1() {
               >
                 {progressSaving ? 'Saving...' : 'Continue'}
               </Button>
+              <Button 
+                onClick={async () => {
+                navigate(`/lesson/hygiene/level-3/${moduleId || 1}/${parseInt(lessonId) + 1 || 2}`);
+                  }} 
+                variant="outlined"
+                sx={{ 
+                borderColor: 'white',
+                color: 'white',
+                px: 4,
+                py: 2,
+                borderRadius: '25px',
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: '600',
+                fontSize: '1.2rem',
+                borderWidth: '2px',
+                textTransform: 'none',
+                '&:hover': {
+                borderColor: 'white',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                borderWidth: '2px'
+                }
+                }}
+                >
+                Next Level
+                </Button>
             </Box>
           </Box>
         </Dialog>

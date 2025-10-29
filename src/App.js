@@ -14,11 +14,6 @@ import PersonalHygieneLevel2 from './components/lesson/PersonalHygieneLevel2';
 import PersonalHygieneLevel3 from './components/lesson/PersonalHygieneLevel3';
 import PersonalHygieneLevel4 from './components/lesson/PersonalHygieneLevel4';
 import PersonalHygieneLevel5 from './components/lesson/PersonalHygieneLevel5';
-import SortingLevel1 from './components/lesson/SortingLevel1'; 
-import SortingLevel2 from './components/lesson/SortingLevel2'; 
-import SortingLevel3 from './components/lesson/SortingLevel3'; 
-import SortingLevel4 from './components/lesson/SortingLevel4'; 
-import SortingLevel5 from './components/lesson/SortingLevel5'; 
 import CookingLevel1 from './components/lesson/CookingLevel1';
 import CookingLevel2 from './components/lesson/CookingLevel2';
 import CookingLevel3 from './components/lesson/CookingLevel3';
@@ -349,42 +344,6 @@ function App() {
           </RouteHandler>
         } />
 
-        {/* Food Sorting Route */}
-        <Route path="/lesson/food-sorting/level-1/:lessonId" element={
-          <RouteHandler requireAuth>
-            <SortingLevel1 />
-          </RouteHandler>
-        } />
-
-        <Route path="/lesson/food-sorting/level-2/:lessonId" element={
-          <RouteHandler requireAuth>
-            <SortingLevel2 />
-          </RouteHandler>
-        } />
-
-        <Route path="/lesson/food-sorting/level-3/:lessonId" element={
-          <RouteHandler requireAuth>
-            <SortingLevel3 />
-          </RouteHandler>
-        } />
-
-        <Route path="/lesson/food-sorting/level-4/:lessonId" element={
-          <RouteHandler requireAuth>
-            <SortingLevel4 />
-          </RouteHandler>
-        } />
-
-        <Route path="/lesson/food-sorting/level-5/:lessonId" element={
-          <RouteHandler requireAuth>
-            <SortingLevel5 />
-          </RouteHandler>
-        } />
-
-        <Route path="/lesson/food-sorting/:lessonId" element={
-          <RouteHandler requireAuth>
-            <SortingLevel1 />
-          </RouteHandler>
-         } />
         
         {/* Admin Routes */}
         <Route 

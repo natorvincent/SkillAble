@@ -19,41 +19,143 @@ import StarIcon from '@mui/icons-material/Star';
 import Loader from '../Loader';
 import { 
   getStudentLessonProgress, 
-  saveStudentLessonProgress,
+  saveStudentLessonProgress
 } from '../../services/progressService';
 
 // Images
-// import successGif from "../../assets/hygienelevel1/roblox.gif"
-import bathroomBg from "../../assets/hygieneLevel1/bg.png"
-import sinkImg from "../../assets/hygieneLevel1/sink.png"
-import faucetImg from "../../assets/hygieneLevel1/onfaucet.png"
-import leftHandImg from "../../assets/hygieneLevel1/lefthand.png"
-import rightHandImg from "../../assets/hygieneLevel1/righthand.png"
-import germsImg from "../../assets/hygieneLevel1/germ.png"
-import mudImg from "../../assets/hygieneLevel1/mud.png"
-import soapImg from "../../assets/hygieneLevel1/soap.png"
-import wetHandsImg from "../../assets/hygieneLevel1/wash.gif"
+import bathroomBg from "../../assets/hygienelevel1/bg.png"
+import sinkImg from "../../assets/hygienelevel1/sink.png"
+import faucetImg from "../../assets/hygienelevel1/onfaucet.png"
+import leftHandImg from "../../assets/hygienelevel1/lefthand.png"
+import rightHandImg from "../../assets/hygienelevel1/righthand.png"
+import germsImg from "../../assets/hygienelevel1/germ.png"
+import mudImg from "../../assets/hygienelevel1/mud.png"
+import soapImg from "../../assets/hygienelevel1/soap.png"
+import wetHandsImg from "../../assets/hygienelevel1/wash.gif"
 
 import characterCatWorried from "../../assets/hygienelevel3/cat_worried.png"
 import characterCatHelpful from "../../assets/hygienelevel3/cat_helpful.png"
 import characterCatExcited from "../../assets/hygienelevel3/cat_excited.png"
-// import characterCatDefault from "../../assets/hygienelevel3/cat.png"
 
 // Audio files
-import backgroundMusic from "../../assets/hygieneLevel1/background-music.mp3"
-import correctSound from "../../assets/hygieneLevel1/correct-sound.mp3"
-import incorrectSound from "../../assets/hygieneLevel1/incorrect-sound.mp3"
-import successSound from "../../assets/hygieneLevel1/success-sound.mp3"
+import backgroundMusic from "../../assets/hygienelevel1/background-music.mp3"
+import correctSound from "../../assets/hygienelevel1/correct-sound.mp3"
+import incorrectSound from "../../assets/hygienelevel1/incorrect-sound.mp3"
+import successSound from "../../assets/hygienelevel1/success-sound.mp3"
 
 // Video files
-import scrubVideo from "../../assets/hygieneLevel1/scrub1.mp4"
-import scrubVideo2 from "../../assets/hygieneLevel1/scrub2.mp4"
-import scrubVideo3 from "../../assets/hygieneLevel1/scrub3.mp4"
-import scrubVideo4 from "../../assets/hygieneLevel1/scrub4.mp4"
-import scrubVideo5 from "../../assets/hygieneLevel1/scrub5.mp4"
-import scrubVideo6 from "../../assets/hygieneLevel1/scrub6.mp4"
-import scrubVideo7 from "../../assets/hygieneLevel1/scrub7.mp4"
+import scrubVideo from "../../assets/hygienelevel1/scrub1.mp4"
+import scrubVideo2 from "../../assets/hygienelevel1/scrub2.mp4"
+import scrubVideo3 from "../../assets/hygienelevel1/scrub3.mp4"
+import scrubVideo4 from "../../assets/hygienelevel1/scrub4.mp4"
+import scrubVideo5 from "../../assets/hygienelevel1/scrub5.mp4"
+import scrubVideo6 from "../../assets/hygienelevel1/scrub6.mp4"
+import scrubVideo7 from "../../assets/hygienelevel1/scrub7.mp4"
 
+// Define keyframes outside of component to avoid recreation
+const keyframes = {
+  bounceAndTilt: {
+    '0%': { transform: 'translateY(0px) rotate(0deg)' },
+    '25%': { transform: 'translateY(-20px) rotate(5deg)' },
+    '50%': { transform: 'translateY(0px) rotate(0deg)' },
+    '75%': { transform: 'translateY(-10px) rotate(-5deg)' },
+    '100%': { transform: 'translateY(0px) rotate(0deg)' }
+  },
+  pulse: {
+    '0%': { transform: 'scale(1)' },
+    '50%': { transform: 'scale(1.05)' },
+    '100%': { transform: 'scale(1)' }
+  },
+  wiggle: {
+    '0%': { transform: 'translate(-50%, 0) rotate(0deg)' },
+    '25%': { transform: 'translate(-50%, -5px) rotate(2deg)' },
+    '50%': { transform: 'translate(-50%, 0) rotate(0deg)' },
+    '75%': { transform: 'translate(-50%, 5px) rotate(-2deg)' },
+    '100%': { transform: 'translate(-50%, 0) rotate(0deg)' }
+  },
+  float: {
+    '0%': { transform: 'translateY(0px)' },
+    '50%': { transform: 'translateY(-8px)' },
+    '100%': { transform: 'translateY(0px)' }
+  },
+  tilt: {
+    '0%': { transform: 'rotate(0deg)' },
+    '25%': { transform: 'rotate(5deg)' },
+    '50%': { transform: 'rotate(0deg)' },
+    '75%': { transform: 'rotate(-5deg)' },
+    '100%': { transform: 'rotate(0deg)' }
+  },
+  bounce: {
+    '0%': { transform: 'translateY(0px)' },
+    '50%': { transform: 'translateY(-10px)' },
+    '100%': { transform: 'translateY(0px)' }
+  },
+  arrowPulse: {
+    '0%': { transform: 'scaleX(0.8)', opacity: 0.7 },
+    '50%': { transform: 'scaleX(1)', opacity: 1 },
+    '100%': { transform: 'scaleX(0.8)', opacity: 0.7 }
+  },
+  pulseHighlight: {
+    '0%': { borderColor: '#FFD700', backgroundColor: 'rgba(255, 215, 0, 0.2)' },
+    '50%': { borderColor: '#FFA500', backgroundColor: 'rgba(255, 215, 0, 0.4)' },
+    '100%': { borderColor: '#FFD700', backgroundColor: 'rgba(255, 215, 0, 0.2)' }
+  },
+  bounceSoap: {
+    '0%': { transform: 'translateY(0px)' },
+    '50%': { transform: 'translateY(-10px)' },
+    '100%': { transform: 'translateY(0px)' }
+  },
+  pulseHands: {
+    '0%': { transform: 'scale(1)' },
+    '50%': { transform: 'scale(1.05)' },
+    '100%': { transform: 'scale(1)' }
+  },
+  rotateSoap: {
+    '0%': { transform: 'rotate(0deg)' },
+    '25%': { transform: 'rotate(10deg)' },
+    '50%': { transform: 'rotate(0deg)' },
+    '75%': { transform: 'rotate(-10deg)' },
+    '100%': { transform: 'rotate(0deg)' }
+  },
+  rubMotion: {
+    '0%': { transform: 'translateX(-20px)', opacity: 0.7 },
+    '50%': { transform: 'translateX(20px)', opacity: 1 },
+    '100%': { transform: 'translateX(-20px)', opacity: 0.7 }
+  },
+  sparkle: {
+    '0%': { filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3)) brightness(1.1)' },
+    '50%': { filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.6)) brightness(1.2)' },
+    '100%': { filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3)) brightness(1.1)' }
+  },
+  happyDance: {
+    '0%': { transform: 'translateY(0px) rotate(0deg)' },
+    '25%': { transform: 'translateY(-10px) rotate(5deg)' },
+    '50%': { transform: 'translateY(0px) rotate(0deg)' },
+    '75%': { transform: 'translateY(-5px) rotate(-5deg)' },
+    '100%': { transform: 'translateY(0px) rotate(0deg)' }
+  },
+  fadeInOut: {
+    '0%': { opacity: 0.7 },
+    '50%': { opacity: 1 },
+    '100%': { opacity: 0.7 }
+  },
+  soapAppear: {
+    '0%': { transform: 'translate(-50%, 0) scale(0)', opacity: 0 },
+    '70%': { transform: 'translate(-50%, 0) scale(1.1)', opacity: 1 },
+    '100%': { transform: 'translate(-50%, 0) scale(1)', opacity: 1 }
+  },
+  starPop: {
+    '0%': { transform: 'scale(0)', opacity: 0 },
+    '50%': { transform: 'scale(1.5)', opacity: 1 },
+    '100%': { transform: 'scale(1)', opacity: 1 }
+  },
+  bounceIn: {
+    '0%': { transform: 'scale(0.8)', opacity: 0.8 },
+    '50%': { transform: 'scale(1.1)' },
+    '70%': { transform: 'scale(0.95)' },
+    '100%': { transform: 'scale(1)', opacity: 1 }
+  }
+};
 
 export default function PersonalHygieneLevel1() {
   const navigate = useNavigate();
@@ -67,10 +169,10 @@ export default function PersonalHygieneLevel1() {
   const [progressSaving, setProgressSaving] = useState(false);
   const [progressSaved, setProgressSaved] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
-  const [audioRef, setAudioRef] = useState(null);
-  const [correctSoundRef, setCorrectSoundRef] = useState(null);
-  const [incorrectSoundRef, setIncorrectSoundRef] = useState(null);
-  const [successSoundRef, setSuccessSoundRef] = useState(null);
+  const audioRef = useRef(null);
+  const correctSoundRef = useRef(null);
+  const incorrectSoundRef = useRef(null);
+  const successSoundRef = useRef(null);
   const [showStartScreen, setShowStartScreen] = useState(true);
   const [starAnimationStage, setStarAnimationStage] = useState(0);
   const [confettiPieces, setConfettiPieces] = useState([]);
@@ -96,16 +198,16 @@ export default function PersonalHygieneLevel1() {
   const [scratchMarks, setScratchMarks] = useState([]);
   const [scratchedPercentage, setScratchedPercentage] = useState(0);
   const teethContainerRef = useRef(null);
-  const [teethCoverage, setTeethCoverage] = useState(new Set()); // Track grid cells that have been brushed
+  const [teethCoverage, setTeethCoverage] = useState(new Set());
 
   // Game states for brushing sequence (start at character introduction step)
-  const [gameStep, setGameStep] = useState(0); // 0: character introduction, 1: hand introduction, 2: turn on faucet, 3: wet hands, 4: apply soap, 5: rub hands, 6: rinse hands
-  const [faucetOn, setFaucetOn] = useState(false); // Track if faucet has been turned on
+  const [gameStep, setGameStep] = useState(0);
+  const [faucetOn, setFaucetOn] = useState(false);
   const [step2Completed, setStep2Completed] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [draggedItem, setDraggedItem] = useState(null); // 'left' | 'right' | 'toothbrush' | null
-  const [dragPos, setDragPos] = useState({ x: 0, y: 0 }); // client coords while dragging
-  const [teethBubbles, setTeethBubbles] = useState([]); // Bubbles that stay on teeth
+  const [draggedItem, setDraggedItem] = useState(null);
+  const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
+  const [teethBubbles, setTeethBubbles] = useState([]);
   
   const [sinkTimer, setSinkTimer] = useState(10);
   const [showSinkPulse, setShowSinkPulse] = useState(false);
@@ -123,7 +225,7 @@ export default function PersonalHygieneLevel1() {
   // Create array of all scrub videos
   const scrubVideos = [scrubVideo, scrubVideo2, scrubVideo3, scrubVideo4, scrubVideo5, scrubVideo6, scrubVideo7];
   
-  const initializeGerms = () => ([ // keep this for reset
+  const initializeGerms = () => ([
     { id: 'germ1', x: 30, y: 50, image: germsImg, size: 50, removed: false },
     { id: 'germ2', x: 65, y: 58, image: germsImg, size: 60, removed: false },
     { id: 'germ3', x: 70, y: 78, image: germsImg, size: 50, removed: false },
@@ -131,83 +233,68 @@ export default function PersonalHygieneLevel1() {
     { id: 'germ5', x: 80, y: 65, image: germsImg, size: 50, removed: false }
   ]);
   
-  // state to hold the germ blobs so you can render/update them
   const [germBlobs, setGermBlobs] = useState(initializeGerms());
   const [soapPlaced, setSoapPlaced] = useState(false);
   const [leftHandWet, setLeftHandWet] = useState(false);
   const [rightHandWet, setRightHandWet] = useState(false);
   const [showWetHands, setShowWetHands] = useState(false);
 
-  // Helper to check if drop position (relative percent inside container) is over faucet area
-   const isOverFaucetArea = (relX, relY) => {
+  // Helper functions
+  const isOverFaucetArea = (relX, relY) => {
     return relX >= 45 && relX <= 100 && relY >= 0 && relY <= 45;
   };
 
-  // Helper to check if click position is in soap area (upper right of faucet)
   const isInSoapArea = (relX, relY) => {
     return relX >= 65 && relX <= 98 && relY >= 3 && relY <= 30;
   };
 
   const handleStartGame = () => {
     setShowStartScreen(false);
-    // Show character introduction first
     setShowCharacterIntroduction(true);
   };
 
-  // New function to handle character introduction completion
   const handleCharacterIntroductionComplete = () => {
     setShowCharacterIntroduction(false);
-    // Show hand introduction next
     setShowHandIntroduction(true);
   };
 
-  // New function to handle hand introduction completion
   const handleHandIntroductionComplete = () => {
     setShowHandIntroduction(false);
-    // Show sink introduction next
     setShowSinkIntroduction(true);
   };
 
-  // Add function to handle sink introduction completion
   const handleSinkIntroductionComplete = () => {
     setShowSinkIntroduction(false);
-    setGameStep(1); // Move to faucet step
+    setGameStep(1);
   };
 
   const handleTurnOnFaucet = () => {
-  // Turn on faucet visual
-  setFaucetOn(true);
-  // Reset timer and animation states
-  setShowSinkPulse(false);
-  setSinkPulseScale(1);
-  // Wait a moment, then show step 2 introduction
-  setTimeout(() => {
-    setGameStep(2);
-    setShowStep2Introduction(true); // Show step 2 introduction
-    playSoundEffect('correct');
-  }, 500);
-};
+    setFaucetOn(true);
+    setShowSinkPulse(false);
+    setSinkPulseScale(1);
+    setTimeout(() => {
+      setGameStep(2);
+      setShowStep2Introduction(true);
+      playSoundEffect('correct');
+    }, 500);
+  };
 
-const handleStep2IntroductionComplete = () => {
-  setShowStep2Introduction(false);
-};
+  const handleStep2IntroductionComplete = () => {
+    setShowStep2Introduction(false);
+  };
 
-// New function to handle step 3 introduction completion
-const handleStep3IntroductionComplete = () => {
-  setShowStep3Introduction(false);
-};
+  const handleStep3IntroductionComplete = () => {
+    setShowStep3Introduction(false);
+  };
 
-// New function to handle step 4 introduction completion
-const handleStep4IntroductionComplete = () => {
-  setShowStep4Introduction(false);
-};
+  const handleStep4IntroductionComplete = () => {
+    setShowStep4Introduction(false);
+  };
 
-// New function to handle step 5 introduction completion
-const handleStep5IntroductionComplete = () => {
-  setShowStep5Introduction(false);
-};
+  const handleStep5IntroductionComplete = () => {
+    setShowStep5Introduction(false);
+  };
 
-  // New function to handle soap application
   const handleApplySoap = (e) => {
     if (gameStep !== 3) return;
     
@@ -218,11 +305,9 @@ const handleStep5IntroductionComplete = () => {
       const relativeY = ((e.clientY - containerRect.top) / containerRect.height) * 100;
 
       if (isInSoapArea(relativeX, relativeY)) {
-        // Place soap on right hand directly
         setSoapPlaced(true);
         playSoundEffect('correct');
         
-        // Advance to step 4 after a short delay and show step 4 introduction
         setTimeout(() => {
           setGameStep(4);
           setShowStep4Introduction(true);
@@ -231,50 +316,50 @@ const handleStep5IntroductionComplete = () => {
     }
   };
 
-  // New function to handle hand rubbing in step 4
   const handleHandRub = () => {
     if (gameStep !== 4 || handsRubbed) return;
-  
     setShowScrubVideo(true);
     playSoundEffect('correct');
   };
 
   const getStudentId = () => {
+  try {
     const studentId = localStorage.getItem('studentId');
-    const userRole = localStorage.getItem('userRole');
+    const userType = localStorage.getItem('userType');
     
-    console.log("Getting student ID - Role:", userRole, "ID:", studentId);
+    console.log('Retrieving student ID:', { studentId, userType });
     
-    if (userRole !== 'STUDENT') {
-      console.error('User is not a student:', userRole);
-      return null;
-    }
-    
-    if (!studentId || studentId === 'null') {
-      console.error('No student ID found in localStorage');
+    // Check if we have a valid student ID regardless of userType
+    if (!studentId || studentId === 'null' || studentId === 'undefined') {
+      console.warn('No student ID found in localStorage');
       return null;
     }
     
     const parsedId = parseInt(studentId, 10);
     if (isNaN(parsedId)) {
-      console.error('Invalid student ID format:', studentId);
+      console.warn('Invalid student ID format:', studentId);
       return null;
     }
     
+    console.log('Successfully retrieved student ID:', parsedId);
     return parsedId;
-  };
+  } catch (error) {
+    console.error('Error retrieving student ID:', error);
+    return null;
+  }
+};
 
   const playSoundEffect = (soundType) => {
     try {
-      if (soundType === 'correct' && correctSoundRef) {
-        correctSoundRef.currentTime = 0;
-        correctSoundRef.play();
-      } else if (soundType === 'incorrect' && incorrectSoundRef) {
-        incorrectSoundRef.currentTime = 0;
-        incorrectSoundRef.play();
-      } else if (soundType === 'success' && successSoundRef) {
-        successSoundRef.currentTime = 0;
-        successSoundRef.play();
+      if (soundType === 'correct' && correctSoundRef.current) {
+        correctSoundRef.current.currentTime = 0;
+        correctSoundRef.current.play();
+      } else if (soundType === 'incorrect' && incorrectSoundRef.current) {
+        incorrectSoundRef.current.currentTime = 0;
+        incorrectSoundRef.current.play();
+      } else if (soundType === 'success' && successSoundRef.current) {
+        successSoundRef.current.currentTime = 0;
+        successSoundRef.current.play();
       }
     } catch (error) {
       console.log('Error playing sound:', error);
@@ -289,7 +374,6 @@ const handleStep5IntroductionComplete = () => {
 
   const handleMouseUp = (e) => {
     if (isDragging && draggedItem === 'hands-group') {
-      // detect drop over faucet area relative to container
       const teethContainer = teethContainerRef.current;
       if (teethContainer) {
         const containerRect = teethContainer.getBoundingClientRect();
@@ -298,23 +382,18 @@ const handleStep5IntroductionComplete = () => {
 
         if (isOverFaucetArea(relativeX, relativeY)) {
           if (gameStep === 2) {
-            // Step 2: Wet hands
             setLeftHandWet(true);
             setRightHandWet(true);
-
-            // Hide all images and show wet hands popup for ~2s, give feedback, then advance to soap step
             setHideAllImages(true);
             setShowWetHands(true);
             playSoundEffect('correct');
             setTimeout(() => {
               setShowWetHands(false);
-              setHideAllImages(false); // Bring images back
-              setGameStep(3); // move to Apply Soap step
-              // Show step 3 introduction after wetting hands
+              setHideAllImages(false);
+              setGameStep(3);
               setShowStep3Introduction(true);
             }, 2000);
           } else if (gameStep === 5) {
-            // Step 5: Rinse clean hands - show success
             setHideAllImages(true);
             setShowWetHands(true);
             playSoundEffect('correct');
@@ -323,7 +402,6 @@ const handleStep5IntroductionComplete = () => {
               setHideAllImages(false);
               setStep5Completed(true);
               
-              // Show success after a short delay
               setTimeout(() => {
                 setShowSuccess(true);
                 playSoundEffect('success');
@@ -335,53 +413,15 @@ const handleStep5IntroductionComplete = () => {
       }
     }
 
-    // existing per-item drop logic (keep for backward compatibility)
-    if (isDragging && (draggedItem === 'left' || draggedItem === 'right')) {
-      // detect drop over faucet area relative to container
-      const teethContainer = teethContainerRef.current;
-      if (teethContainer) {
-        const containerRect = teethContainer.getBoundingClientRect();
-        const relativeX = ((e.clientX - containerRect.left) / containerRect.width) * 100;
-        const relativeY = ((e.clientY - containerRect.top) / containerRect.height) * 100;
-
-        if (isOverFaucetArea(relativeX, relativeY)) {
-          if (draggedItem === 'left') setLeftHandWet(true);
-          if (draggedItem === 'right') setRightHandWet(true);
-        }
-      }
-
-      setTimeout(() => {
-        if (leftHandWet || rightHandWet) {
-          const nowLeft = (draggedItem === 'left') ? true : leftHandWet;
-          const nowRight = (draggedItem === 'right') ? true : rightHandWet;
-          if (nowLeft && nowRight) {
-            setHideAllImages(true);
-            setShowWetHands(true);
-            playSoundEffect('correct');
-            setTimeout(() => {
-              setShowWetHands(false);
-              setHideAllImages(false); // Bring images back
-              setGameStep(3); // move to Apply Soap step
-              // Show step 3 introduction after wetting hands
-              setShowStep3Introduction(true);
-            }, 2000);
-          }
-        }
-      }, 50);
-    }
-
     setIsDragging(false);
     setDraggedItem(null);
-    // Restore germs if hands-group drag ends and still in step 2
     if (draggedItem === 'hands-group' && gameStep === 2) {
       setGermBlobs(initializeGerms());
     }
   };
 
-  // New: start dragging the grouped hands (fix missing handler)
   const startDragHandsGroup = (e) => {
-    if (gameStep !== 2 && gameStep !== 5) return; // only draggable during step 2 and 5
-    // support mouse and touch events
+    if (gameStep !== 2 && gameStep !== 5) return;
     const clientX = e.clientX ?? (e.touches && e.touches[0] && e.touches[0].clientX);
     const clientY = e.clientY ?? (e.touches && e.touches[0] && e.touches[0].clientY);
     if (clientX == null || clientY == null) return;
@@ -389,40 +429,44 @@ const handleStep5IntroductionComplete = () => {
     setIsDragging(true);
     setDraggedItem('hands-group');
     setDragPos({ x: clientX, y: clientY });
-    // Keep germs visible - they'll move with the hands
   };
 
-  // Clean up old scratch marks to prevent memory issues - but only when not actively playing
+  // Effects
   useEffect(() => {
     const cleanup = setInterval(() => {
-      // Only clean up if we're not in the brushing step to prevent marks from disappearing during gameplay
       if (gameStep !== 2) {
         const now = Date.now();
-        setScratchMarks(prev => prev.filter(mark => now - mark.timestamp < 60000)); // Keep marks for 60 seconds
+        setScratchMarks(prev => prev.filter(mark => now - mark.timestamp < 60000));
       }
-    }, 10000); // Check every 10 seconds instead of 5
+    }, 10000);
 
     return () => clearInterval(cleanup);
   }, [gameStep]);
 
   useEffect(() => {
+  console.log('Progress state:', {
+    studentId: getStudentId(),
+    lessonId,
+    moduleId,
+    gameCompleted,
+    progressSaving,
+    progressSaved,
+    showSuccess
+  });
+}, [gameCompleted, progressSaving, progressSaved, showSuccess, lessonId, moduleId]);
+
+  useEffect(() => {
     const fetchUserProgress = async () => {
       try {
         const studentId = getStudentId();
-        if (!studentId || !lessonId) {
-          console.log('Missing studentId or lessonId:', { studentId, lessonId });
-          return;
-        }
+        if (!studentId || !lessonId) return;
         
-        console.log('Fetching progress for student:', studentId, 'lesson:', lessonId);
         const progressResponse = await getStudentLessonProgress(studentId, lessonId);
         if (progressResponse) {
           console.log('Loaded existing progress:', progressResponse);
-        } else {
-          console.log('No existing progress found - starting fresh');
         }
       } catch (error) {
-        console.log('Error fetching progress, starting fresh:', error);
+        console.log('Error fetching progress:', error);
       }
     };
     
@@ -434,7 +478,6 @@ const handleStep5IntroductionComplete = () => {
       try {
         setLoading(true);
         
-        // Set lesson data directly
         setLesson({
           id: lessonId || 1,
           title: "Handwashing",
@@ -454,158 +497,156 @@ const handleStep5IntroductionComplete = () => {
   }, [lessonId, moduleId]);
 
   useEffect(() => {
-  let timerInterval;
-  let animationInterval;
+    let timerInterval;
+    let animationInterval;
 
-  if (gameStep === 1 && !faucetOn) {
-    // Start the 10-second timer
-    setSinkTimer(10);
-    timerInterval = setInterval(() => {
-      setSinkTimer(prev => {
-        if (prev <= 1) {
-          clearInterval(timerInterval);
-          // Start pulsing animation when timer reaches 0
-          setShowSinkPulse(true);
-          // Start pulsing scale animation
-          let scale = 1;
-          animationInterval = setInterval(() => {
-            scale = scale === 1 ? 1.1 : 1;
-            setSinkPulseScale(scale);
-          }, 500); // Pulse every 500ms
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  } else {
-    // Reset when moving away from step 1 or faucet is turned on
-    setShowSinkPulse(false);
-    setSinkPulseScale(1);
-  }
+    if (gameStep === 1 && !faucetOn) {
+      setSinkTimer(10);
+      timerInterval = setInterval(() => {
+        setSinkTimer(prev => {
+          if (prev <= 1) {
+            clearInterval(timerInterval);
+            setShowSinkPulse(true);
+            let scale = 1;
+            animationInterval = setInterval(() => {
+              scale = scale === 1 ? 1.1 : 1;
+              setSinkPulseScale(scale);
+            }, 500);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      setShowSinkPulse(false);
+      setSinkPulseScale(1);
+    }
 
-  return () => {
-    if (timerInterval) clearInterval(timerInterval);
-    if (animationInterval) clearInterval(animationInterval);
-  };
-}, [gameStep, faucetOn]);
+    return () => {
+      if (timerInterval) clearInterval(timerInterval);
+      if (animationInterval) clearInterval(animationInterval);
+    };
+  }, [gameStep, faucetOn]);
 
-  const saveProgress = async () => {
-  if (progressSaving || progressSaved) return;
-
+const saveProgress = async () => {
   try {
     setProgressSaving(true);
-    const studentId = getStudentId();
     
-    if (!studentId || !lessonId) {
-      console.error('Cannot save progress - missing data:', { studentId, lessonId });
-      return;
+    // Force get student ID directly
+    const studentId = parseInt(localStorage.getItem('studentId'), 10);
+    const lessonIdNum = parseInt(lessonId, 10);
+    
+    console.log('Force saving with:', { studentId, lessonId: lessonIdNum });
+    
+    if (!studentId || !lessonIdNum) {
+      throw new Error(`Missing IDs: studentId=${studentId}, lessonId=${lessonIdNum}`);
+    }
+
+    const response = await fetch('http://localhost:8080/api/progress/lesson', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        studentId: studentId,
+        lessonId: lessonIdNum,
+        score: 100,
+        maxScore: 100,
+        completed: true,
+        starsEarned: 3
+      }),
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log('SUCCESS:', result);
+      setProgressSaved(true);
+    } else {
+      throw new Error(`HTTP ${response.status}: ${await response.text()}`);
     }
     
-    // Create complete progress data with ALL required fields
-    const progressData = {
-      score: 100, // Add this - required by backend
-      maxScore: 100, // Add this - required by backend  
-      completed: true,
-      starsEarned: 3
-    };
-    
-    console.log('Saving progress for student:', studentId, 'lesson:', lessonId, 'data:', progressData);
-    
-    // Use the service function correctly
-    await saveStudentLessonProgress(studentId, parseInt(lessonId, 10), progressData);
-    
-    console.log('Progress saved successfully!');
-    setProgressSaved(true);
-    
   } catch (error) {
-    console.error('Error saving progress:', error);
+    console.error('Save error:', error);
+    alert(`Save failed: ${error.message}`);
   } finally {
     setProgressSaving(false);
   }
 };
 
-  // Reset game state
   const resetGame = () => {
     setShowFeedback(false);
     setShowSuccess(false);
     setGameCompleted(false);
     setProgressSaved(false);
     setProgressSaving(false);
-    setHideAllImages(false); // Reset image visibility
+    setHideAllImages(false);
     
-    // Reset all popup states
-    setShowCharacterIntroduction(true); // Show Purrnando introduction again
-    setShowHandIntroduction(false); // Reset hand introduction
-    setShowSinkIntroduction(false); // Reset sink introduction
-    setShowStep2Introduction(false); // Reset step 2 introduction
-    setShowStep3Introduction(false); // Reset step 3 introduction
-    setShowStep4Introduction(false); // Reset step 4 introduction
-    setShowStep5Introduction(false); // Reset step 5 introduction
+    setShowCharacterIntroduction(true);
+    setShowHandIntroduction(false);
+    setShowSinkIntroduction(false);
+    setShowStep2Introduction(false);
+    setShowStep3Introduction(false);
+    setShowStep4Introduction(false);
+    setShowStep5Introduction(false);
     
-    // Reset game states
-    setGameStep(0); // Start with character introduction
+    setGameStep(0);
     setFaucetOn(false);
     setStep2Completed(false);
     setIsDragging(false);
     setDraggedItem(null);
-    // remove soap when resetting
     setSoapPlaced(false);
     setLeftHandWet(false);
     setRightHandWet(false);
-    // Reset step 4 states
     setShowScrubVideo(false);
     setIsHandHovered(false);
     setHandsRubbed(false);
-    setCurrentScrubVideoIndex(0); // Reset to first video
-    // Reset step 5 state
+    setCurrentScrubVideoIndex(0);
     setStep5Completed(false);
 
-    // Reset timer states
     setSinkTimer(10);
     setShowSinkPulse(false);
     setSinkPulseScale(1);
 
-    // Reset germs
     setGermBlobs(initializeGerms());
 
-    // Try to resume background audio if available
-    if (audioRef) {
+    if (audioRef.current) {
       try {
-        // if audio was paused, play it; otherwise leave as is
-        audioRef.play().then(() => {
+        audioRef.current.play().then(() => {
           setAudioPlaying(true);
-        }).catch(() => {
-          // ignore play errors (autoplay restrictions)
-        });
-      } catch (err) {
-        // ignore
-      }
+        }).catch(() => {});
+      } catch (err) {}
     }
   };
 
   const getStarRating = () => {
-    // Always return 3 stars when game is completed
     return gameCompleted ? 3 : 0;
   };
 
   const handleContinue = async () => {
-    if (!progressSaved && !progressSaving) {
-      await saveProgress();
-    }
-    
-    if (audioRef) {
-      audioRef.pause();
-      setAudioPlaying(false);
-    }
-    
-    setTimeout(() => {
-      navigate(-1);
-    }, 300);
-  };
+  console.log('Continue clicked, progress state:', { progressSaved, progressSaving });
+  
+  if (!progressSaved && !progressSaving) {
+    console.log('Saving progress before continue...');
+    await saveProgress();
+  } else if (progressSaving) {
+    console.log('Progress is currently saving, please wait...');
+    return;
+  }
+  
+  if (audioRef.current) {
+    audioRef.current.pause();
+    setAudioPlaying(false);
+  }
+  
+  console.log('Navigating back...');
+  setTimeout(() => {
+    navigate(-1);
+  }, 300);
+};
 
   const handleGoHome = () => {
-    if (audioRef) {
-      audioRef.pause();
+    if (audioRef.current) {
+      audioRef.current.pause();
       setAudioPlaying(false);
     }
     navigate('/homepage');
@@ -632,7 +673,7 @@ const handleStep5IntroductionComplete = () => {
     const audio = new Audio(backgroundMusic);
     audio.loop = true;
     audio.volume = 0.3;
-    setAudioRef(audio);
+    audioRef.current = audio;
 
     const correctAudio = new Audio(correctSound);
     const incorrectAudio = new Audio(incorrectSound);
@@ -642,9 +683,9 @@ const handleStep5IntroductionComplete = () => {
     incorrectAudio.volume = 0.7;
     successAudio.volume = 0.7;
     
-    setCorrectSoundRef(correctAudio);
-    setIncorrectSoundRef(incorrectAudio);
-    setSuccessSoundRef(successAudio);
+    correctSoundRef.current = correctAudio;
+    incorrectSoundRef.current = incorrectAudio;
+    successSoundRef.current = successAudio;
 
     const playAudio = () => {
       audio.play().then(() => {
@@ -712,7 +753,6 @@ const handleStep5IntroductionComplete = () => {
         zIndex: 2000
       }}
     >
-      {/* Centered Cat Character */}
       <Box sx={{ 
         display: 'flex', 
         justifyContent: 'center', 
@@ -729,28 +769,11 @@ const handleStep5IntroductionComplete = () => {
             height: 400,
             filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3))',
             animation: 'bounceAndTilt 3s ease-in-out infinite',
-            '@keyframes bounceAndTilt': {
-              '0%': { 
-                transform: 'translateY(0px) rotate(0deg)',
-              },
-              '25%': { 
-                transform: 'translateY(-20px) rotate(5deg)',
-              },
-              '50%': { 
-                transform: 'translateY(0px) rotate(0deg)',
-              },
-              '75%': { 
-                transform: 'translateY(-10px) rotate(-5deg)',
-              },
-              '100%': { 
-                transform: 'translateY(0px) rotate(0deg)',
-              }
-            }
+            '@keyframes bounceAndTilt': keyframes.bounceAndTilt
           }}
         />
       </Box>
       
-      {/* Popup at the bottom */}
       <Paper
         sx={{
           position: 'fixed',
@@ -769,7 +792,6 @@ const handleStep5IntroductionComplete = () => {
           gap: 3
         }}
       >
-        {/* Text content */}
         <Box sx={{ flex: 1, textAlign: 'left' }}>
           <Typography
             variant="h4"
@@ -3039,17 +3061,6 @@ const handleStep5IntroductionComplete = () => {
               </Button>
               <Button 
                 onClick={async () => {
-                  // Save progress first if not already saved
-                  if (!progressSaved && !progressSaving) {
-                    await saveProgress();
-                  }
-                  
-                  if (audioRef) {
-                    audioRef.pause();
-                    setAudioPlaying(false);
-                  }
-                  
-                  // Navigate to Personal Hygiene Level 2
                   navigate(`/lesson/hygiene/level-2/${moduleId || 1}/${parseInt(lessonId) + 1 || 2}`);
                 }} 
                 variant="outlined"
