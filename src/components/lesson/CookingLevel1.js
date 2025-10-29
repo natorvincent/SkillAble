@@ -93,10 +93,10 @@ export default function FriedEggLevel1() {
   // Get student ID from localStorage
   const getStudentId = () => {
     const studentId = localStorage.getItem('studentId');
-    const userType = localStorage.getItem('userType');
+    const userRole = localStorage.getItem('userRole');
     
-    if (userType !== 'STUDENT') {
-      console.error('User is not a student:', userType);
+    if (userRole !== 'STUDENT') {
+      console.error('User is not a student:', userRole);
       return null;
     }
     
