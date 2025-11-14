@@ -9,7 +9,10 @@ import {
   Stack,
   LinearProgress,
   CircularProgress,
-  Chip
+  Chip,
+  Grid,
+  Card,
+  CardMedia
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '../Navbar';
@@ -22,9 +25,36 @@ import {
   saveStudentLessonProgress
 } from '../../services/progressService';
 
-// Images - Replace these with your nail care images
-// import successGif from "../../assets/hygieneLevel1/roblox.gif"
-import backgroundImg from "../../assets/hygienelevel3/room.png"
+// Background images
+import backgroundImg from "../../assets/hygienelevel5/park.png"
+import bedroomBackground from "../../assets/hygienelevel5/bedroom.png"
+import wardrobeBackground from "../../assets/hygienelevel5/wardrobe.png"
+import rainBg from "../../assets/hygienelevel5/rainbg.png"
+
+// Character images
+import characterCatDefault from "../../assets/hygienelevel3/cat.png"
+import characterCatExcited from "../../assets/hygienelevel3/cat_excited.png"
+import characterCatCurious from "../../assets/hygienelevel3/cat_curious.png"
+import characterCatHelpful from "../../assets/hygienelevel3/cat_helpful.png"
+import characterCatProud from "../../assets/hygienelevel3/cat_proud.png"
+
+// Character base images
+import characterBase from "../../assets/hygienelevel5/character_base.png"
+import characterUnderwear from "../../assets/hygienelevel5/character_underwear.png"
+import characterShirt from "../../assets/hygienelevel5/character_shirt.png"
+import characterPants from "../../assets/hygienelevel5/character_pants.png"
+import characterSocks from "../../assets/hygienelevel5/character_socks.png"
+import characterShoes from "../../assets/hygienelevel5/character_shoes.png"
+import characterComplete from "../../assets/hygienelevel5/character_complete.png"
+import characterRaincoat from "../../assets/hygienelevel5/character_raincoat.png"
+
+// Clothing items
+import underwearClean from "../../assets/hygienelevel5/underwear_clean.png"
+import shirtClean from "../../assets/hygienelevel5/shirt_clean.png"
+import pantsClean from "../../assets/hygienelevel5/pants_clean.png"
+import socksClean from "../../assets/hygienelevel5/socks_clean.png"
+import shoesClean from "../../assets/hygienelevel5/shoes_clean.png"
+import rainCoat from "../../assets/hygienelevel5/rain_coat.png"
 
 // Audio files
 import backgroundMusic from "../../assets/hygienelevel1/background-music.mp3"
@@ -32,573 +62,1296 @@ import correctSound from "../../assets/hygienelevel1/correct-sound.mp3"
 import incorrectSound from "../../assets/hygienelevel1/incorrect-sound.mp3"
 import successSound from "../../assets/hygienelevel1/success-sound.mp3"
 
+// Enhanced Character Introduction Component
+const CharacterIntroductionPopup = ({ onComplete }) => {
+  const [currentStep, setCurrentStep] = useState(0);
+  
+  const introductionSteps = [
+    {
+      title: "Meow! 🐱",
+      message: "Welcome to our Dress Up Adventure! Let's learn how to dress up properly.",
+      character: characterCatExcited,
+      buttonText: "NEXT"
+    },
+    {
+      title: "Dress Up in Order! 🎯",
+      message: "We'll dress up step by step: underwear → shirt → pants → socks → shoes!",
+      character: characterCatHelpful,
+      buttonText: "LET'S BEGIN!"
+    }
+  ];
+
+  const currentStepData = introductionSteps[currentStep];
+
+  const handleNext = () => {
+    if (currentStep < introductionSteps.length - 1) {
+      setCurrentStep(prev => prev + 1);
+    } else {
+      onComplete();
+    }
+  };
+
+  return (
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 2000,
+        animation: 'fadeIn 0.5s ease-out',
+        '@keyframes fadeIn': {
+          '0%': { opacity: 0 },
+          '100%': { opacity: 1 }
+        }
+      }}
+    >
+      {/* Character Display */}
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        mb: -9,
+        position: 'relative'
+      }}>
+        <Box
+          component="img"
+          src={currentStepData.character}
+          alt="Purrnando the Cat"
+          sx={{
+            width: 350,
+            height: 350,
+            filter: 'drop-shadow(0 15px 30px rgba(255, 255, 255, 0.4))',
+            animation: 'characterEntrance 1s ease-out, bounceGentle 3s ease-in-out infinite',
+            '@keyframes characterEntrance': {
+              '0%': { 
+                transform: 'translateY(100px) scale(0.8)',
+                opacity: 0 
+              },
+              '100%': { 
+                transform: 'translateY(0) scale(1)',
+                opacity: 1 
+              }
+            },
+            '@keyframes bounceGentle': {
+              '0%, 100%': { transform: 'translateY(0) rotate(0deg)' },
+              '25%': { transform: 'translateY(-8px) rotate(2deg)' },
+              '75%': { transform: 'translateY(-4px) rotate(-1deg)' }
+            }
+          }}
+        />
+        
+        {/* Progress Dots */}
+        <Box sx={{ 
+          position: 'absolute', 
+          bottom: -60, 
+          display: 'flex', 
+          gap: 2 
+        }}>
+          {introductionSteps.map((_, index) => (
+            <Box
+              key={index}
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: '50%',
+                backgroundColor: index === currentStep ? '#FFD166' : 'rgba(255, 255, 255, 0.3)',
+                transition: 'all 0.3s ease',
+                transform: index === currentStep ? 'scale(1.2)' : 'scale(1)'
+              }}
+            />
+          ))}
+        </Box>
+      </Box>
+      
+      {/* Dialog Box */}
+      <Paper
+        sx={{
+          position: 'relative',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderRadius: '25px',
+          padding: 4,
+          maxWidth: '700px',
+          width: '90%',
+          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
+          border: '4px solid #FFD166',
+          animation: 'dialogSlideUp 0.8s ease-out',
+          '@keyframes dialogSlideUp': {
+            '0%': { 
+              transform: 'translateY(100px) scale(0.9)',
+              opacity: 0 
+            },
+            '100%': { 
+              transform: 'translateY(0) scale(1)',
+              opacity: 1 
+            }
+          }
+        }}
+      >
+        <Box sx={{ textAlign: 'center' }}>
+          <Typography
+            variant="h3"
+            sx={{
+              fontWeight: 'bold',
+              color: '#280B60',
+              mb: 2,
+              fontFamily: 'Poppins, sans-serif',
+              background: 'linear-gradient(135deg, #280B60 0%, #6D28D9 100%)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}
+          >
+            {currentStepData.title}
+          </Typography>
+          
+          <Typography
+            variant="h5"
+            sx={{
+              color: '#4B5563',
+              mb: 4,
+              fontFamily: 'Inter, sans-serif',
+              lineHeight: 1.6,
+              fontSize: '1.4rem'
+            }}
+          >
+            {currentStepData.message}
+          </Typography>
+          
+          <Button
+            variant="contained"
+            onClick={handleNext}
+            sx={{
+              background: 'linear-gradient(135deg, #FFD166 0%, #FFB700 100%)',
+              color: '#280B60',
+              px: 6,
+              py: 1.5,
+              borderRadius: '25px',
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '700',
+              fontSize: '1.2rem',
+              textTransform: 'none',
+              boxShadow: '0 8px 20px rgba(255, 209, 102, 0.5)',
+              minWidth: '200px',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #FFDC87 0%, #FFD166 100%)',
+                transform: 'translateY(-3px)',
+                boxShadow: '0 12px 25px rgba(255, 209, 102, 0.6)'
+              },
+              '&:active': {
+                transform: 'translateY(-1px)'
+              }
+            }}
+          >
+            {currentStepData.buttonText}
+          </Button>
+        </Box>
+      </Paper>
+    </Box>
+  );
+};
+
+// Dressing Guide Popup Component
+const DressingGuidePopup = ({ currentStep, onClose }) => {
+  const dressingSteps = [
+    {
+      title: "First Step: Underwear 👙",
+      message: "You need to wear underwear first before anything else! Underwear is the foundation of getting dressed.",
+      buttonText: "GOT IT!"
+    },
+    {
+      title: "Next: Put on Your Shirt 👕",
+      message: "After underwear, you put on your shirt. This covers your upper body and keeps you warm!",
+      buttonText: "CONTINUE"
+    },
+    {
+      title: "Time for Pants 👖",
+      message: "Now put on your pants. They cover your legs and complete your main outfit!",
+      buttonText: "ALRIGHT!"
+    },
+    {
+      title: "Don't Forget Socks 🧦",
+      message: "Next, put on your socks. They keep your feet warm and comfortable in shoes!",
+      buttonText: "OKAY!"
+    },
+    {
+      title: "Final Step: Shoes 👟",
+      message: "Last step! Put on your shoes to protect your feet and complete your outfit!",
+      buttonText: "LET'S FINISH!"
+    }
+  ];
+
+  const currentStepData = dressingSteps[currentStep];
+
+  return (
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1500,
+        animation: 'fadeIn 0.3s ease-out',
+      }}
+    >
+      <Paper
+        sx={{
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderRadius: '20px',
+          padding: 4,
+          maxWidth: '500px',
+          width: '90%',
+          boxShadow: '0 15px 30px rgba(0, 0, 0, 0.3)',
+          border: '3px solid #4F46E5',
+          textAlign: 'center',
+          animation: 'popIn 0.4s ease-out',
+          '@keyframes popIn': {
+            '0%': { 
+              transform: 'scale(0.8) translateY(20px)',
+              opacity: 0 
+            },
+            '100%': { 
+              transform: 'scale(1) translateY(0)',
+              opacity: 1 
+            }
+          }
+        }}
+      >
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 'bold',
+            color: '#4F46E5',
+            mb: 2,
+            fontFamily: 'Poppins, sans-serif',
+          }}
+        >
+          {currentStepData.title}
+        </Typography>
+        
+        <Typography
+          variant="h6"
+          sx={{
+            color: '#4B5563',
+            mb: 4,
+            fontFamily: 'Inter, sans-serif',
+            lineHeight: 1.5,
+          }}
+        >
+          {currentStepData.message}
+        </Typography>
+        
+        <Button
+          variant="contained"
+          onClick={onClose}
+          sx={{
+            background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+            color: 'white',
+            px: 4,
+            py: 1,
+            borderRadius: '20px',
+            fontFamily: 'Poppins, sans-serif',
+            fontWeight: '600',
+            fontSize: '1.1rem',
+            textTransform: 'none',
+            boxShadow: '0 6px 15px rgba(79, 70, 229, 0.4)',
+            minWidth: '150px',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+              transform: 'translateY(-2px)',
+              boxShadow: '0 8px 20px rgba(79, 70, 229, 0.5)'
+            }
+          }}
+        >
+          {currentStepData.buttonText}
+        </Button>
+        
+        {/* Progress indicator */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mt: 3 }}>
+          {dressingSteps.map((_, index) => (
+            <Box
+              key={index}
+              sx={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                backgroundColor: index === currentStep ? '#4F46E5' : 'rgba(79, 70, 229, 0.3)',
+                transition: 'all 0.3s ease',
+              }}
+            />
+          ))}
+        </Box>
+      </Paper>
+    </Box>
+  );
+};
+
+// Success Popup Component
+const SuccessPopup = ({ onContinue }) => {
+  return (
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 2000,
+        animation: 'fadeIn 0.5s ease-out',
+      }}
+    >
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        mb: 2,
+        position: 'relative'
+      }}>
+        <Box
+          component="img"
+          src={characterCatProud}
+          alt="Purrnando the Cat"
+          sx={{
+            width: 250,
+            height: 250,
+            filter: 'drop-shadow(0 15px 30px rgba(255, 255, 255, 0.4))',
+            animation: 'bounceGentle 3s ease-in-out infinite',
+          }}
+        />
+      </Box>
+      
+      <Paper
+        sx={{
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderRadius: '25px',
+          padding: 4,
+          maxWidth: '600px',
+          width: '90%',
+          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
+          border: '4px solid #90BE6D',
+          textAlign: 'center',
+        }}
+      >
+        <Typography
+          variant="h3"
+          sx={{
+            fontWeight: 'bold',
+            color: '#280B60',
+            mb: 2,
+            fontFamily: 'Poppins, sans-serif',
+          }}
+        >
+          Amazing! You're All Dressed! 🎉
+        </Typography>
+        
+        <Typography
+          variant="h5"
+          sx={{
+            color: '#4B5563',
+            mb: 4,
+            fontFamily: 'Inter, sans-serif',
+            lineHeight: 1.6,
+          }}
+        >
+          You dressed up perfectly in the right order! Now let's go outside and see what happens next!
+        </Typography>
+        
+        <Button
+          variant="contained"
+          onClick={onContinue}
+          sx={{
+            background: 'linear-gradient(135deg, #90BE6D 0%, #7BA05B 100%)',
+            color: 'white',
+            px: 6,
+            py: 1.5,
+            borderRadius: '25px',
+            fontFamily: 'Poppins, sans-serif',
+            fontWeight: '700',
+            fontSize: '1.2rem',
+            textTransform: 'none',
+            boxShadow: '0 8px 20px rgba(144, 190, 109, 0.5)',
+            minWidth: '200px',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #A3C585 0%, #90BE6D 100%)',
+              transform: 'translateY(-2px)',
+            }
+          }}
+        >
+          Let's Go Outside!
+        </Button>
+      </Paper>
+    </Box>
+  );
+};
+
+// Rain Scenario Popup Component
+const RainScenarioPopup = ({ onUnderstand }) => {
+  return (
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 2000,
+        animation: 'fadeIn 0.5s ease-out',
+      }}
+    >
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        mb: 2,
+        position: 'relative'
+      }}>
+        <Box
+          component="img"
+          src={characterCatCurious}
+          alt="Purrnando the Cat"
+          sx={{
+            width: 250,
+            height: 250,
+            filter: 'drop-shadow(0 15px 30px rgba(255, 255, 255, 0.4))',
+            animation: 'bounceGentle 3s ease-in-out infinite',
+          }}
+        />
+      </Box>
+      
+      <Paper
+        sx={{
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderRadius: '25px',
+          padding: 4,
+          maxWidth: '600px',
+          width: '90%',
+          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4)',
+          border: '4px solid #4F46E5',
+          textAlign: 'center',
+        }}
+      >
+        <Typography
+          variant="h3"
+          sx={{
+            fontWeight: 'bold',
+            color: '#280B60',
+            mb: 2,
+            fontFamily: 'Poppins, sans-serif',
+          }}
+        >
+          Oh No! It's Raining! 🌧️
+        </Typography>
+        
+        <Typography
+          variant="h5"
+          sx={{
+            color: '#4B5563',
+            mb: 4,
+            fontFamily: 'Inter, sans-serif',
+            lineHeight: 1.6,
+          }}
+        >
+          When it rains, we need to wear special clothes to stay dry and protect ourselves from the rain. What should you wear to stay dry?
+        </Typography>
+        
+        <Button
+          variant="contained"
+          onClick={onUnderstand}
+          sx={{
+            background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+            color: 'white',
+            px: 6,
+            py: 1.5,
+            borderRadius: '25px',
+            fontFamily: 'Poppins, sans-serif',
+            fontWeight: '700',
+            fontSize: '1.2rem',
+            textTransform: 'none',
+            boxShadow: '0 8px 20px rgba(79, 70, 229, 0.5)',
+            minWidth: '200px',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+              transform: 'translateY(-2px)',
+            }
+          }}
+        >
+          I Understand!
+        </Button>
+      </Paper>
+    </Box>
+  );
+};
+
+// Enhanced Character Cat Component
+const CharacterCat = ({ gameState, message, onInteraction }) => {
+  const getCatImage = () => {
+    const characterStates = {
+      'introduction': characterCatExcited,
+      'dressing': characterCatHelpful,
+      'complete': characterCatProud,
+      'rain': characterCatCurious,
+      'default': characterCatExcited
+    };
+    
+    return characterStates[gameState] || characterStates.default;
+  };
+
+  const getCatAnimation = () => {
+    const animations = {
+      'introduction': 'bounce 2s ease-in-out infinite',
+      'dressing': 'nod 2s ease-in-out infinite',
+      'complete': 'celebrate 2s ease-in-out infinite',
+      'rain': 'float 3s ease-in-out infinite',
+      'default': 'float 3s ease-in-out infinite'
+    };
+    
+    return animations[gameState] || animations.default;
+  };
+
+  return (
+    <Box
+      sx={{
+        position: 'fixed',
+        left: 20,
+        bottom: 20,
+        zIndex: 100,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        cursor: onInteraction ? 'pointer' : 'default'
+      }}
+      onClick={onInteraction}
+    >
+      <Box
+        component="img"
+        src={getCatImage()}
+        alt="Purrnando the Cat"
+        sx={{
+          width: 140,
+          height: 'auto',
+          filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.4))',
+          animation: `${getCatAnimation()}, glowPulse 4s ease-in-out infinite`,
+          transition: 'all 0.3s ease',
+          '&:hover': onInteraction ? {
+            transform: 'scale(1.05)',
+            filter: 'drop-shadow(0 8px 16px rgba(255, 209, 102, 0.6))'
+          } : {},
+        }}
+      />
+      
+      {/* Speech Bubble */}
+      <Paper
+        sx={{
+          position: 'absolute',
+          top: 10,
+          left: 160,
+          backgroundColor: 'white',
+          color: '#280B60',
+          padding: '12px 20px',
+          borderRadius: '25px',
+          fontSize: '1.1rem',
+          fontFamily: 'Poppins, sans-serif',
+          fontWeight: '500',
+          maxWidth: '300px',
+          minWidth: '200px',
+          boxShadow: '0 6px 20px rgba(0,0,0,0.15)',
+          wordWrap: 'break-word',
+          animation: 'speechPop 0.5s ease-out',
+          border: '2px solid #FFD166',
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            top: '30px',
+            left: '-12px',
+            width: 0,
+            height: 0,
+            border: '12px solid transparent',
+            borderRightColor: 'white',
+            borderLeft: 0
+          },
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: '29px',
+            left: '-15px',
+            width: 0,
+            height: 0,
+            border: '14px solid transparent',
+            borderRightColor: '#FFD166',
+            borderLeft: 0
+          },
+        }}
+      >
+        {message}
+      </Paper>
+    </Box>
+  );
+};
+
+// Centered Character Component
+const CenteredCharacter = ({ dressedClothes, characterImage }) => {
+  const getCharacterImage = () => {
+    if (characterImage) return characterImage;
+    
+    const dressedCount = Object.keys(dressedClothes).length;
+    if (dressedCount === 0) return characterBase;
+    if (dressedCount === 1) return characterUnderwear;
+    if (dressedCount === 2) return characterShirt;
+    if (dressedCount === 3) return characterPants;
+    if (dressedCount === 4) return characterSocks;
+    if (dressedCount === 5) return characterShoes;
+    return characterComplete;
+  };
+
+  return (
+    <Box
+      sx={{
+        position: 'fixed',
+        top: '55%',
+        left: '40%',
+        transform: 'translate(-50%, -50%)',
+        zIndex: 10,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center'
+      }}
+    >
+      <Box
+        component="img"
+        src={getCharacterImage()}
+        alt="Character"
+        sx={{
+          width: 550,
+          height: 550,
+          objectFit: 'contain',
+          filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))'
+        }}
+      />
+    </Box>
+  );
+};
+
+// Draggable Clothing Item Component
+const DraggableClothingItem = ({ item, onDragStart, onDragEnd, isDragging }) => {
+  const handleDragStart = (e) => {
+    e.dataTransfer.setData('text/plain', JSON.stringify(item));
+    onDragStart && onDragStart(item);
+  };
+
+  const handleDragEnd = () => {
+    onDragEnd && onDragEnd();
+  };
+
+  return (
+    <Box
+      draggable
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      sx={{
+        cursor: 'grab',
+        transition: 'all 0.3s ease',
+        transform: isDragging ? 'scale(0.9)' : 'scale(1)',
+        opacity: isDragging ? 0.7 : 1,
+        filter: isDragging ? 'brightness(0.8)' : 'brightness(1)',
+        '&:active': {
+          cursor: 'grabbing',
+        }
+      }}
+    >
+      <Box
+        component="img"
+        src={item.image}
+        alt=""
+        sx={{
+          width: 250,
+          height: 250,
+          objectFit: 'contain',
+          filter: `
+            brightness(1.08) 
+            contrast(1.12) 
+            saturate(1.05)
+            drop-shadow(0 2px 3px rgba(0,0,0,0.2))
+          `,
+          mixBlendMode: 'multiply',
+        }}
+      />
+    </Box>
+  );
+};
+
+// Dressing Game Component
+const DressingGame = ({ cleanClothes, onComplete, onScoreUpdate, currentStep, onDressItem, showDressingGuide, onCloseGuide }) => {
+  const [draggedItem, setDraggedItem] = useState(null);
+  const [isOverCharacter, setIsOverCharacter] = useState(false);
+  const [feedback, setFeedback] = useState({ show: false, message: '', correct: false });
+  const [usedItems, setUsedItems] = useState([]);
+
+  // Filter clean clothes for current step - ONLY show the current required item
+  const dressingSteps = ['underwear', 'shirt', 'pants', 'socks', 'shoes'];
+  const currentClothingType = dressingSteps[currentStep];
+  
+  // Only show ONE item of the current required type
+  const availableClothes = cleanClothes
+    .filter(item => item.type === currentClothingType && !usedItems.includes(item.id))
+    .slice(0, 1); // Show only 1 option
+
+  const showFeedback = (message, correct) => {
+    setFeedback({ show: true, message, correct });
+    setTimeout(() => {
+      setFeedback({ show: false, message: '', correct: false });
+    }, 1500);
+  };
+
+  const handleDragStart = (item) => {
+    setDraggedItem(item);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedItem(null);
+    setIsOverCharacter(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    if (!draggedItem) return;
+
+    // Check if the dragged item matches the current step
+    if (draggedItem.type === currentClothingType) {
+      showFeedback(`Great! You put on the ${currentClothingType}! 🎉`, true);
+      onScoreUpdate(15);
+      setUsedItems(prev => [...prev, draggedItem.id]);
+      onDressItem(currentClothingType, draggedItem);
+      
+      setTimeout(() => {
+        setIsOverCharacter(false);
+      }, 1000);
+    } else {
+      showFeedback(`Oops! You need to put on ${currentClothingType} first!`, false);
+      onScoreUpdate(-5);
+    }
+
+    setDraggedItem(null);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsOverCharacter(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsOverCharacter(false);
+  };
+
+  return (
+    <Box sx={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      alignItems: 'center',
+      gap: 4,
+      minHeight: '400px',
+      width: '100%'
+    }}>
+
+      {/* Dressing Guide Popup */}
+      {showDressingGuide && (
+        <DressingGuidePopup 
+          currentStep={currentStep} 
+          onClose={onCloseGuide}
+        />
+      )}
+
+      {/* Clothing Options - Positioned on the right side - ONLY show current step item */}
+      {availableClothes.length > 0 && (
+        <Box sx={{ 
+          position: 'fixed',
+          right: 500,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 3,
+          alignItems: 'center',
+          zIndex: 100
+        }}>
+          {availableClothes.map((item) => (
+            <DraggableClothingItem
+              key={item.id}
+              item={item}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              isDragging={draggedItem?.id === item.id}
+            />
+          ))}
+        </Box>
+      )}
+
+      {/* Character Drop Zone */}
+      <Box
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        sx={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 600,
+          height: 600,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'all 0.3s ease',
+          zIndex: 50
+        }}
+      >
+      </Box>
+
+      {/* Feedback Message */}
+      {feedback.show && (
+        <Paper 
+          sx={{ 
+            p: 2,
+            backgroundColor: feedback.correct ? '#90BE6D' : '#FF595E',
+            color: 'white',
+            textAlign: 'center',
+            borderRadius: '15px',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+            animation: 'fadeInOut 1.5s ease-in-out',
+            position: 'fixed',
+            top: 100,
+            zIndex: 1000,
+          }}
+        >
+          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+            {feedback.message}
+          </Typography>
+        </Paper>
+      )}
+    </Box>
+  );
+};
+
+// Rain Game Component
+const RainGame = ({ onComplete, onScoreUpdate }) => {
+  const [draggedItem, setDraggedItem] = useState(null);
+  const [isOverCharacter, setIsOverCharacter] = useState(false);
+  const [feedback, setFeedback] = useState({ show: false, message: '', correct: false });
+  const [raincoatUsed, setRaincoatUsed] = useState(false);
+
+  const raincoatItem = { id: 'raincoat-1', image: rainCoat, type: 'raincoat' };
+
+  const showFeedback = (message, correct) => {
+    setFeedback({ show: true, message, correct });
+    setTimeout(() => {
+      setFeedback({ show: false, message: '', correct: false });
+    }, 1500);
+  };
+
+  const handleDragStart = (item) => {
+    setDraggedItem(item);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedItem(null);
+    setIsOverCharacter(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    if (!draggedItem) return;
+
+    if (draggedItem.type === 'raincoat') {
+      showFeedback("Perfect! The raincoat will keep you dry in the rain! 🌧️", true);
+      onScoreUpdate(20);
+      setRaincoatUsed(true);
+      
+      setTimeout(() => {
+        setIsOverCharacter(false);
+        onComplete();
+      }, 1500);
+    } else {
+      showFeedback("That won't protect you from the rain! Try the raincoat!", false);
+      onScoreUpdate(-5);
+    }
+
+    setDraggedItem(null);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsOverCharacter(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsOverCharacter(false);
+  };
+
+  return (
+    <Box sx={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      alignItems: 'center',
+      gap: 4,
+      minHeight: '400px',
+      width: '100%'
+    }}>
+      {/* Raincoat Option */}
+      {!raincoatUsed && (
+        <Box sx={{ 
+          position: 'fixed',
+          right: 500,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 3,
+          alignItems: 'center',
+          zIndex: 100
+        }}>
+          <DraggableClothingItem
+            item={raincoatItem}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            isDragging={draggedItem?.id === raincoatItem.id}
+          />
+        </Box>
+      )}
+
+      {/* Character Drop Zone */}
+      <Box
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        sx={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 600,
+          height: 600,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'all 0.3s ease',
+          zIndex: 50
+        }}
+      >
+      </Box>
+
+      {/* Feedback Message */}
+      {feedback.show && (
+        <Paper 
+          sx={{ 
+            p: 2,
+            backgroundColor: feedback.correct ? '#90BE6D' : '#FF595E',
+            color: 'white',
+            textAlign: 'center',
+            borderRadius: '15px',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+            animation: 'fadeInOut 1.5s ease-in-out',
+            position: 'fixed',
+            top: 100,
+            zIndex: 1000,
+          }}
+        >
+          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+            {feedback.message}
+          </Typography>
+        </Paper>
+      )}
+    </Box>
+  );
+};
+
+// Main Game Component
 export default function DressUpGame() {
   const navigate = useNavigate();
   const { moduleId, lessonId } = useParams();
-  const [lesson, setLesson] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [score, setScore] = useState(0);
   const [gameCompleted, setGameCompleted] = useState(false);
   const [progressSaving, setProgressSaving] = useState(false);
   const [progressSaved, setProgressSaved] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
   const [audioRef, setAudioRef] = useState(null);
-  const [correctSoundRef, setCorrectSoundRef] = useState(null);
-  const [incorrectSoundRef, setIncorrectSoundRef] = useState(null);
-  const [successSoundRef, setSuccessSoundRef] = useState(null);
-  const [showStartScreen, setShowStartScreen] = useState(true);
-  const [starAnimationStage, setStarAnimationStage] = useState(0);
-  const [confettiPieces, setConfettiPieces] = useState([]);
 
-  // Game states - customize these for nail care
-  const [gameStep, setGameStep] = useState(1);
-  const [isDragging, setIsDragging] = useState(false);
-  const [draggedItem, setDraggedItem] = useState(null);
+  // Game states
+  const [showCharacterIntroduction, setShowCharacterIntroduction] = useState(true);
+  const [currentStage, setCurrentStage] = useState('dressing');
+  const [dressedClothes, setDressedClothes] = useState({});
+  const [currentDressingStep, setCurrentDressingStep] = useState(0);
+  const [showCenteredCharacter, setShowCenteredCharacter] = useState(false);
+  const [cleanClothes, setCleanClothes] = useState([]);
+  const [showDressingGuide, setShowDressingGuide] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [showRainScenario, setShowRainScenario] = useState(false);
+  const [currentCharacterImage, setCurrentCharacterImage] = useState(null);
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  const handleStartGame = () => {
-    setShowStartScreen(false);
-    // Initialize your nail care game here
-  };
+  // All clean clothing items for dressing - only one option per type
+  const allClothingItems = [
+    { id: 'underwear-clean-1', image: underwearClean, clean: true, type: 'underwear' },
+    { id: 'shirt-clean-1', image: shirtClean, clean: true, type: 'shirt' },
+    { id: 'pants-clean-1', image: pantsClean, clean: true, type: 'pants' },
+    { id: 'socks-clean-1', image: socksClean, clean: true, type: 'socks' },
+    { id: 'shoes-clean-1', image: shoesClean, clean: true, type: 'shoes' },
+  ];
 
-  const getStudentId = () => {
-  try {
-    const studentId = localStorage.getItem('studentId');
-    const userType = localStorage.getItem('userType');
-    
-    console.log('Retrieving student ID:', { studentId, userType });
-    
-    // Check if we have a valid student ID regardless of userType
-    if (!studentId || studentId === 'null' || studentId === 'undefined') {
-      console.warn('No student ID found in localStorage');
-      return null;
-    }
-    
-    const parsedId = parseInt(studentId, 10);
-    if (isNaN(parsedId)) {
-      console.warn('Invalid student ID format:', studentId);
-      return null;
-    }
-    
-    console.log('Successfully retrieved student ID:', parsedId);
-    return parsedId;
-  } catch (error) {
-    console.error('Error retrieving student ID:', error);
-    return null;
-  }
-};
+  // Dressing steps
+  const dressingSteps = ['underwear', 'shirt', 'pants', 'socks', 'shoes'];
 
-  const playSoundEffect = (soundType) => {
-    try {
-      if (soundType === 'correct' && correctSoundRef) {
-        correctSoundRef.currentTime = 0;
-        correctSoundRef.play();
-      } else if (soundType === 'incorrect' && incorrectSoundRef) {
-        incorrectSoundRef.currentTime = 0;
-        incorrectSoundRef.play();
-      } else if (soundType === 'success' && successSoundRef) {
-        successSoundRef.currentTime = 0;
-        successSoundRef.play();
-      }
-    } catch (error) {
-      console.log('Error playing sound:', error);
+  const getCurrentBackground = () => {
+    switch (currentStage) {
+      case 'dressing':
+        return wardrobeBackground;
+      case 'complete':
+        return backgroundImg;
+      case 'rain':
+        return rainBg;
+      default:
+        return wardrobeBackground;
     }
   };
 
-  // Add your nail care game logic here
-  const handleDragStart = (e, itemType) => {
-    if (gameStep !== 1) return;
-    e.dataTransfer.setData('text/plain', itemType);
-    setDraggedItem(itemType);
+  // Get star rating based on score
+  const getStarRating = () => {
+    if (score >= 90) return 3;
+    if (score >= 70) return 2;
+    return 1;
   };
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    // Add your nail care drop logic here
-  };
-
-  const handleMouseDown = (e) => {
-    // Add your nail care mouse down logic here
-  };
-
-  const handleMouseMove = (e) => {
-    // Add your nail care mouse move logic here
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    setDraggedItem(null);
-  };
-
-  useEffect(() => {
-    const fetchUserProgress = async () => {
-      try {
-        const studentId = getStudentId();
-        if (!studentId || !lessonId) {
-          console.log('Missing studentId or lessonId:', { studentId, lessonId });
-          return;
-        }
-        
-        console.log('Fetching progress for student:', studentId, 'lesson:', lessonId);
-        const progressResponse = await getStudentLessonProgress(studentId, lessonId);
-        if (progressResponse) {
-          setScore(progressResponse.score || 0);
-          console.log('Loaded existing progress:', progressResponse);
-        } else {
-          console.log('No existing progress found - starting fresh');
-        }
-      } catch (error) {
-        console.log('Error fetching progress, starting fresh:', error);
-      }
-    };
-    
-    fetchUserProgress();
-  }, [lessonId]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        
-        // Set lesson data for nail care
-        setLesson({
-          id: lessonId || 1,
-          title: "Nail Care",
-          description: "Learn proper nail care technique!",
-          level: 1
-        });
-        
-        setLoading(false);
-      } catch (err) {
-        console.error('Error in fetchData:', err);
-        setError('Something went wrong');
-        setLoading(false);
-      }
-    };
-    
-    fetchData();
-  }, [lessonId, moduleId]);
-
-  const saveProgress = async () => {
-  if (progressSaving || progressSaved) {
-    console.log('Progress already saving or saved, skipping');
-    return;
-  }
-
-  try {
-    setProgressSaving(true);
-    
-    // Get student ID with relaxed checking
-    const studentId = getStudentId();
-    
-    console.log('Authentication check:', { 
-      studentId, 
-      userType: localStorage.getItem('userType'),
-      studentIdFromStorage: localStorage.getItem('studentId')
-    });
-    
-    if (!studentId) {
-      console.error('Cannot save progress: No valid student ID found');
-      
-      let errorMessage = 'Please log in to save your progress.\n\n';
-      errorMessage += `Debug Info:\n`;
-      errorMessage += `- User type: ${localStorage.getItem('userType') || 'Not set'}\n`;
-      errorMessage += `- Student ID: ${localStorage.getItem('studentId') || 'Not found'}`;
-      
-      alert(errorMessage);
-      setProgressSaving(false);
-      return;
-    }
-    
-    if (!lessonId) {
-      console.error('Cannot save progress: No lesson ID available');
-      alert('Lesson ID is missing. Cannot save progress.');
-      setProgressSaving(false);
-      return;
-    }
-
-    const progressData = {
-      score: 100,
-      maxScore: 100,  
-      completed: true,
-      starsEarned: 3
-    };
-    
-    console.log('Saving progress data:', progressData);
-    
-    const result = await saveStudentLessonProgress(
-      studentId, 
-      parseInt(lessonId, 10), 
-      progressData
-    );
-    
-    console.log('Progress save result:', result);
-    setProgressSaved(true);
-    
-  } catch (error) {
-    console.error('Error saving progress:', error);
-    
-    // Show user-friendly error message
-    if (error.message.includes('No student ID available')) {
-      alert('Please log in to save your progress.');
-    } else {
-      alert('Failed to save progress. Please try again.');
-    }
-  } finally {
-    setProgressSaving(false);
-  }
-};
-
+  // Reset game function
   const resetGame = () => {
-    setShowFeedback(false);
-    setShowSuccess(false);
     setScore(0);
     setGameCompleted(false);
-    setProgressSaved(false);
+    setCurrentStage('dressing');
+    setDressedClothes({});
+    setCurrentDressingStep(0);
+    setShowCenteredCharacter(true);
+    setCleanClothes(allClothingItems);
+    setShowDressingGuide(true);
+    setShowSuccessPopup(false);
+    setShowRainScenario(false);
+    setCurrentCharacterImage(null);
+    setShowSuccess(false);
     setProgressSaving(false);
-    
-    // Reset game states for nail care
-    setGameStep(1);
-    setIsDragging(false);
-    setDraggedItem(null);
-    
-    if (audioRef && !audioPlaying) {
+    setProgressSaved(false);
+  };
+
+  // Handle go home
+  const handleGoHome = () => {
+    navigate(-1);
+  };
+
+  const handleCharacterIntroductionComplete = () => {
+    setShowCharacterIntroduction(false);
+    setCurrentStage('dressing');
+    setCleanClothes(allClothingItems);
+    setShowCenteredCharacter(true);
+    setShowDressingGuide(true);
+  };
+
+  const handleDressItem = (clothingType, item) => {
+    setDressedClothes(prev => ({
+      ...prev,
+      [clothingType]: item
+    }));
+
+    // Move to next dressing step
+    setTimeout(() => {
+      if (currentDressingStep < dressingSteps.length - 1) {
+        setCurrentDressingStep(prev => prev + 1);
+        // Show next dressing guide after a short delay
+        setTimeout(() => {
+          setShowDressingGuide(true);
+        }, 500);
+      } else {
+        // All dressing steps completed - show success popup after 4 seconds
+        setCurrentStage('complete');
+        setScore(prev => prev + 50);
+        setShowDressingGuide(false);
+        
+        // Wait 4 seconds before showing the success popup
+        setTimeout(() => {
+          setShowSuccessPopup(true);
+          console.log('Dressing completed - showing success popup after 4 seconds');
+        }, 3000);
+      }
+    }, 1500);
+  };
+
+  const handleCloseDressingGuide = () => {
+    setShowDressingGuide(false);
+  };
+
+  const handleScoreUpdate = (points) => {
+    setScore(prev => Math.min(100, prev + points));
+  };
+
+  const handleSuccessContinue = () => {
+    console.log('Success continue clicked');
+    setShowSuccessPopup(false);
+    // Change to rain background and show rain scenario
+    setCurrentStage('rain');
+    setShowRainScenario(true);
+  };
+
+  const handleRainScenarioUnderstand = () => {
+    setShowRainScenario(false);
+    // Set character to complete outfit (without raincoat)
+    setCurrentCharacterImage(characterComplete);
+  };
+
+  const handleRainGameComplete = () => {
+    // Change character to wear raincoat
+    setCurrentCharacterImage(characterRaincoat);
+    setScore(prev => prev + 30);
+    // Show final success after delay
+    setTimeout(() => {
+      setGameCompleted(true);
+      setShowSuccess(true);
+    }, 2000);
+  };
+
+  // Save progress function
+  const saveProgress = async () => {
+    setProgressSaving(true);
+    try {
+      await saveStudentLessonProgress(moduleId, lessonId, {
+        score: score,
+        completed: true,
+        stars: getStarRating()
+      });
+      setProgressSaved(true);
+      setTimeout(() => {
+        setProgressSaving(false);
+      }, 1000);
+    } catch (error) {
+      console.error('Error saving progress:', error);
+      setProgressSaving(false);
+    }
+  };
+
+  const handleContinue = () => {
+    saveProgress();
+    navigate('/');
+  };
+
+  const getCharacterMessage = () => {
+    switch (currentStage) {
+      case 'dressing':
+        const currentItem = dressingSteps[currentDressingStep];
+        return `Put on the ${currentItem}! ${currentDressingStep + 1}/5`;
+      case 'complete':
+        return "Perfect! You're ready to go outside! 🎉";
+      case 'rain':
+        return "Quick! Drag the raincoat to stay dry! 🌧️";
+      default:
+        return "Let's get dressed!";
+    }
+  };
+
+  // Audio effects
+  useEffect(() => {
+    const audio = new Audio(backgroundMusic);
+    audio.loop = true;
+    setAudioRef(audio);
+
+    return () => {
+      audio.pause();
+    };
+  }, []);
+
+  // Auto-play background music when component mounts
+  useEffect(() => {
+    if (audioRef) {
       audioRef.play().then(() => {
         setAudioPlaying(true);
       }).catch(error => {
         console.log('Audio play failed:', error);
       });
     }
-  };
+  }, [audioRef]);
 
-  const getStarRating = () => {
-    if (score >= 90) return 3;
-    if (score >= 70) return 2;
-    if (score >= 50) return 1;
-    return 0;
-  };
-
-  const handleContinue = async () => {
-  console.log('Continue clicked, progress state:', { progressSaved, progressSaving });
-  
-  if (!progressSaved && !progressSaving) {
-    console.log('Saving progress before continue...');
-    await saveProgress();
-  } else if (progressSaving) {
-    console.log('Progress is currently saving, please wait...');
-    return;
-  }
-  
-  if (audioRef.current) {
-    audioRef.current.pause();
-    setAudioPlaying(false);
-  }
-  
-  console.log('Navigating back...');
-  setTimeout(() => {
-    navigate(-1);
-  }, 300);
-};
-
-  const handleGoHome = () => {
-    if (audioRef) {
-      audioRef.pause();
-      setAudioPlaying(false);
-    }
-    navigate('/homepage');
-  };
-
+  // Debug current stage
   useEffect(() => {
-    if (showSuccess) {
-      const animateStars = async () => {
-        setStarAnimationStage(0);
-        const totalStars = getStarRating();
-        
-        for (let i = 0; i < totalStars; i++) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-          setStarAnimationStage(i + 1);
-        }
-      };
-      
-      const timer = setTimeout(animateStars, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [showSuccess, score]);
-
-  useEffect(() => {
-    const audio = new Audio(backgroundMusic);
-    audio.loop = true;
-    audio.volume = 0.3;
-    setAudioRef(audio);
-
-    const correctAudio = new Audio(correctSound);
-    const incorrectAudio = new Audio(incorrectSound);
-    const successAudio = new Audio(successSound);
-    
-    correctAudio.volume = 0.7;
-    incorrectAudio.volume = 0.7;
-    successAudio.volume = 0.7;
-    
-    setCorrectSoundRef(correctAudio);
-    setIncorrectSoundRef(incorrectAudio);
-    setSuccessSoundRef(successAudio);
-
-    const playAudio = () => {
-      audio.play().then(() => {
-        setAudioPlaying(true);
-      }).catch(error => {
-        console.log('Audio autoplay prevented:', error);
-      });
-    };
-
-    const timer = setTimeout(playAudio, 1000);
-
-    return () => {
-      clearTimeout(timer);
-      if (audio) {
-        audio.pause();
-        audio.currentTime = 0;
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (showSuccess) {
-      const createConfetti = () => {
-        const pieces = [];
-        for (let i = 0; i < 150; i++) {
-          pieces.push({
-            id: i,
-            x: Math.random() * 100,
-            y: -10,
-            rotation: Math.random() * 360,
-            color: [
-              '#FF0080', '#00FFFF', '#FF4500', '#9400D3', '#32CD32', '#FFD700', 
-              '#FF1493', '#00FF7F', '#1E90FF', '#FF6347', '#ADFF2F', '#FF69B4', 
-              '#00CED1', '#FFA500', '#DA70D6'
-            ][Math.floor(Math.random() * 15)],
-            size: Math.random() * 12 + 6,
-            speed: Math.random() * 4 + 2,
-            drift: (Math.random() - 0.5) * 3,
-            width: Math.random() * 8 + 4,
-            height: Math.random() * 12 + 6
-          });
-        }
-        setConfettiPieces(pieces);
-      };
-      
-      const timer = setTimeout(createConfetti, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [showSuccess]);
-
-  // Start screen
-  if (showStartScreen) {
-    return (
-      <div style={{
-        minHeight: "100vh",
-        width: "100%",
-        backgroundImage: `url(${backgroundImg})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        display: "flex",
-        flexDirection: "column"
-      }}>
-        <Navbar />
-        <Box sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'linear-gradient(135deg, rgba(144, 190, 109, 0.8) 0%, rgba(25, 130, 196, 0.8) 100%)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'column',
-          zIndex: 1
-        }}>
-          <Typography variant="h1" sx={{ 
-            color: 'white', 
-            fontWeight: 'bold', 
-            mb: 2,
-            fontFamily: 'Poppins, sans-serif',
-            fontSize: { xs: '3rem', md: '5rem' },
-            textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
-            textAlign: 'center'
-          }}>
-            Dress Me for the Day!
-          </Typography>
-          
-          <Typography variant="h4" sx={{ 
-            color: 'rgba(255, 255, 255, 0.95)', 
-            mb: 6,
-            fontFamily: 'Inter, sans-serif',
-            lineHeight: 1.5,
-            textAlign: 'center',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-            maxWidth: '600px',
-            px: 2
-          }}>
-            Learn how to take care of your nails properly!
-          </Typography>
-          
-          <Stack direction="row" spacing={3}>
-            <Button 
-              variant="contained"
-              onClick={handleStartGame}
-              sx={{ 
-                background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
-                color: 'white',
-                px: 8,
-                py: 2,
-                borderRadius: '25px',
-                fontFamily: 'Poppins, sans-serif',
-                fontWeight: '700',
-                fontSize: '1.5rem',
-                textTransform: 'none',
-                boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
-                  transform: 'translateY(-2px)'
-                }
-              }}
-            >
-              Start Game!
-            </Button>
-          </Stack>
-        </Box>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div style={{
-        minHeight: "100vh",
-        width: "100%",
-        backgroundImage: `url(${backgroundImg})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        display: "flex",
-        flexDirection: "column"
-      }}>
-        <Navbar />
-        <div style={{
-          flexGrow: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(2px)'
-        }}>
-          <Loader />
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div style={{
-        minHeight: "100vh",
-        width: "100%",
-        backgroundImage: `url(${backgroundImg})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}>
-        <Navbar />
-        <Container sx={{ py: 8, textAlign: 'center' }}>
-          <Paper sx={{ 
-            p: 6, 
-            borderRadius: '20px', 
-            backgroundColor: '#FFFAF4',
-            border: '2px solid #FF595E'
-          }}>
-            <Typography variant="h5" sx={{ 
-              color: '#280B60', 
-              fontWeight: 'bold', 
-              mb: 3,
-              fontFamily: 'Poppins, sans-serif'
-            }}>
-              Oops! Something went wrong.
-            </Typography>
-            <Button 
-              variant="contained" 
-              onClick={() => navigate('/homepage')}
-              sx={{ 
-                backgroundColor: '#FF595E',
-                fontSize: '1.2rem',
-                px: 4,
-                py: 2,
-                borderRadius: '20px',
-                fontFamily: 'Poppins, sans-serif',
-                fontWeight: '600',
-                '&:hover': { backgroundColor: '#E04549' }
-              }}
-            >
-              Go Home
-            </Button>
-          </Paper>
-        </Container>
-      </div>
-    );
-  }
+    console.log('Current stage:', currentStage);
+    console.log('Show success popup:', showSuccessPopup);
+  }, [currentStage, showSuccessPopup]);
 
   return (
     <div style={{
       minHeight: "100vh",
       width: "100%",
-      backgroundImage: `url(${backgroundImg})`,
+      backgroundImage: `url(${getCurrentBackground()})`,
       backgroundSize: "cover",
       backgroundPosition: "center",
       backgroundRepeat: "no-repeat",
-    }}
-    onMouseMove={handleMouseMove}
-    onMouseUp={handleMouseUp}
-    >
+      overflow: 'hidden'
+    }}>
+      <Navbar />
       
       <Container maxWidth="xl" sx={{ py: 1 }}>
-        {/* Progress bar and instructions */}
-        <Box 
-          sx={{
-            position: 'relative',
-            zIndex: 1010,
-            mb: 2
-          }}
-        >
-          <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1} sx={{ maxWidth: '800px', mx: 'auto' }}>
-            <Typography variant="body1" sx={{ 
-              color: 'white', 
-              fontWeight: 'bold',
-              fontFamily: 'Poppins, sans-serif',
-              backgroundColor: 'rgba(0, 0, 0, 0.7)',
-              px: 2,
-              py: 1,
-              borderRadius: '10px',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
-            }}>
-              Step {gameStep}/3: {/* Add your nail care steps here */}
-            </Typography>
-            
-            <Chip 
-              label={`Score: ${score}/100`} 
-              sx={{
-                backgroundColor: '#FF595E',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: '0.9rem',
-                fontFamily: 'Poppins, sans-serif',
-                borderRadius: '15px',
-                boxShadow: '0 4px 15px rgba(255, 89, 94, 0.4)'
-              }}
-            />
-          </Stack>
+        {/* Character Introduction Popup */}
+        {showCharacterIntroduction && (
+          <CharacterIntroductionPopup onComplete={handleCharacterIntroductionComplete} />
+        )}
+
+        {/* Success Popup - Show after dressing is complete (with 4-second delay) */}
+        {showSuccessPopup && (
+          <SuccessPopup onContinue={handleSuccessContinue} />
+        )}
+
+        {/* Rain Scenario Popup */}
+        {showRainScenario && (
+          <RainScenarioPopup onUnderstand={handleRainScenarioUnderstand} />
+        )}
+
+        {/* Character Cat */}
+        {!showCharacterIntroduction && !showSuccessPopup && !showRainScenario && (
+          <CharacterCat 
+            gameState={currentStage}
+            message={getCharacterMessage()}
+          />
+        )}
+
+        {/* Centered Character - Show during dressing and rain stages */}
+        {(currentStage === 'dressing' && showCenteredCharacter) && (
+          <CenteredCharacter dressedClothes={dressedClothes} characterImage={currentCharacterImage} />
+        )}
+
+        {/* Centered Character for complete and rain stages */}
+        {(currentStage === 'complete' || currentStage === 'rain') && (
+          <CenteredCharacter dressedClothes={dressedClothes} characterImage={currentCharacterImage} />
+        )}
+
+        {/* Progress and Score */}
+        <Box sx={{ position: 'relative', zIndex: 1010, mb: 2 }}>
           <Box sx={{ maxWidth: '800px', mx: 'auto' }}>
             <LinearProgress 
               variant="determinate" 
@@ -607,7 +1360,6 @@ export default function DressUpGame() {
                 height: 8, 
                 borderRadius: '10px',
                 backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
                 '& .MuiLinearProgress-bar': {
                   borderRadius: '10px',
                   backgroundColor: '#90BE6D'
@@ -617,79 +1369,71 @@ export default function DressUpGame() {
           </Box>
         </Box>
 
-        {/* Action buttons */}
+        {/* Control Buttons */}
         <Box sx={{
           position: 'fixed',
-          top: 18,
+          top: 100,
           left: 18,
           zIndex: 1020,
           display: 'flex',
           flexDirection: 'column',
           gap: 2
         }}>
-          <Button 
-            variant="contained"
+          <Box
+            component="img"
+            src={require("../../assets/hygienelevel3/resetbtn.png")}
+            alt="Reset Game"
             onClick={resetGame}
-            sx={{ 
-              background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
-              color: 'white',
-              width: 64,
-              height: 64,
-              minWidth: 64,
-              borderRadius: '12px',
-              fontFamily: 'Poppins, sans-serif',
-              fontWeight: '700',
-              fontSize: '1.25rem',
-              textTransform: 'none',
-              boxShadow: '0 8px 18px rgba(255, 89, 94, 0.35)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+            sx={{
+              width: 70,
+              height: 70,
+              cursor: 'pointer',
+              borderRadius: '50%',
+              transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
               '&:hover': {
-                background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
-                transform: 'translateY(-2px)'
+                transform: 'translateY(-6px) scale(1.25)',
+                width: 85,
+                height: 85,
+                zIndex: 1021
+              },
+              '&:active': {
+                transform: 'translateY(-3px) scale(1.1)',
+                width: 78,
+                height: 78
               }
             }}
-            aria-label="Reset"
-          >
-            🔄
-          </Button>
+          />
           
-          <Button 
-            variant="contained"
+          <Box
+            component="img"
+            src={require("../../assets/hygienelevel3/homebtn.png")}
+            alt="Go Home"
             onClick={handleGoHome}
-            sx={{ 
-              background: 'linear-gradient(135deg, #1982C4 0%, #1568A0 100%)',
-              color: 'white',
-              width: 64,
-              height: 64,
-              minWidth: 64,
-              borderRadius: '12px',
-              fontFamily: 'Poppins, sans-serif',
-              fontWeight: '700',
-              fontSize: '1.25rem',
-              textTransform: 'none',
-              boxShadow: '0 8px 18px rgba(25, 130, 196, 0.35)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+            sx={{
+              width: 70,
+              height: 70,
+              cursor: 'pointer',
+              borderRadius: '50%',
+              transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
               '&:hover': {
-                background: 'linear-gradient(135deg, #42A5F5 0%, #1982C4 100%)',
-                transform: 'translateY(-2px)'
+                transform: 'translateY(-6px) scale(1.25)',
+                width: 85,
+                height: 85,
+                zIndex: 1021
+              },
+              '&:active': {
+                transform: 'translateY(-3px) scale(1.1)',
+                width: 78,
+                height: 78
               }
             }}
-            aria-label="Home"
-          >
-            🏠
-          </Button>
+          />
         </Box>
 
-        <Box sx={{ 
-          position: 'fixed',
-          top: 100,
-          right: 20,
-          zIndex: 1000
-        }}>
+        {/* Audio Control */}
+        <Box sx={{ position: 'fixed', top: 100, right: 20, zIndex: 1000 }}>
           <Button
             onClick={() => {
               if (audioRef) {
@@ -699,8 +1443,6 @@ export default function DressUpGame() {
                 } else {
                   audioRef.play().then(() => {
                     setAudioPlaying(true);
-                  }).catch(error => {
-                    console.log('Audio play failed:', error);
                   });
                 }
               }
@@ -710,15 +1452,12 @@ export default function DressUpGame() {
               width: '60px',
               height: '60px',
               borderRadius: '50%',
-              background: audioPlaying 
-                ? 'linear-gradient(135deg, #90BE6D 0%, #7BA05B 100%)'
-                : 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+              background: audioPlaying ? 'linear-gradient(135deg, #90BE6D 0%, #7BA05B 100%)' : 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
               color: 'white',
               fontSize: '1.5rem',
               boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
               '&:hover': {
                 transform: 'scale(1.1)',
-                boxShadow: '0 6px 20px rgba(0,0,0,0.4)'
               }
             }}
           >
@@ -726,66 +1465,54 @@ export default function DressUpGame() {
           </Button>
         </Box>
 
+        {/* Game Content */}
         <Box sx={{ 
-          mb: 1,
-          textAlign: 'center',
-          position: 'relative',
-          zIndex: 1010
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center', 
+          minHeight: 'calc(100vh - 200px)',
+          width: '100%',
+          pt: 1
         }}>
-          <Typography variant="body1" sx={{ 
-            color: 'white', 
-            fontWeight: 'bold',
-            fontFamily: 'Poppins, sans-serif',
-            backgroundColor: 'rgba(25, 130, 196, 0.9)',
-            display: 'inline-block',
-            px: 3,
-            py: 1,
-            borderRadius: '15px',
-            fontSize: '1rem',
-            boxShadow: '0 4px 15px rgba(25, 130, 196, 0.4)'
-          }}>
-            {/* Add your nail care instructions here */}
-            {gameStep === 1 && 'Start your nail care routine!'}
-            {gameStep === 2 && 'Continue with the next step!'}
-            {gameStep === 3 && 'Finish your nail care!'}
-          </Typography>
+          {/* Dressing Game */}
+          {currentStage === 'dressing' && !showSuccessPopup && (
+            <Box sx={{ 
+              backgroundColor: 'transparent', 
+              p: 4, 
+              mt: 0,
+              maxWidth: '1000px',
+              width: '95%',
+            }}>
+              <DressingGame
+                cleanClothes={cleanClothes}
+                onComplete={() => setCurrentStage('complete')}
+                onScoreUpdate={handleScoreUpdate}
+                currentStep={currentDressingStep}
+                onDressItem={handleDressItem}
+                showDressingGuide={showDressingGuide}
+                onCloseGuide={handleCloseDressingGuide}
+              />
+            </Box>
+          )}
+
+          {/* Rain Game */}
+          {currentStage === 'rain' && !showRainScenario && (
+            <Box sx={{ 
+              backgroundColor: 'transparent', 
+              p: 4, 
+              mt: 0,
+              maxWidth: '1000px',
+              width: '95%',
+            }}>
+              <RainGame
+                onComplete={handleRainGameComplete}
+                onScoreUpdate={handleScoreUpdate}
+              />
+            </Box>
+          )}
         </Box>
 
-        {/* Game Area - Add your nail care components here */}
-        {!gameCompleted && (
-          <Box 
-            sx={{ 
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              minHeight: 'calc(100vh - 200px)',
-              width: '100%',
-              pt: 1,
-              mb: 0,
-              pb: 0
-            }}
-          >
-            {/* Add your nail care game elements here */}
-            <Box 
-              sx={{ 
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mb: 4,
-                mt: 2,
-                position: 'relative',
-                width: '100%'
-              }}
-            >
-              {/* Add nail care tools and hands/nails here */}
-              <Typography variant="h4" sx={{ color: 'white', textAlign: 'center' }}>
-                Your Nail Care Game Goes Here!
-              </Typography>
-            </Box>
-          </Box>
-        )}
-        
-        {/* Success Dialog */}
+        {/* Final Success Dialog */}
         <Dialog
           open={showSuccess}
           fullScreen
@@ -799,76 +1526,12 @@ export default function DressUpGame() {
             }
           }}
         >
-          <Box sx={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            pointerEvents: 'none',
-            zIndex: 1000,
-            overflow: 'hidden'
-          }}>
-            {confettiPieces.map(piece => (
-              <Box
-                key={piece.id}
-                sx={{
-                  position: 'absolute',
-                  left: `${piece.x}%`,
-                  top: `${piece.y}%`,
-                  width: `${piece.width}px`,
-                  height: `${piece.height}px`,
-                  backgroundColor: piece.color,
-                  transform: `rotate(${piece.rotation}deg)`,
-                  boxShadow: `0 0 10px ${piece.color}`,
-                  animation: `confettiFall 4s linear infinite`,
-                  animationDelay: `${Math.random() * 3}s`,
-                  '@keyframes confettiFall': {
-                    '0%': {
-                      transform: `translateY(-100vh) rotate(${piece.rotation}deg) scale(0.8)`,
-                      opacity: 1
-                    },
-                    '10%': {
-                      opacity: 1,
-                      transform: `translateY(-90vh) rotate(${piece.rotation + 36}deg) scale(1)`
-                    },
-                    '90%': {
-                      opacity: 0.8,
-                      transform: `translateY(90vh) translateX(${piece.drift * 60}px) rotate(${piece.rotation + 324}deg) scale(0.6)`
-                    },
-                    '100%': {
-                      transform: `translateY(100vh) translateX(${piece.drift * 70}px) rotate(${piece.rotation + 360}deg) scale(0)`,
-                      opacity: 0
-                    }
-                  }
-                }}
-              />
-            ))}
-          </Box>
-          <Box sx={{
-            textAlign: 'center',
-            color: 'white'
-          }}>
-            <EmojiEventsIcon sx={{ 
-              fontSize: 150,
-              color: 'white',
-              mb: 4
-            }} />
-            <Typography variant="h1" sx={{ 
-              fontWeight: 'bold',
-              color: 'white',
-              fontFamily: 'Poppins, sans-serif',
-              fontSize: { xs: '2rem', md: '3rem' },
-              textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
-              mb: 2
-            }}>
-              Perfect Nail Care!
-            </Typography>
+          <Box sx={{ textAlign: 'center', color: 'white' }}>
+            <EmojiEventsIcon sx={{ fontSize: 150, color: 'white', mb: 4 }} />
             
             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
               {[...Array(3)].map((_, i) => {
                 const isActive = i < getStarRating();
-                const shouldAnimate = i < starAnimationStage;
                 
                 return (
                   <StarIcon 
@@ -878,75 +1541,31 @@ export default function DressUpGame() {
                       fontSize: 80,
                       mx: 1,
                       textShadow: isActive ? '2px 2px 4px rgba(0,0,0,0.3)' : 'none',
-                      transform: shouldAnimate ? 'scale(1.3)' : 'scale(1)',
-                      transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                      animation: shouldAnimate ? 'starPop 0.6s ease-out' : 'none',
-                      '@keyframes starPop': {
-                        '0%': {
-                          transform: 'scale(0)',
-                          opacity: 0
-                        },
-                        '50%': {
-                          transform: 'scale(1.5)',
-                          opacity: 1
-                        },
-                        '100%': {
-                          transform: 'scale(1)',
-                          opacity: 1
-                        }
-                      }
                     }} 
                   />
                 );
               })}
             </Box>
-            <Typography variant="h4" sx={{ 
-              fontWeight: 'bold',
-              color: 'white',
-              mb: 3,
-              fontFamily: 'Poppins, sans-serif',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
-            }}>
-              Score: {score}/100
+            
+            <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 2, textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>
+              Excellent! You're Prepared for Anything! 🌟
             </Typography>
-            <Typography variant="h6" sx={{ 
-              color: 'white',
-              fontFamily: 'Inter, sans-serif',
-              lineHeight: 1.6,
-              mb: 6,
-              maxWidth: '800px',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
-            }}>
-              Great job! Your nails look healthy and well-maintained!
+            
+            <Typography variant="h5" sx={{ mb: 4, textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}>
+              You learned to dress properly and stay dry in the rain! Perfect!
             </Typography>
             
             {progressSaving && (
-              <Box sx={{ 
-                mb: 4, 
-                p: 3, 
-                backgroundColor: 'rgba(25, 130, 196, 0.8)', 
-                borderRadius: '15px',
-                color: 'white'
-              }}>
+              <Box sx={{ mb: 4, p: 3, backgroundColor: 'rgba(25, 130, 196, 0.8)', borderRadius: '15px', color: 'white' }}>
                 <CircularProgress size={30} sx={{ mr: 2, color: 'white' }} />
-                <Typography variant="h5" sx={{ fontFamily: 'Poppins, sans-serif', display: 'inline' }}>
-                  Saving your progress...
-                </Typography>
+                <Typography variant="h6">Saving your progress...</Typography>
               </Box>
             )}
             
             {progressSaved && (
-              <Box sx={{ 
-                mb: 4, 
-                p: 3, 
-                backgroundColor: 'rgba(144, 190, 109, 0.8)', 
-                borderRadius: '15px',
-                color: 'white'
-              }}>
+              <Box sx={{ mb: 4, p: 3, backgroundColor: 'rgba(144, 190, 109, 0.8)', borderRadius: '15px', color: 'white' }}>
                 <CheckCircleIcon sx={{ mr: 2, fontSize: 30, verticalAlign: 'middle' }} />
-                <Typography variant="h6" sx={{ fontFamily: 'Poppins, sans-serif', display: 'inline' }}>
-                  Progress saved successfully!
-                </Typography>
+                <Typography variant="h6" component="span">Progress Saved!</Typography>
               </Box>
             )}
             
@@ -963,19 +1582,16 @@ export default function DressUpGame() {
                   px: 4,
                   py: 2,
                   borderRadius: '25px',
-                  fontFamily: 'Poppins, sans-serif',
                   fontWeight: '600',
                   fontSize: '1.2rem',
                   borderWidth: '2px',
-                  textTransform: 'none',
                   '&:hover': {
                     borderColor: 'white',
                     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    borderWidth: '2px'
                   }
                 }}
               >
-                Play Again
+                🔄 Play Again
               </Button>
               <Button 
                 variant="contained"
@@ -987,10 +1603,8 @@ export default function DressUpGame() {
                   px: 6,
                   py: 2,
                   borderRadius: '25px',
-                  fontFamily: 'Poppins, sans-serif',
                   fontWeight: '700',
                   fontSize: '1.2rem',
-                  textTransform: 'none',
                   boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
                   '&:hover': { 
                     background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
@@ -998,7 +1612,7 @@ export default function DressUpGame() {
                   }
                 }}
               >
-                {progressSaving ? 'Saving...' : 'Continue'}
+                {progressSaving ? '...' : 'Continue'}
               </Button>
             </Box>
           </Box>

@@ -23,7 +23,7 @@ import {
 } from '../../services/progressService';
 
 // Images
-import bathroomBg from "../../assets/hygienelevel1/bg.png"
+import bathroomBg from "../../assets/hygienelevel1/bathroom.png"
 import sinkImg from "../../assets/hygienelevel1/sink.png"
 import faucetImg from "../../assets/hygienelevel1/onfaucet.png"
 import leftHandImg from "../../assets/hygienelevel1/lefthand.png"
@@ -649,7 +649,7 @@ const saveProgress = async () => {
       audioRef.current.pause();
       setAudioPlaying(false);
     }
-    navigate('/homepage');
+    navigate(-1);
   };
 
   useEffect(() => {
@@ -2154,7 +2154,9 @@ const saveProgress = async () => {
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
         display: "flex",
-        flexDirection: "column"
+        flexDirection: "column",
+        overflow: "hidden",
+        position: "fixed"
       }}>
         <Navbar />
         <Box sx={{
@@ -2786,72 +2788,69 @@ const saveProgress = async () => {
            </Box>
          )}
 
-        {/* Upper-left fixed action buttons (reset / home) */}
         <Box sx={{
-          position: 'fixed',
-          top: 18,
-          left: 18,
-          zIndex: 1020,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 2
-        }}>
-          <Button 
-            variant="contained"
-            onClick={resetGame}
-            sx={{ 
-              background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
-              color: 'white',
-              width: 64,
-              height: 64,
-              minWidth: 64,
-              borderRadius: '12px',
-              fontFamily: 'Poppins, sans-serif',
-              fontWeight: '700',
-              fontSize: '1.25rem',
-              textTransform: 'none',
-              boxShadow: '0 8px 18px rgba(255, 89, 94, 0.35)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
-                transform: 'translateY(-2px)'
-              }
-            }}
-            aria-label="Reset"
-          >
-            🔄
-          </Button>
-          
-          <Button 
-            variant="contained"
-            onClick={handleGoHome}
-            sx={{ 
-              background: 'linear-gradient(135deg, #1982C4 0%, #1568A0 100%)',
-              color: 'white',
-              width: 64,
-              height: 64,
-              minWidth: 64,
-              borderRadius: '12px',
-              fontFamily: 'Poppins, sans-serif',
-              fontWeight: '700',
-              fontSize: '1.25rem',
-              textTransform: 'none',
-              boxShadow: '0 8px 18px rgba(25, 130, 196, 0.35)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #42A5F5 0%, #1982C4 100%)',
-                transform: 'translateY(-2px)'
-              }
-            }}
-            aria-label="Home"
-          >
-            🏠
-          </Button>
-        </Box>
+                  position: 'fixed',
+                  top: 18,
+                  left: 18,
+                  zIndex: 1020,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 2
+                }}>
+                  {/* Reset Button - Image with Larger Hover */}
+                  <Box
+                    component="img"
+                    src={require("../../assets/hygienelevel3/resetbtn.png")}
+                    alt="Reset Game"
+                    onClick={resetGame}
+                    sx={{
+                      width: 70,
+                      height: 70,
+                      cursor: 'pointer',
+                      borderRadius: '50%',
+                      transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+                      '&:hover': {
+                        transform: 'translateY(-6px) scale(1.25)',
+                        width: 85,
+                        height: 85,
+                        zIndex: 1021
+                      },
+                      '&:active': {
+                        transform: 'translateY(-3px) scale(1.1)',
+                        width: 78,
+                        height: 78
+                      }
+                    }}
+                  />
+                  
+                  {/* Home Button - Image with Larger Hover */}
+                  <Box
+                    component="img"
+                    src={require("../../assets/hygienelevel3/homebtn.png")}
+                    alt="Go Home"
+                    onClick={handleGoHome}
+                    sx={{
+                      width: 70,
+                      height: 70,
+                      cursor: 'pointer',
+                      borderRadius: '50%',
+                      transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+                      '&:hover': {
+                        transform: 'translateY(-6px) scale(1.25)',
+                        width: 85,
+                        height: 85,
+                        zIndex: 1021
+                      },
+                      '&:active': {
+                        transform: 'translateY(-3px) scale(1.1)',
+                        width: 78,
+                        height: 78
+                      }
+                    }}
+                  />
+                </Box>
         
         {/* Success Dialog */}
         <Dialog

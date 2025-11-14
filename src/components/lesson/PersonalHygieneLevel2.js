@@ -22,9 +22,7 @@ import {
   saveStudentLessonProgress
 } from '../../services/progressService';
 
-// Images
-// import successGif from "../../assets/hygieneLevel1/roblox.gif"
-import bathroomBg from "../../assets/hygienelevel2/bg.png"
+import bathroomBg from "../../assets/hygienelevel2/lvl2bg.png"
 import teethImg from "../../assets/hygienelevel2/before_teeth.png"
 import afterTeethImg from "../../assets/hygienelevel2/after_teeth.png"
 import blob1Img from "../../assets/hygienelevel2/blob1.png"
@@ -35,16 +33,727 @@ import toothbrushWithPasteImg from "../../assets/hygienelevel2/with_paste.png"
 import waterCupImg from "../../assets/hygienelevel2/water.png"
 
 // Character images
-// import characterCatWorried from "../../assets/hygienelevel3/cat_worried.png"
-// import characterCatHelpful from "../../assets/hygienelevel3/cat_helpful.png"
-// import characterCatExcited from "../../assets/hygienelevel3/cat_excited.png"
-// import characterCatDefault from "../../assets/hygienelevel3/cat.png"
+import characterCatDefault from "../../assets/hygienelevel3/cat.png"
+import characterCatExcited from "../../assets/hygienelevel3/cat_excited.png"
+import characterCatCurious from "../../assets/hygienelevel3/cat_curious.png"
+import characterCatHelpful from "../../assets/hygienelevel3/cat_helpful.png"
+import characterCatProud from "../../assets/hygienelevel3/cat_proud.png"
+import characterCatWorried from "../../assets/hygienelevel3/cat_worried.png"
 
 // Audio files
 import backgroundMusic from "../../assets/hygienelevel1/background-music.mp3"
 import correctSound from "../../assets/hygienelevel1/correct-sound.mp3"
 import incorrectSound from "../../assets/hygienelevel1/incorrect-sound.mp3"
 import successSound from "../../assets/hygienelevel1/success-sound.mp3"
+
+// Character Introduction Component
+const CharacterIntroductionPopup = ({ onComplete }) => (
+  <Box
+    sx={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 2000
+    }}
+  >
+    <Box sx={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center',
+      mb: 15,
+      position: 'relative'
+    }}>
+      <Box
+        component="img"
+        src={characterCatExcited}
+        alt="Purrnando the Cat"
+        sx={{
+          width: 400,
+          height: 400,
+          filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3))',
+          animation: 'bounceAndTilt 3s ease-in-out infinite',
+          '@keyframes bounceAndTilt': {
+            '0%': { transform: 'translateY(0px) rotate(0deg)' },
+            '25%': { transform: 'translateY(-20px) rotate(5deg)' },
+            '50%': { transform: 'translateY(0px) rotate(0deg)' },
+            '75%': { transform: 'translateY(-10px) rotate(-5deg)' },
+            '100%': { transform: 'translateY(0px) rotate(0deg)' }
+          }
+        }}
+      />
+    </Box>
+    
+    <Paper
+      sx={{
+        position: 'fixed',
+        bottom: 50,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderRadius: '20px',
+        padding: 3,
+        maxWidth: '600px',
+        width: '90%',
+        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+        border: '3px solid #1982C4',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 3
+      }}
+    >
+      <Box sx={{ flex: 1, textAlign: 'left' }}>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 'bold',
+            color: '#280B60',
+            mb: 1,
+            fontFamily: 'Poppins, sans-serif'
+          }}
+        >
+          Hello! I'm Purrnando! 🐱
+        </Typography>
+        
+        <Typography
+          variant="h6"
+          sx={{
+            color: '#333',
+            mb: 2,
+            fontFamily: 'Inter, sans-serif',
+            lineHeight: 1.4
+          }}
+        >
+          I'm here to help you learn how to brush your teeth properly! We'll use special tools 
+          to make your teeth sparkly clean. Ready to learn with me?
+        </Typography>
+        
+        <Button
+          variant="contained"
+          onClick={onComplete}
+          sx={{
+            background: 'linear-gradient(135deg, #1982C4 0%, #1568A0 100%)',
+            color: 'white',
+            px: 4,
+            py: 1,
+            borderRadius: '20px',
+            fontFamily: 'Poppins, sans-serif',
+            fontWeight: '700',
+            fontSize: '1.1rem',
+            textTransform: 'none',
+            boxShadow: '0 4px 15px rgba(25, 130, 196, 0.4)',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #1E90FF 0%, #1982C4 100%)',
+              transform: 'translateY(-2px)'
+            }
+          }}
+        >
+          YES, LET'S BRUSH! 🐾
+        </Button>
+      </Box>
+    </Paper>
+  </Box>
+);
+
+// Individual Tool Introduction Components
+const ToothpasteIntroduction = ({ onNext }) => (
+  <Box
+    sx={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 2000
+    }}
+  >
+    <Box sx={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center',
+      mb: 8,
+      position: 'relative'
+    }}>
+      <Box
+        component="img"
+        src={toothpasteImg}
+        alt="Toothpaste"
+        sx={{
+          width: 300,
+          height: 300,
+          filter: 'drop-shadow(0 15px 30px rgba(255, 255, 255, 0.4))',
+          animation: 'glowPulse 2s ease-in-out infinite',
+          '@keyframes glowPulse': {
+            '0%': { 
+              transform: 'scale(1)',
+              filter: 'drop-shadow(0 15px 30px rgba(255, 255, 255, 0.4))'
+            },
+            '50%': { 
+              transform: 'scale(1.1)',
+              filter: 'drop-shadow(0 20px 40px rgba(255, 255, 255, 0.6)) brightness(1.2)'
+            },
+            '100%': { 
+              transform: 'scale(1)',
+              filter: 'drop-shadow(0 15px 30px rgba(255, 255, 255, 0.4))'
+            }
+          }
+        }}
+      />
+    </Box>
+    
+    <Paper
+      sx={{
+        position: 'fixed',
+        bottom: 50,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderRadius: '20px',
+        padding: 3,
+        maxWidth: '600px',
+        width: '90%',
+        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+        border: '3px solid #1982C4',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 3
+      }}
+    >
+      <Box
+        component="img"
+        src={characterCatHelpful}
+        alt="Cute Cat Helper"
+        sx={{
+          width: 100,
+          height: 'auto',
+          filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+          animation: 'tilt 3s ease-in-out infinite',
+          '@keyframes tilt': {
+            '0%': { transform: 'rotate(0deg)' },
+            '25%': { transform: 'rotate(5deg)' },
+            '50%': { transform: 'rotate(0deg)' },
+            '75%': { transform: 'rotate(-5deg)' },
+            '100%': { transform: 'rotate(0deg)' }
+          }
+        }}
+      />
+      
+      <Box sx={{ flex: 1, textAlign: 'left' }}>
+        <Typography
+          variant="h5"
+          sx={{
+            fontWeight: 'bold',
+            color: '#280B60',
+            mb: 1,
+            fontFamily: 'Poppins, sans-serif'
+          }}
+        >
+          Toothpaste 🦷
+        </Typography>
+        
+        <Typography
+          variant="body1"
+          sx={{
+            color: '#333',
+            mb: 2,
+            fontSize: '1.1rem',
+            fontFamily: 'Inter, sans-serif',
+            lineHeight: 1.4
+          }}
+        >
+          This is <strong>toothpaste</strong>! It helps clean your teeth and makes them shiny. 
+          Toothpaste has special ingredients that fight germs and keep your mouth healthy.
+        </Typography>
+        
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={onNext}
+            sx={{
+              borderColor: '#1982C4',
+              color: '#1982C4',
+              px: 3,
+              py: 1,
+              borderRadius: '15px',
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '600',
+              fontSize: '1rem',
+              textTransform: 'none',
+              '&:hover': {
+                borderColor: '#1568A0',
+                backgroundColor: 'rgba(25, 130, 196, 0.1)'
+              }
+            }}
+          >
+            Next Tool
+          </Button>
+        </Box>
+      </Box>
+    </Paper>
+  </Box>
+);
+
+const ToothbrushIntroduction = ({ onNext, onPrevious }) => (
+  <Box
+    sx={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 2000
+    }}
+  >
+    <Box sx={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center',
+      mb: 8,
+      position: 'relative'
+    }}>
+      <Box
+        component="img"
+        src={toothbrushImg}
+        alt="Toothbrush"
+        sx={{
+          width: 300,
+          height: 300,
+          filter: 'drop-shadow(0 15px 30px rgba(144, 190, 109, 0.4))',
+          animation: 'glowPulseGreen 2s ease-in-out infinite',
+          '@keyframes glowPulseGreen': {
+            '0%': { 
+              transform: 'scale(1)',
+              filter: 'drop-shadow(0 15px 30px rgba(144, 190, 109, 0.4))'
+            },
+            '50%': { 
+              transform: 'scale(1.1)',
+              filter: 'drop-shadow(0 20px 40px rgba(144, 190, 109, 0.6)) brightness(1.2)'
+            },
+            '100%': { 
+              transform: 'scale(1)',
+              filter: 'drop-shadow(0 15px 30px rgba(144, 190, 109, 0.4))'
+            }
+          }
+        }}
+      />
+    </Box>
+    
+    <Paper
+      sx={{
+        position: 'fixed',
+        bottom: 50,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderRadius: '20px',
+        padding: 3,
+        maxWidth: '600px',
+        width: '90%',
+        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+        border: '3px solid #90BE6D',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 3
+      }}
+    >
+      <Box
+        component="img"
+        src={characterCatHelpful}
+        alt="Cute Cat Helper"
+        sx={{
+          width: 100,
+          height: 'auto',
+          filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+          animation: 'tilt 3s ease-in-out infinite',
+          '@keyframes tilt': {
+            '0%': { transform: 'rotate(0deg)' },
+            '25%': { transform: 'rotate(5deg)' },
+            '50%': { transform: 'rotate(0deg)' },
+            '75%': { transform: 'rotate(-5deg)' },
+            '100%': { transform: 'rotate(0deg)' }
+          }
+        }}
+      />
+      
+      <Box sx={{ flex: 1, textAlign: 'left' }}>
+        <Typography
+          variant="h5"
+          sx={{
+            fontWeight: 'bold',
+            color: '#280B60',
+            mb: 1,
+            fontFamily: 'Poppins, sans-serif'
+          }}
+        >
+          Toothbrush 🪥
+        </Typography>
+        
+        <Typography
+          variant="body1"
+          sx={{
+            color: '#333',
+            mb: 2,
+            fontSize: '1.1rem',
+            fontFamily: 'Inter, sans-serif',
+            lineHeight: 1.4
+          }}
+        >
+          This is your <strong>toothbrush</strong>! It has soft bristles that gently scrub away 
+          food and germs from your teeth. We use it to reach all the tricky spots in your mouth.
+        </Typography>
+        
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={onPrevious}
+            sx={{
+              borderColor: '#6B7280',
+              color: '#6B7280',
+              px: 3,
+              py: 1,
+              borderRadius: '15px',
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '600',
+              fontSize: '1rem',
+              textTransform: 'none',
+              '&:hover': {
+                borderColor: '#4B5563',
+                backgroundColor: 'rgba(107, 114, 128, 0.1)'
+              }
+            }}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="contained"
+            onClick={onNext}
+            sx={{
+              background: 'linear-gradient(135deg, #90BE6D 0%, #7DA85A 100%)',
+              color: 'white',
+              px: 3,
+              py: 1,
+              borderRadius: '15px',
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '600',
+              fontSize: '1rem',
+              textTransform: 'none',
+              boxShadow: '0 4px 15px rgba(144, 190, 109, 0.4)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #A3D075 0%, #90BE6D 100%)',
+                transform: 'translateY(-2px)'
+              }
+            }}
+          >
+            Next Tool
+          </Button>
+        </Box>
+      </Box>
+    </Paper>
+  </Box>
+);
+
+const WaterCupIntroduction = ({ onComplete, onPrevious }) => (
+  <Box
+    sx={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 2000
+    }}
+  >
+    <Box sx={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center',
+      mb: 8,
+      position: 'relative'
+    }}>
+      <Box
+        component="img"
+        src={waterCupImg}
+        alt="Water Cup"
+        sx={{
+          width: 300,
+          height: 300,
+          filter: 'drop-shadow(0 15px 30px rgba(59, 130, 246, 0.4))',
+          animation: 'glowPulseBlue 2s ease-in-out infinite',
+          '@keyframes glowPulseBlue': {
+            '0%': { 
+              transform: 'scale(1)',
+              filter: 'drop-shadow(0 15px 30px rgba(59, 130, 246, 0.4))'
+            },
+            '50%': { 
+              transform: 'scale(1.1)',
+              filter: 'drop-shadow(0 20px 40px rgba(59, 130, 246, 0.6)) brightness(1.2)'
+            },
+            '100%': { 
+              transform: 'scale(1)',
+              filter: 'drop-shadow(0 15px 30px rgba(59, 130, 246, 0.4))'
+            }
+          }
+        }}
+      />
+    </Box>
+    
+    <Paper
+      sx={{
+        position: 'fixed',
+        bottom: 50,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderRadius: '20px',
+        padding: 3,
+        maxWidth: '600px',
+        width: '90%',
+        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+        border: '3px solid #3B82F6',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 3
+      }}
+    >
+      <Box
+        component="img"
+        src={characterCatHelpful}
+        alt="Cute Cat Helper"
+        sx={{
+          width: 100,
+          height: 'auto',
+          filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+          animation: 'tilt 3s ease-in-out infinite',
+          '@keyframes tilt': {
+            '0%': { transform: 'rotate(0deg)' },
+            '25%': { transform: 'rotate(5deg)' },
+            '50%': { transform: 'rotate(0deg)' },
+            '75%': { transform: 'rotate(-5deg)' },
+            '100%': { transform: 'rotate(0deg)' }
+          }
+        }}
+      />
+      
+      <Box sx={{ flex: 1, textAlign: 'left' }}>
+        <Typography
+          variant="h5"
+          sx={{
+            fontWeight: 'bold',
+            color: '#280B60',
+            mb: 1,
+            fontFamily: 'Poppins, sans-serif'
+          }}
+        >
+          Water Cup 💧
+        </Typography>
+        
+        <Typography
+          variant="body1"
+          sx={{
+            color: '#333',
+            mb: 2,
+            fontSize: '1.1rem',
+            fontFamily: 'Inter, sans-serif',
+            lineHeight: 1.4
+          }}
+        >
+          This is a <strong>water cup</strong>! After brushing, we use water to rinse away 
+          all the toothpaste and leftover dirt. This leaves your mouth feeling fresh and clean!
+        </Typography>
+        
+        <Typography
+          variant="body1"
+          sx={{
+            color: '#280B60',
+            mb: 3,
+            fontSize: '1rem',
+            fontFamily: 'Inter, sans-serif',
+            lineHeight: 1.4,
+            fontWeight: '600',
+            fontStyle: 'italic'
+          }}
+        >
+          Remember the steps: 1. Apply toothpaste → 2. Brush teeth → 3. Rinse with water!
+        </Typography>
+        
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={onPrevious}
+            sx={{
+              borderColor: '#6B7280',
+              color: '#6B7280',
+              px: 3,
+              py: 1,
+              borderRadius: '15px',
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '600',
+              fontSize: '1rem',
+              textTransform: 'none',
+              '&:hover': {
+                borderColor: '#4B5563',
+                backgroundColor: 'rgba(107, 114, 128, 0.1)'
+              }
+            }}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="contained"
+            onClick={onComplete}
+            sx={{
+              background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+              color: 'white',
+              px: 4,
+              py: 1,
+              borderRadius: '15px',
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '700',
+              fontSize: '1rem',
+              textTransform: 'none',
+              boxShadow: '0 4px 15px rgba(59, 130, 246, 0.4)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%)',
+                transform: 'translateY(-2px)'
+              }
+            }}
+          >
+            START BRUSHING!
+          </Button>
+        </Box>
+      </Box>
+    </Paper>
+  </Box>
+);
+
+// Character Cat Component
+const CharacterCat = ({ gameState, message }) => {
+  const getCatImage = () => {
+    switch (gameState) {
+      case 'step1':
+        return characterCatCurious;
+      case 'step2':
+        return characterCatHelpful;
+      case 'step3':
+        return characterCatHelpful;
+      case 'complete':
+        return characterCatProud;
+      default:
+        return characterCatDefault;
+    }
+  };
+
+  const getCatAnimation = () => {
+    switch (gameState) {
+      case 'step1':
+        return 'bounce 2s ease-in-out infinite';
+      case 'step2':
+        return 'float 3s ease-in-out infinite';
+      case 'step3':
+        return 'float 3s ease-in-out infinite';
+      case 'complete':
+        return 'celebrate 2s ease-in-out infinite';
+      default:
+        return 'float 3s ease-in-out infinite';
+    }
+  };
+
+  return (
+    <Box
+      sx={{
+        position: 'fixed',
+        left: 20,
+        bottom: 20,
+        zIndex: 100,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center'
+      }}
+    >
+      <Box
+        component="img"
+        src={getCatImage()}
+        alt="Cute Cat Helper"
+        sx={{
+          width: 120,
+          height: 'auto',
+          filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+          animation: getCatAnimation(),
+          '@keyframes float': {
+            '0%': { transform: 'translateY(0px)' },
+            '50%': { transform: 'translateY(-10px)' },
+            '100%': { transform: 'translateY(0px)' }
+          },
+          '@keyframes bounce': {
+            '0%': { transform: 'translateY(0px) scale(1)' },
+            '25%': { transform: 'translateY(-8px) scale(1.05)' },
+            '50%': { transform: 'translateY(0px) scale(1)' },
+            '75%': { transform: 'translateY(-4px) scale(1.02)' },
+            '100%': { transform: 'translateY(0px) scale(1)' }
+          },
+          '@keyframes celebrate': {
+            '0%': { transform: 'translateY(0px) rotate(0deg)' },
+            '25%': { transform: 'translateY(-15px) rotate(10deg)' },
+            '50%': { transform: 'translateY(-20px) rotate(0deg)' },
+            '75%': { transform: 'translateY(-15px) rotate(-10deg)' },
+            '100%': { transform: 'translateY(0px) rotate(0deg)' }
+          }
+        }}
+      />
+      <Paper
+        sx={{
+          position: 'absolute',
+          top: 5,
+          left: 140,
+          backgroundColor: 'white',
+          color: '#280B60',
+          padding: '8px 16px',
+          borderRadius: '20px',
+          fontSize: '1.3rem',
+          fontFamily: 'Poppins, sans-serif',
+          fontWeight: '500',
+          maxWidth: '700px',
+          minWidth: '300px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+          wordWrap: 'break-word',
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            top: '50%',
+            left: '-10px',
+            marginTop: '-5px',
+            borderWidth: '5px',
+            borderStyle: 'solid',
+            borderColor: 'transparent white transparent transparent'
+          }
+        }}
+      >
+        {message}
+      </Paper>
+    </Box>
+  );
+};
 
 export default function PersonalHygieneLevel2() {
   const navigate = useNavigate();
@@ -67,6 +776,10 @@ export default function PersonalHygieneLevel2() {
   const [starAnimationStage, setStarAnimationStage] = useState(0);
   const [confettiPieces, setConfettiPieces] = useState([]);
 
+  // New states for character and tool introductions
+  const [showCharacterIntroduction, setShowCharacterIntroduction] = useState(false);
+  const [currentToolIntroduction, setCurrentToolIntroduction] = useState(null);
+
   // Game states for brushing sequence
   const [gameStep, setGameStep] = useState(1); // Start directly at step 1: apply paste, 2: brush, 3: rinse
   const [toothpasteApplied, setToothpasteApplied] = useState(false);
@@ -74,8 +787,6 @@ export default function PersonalHygieneLevel2() {
   const [isDragging, setIsDragging] = useState(false);
   const [draggedItem, setDraggedItem] = useState(null);
   const [toothbrushPosition, setToothbrushPosition] = useState({ x: 0, y: 0 });
-  const [bubbles, setBubbles] = useState([]);
-  const [teethBubbles, setTeethBubbles] = useState([]); // Bubbles that stay on teeth
   const [waterCupVisible, setWaterCupVisible] = useState(false);
   
   // Scratch card effect states
@@ -95,76 +806,35 @@ export default function PersonalHygieneLevel2() {
 
   const handleStartGame = () => {
     setShowStartScreen(false);
+    setShowCharacterIntroduction(true);
+  };
+
+  const handleCharacterIntroductionComplete = () => {
+    setShowCharacterIntroduction(false);
+    setCurrentToolIntroduction('toothpaste');
+  };
+
+  const handleToothpasteIntroductionNext = () => {
+    setCurrentToolIntroduction('toothbrush');
+  };
+
+  const handleToothbrushIntroductionNext = () => {
+    setCurrentToolIntroduction('water');
+  };
+
+  const handleToothbrushIntroductionPrevious = () => {
+    setCurrentToolIntroduction('toothpaste');
+  };
+
+  const handleWaterIntroductionPrevious = () => {
+    setCurrentToolIntroduction('toothbrush');
+  };
+
+  const handleToolIntroductionComplete = () => {
+    setCurrentToolIntroduction(null);
     // Start directly at step 1 and initialize blobs
     setGameStep(1);
     initializeBlobs();
-  };
-
-  const getStudentId = () => {
-  try {
-    const studentId = localStorage.getItem('studentId');
-    const userType = localStorage.getItem('userType');
-    
-    console.log('Retrieving student ID:', { studentId, userType });
-    
-    // Check if we have a valid student ID regardless of userType
-    if (!studentId || studentId === 'null' || studentId === 'undefined') {
-      console.warn('No student ID found in localStorage');
-      return null;
-    }
-    
-    const parsedId = parseInt(studentId, 10);
-    if (isNaN(parsedId)) {
-      console.warn('Invalid student ID format:', studentId);
-      return null;
-    }
-    
-    console.log('Successfully retrieved student ID:', parsedId);
-    return parsedId;
-  } catch (error) {
-    console.error('Error retrieving student ID:', error);
-    return null;
-  }
-};
-
-  const playSoundEffect = (soundType) => {
-    try {
-      if (soundType === 'correct' && correctSoundRef) {
-        correctSoundRef.currentTime = 0;
-        correctSoundRef.play();
-      } else if (soundType === 'incorrect' && incorrectSoundRef) {
-        incorrectSoundRef.currentTime = 0;
-        incorrectSoundRef.play();
-      } else if (soundType === 'success' && successSoundRef) {
-        successSoundRef.currentTime = 0;
-        successSoundRef.play();
-      }
-    } catch (error) {
-      console.log('Error playing sound:', error);
-    }
-  };
-
-  // Create sparkle effects
-  const createSparkles = () => {
-    const sparkleArray = [];
-    for (let i = 0; i < 20; i++) {
-      sparkleArray.push({
-        id: i,
-        x: Math.random() * 300 + 50, // Around toothbrush area
-        y: Math.random() * 300 + 100,
-        size: Math.random() * 8 + 4,
-        delay: Math.random() * 0.5,
-        color: ['#FFD700', '#FFF700', '#87CEEB', '#FFB6C1', '#90EE90'][Math.floor(Math.random() * 5)]
-      });
-    }
-    setSparkles(sparkleArray);
-    setShowSparkleEffect(true);
-    
-    // Hide sparkles after animation
-    setTimeout(() => {
-      setShowSparkleEffect(false);
-      setSparkles([]);
-    }, 2000);
   };
 
   // Initialize blobs on teeth - FIXED with unique IDs
@@ -213,6 +883,145 @@ export default function PersonalHygieneLevel2() {
     ];
     setBlobs(blobArray);
     setBlobsRemoved(0); // Reset counter
+  };
+
+  // Get character message based on game state
+  const getCharacterMessage = () => {
+    switch (gameStep) {
+      case 1:
+        return 'Drag the toothpaste to the toothbrush! 🦷';
+      case 2:
+        return `Brush all the teeth! ${Math.floor(score)}% clean!`;
+      case 3:
+        return 'Now rinse with water! 💧';
+      default:
+        return 'Let\'s brush those teeth!';
+    }
+  };
+
+  // Get character game state
+  const getCharacterGameState = () => {
+    switch (gameStep) {
+      case 1:
+        return 'step1';
+      case 2:
+        return 'step2';
+      case 3:
+        return 'step3';
+      default:
+        return 'step1';
+    }
+  };
+
+  // Game mechanics
+  const handleToothpasteDrag = (e) => {
+    if (gameStep !== 1) return;
+    e.dataTransfer.setData('text/plain', 'toothpaste');
+    setDraggedItem('toothpaste');
+  };
+
+  const handleToothbrushDrop = (e) => {
+    e.preventDefault();
+    if (gameStep === 1 && draggedItem === 'toothpaste') {
+      // Start paste sliding animation
+      setPasteSliding(true);
+      
+      // After sliding animation completes
+      setTimeout(() => {
+        setToothpasteApplied(true);
+        setPasteSliding(false);
+        setGameStep(2);
+        setScore(20); // 20% for applying toothpaste
+        
+        // Create sparkle effect after paste is applied
+        createSparkles();
+      }, 800); // Match the sliding animation duration
+    }
+  };
+
+  const handleToothbrushMouseDown = (e) => {
+    if (gameStep !== 2 || !toothpasteApplied) return;
+    setIsDragging(true);
+    setDraggedItem('toothbrush');
+    const rect = e.currentTarget.getBoundingClientRect();
+    setToothbrushPosition({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging || draggedItem !== 'toothbrush') return;
+    
+    setToothbrushPosition({ x: e.clientX, y: e.clientY });
+    
+    // Check collision with teeth for scratch effect
+    const teethContainer = teethContainerRef.current;
+    if (teethContainer) {
+      const containerRect = teethContainer.getBoundingClientRect();
+      const relativeX = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+      const relativeY = ((e.clientY - containerRect.top) / containerRect.height) * 100;
+
+      // Check if brushing over the teeth area (rough bounds)
+      if (relativeX >= 10 && relativeX <= 90 && relativeY >= 15 && relativeY <= 85) {
+        // Add scratch mark
+        addScratchMark(relativeX, relativeY);
+        
+        // Check collision with blobs
+        checkBlobCollision(relativeX, relativeY);
+      }
+    }
+    
+    // Check if enough teeth area has been cleaned to move to next step
+    if (score >= 70 && gameStep === 2) { // Complete step 2 when score reaches 70
+      setStep2Completed(true);
+      setGameStep(3);
+      setWaterCupVisible(true);
+      // Automatically release the toothbrush
+      setIsDragging(false);
+      setDraggedItem(null);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    setDraggedItem(null);
+  };
+
+  const handleWaterCupDrag = (e) => {
+    if (gameStep !== 3) return;
+    e.dataTransfer.setData('text/plain', 'water');
+    setDraggedItem('water');
+  };
+
+  const handleMouthDrop = (e) => {
+    e.preventDefault();
+    if (gameStep === 3 && draggedItem === 'water') {
+      setScore(100);
+      setGameCompleted(true);
+      setShowSuccess(true);
+      playSoundEffect('success');
+    }
+  };
+
+  // Create sparkle effects
+  const createSparkles = () => {
+    const sparkleArray = [];
+    for (let i = 0; i < 20; i++) {
+      sparkleArray.push({
+        id: i,
+        x: Math.random() * 300 + 50, // Around toothbrush area
+        y: Math.random() * 300 + 100,
+        size: Math.random() * 8 + 4,
+        delay: Math.random() * 0.5,
+        color: ['#FFD700', '#FFF700', '#87CEEB', '#FFB6C1', '#90EE90'][Math.floor(Math.random() * 5)]
+      });
+    }
+    setSparkles(sparkleArray);
+    setShowSparkleEffect(true);
+    
+    // Hide sparkles after animation
+    setTimeout(() => {
+      setShowSparkleEffect(false);
+      setSparkles([]);
+    }, 2000);
   };
 
   // Check collision between toothbrush and blobs - IMPROVED
@@ -303,122 +1112,49 @@ export default function PersonalHygieneLevel2() {
     }
   };
 
-  // Game mechanics
-  const handleToothpasteDrag = (e) => {
-    if (gameStep !== 1) return;
-    e.dataTransfer.setData('text/plain', 'toothpaste');
-    setDraggedItem('toothpaste');
-  };
-
-  const handleToothbrushDrop = (e) => {
-    e.preventDefault();
-    if (gameStep === 1 && draggedItem === 'toothpaste') {
-      // Start paste sliding animation
-      setPasteSliding(true);
+  const getStudentId = () => {
+    try {
+      const studentId = localStorage.getItem('studentId');
+      const userType = localStorage.getItem('userType');
       
-      // After sliding animation completes
-      setTimeout(() => {
-        setToothpasteApplied(true);
-        setPasteSliding(false);
-        setGameStep(2);
-        setScore(20); // 20% for applying toothpaste
-        
-        // Create sparkle effect after paste is applied
-        createSparkles();
-      }, 800); // Match the sliding animation duration
-    }
-  };
-
-  const handleToothbrushMouseDown = (e) => {
-    if (gameStep !== 2 || !toothpasteApplied) return;
-    setIsDragging(true);
-    setDraggedItem('toothbrush');
-    const rect = e.currentTarget.getBoundingClientRect();
-    setToothbrushPosition({ x: e.clientX, y: e.clientY });
-  };
-
-  const handleMouseMove = (e) => {
-    if (!isDragging || draggedItem !== 'toothbrush') return;
-    
-    setToothbrushPosition({ x: e.clientX, y: e.clientY });
-    
-    // Check collision with teeth for scratch effect
-    const teethContainer = teethContainerRef.current;
-    if (teethContainer) {
-      const containerRect = teethContainer.getBoundingClientRect();
-      const relativeX = ((e.clientX - containerRect.left) / containerRect.width) * 100;
-      const relativeY = ((e.clientY - containerRect.top) / containerRect.height) * 100;
-
-      // Check if brushing over the teeth area (rough bounds)
-      if (relativeX >= 10 && relativeX <= 90 && relativeY >= 15 && relativeY <= 85) {
-        // Add scratch mark
-        addScratchMark(relativeX, relativeY);
-        
-        // Check collision with blobs
-        checkBlobCollision(relativeX, relativeY);
-        
-        // Create bubbles on teeth surface when brushing
-        if (Math.random() < 0.4) {
-          const newTeethBubble = {
-            id: Date.now() + Math.random(),
-            x: relativeX,
-            y: relativeY,
-            size: Math.random() * 16 + 10,
-            opacity: 0.9,
-            color: 'white' // Pure white for proper foam appearance
-          };
-          setTeethBubbles(prev => [...prev, newTeethBubble]);
-        }
+      console.log('Retrieving student ID:', { studentId, userType });
+      
+      // Check if we have a valid student ID regardless of userType
+      if (!studentId || studentId === 'null' || studentId === 'undefined') {
+        console.warn('No student ID found in localStorage');
+        return null;
       }
-    }
-    
-    // Check if enough teeth area has been cleaned to move to next step
-    if (score >= 70 && gameStep === 2) { // Complete step 2 when score reaches 70
-      setStep2Completed(true);
-      setGameStep(3);
-      setWaterCupVisible(true);
-      // Automatically release the toothbrush
-      setIsDragging(false);
-      setDraggedItem(null);
-    }
-  };
-
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    setDraggedItem(null);
-  };
-
-  const handleWaterCupDrag = (e) => {
-    if (gameStep !== 3) return;
-    e.dataTransfer.setData('text/plain', 'water');
-    setDraggedItem('water');
-  };
-
-  const handleMouthDrop = (e) => {
-    e.preventDefault();
-    if (gameStep === 3 && draggedItem === 'water') {
-      setScore(100);
-      setGameCompleted(true);
-      setShowSuccess(true);
-      playSoundEffect('success');
       
-      // Clear all teeth bubbles when rinsing
-      setTeethBubbles([]);
+      const parsedId = parseInt(studentId, 10);
+      if (isNaN(parsedId)) {
+        console.warn('Invalid student ID format:', studentId);
+        return null;
+      }
+      
+      console.log('Successfully retrieved student ID:', parsedId);
+      return parsedId;
+    } catch (error) {
+      console.error('Error retrieving student ID:', error);
+      return null;
     }
   };
 
-  // Bubble animation cleanup
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setBubbles(prev => prev.map(bubble => ({
-        ...bubble,
-        life: bubble.life - 0.02,
-        y: bubble.y - 1
-      })).filter(bubble => bubble.life > 0));
-    }, 50);
-
-    return () => clearInterval(interval);
-  }, []);
+  const playSoundEffect = (soundType) => {
+    try {
+      if (soundType === 'correct' && correctSoundRef) {
+        correctSoundRef.currentTime = 0;
+        correctSoundRef.play();
+      } else if (soundType === 'incorrect' && incorrectSoundRef) {
+        incorrectSoundRef.currentTime = 0;
+        incorrectSoundRef.play();
+      } else if (soundType === 'success' && successSoundRef) {
+        successSoundRef.currentTime = 0;
+        successSoundRef.play();
+      }
+    } catch (error) {
+      console.log('Error playing sound:', error);
+    }
+  };
 
   // Clean up old scratch marks to prevent memory issues - but only when not actively playing
   useEffect(() => {
@@ -567,8 +1303,6 @@ export default function PersonalHygieneLevel2() {
     setIsDragging(false);
     setDraggedItem(null);
     setToothbrushPosition({ x: 0, y: 0 });
-    setBubbles([]);
-    setTeethBubbles([]);
     setWaterCupVisible(false);
     setPasteSliding(false);
     setSparkles([]);
@@ -583,6 +1317,10 @@ export default function PersonalHygieneLevel2() {
     setBlobs([]);
     setBlobsRemoved(0);
     initializeBlobs(); // Reinitialize blobs
+    
+    // Reset introductions
+    setShowCharacterIntroduction(false);
+    setCurrentToolIntroduction(null);
     
     if (audioRef && !audioPlaying) {
       audioRef.play().then(() => {
@@ -601,33 +1339,33 @@ export default function PersonalHygieneLevel2() {
   };
 
   const handleContinue = async () => {
-  console.log('Continue clicked, progress state:', { progressSaved, progressSaving });
-  
-  if (!progressSaved && !progressSaving) {
-    console.log('Saving progress before continue...');
-    await saveProgress();
-  } else if (progressSaving) {
-    console.log('Progress is currently saving, please wait...');
-    return;
-  }
-  
-  if (audioRef.current) {
-    audioRef.current.pause();
-    setAudioPlaying(false);
-  }
-  
-  console.log('Navigating back...');
-  setTimeout(() => {
-    navigate(-1);
-  }, 300);
-};
+    console.log('Continue clicked, progress state:', { progressSaved, progressSaving });
+    
+    if (!progressSaved && !progressSaving) {
+      console.log('Saving progress before continue...');
+      await saveProgress();
+    } else if (progressSaving) {
+      console.log('Progress is currently saving, please wait...');
+      return;
+    }
+    
+    if (audioRef.current) {
+      audioRef.current.pause();
+      setAudioPlaying(false);
+    }
+    
+    console.log('Navigating back...');
+    setTimeout(() => {
+      navigate(-1);
+    }, 300);
+  };
 
   const handleGoHome = () => {
     if (audioRef) {
       audioRef.pause();
       setAudioPlaying(false);
     }
-    navigate('/homepage');
+    navigate(-1);
   };
 
   useEffect(() => {
@@ -721,11 +1459,10 @@ export default function PersonalHygieneLevel2() {
         minHeight: "100vh",
         width: "100%",
         backgroundImage: `url(${bathroomBg})`,
-        backgroundSize: "cover",
+        backgroundSize: "120% auto",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
-        display: "flex",
-        flexDirection: "column"
+        overflow: "hidden"
       }}>
         <Navbar />
         <Box sx={{
@@ -792,6 +1529,34 @@ export default function PersonalHygieneLevel2() {
           </Stack>
         </Box>
       </div>
+    );
+  }
+
+  // Character Introduction
+  if (showCharacterIntroduction) {
+    return <CharacterIntroductionPopup onComplete={handleCharacterIntroductionComplete} />;
+  }
+
+  // Tool Introductions - One by One
+  if (currentToolIntroduction === 'toothpaste') {
+    return <ToothpasteIntroduction onNext={handleToothpasteIntroductionNext} />;
+  }
+
+  if (currentToolIntroduction === 'toothbrush') {
+    return (
+      <ToothbrushIntroduction 
+        onNext={handleToothbrushIntroductionNext} 
+        onPrevious={handleToothbrushIntroductionPrevious} 
+      />
+    );
+  }
+
+  if (currentToolIntroduction === 'water') {
+    return (
+      <WaterCupIntroduction 
+        onComplete={handleToolIntroductionComplete} 
+        onPrevious={handleWaterIntroductionPrevious} 
+      />
     );
   }
 
@@ -925,72 +1690,77 @@ export default function PersonalHygieneLevel2() {
           </Box>
         </Box>
 
-        {/* Upper-left fixed action buttons (reset / home) - MOVED HERE */}
+        {/* Character Cat */}
+        {!showCharacterIntroduction && !currentToolIntroduction && (
+          <CharacterCat 
+            gameState={getCharacterGameState()}
+            message={getCharacterMessage()}
+          />
+        )}
+
         <Box sx={{
-          position: 'fixed',
-          top: 18,
-          left: 18,
-          zIndex: 1020,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 2
-        }}>
-          <Button 
-            variant="contained"
-            onClick={resetGame}
-            sx={{ 
-              background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
-              color: 'white',
-              width: 64,
-              height: 64,
-              minWidth: 64,
-              borderRadius: '12px',
-              fontFamily: 'Poppins, sans-serif',
-              fontWeight: '700',
-              fontSize: '1.25rem',
-              textTransform: 'none',
-              boxShadow: '0 8px 18px rgba(255, 89, 94, 0.35)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
-                transform: 'translateY(-2px)'
-              }
-            }}
-            aria-label="Reset"
-          >
-            🔄
-          </Button>
-          
-          <Button 
-            variant="contained"
-            onClick={handleGoHome}
-            sx={{ 
-              background: 'linear-gradient(135deg, #1982C4 0%, #1568A0 100%)',
-              color: 'white',
-              width: 64,
-              height: 64,
-              minWidth: 64,
-              borderRadius: '12px',
-              fontFamily: 'Poppins, sans-serif',
-              fontWeight: '700',
-              fontSize: '1.25rem',
-              textTransform: 'none',
-              boxShadow: '0 8px 18px rgba(25, 130, 196, 0.35)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #42A5F5 0%, #1982C4 100%)',
-                transform: 'translateY(-2px)'
-              }
-            }}
-            aria-label="Home"
-          >
-            🏠
-          </Button>
-        </Box>
+                  position: 'fixed',
+                  top: 18,
+                  left: 18,
+                  zIndex: 1020,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 2
+                }}>
+                  {/* Reset Button - Image with Larger Hover */}
+                  <Box
+                    component="img"
+                    src={require("../../assets/hygienelevel3/resetbtn.png")}
+                    alt="Reset Game"
+                    onClick={resetGame}
+                    sx={{
+                      width: 70,
+                      height: 70,
+                      cursor: 'pointer',
+                      borderRadius: '50%',
+                      transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+                      '&:hover': {
+                        transform: 'translateY(-6px) scale(1.25)',
+                        width: 85,
+                        height: 85,
+                        zIndex: 1021
+                      },
+                      '&:active': {
+                        transform: 'translateY(-3px) scale(1.1)',
+                        width: 78,
+                        height: 78
+                      }
+                    }}
+                  />
+                  
+                  {/* Home Button - Image with Larger Hover */}
+                  <Box
+                    component="img"
+                    src={require("../../assets/hygienelevel3/homebtn.png")}
+                    alt="Go Home"
+                    onClick={handleGoHome}
+                    sx={{
+                      width: 70,
+                      height: 70,
+                      cursor: 'pointer',
+                      borderRadius: '50%',
+                      transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+                      '&:hover': {
+                        transform: 'translateY(-6px) scale(1.25)',
+                        width: 85,
+                        height: 85,
+                        zIndex: 1021
+                      },
+                      '&:active': {
+                        transform: 'translateY(-3px) scale(1.1)',
+                        width: 78,
+                        height: 78
+                      }
+                    }}
+                  />
+                </Box>
 
         <Box sx={{ 
           position: 'fixed',
@@ -1034,83 +1804,6 @@ export default function PersonalHygieneLevel2() {
           </Button>
         </Box>
 
-        <Box sx={{ 
-          mb: 1,
-          textAlign: 'center',
-          position: 'relative',
-          zIndex: 1010
-        }}>
-          <Typography variant="body1" sx={{ 
-            color: 'white', 
-            fontWeight: 'bold',
-            fontFamily: 'Poppins, sans-serif',
-            backgroundColor: 'rgba(25, 130, 196, 0.9)',
-            display: 'inline-block',
-            px: 3,
-            py: 1,
-            borderRadius: '15px',
-            fontSize: '1rem',
-            boxShadow: '0 4px 15px rgba(25, 130, 196, 0.4)'
-          }}>
-            {gameStep === 1 ? 'Drag the toothpaste to the toothbrush!' : 
-             gameStep === 2 ? 'Drag the toothbrush over the teeth to clean them!' :
-             'Drag the water cup to your mouth to rinse!'}
-          </Typography>
-        </Box>
-
-        {/* Teeth bubbles - bubbles that stay on teeth surface with improved styling */}
-        {teethBubbles.map(bubble => (
-          <Box
-            key={bubble.id}
-            sx={{
-              position: 'absolute',
-              left: `${bubble.x}%`,
-              top: `${bubble.y}%`,
-              width: `${bubble.size}px`,
-              height: `${bubble.size}px`,
-              backgroundColor: 'white',
-              border: '1px solid rgba(173, 216, 230, 0.3)',
-              borderRadius: '50%',
-              pointerEvents: 'none',
-              zIndex: 10,
-              opacity: bubble.opacity,
-              transform: 'translate(-50%, -50%)',
-              boxShadow: '0 0 8px rgba(255, 255, 255, 0.6), inset 0 0 8px rgba(173, 216, 230, 0.2)',
-              animation: 'gentleBubble 3s ease-in-out infinite',
-              '@keyframes gentleBubble': {
-                '0%': { transform: 'translate(-50%, -50%) scale(1)' },
-                '50%': { transform: 'translate(-50%, -50%) scale(1.1)' },
-                '100%': { transform: 'translate(-50%, -50%) scale(1)' }
-              }
-            }}
-          />
-        ))}
-
-        {/* Floating bubbles */}
-        {bubbles.map(bubble => (
-          <Box
-            key={bubble.id}
-            sx={{
-              position: 'fixed',
-              left: bubble.x,
-              top: bubble.y,
-              width: bubble.size,
-              height: bubble.size,
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              borderRadius: '50%',
-              pointerEvents: 'none',
-              zIndex: 1000,
-              opacity: bubble.life,
-              transform: 'translate(-50%, -50%)',
-              animation: 'bubble 1s ease-out',
-              '@keyframes bubble': {
-                '0%': { transform: 'translate(-50%, -50%) scale(0)' },
-                '50%': { transform: 'translate(-50%, -50%) scale(1.2)' },
-                '100%': { transform: 'translate(-50%, -50%) scale(1)' }
-              }
-            }}
-          />
-        ))}
 
         {/* Sparkle effects */}
         {showSparkleEffect && sparkles.map(sparkle => (
@@ -1269,7 +1962,7 @@ export default function PersonalHygieneLevel2() {
                 </Box>
               )}
 
-              {/* Central teeth container with scratch card effect */}
+              {/* Central teeth container with scratch card effect - FIXED */}
               <Box
                 ref={teethContainerRef}
                 data-teeth-container
@@ -1282,7 +1975,7 @@ export default function PersonalHygieneLevel2() {
                   transition: 'all 0.3s ease',
                   transform: 'scale(1)',
                   position: 'relative',
-                  overflow: 'visible'
+                  overflow: 'hidden' // Changed to hidden to prevent blue artifacts
                 }}
                 onDrop={gameStep === 3 ? handleMouthDrop : undefined}
                 onDragOver={(e) => e.preventDefault()}
@@ -1301,7 +1994,7 @@ export default function PersonalHygieneLevel2() {
                   }}
                 />
 
-                {/* Dirty teeth image with scratch mask overlay - only show in step 2 before completion */}
+                {/* Dirty teeth image with scratch effect - only show in step 2 before completion */}
                 {gameStep >= 2 && !step2Completed && (
                   <Box
                     sx={{
@@ -1320,48 +2013,39 @@ export default function PersonalHygieneLevel2() {
                         height: '600px',
                         objectFit: 'contain',
                         position: 'absolute',
-                        mask: `url("data:image/svg+xml,${encodeURIComponent(`
-                          <svg xmlns="http://www.w3.org/2000/svg" width="650" height="600" viewBox="0 0 100 100">
-                            <defs>
-                              <mask id="scratchMask">
-                                <rect width="100%" height="100%" fill="white"/>
-                                ${scratchMarks.map(mark => 
-                                  `<circle cx="${mark.x}" cy="${mark.y}" r="${mark.size / 8}" fill="black"/>`
-                                ).join('')}
-                              </mask>
-                            </defs>
-                            <rect width="100%" height="100%" fill="white" mask="url(#scratchMask)"/>
-                          </svg>
-                        `)}") 0 0/100% 100%`,
-                        WebkitMask: `url("data:image/svg+xml,${encodeURIComponent(`
-                          <svg xmlns="http://www.w3.org/2000/svg" width="650" height="600" viewBox="0 0 100 100">
-                            <defs>
-                              <mask id="scratchMask">
-                                <rect width="100%" height="100%" fill="white"/>
-                                ${scratchMarks.map(mark => 
-                                  `<circle cx="${mark.x}" cy="${mark.y}" r="${mark.size / 8}" fill="black"/>`
-                                ).join('')}
-                              </mask>
-                            </defs>
-                            <rect width="100%" height="100%" fill="white" mask="url(#scratchMask)"/>
-                          </svg>
-                        `)}") 0 0/100% 100%`
+                        // Simple approach - use opacity based on scratch coverage
+                        opacity: Math.max(0.1, 1 - (scratchMarks.length / 50))
                       }}
                     />
                   </Box>
                 )}
 
-                {/* Original teeth image for step 1, step 2 completion, and completed game */}
-                {(gameStep === 1 || step2Completed || gameCompleted) && (
+                {/* Show clean teeth when step 2 is completed or game is completed */}
+                {(step2Completed || gameCompleted) && (
                   <img 
-                    src={gameStep === 1 ? teethImg : afterTeethImg} 
-                    alt="Teeth" 
+                    src={afterTeethImg} 
+                    alt="Clean Teeth" 
                     style={{
                       width: '650px',
                       height: '600px',
                       objectFit: 'contain',
-                      filter: (step2Completed || gameCompleted) ? 'brightness(1.1) drop-shadow(0 0 20px rgba(255, 255, 255, 0.5))' : 'brightness(1)',
+                      filter: 'brightness(1.1) drop-shadow(0 0 20px rgba(255, 255, 255, 0.5))',
                       transition: 'filter 0.5s ease',
+                      position: 'relative',
+                      zIndex: 3
+                    }}
+                  />
+                )}
+
+                {/* Show dirty teeth for step 1 */}
+                {gameStep === 1 && (
+                  <img 
+                    src={teethImg} 
+                    alt="Dirty Teeth" 
+                    style={{
+                      width: '650px',
+                      height: '600px',
+                      objectFit: 'contain',
                       position: 'relative',
                       zIndex: 3
                     }}
