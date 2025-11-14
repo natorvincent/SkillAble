@@ -472,7 +472,7 @@ function StudentDashboard() {
             <AudioToggleButton audioPlaying={audioPlaying} toggleAudio={toggleAudio} />
             <Box sx={{ mb: 3 }}>
               <Typography variant="h5" color="#2d3748" fontWeight={600} gutterBottom>
-                Your Learning Modules
+                Learning Modules
               </Typography>
             </Box>
             
@@ -608,11 +608,6 @@ function StudentDashboard() {
                                         {progress.totalStars || 0} Stars
                                       </Typography>
                                     </Box>
-                                  </Grid>
-                                  <Grid item xs={6}>
-                                    <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                                      {progress.averageScore ? Math.round(progress.averageScore) + '% Avg' : 'No Score'}
-                                    </Typography>
                                   </Grid>
                                 </Grid>
 
