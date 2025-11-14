@@ -331,7 +331,7 @@ function App() {
           </RouteHandler>
         } />
 
-        <Route path="/lesson/hygiene/level-5/:moduleId/:lessonId" element={
+        <Route path="/lesson/hygiene/level-5/:lessonId" element={
           <RouteHandler requireAuth>
             <PersonalHygieneLevel5 />
           </RouteHandler>
