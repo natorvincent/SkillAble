@@ -41,7 +41,7 @@ const AdminInterface = () => {
   const [activeTab, setActiveTab] = useState(0);
 
   // Base URL for API
-  const API_BASE_URL = 'https://skillable-pdv0.onrender.com/api';
+  const API_BASE_URL = 'http://localhost:8080/api';
   
   // Get the auth token from localStorage
   const getAuthToken = () => localStorage.getItem('token');

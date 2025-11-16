@@ -34,7 +34,7 @@
     const [openDeleteModal, setOpenDeleteModal] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState(null);
 
-    const API_BASE_URL = 'https://skillable-pdv0.onrender.com/api';
+    const API_BASE_URL = 'http://localhost:8080/api';
     const getAuthToken = () => localStorage.getItem('token');
 
     useEffect(() => {

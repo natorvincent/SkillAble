@@ -102,7 +102,7 @@ function TeacherDashboard() {
 
   const fetchUserProfile = async (email) => {
     try {
-      const response = await fetch(`https://skillable-pdv0.onrender.com/api/teachers/profile?email=${email}`, {
+      const response = await fetch(`http://localhost:8080/api/teachers/profile?email=${email}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json"
@@ -135,7 +135,7 @@ function TeacherDashboard() {
     setLoadingStudents(true);
     try {
       const userEmail = localStorage.getItem("userEmail");
-      const response = await fetch(`https://skillable-pdv0.onrender.com/api/teachers/students?email=${userEmail}`, {
+      const response = await fetch(`http://localhost:8080/api/teachers/students?email=${userEmail}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json"
@@ -162,7 +162,7 @@ function TeacherDashboard() {
     setLoadingCompletionRate(true);
     try {
       const userEmail = localStorage.getItem("userEmail");
-      const response = await fetch(`https://skillable-pdv0.onrender.com/api/progress/teacher/${userEmail}/completion-rate`, {
+      const response = await fetch(`http://localhost:8080/api/progress/teacher/${userEmail}/completion-rate`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json"
@@ -188,7 +188,7 @@ function TeacherDashboard() {
     try {
       const userEmail = localStorage.getItem("userEmail");
       
-      const availableResponse = await fetch("https://skillable-pdv0.onrender.com/api/modules/available", {
+      const availableResponse = await fetch("http://localhost:8080/api/modules/available", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -222,7 +222,7 @@ function TeacherDashboard() {
 
     try {
       const userEmail = localStorage.getItem("userEmail");
-      const response = await fetch(`https://skillable-pdv0.onrender.com/api/teachers/profile`, {
+      const response = await fetch(`http://localhost:8080/api/teachers/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json"

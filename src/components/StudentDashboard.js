@@ -35,7 +35,7 @@ import module1 from "../assets/hygiene.png"
 import module2 from "../assets/culinary-skills.jpg"
 import module3 from "../assets/chores.jpg"
 import { 
-  getAllModuleProgress
+  getStudentModuleProgress,
 } from '../services/progressService';
 import AudioToggleButton from "../components/background music/AudioToggleButton";
 import backgroundMusic from '../assets/background-music.mp3';
@@ -89,6 +89,7 @@ function StudentDashboard() {
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [openProfileModal, setOpenProfileModal] = useState(false);
   const [showRoleSelection, setShowRoleSelection] = useState(false);
+  const [selectedRole, setSelectedRole] = useState(null);
   const [tempSelectedRole, setTempSelectedRole] = useState(null);
   const [modules, setModules] = useState([]);
   const [moduleProgress, setModuleProgress] = useState({});
@@ -105,7 +106,6 @@ function StudentDashboard() {
   const authCheckedRef = useRef(false);
   const profileModalShownRef = useRef(false);
   const roleSelectionShownRef = useRef(false);
-  const modulesFetchedRef = useRef(false);
 
   const moduleImages = [
     module1,
@@ -113,11 +113,14 @@ function StudentDashboard() {
     module3
   ];
 
-  // FIXED: Simplified authentication check - only run once
+  // FIXED: Main authentication check with loop prevention
   useEffect(() => {
-    if (authCheckedRef.current) return;
-    authCheckedRef.current = true;
+    if (navigationBlockedRef.current || authCheckedRef.current) {
+      return;
+    }
 
+    navigationBlockedRef.current = true;
+    
     const checkAuthentication = () => {
       const token = localStorage.getItem("token");
       const userEmail = localStorage.getItem("userEmail");
@@ -125,39 +128,66 @@ function StudentDashboard() {
       
       console.log("StudentDashboard Auth check:", { token: !!token, userEmail, userRole });
 
+      // If no token or email, redirect to login
       if (!token || !userEmail) {
         console.log("No auth token, redirecting to login");
+        navigationBlockedRef.current = false;
         navigate("/login", { replace: true });
         return;
       }
 
+      // If user has TEACHER role but is on student dashboard, redirect to teacher dashboard
       if (userRole === "TEACHER") {
-        console.log("Teacher role detected, redirecting to teacher dashboard");
-        navigate("/teacherdashboard", { replace: true });
+        console.log("Teacher role detected in StudentDashboard, performing hard redirect to teacher dashboard");
+        navigationBlockedRef.current = false;
+        authCheckedRef.current = true;
+        
+        // Use hard redirect to break any React Router loop
+        setTimeout(() => {
+          window.location.href = "/teacherdashboard";
+        }, 100);
         return;
       }
 
+      // If we get here, user is authenticated and is a STUDENT
       console.log("User authenticated as STUDENT, fetching profile...");
+      authCheckedRef.current = true;
+      navigationBlockedRef.current = false;
       fetchUserProfile(userEmail);
     };
 
-    // Use setTimeout to ensure this runs after component mount
-    setTimeout(checkAuthentication, 0);
+    const timer = setTimeout(checkAuthentication, 100);
+    
+    return () => {
+      clearTimeout(timer);
+      navigationBlockedRef.current = false;
+    };
   }, [navigate]);
 
-  // FIXED: Profile completion check
+  // FIXED: Profile completion check with modal control
   useEffect(() => {
     if (userProfile && !loading) {
-      console.log("User profile loaded, complete:", isProfileComplete());
+      console.log("User profile loaded:", userProfile);
+      console.log("Profile complete check:", isProfileComplete());
       
+      // Check if profile is incomplete and modal hasn't been shown yet
       if (!isProfileComplete() && !profileModalShownRef.current) {
-        console.log("Profile incomplete, showing modal");
+        console.log("Profile incomplete, showing profile modal");
         setOpenProfileModal(true);
         profileModalShownRef.current = true;
-      } else if (isProfileComplete() && !modulesFetchedRef.current) {
-        console.log("Profile complete, fetching modules");
-        modulesFetchedRef.current = true;
-        fetchModules();
+      } else if (isProfileComplete() && !roleSelectionShownRef.current) {
+        console.log("Profile complete, checking role selection");
+        // Check if user has a role set
+        const userRole = localStorage.getItem("userRole");
+        console.log("Current user role:", userRole);
+        
+        if (!userRole || userRole === "STUDENT") {
+          console.log("No role or STUDENT role, fetching modules");
+          fetchModules();
+        } else {
+          console.log("User has role:", userRole);
+          fetchModules();
+        }
       }
     }
   }, [userProfile, loading]);
@@ -165,7 +195,7 @@ function StudentDashboard() {
   const fetchUserProfile = async (email) => {
     try {
       console.log("Fetching user profile for:", email);
-      const response = await fetch(`https://skillable-pdv0.onrender.com/api/students/profile?email=${email}`, {
+      const response = await fetch(`http://localhost:8080/api/students/profile?email=${email}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json"
@@ -180,6 +210,8 @@ function StudentDashboard() {
       console.log("Profile data received:", profileData);
       
       setUserProfile(profileData);
+      
+      // Set form fields with profile data
       setFirstName(profileData.firstName || "");
       setLastName(profileData.lastName || "");
       setDateOfBirth(profileData.dateOfBirth || "");
@@ -197,16 +229,22 @@ function StudentDashboard() {
     }
   };
 
-  // FIXED: Module fetching
+  const fetchModuleProgress = async (moduleId, studentId) => {
+    try {
+      const moduleProgressResponse = await getStudentModuleProgress(studentId, moduleId);
+      return moduleProgressResponse;
+    } catch (error) {
+      console.error(`Error fetching progress for module ${moduleId}:`, error);
+      return null;
+    }
+  };
+
   const fetchModules = async () => {
-    if (modulesFetchedRef.current && modules.length > 0) return;
-    
     setLoadingModules(true);
     try {
       const userEmail = localStorage.getItem("userEmail");
       
-      console.log("Fetching available modules...");
-      const availableResponse = await fetch("https://skillable-pdv0.onrender.com/api/modules/available", {
+      const availableResponse = await fetch("http://localhost:8080/api/modules/available", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -219,41 +257,33 @@ function StudentDashboard() {
       }
       
       const modulesData = await availableResponse.json();
-      console.log("Modules data received:", modulesData);
-      
-      // Use the simplified utility function to get all progress
       const studentId = localStorage.getItem('studentId') || userProfile?.id;
-      const progressMap = await getAllModuleProgress(studentId, modulesData);
+      
+      if (!studentId) {
+        throw new Error("Student ID not found");
+      }
+      
+      const moduleProgressPromises = modulesData.map(async (module) => {
+        const progress = await fetchModuleProgress(module.id, studentId);
+        return { moduleId: module.id, progress };
+      });
+      
+      const progressResults = await Promise.all(moduleProgressPromises);
+      const progressMap = {};
+      progressResults.forEach(result => {
+        progressMap[result.moduleId] = result.progress;
+      });
       
       setModuleProgress(progressMap);
       setModules(modulesData);
       setLoadingModules(false);
-      
     } catch (err) {
       console.error("Error fetching modules:", err);
-      // Set default progress for all modules on error
-      const progressMap = {};
-      if (modules && modules.length > 0) {
-        modules.forEach(module => {
-          progressMap[module.id] = getDefaultModuleProgress();
-        });
-      }
-      setModuleProgress(progressMap);
+      setError("Failed to load modules. Please try again.");
+      setOpenSnackbar(true);
       setLoadingModules(false);
     }
-  };
-
-  // Default progress function
-  const getDefaultModuleProgress = () => {
-    return {
-      completed: false,
-      completedLessons: 0,
-      totalLessons: 0,
-      totalStars: 0,
-      averageScore: 0,
-      lastAccessed: null
-    };
-  };
+  };  
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
@@ -266,7 +296,7 @@ function StudentDashboard() {
 
     try {
       const userEmail = localStorage.getItem("userEmail");
-      const response = await fetch("https://skillable-pdv0.onrender.com/api/students/update", {
+      const response = await fetch("http://localhost:8080/api/students/update", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -326,8 +356,8 @@ function StudentDashboard() {
 
       const endpoint =
         tempSelectedRole === "STUDENT"
-          ? "https://skillable-pdv0.onrender.com/api/students/set-role"
-          : "https://skillable-pdv0.onrender.com/api/teachers/set-role";
+          ? "http://localhost:8080/api/students/set-role"
+          : "http://localhost:8080/api/teachers/set-role";
 
       const response = await fetch(endpoint, {
         method: "POST",
@@ -341,18 +371,27 @@ function StudentDashboard() {
 
       // Save role locally
       localStorage.setItem("userRole", tempSelectedRole);
+      setSelectedRole(tempSelectedRole);
       setShowRoleSelection(false);
       setSavingRole(false);
 
       if (tempSelectedRole === "TEACHER") {
-        setSuccess("Role set to TEACHER. Redirecting to dashboard...");
+        setSuccess("Role set to TEACHER. Redirecting to login...");
         setOpenSnackbar(true);
         setIsRedirecting(true);
 
         setTimeout(() => {
-          console.log("Redirecting to teacher dashboard");
-          // Redirect to teacher dashboard without clearing auth data
-          window.location.href = "/teacherdashboard";
+          console.log("Clearing auth data and redirecting to login");
+          // Clear ALL authentication data
+          localStorage.removeItem("token");
+          localStorage.removeItem("userEmail");
+          localStorage.removeItem("userRole");
+          localStorage.removeItem("studentId");
+          localStorage.removeItem("teacherId");
+          localStorage.removeItem("isAdmin");
+          
+          // Use window.location for hard redirect to ensure complete cleanup
+          window.location.href = "/login";
         }, 1500);
       } else {
         setSuccess("Successfully registered as STUDENT!");
@@ -391,14 +430,16 @@ function StudentDashboard() {
   const isProfileComplete = () => {
     if (!userProfile) return false;
     const complete = !!(userProfile.firstName && userProfile.lastName && userProfile.dateOfBirth);
+    console.log("Profile complete check:", { 
+      firstName: userProfile.firstName, 
+      lastName: userProfile.lastName, 
+      dateOfBirth: userProfile.dateOfBirth,
+      complete 
+    });
     return complete;
   };
 
-  // FIXED: Navigation function - completely simplified
   const handleStartModule = (moduleId) => {
-    console.log("Starting module:", moduleId);
-    
-    // Use a simple navigation without any complex logic
     navigate(`/module/${moduleId}`);
   };
 
@@ -412,13 +453,12 @@ function StudentDashboard() {
   };
 
   const getModuleImage = (index) => {
-    const image = moduleImages[index % moduleImages.length];
-    return image || module1;
+    return moduleImages[index % moduleImages.length];
   };
 
   const getProgressPercentage = (moduleId) => {
     const progress = moduleProgress[moduleId];
-    if (!progress || !progress.totalLessons || progress.totalLessons === 0) return 0;
+    if (!progress || progress.totalLessons === 0) return 0;
     return Math.round((progress.completedLessons / progress.totalLessons) * 100);
   };
 
@@ -472,7 +512,7 @@ function StudentDashboard() {
             <AudioToggleButton audioPlaying={audioPlaying} toggleAudio={toggleAudio} />
             <Box sx={{ mb: 3 }}>
               <Typography variant="h5" color="#2d3748" fontWeight={600} gutterBottom>
-                Learning Modules
+                Your Learning Modules
               </Typography>
             </Box>
             
@@ -487,7 +527,7 @@ function StudentDashboard() {
                   const progressPercentage = getProgressPercentage(module.id);
                   
                   return (
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={module.id} sx={{ display: 'flex', justifyContent: 'center' }}>
+                    <Grid item xs={12} sm={6} md={4} key={module.id}>
                       <Card 
                         sx={{ 
                           height: '535px', 
@@ -515,9 +555,6 @@ function StudentDashboard() {
                             }}
                             image={getModuleImage(index)}
                             alt={`${module.name || 'Module'} cover`}
-                            onError={(e) => {
-                              e.target.src = module1;
-                            }}
                           />
                           
                           {progress && (
@@ -583,7 +620,7 @@ function StudentDashboard() {
                                     Progress:
                                   </Typography>
                                   <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                                    {progress.completedLessons || 0}/{progress.totalLessons || 0} Lessons
+                                    {progress.completedLessons}/{progress.totalLessons} Lessons
                                   </Typography>
                                 </Box>
                                 <LinearProgress 
@@ -608,6 +645,11 @@ function StudentDashboard() {
                                         {progress.totalStars || 0} Stars
                                       </Typography>
                                     </Box>
+                                  </Grid>
+                                  <Grid item xs={6}>
+                                    <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                                      {progress.averageScore ? Math.round(progress.averageScore) + '% Avg' : 'No Score'}
+                                    </Typography>
                                   </Grid>
                                 </Grid>
 
@@ -705,6 +747,9 @@ function StudentDashboard() {
         BackdropComponent={Backdrop}
         BackdropProps={{
           timeout: 500,
+          sx: {
+            backgroundColor: 'rgba(74, 108, 247, 0.1)',
+          }
         }}
         sx={{
           display: 'flex',
@@ -871,6 +916,12 @@ function StudentDashboard() {
         open={showRoleSelection}
         closeAfterTransition
         BackdropComponent={Backdrop}
+        BackdropProps={{
+          timeout: 500,
+          sx: {
+            backgroundColor: 'rgba(74, 108, 247, 0.1)',
+          }
+        }}
         sx={{
           display: 'flex',
           alignItems: 'center',

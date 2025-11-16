@@ -11,7 +11,7 @@ import {
   Divider,
   IconButton,
   Chip,
-  Card, 
+  Card,
   CardContent,
   CardMedia,
   CardActions,
@@ -50,9 +50,6 @@ import module3 from "../assets/chores.jpg";
 import { useGlobalBackgroundMusic } from "./background music/useGlobalBackgroundMusic";
 import AudioToggleButton from "../components/background music/AudioToggleButton";
 import backgroundMusic from '../assets/background-music.mp3';
-import playbtn from '../assets/playbtn.png';
-import exitbtn from '../assets/exitbtn.png'; // ADD THIS IMPORT
-
 
 
 function ModuleDetails() {
@@ -118,7 +115,7 @@ function ModuleDetails() {
       
       if (!studentId || !moduleId) return;
       
-      const response = await fetch(`https://skillable-pdv0.onrender.com/api/lessons/module/${moduleId}`, {
+      const response = await fetch(`http://localhost:8080/api/lessons/module/${moduleId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -155,7 +152,7 @@ function ModuleDetails() {
 
   const fetchModuleDetails = async () => {
     try {
-      const response = await fetch(`https://skillable-pdv0.onrender.com/api/modules/${moduleId}`, {
+      const response = await fetch(`http://localhost:8080/api/modules/${moduleId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -178,7 +175,7 @@ function ModuleDetails() {
 
   const fetchLessons = async () => {
     try {
-      const response = await fetch(`https://skillable-pdv0.onrender.com/api/lessons/module/${moduleId}`, {
+      const response = await fetch(`http://localhost:8080/api/lessons/module/${moduleId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -268,9 +265,15 @@ function ModuleDetails() {
     return lessonProgress[lesson.id]?.completed === true;
   };
 
-  // MODIFIED: Always return false to unlock all lessons
   const isLessonLocked = (lesson, index) => {
-    return false; // All lessons are unlocked
+    if (index === 0) return false;
+    
+    const previousLesson = lessons[index - 1];
+    if (previousLesson && !isLessonCompleted(previousLesson)) {
+      return true;
+    }
+    
+    return false;
   };
 
   const getLessonProgressPercentage = () => {
@@ -313,42 +316,181 @@ function ModuleDetails() {
         <Navbar />
         
         <Container maxWidth="lg" sx={{ py: 5 }}>
+          <Breadcrumbs sx={{ mb: 3 }}>
+            <Link 
+              color="inherit" 
+              href="/homepage"
+              sx={{ 
+                textDecoration: 'none',
+                '&:hover': { textDecoration: 'underline' }
+              }}
+            >
+              Home
+            </Link>
+            <Typography color="text.primary">{module?.name || 'Module Details'}</Typography>
+          </Breadcrumbs>
           
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
           <Button
-            onClick={() => navigate('/studentdashboard')}
-            sx={{ 
-              padding: '1px',
-              minWidth: 'auto',
-              backgroundColor: 'transparent',
-              boxShadow: 'none',
-              marginLeft: '-120px',
-              '&:hover': {
-                backgroundColor: 'transparent',
-                boxShadow: 'none',
-                transform: 'scale(1.1)',
-                transition: 'transform 0.2s ease-in-out'
-              }
+            startIcon={<ArrowBack />}
+            onClick={() => navigate('/homepage')}
+            sx={{ mb: 3 }}
+          >
+            Back to Modules
+          </Button>
+          <AudioToggleButton audioPlaying={audioPlaying} toggleAudio={toggleAudio} />
+          
+          {progressStats && (
+            <Card sx={{ mb: 4, p: 3, borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' }}>
+              <Typography variant="h6" gutterBottom>
+                Your Progress
+              </Typography>
+              
+              <LinearProgress
+                variant="determinate"
+                value={getLessonProgressPercentage()}
+                sx={{ height: 10, borderRadius: 5, mb: 2 }}
+              />
+              
+              <Grid container spacing={2}>
+                <Grid item xs={6} sm={3}>
+                  <Typography variant="body2" color="text.secondary">
+                    Completed Lessons
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                    {progressStats.completedLessons || 0}/{lessons.length}
+                  </Typography>
+                </Grid>
+                
+                <Grid item xs={6} sm={3}>
+                  <Typography variant="body2" color="text.secondary">
+                    Stars Earned
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'warning.main', display: 'flex', alignItems: 'center' }}>
+                    {progressStats.totalStars || 0}
+                    <StarIcon fontSize="small" sx={{ ml: 0.5, color: 'warning.main' }} />
+                  </Typography>
+                </Grid>
+                
+                <Grid item xs={6} sm={3}>
+                  <Typography variant="body2" color="text.secondary">
+                    Average Score
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: 'info.main' }}>
+                    {progressStats.averageScore ? Math.round(progressStats.averageScore) + '%' : 'N/A'}
+                  </Typography>
+                </Grid>
+                
+                <Grid item xs={6} sm={3}>
+                  <Typography variant="body2" color="text.secondary">
+                    Status
+                  </Typography>
+                  <Chip
+                    label={moduleProgress?.completed ? "Completed" : "In Progress"}
+                    color={moduleProgress?.completed ? "success" : "primary"}
+                    size="small"
+                  />
+                </Grid>
+              </Grid>
+            </Card>
+          )}
+          
+          <Card
+            sx={{
+              mb: 4,
+              borderRadius: '16px',
+              boxShadow: '0 5px 15px rgba(0,0,0,0.08)',
+              overflow: 'hidden'
             }}
           >
-            <img 
-              src={exitbtn} 
-              alt="Exit" 
-              style={{ 
-                width: 85, 
-                height: 85
-              }} 
+            <CardMedia
+              component="img"
+              sx={{
+                height: 200,
+                objectFit: 'cover'
+              }}
+              image={getModuleImage(module?.id)}
+              alt={`${module?.name || 'Module'} cover`}
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
             />
-          </Button>
-          
-          <AudioToggleButton audioPlaying={audioPlaying} toggleAudio={toggleAudio} />
-        </Box>
+            <div
+              style={{
+                height: 200,
+                backgroundColor: '#4a6cf7',
+                display: 'none',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <BookOutlined sx={{ fontSize: 100, color: 'white' }} />
+            </div>
+
+            <CardContent>
+              <Typography variant="h4" component="h1" gutterBottom>
+                {module?.name || 'Module'}
+              </Typography>
+              <Typography variant="body1" color="text.secondary" paragraph>
+                {module?.description || 'No description available'}
+              </Typography>
+              
+              <Box sx={{ display: 'flex', mt: 2, gap: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <BookOutlined sx={{ mr: 1, color: '#4a6cf7' }} />
+                  <Typography variant="body2">
+                    {lessons.length} Lessons
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <AccessTime sx={{ mr: 1, color: '#4a6cf7' }} />
+                  <Typography variant="body2">
+                    {formatTime(lessons.reduce((total, lesson) => total + (lesson.estimatedTimeMinutes || 0), 0))}
+                  </Typography>
+                </Box>
+              </Box>
+
+              {progressStats && (
+                <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                  <Chip 
+                    icon={<CheckCircle />} 
+                    label={`${progressStats.completedLessons || 0}/${lessons.length} Lessons Completed`} 
+                    color={progressStats.completedLessons === lessons.length ? "success" : "primary"}
+                    variant="outlined"
+                  />
+                  
+                  <Chip 
+                    icon={<StarIcon />}
+                    label={`${progressStats.totalStars || 0} Stars Earned`}
+                    color="warning"
+                    variant="outlined"
+                  />
+                  
+                  {progressStats.averageScore !== undefined && (
+                    <Chip 
+                      icon={<ScoreIcon />}
+                      label={`${Math.round(progressStats.averageScore)}% Average Score`}
+                      color="info"
+                      variant="outlined"
+                    />
+                  )}
+                </Box>
+              )}
+            </CardContent>
+          </Card>
           
           <Paper
             sx={{
-              backgroundColor: 'transparent'
+              p: 3,
+              borderRadius: '16px',
+              boxShadow: '0 5px 15px rgba(0,0,0,0.08)',
+              backgroundColor: 'rgba(255, 255, 255, 0.9)'
             }}
           >
+            <Typography variant="h5" component="h2" gutterBottom>
+              Lessons
+            </Typography>
+            <Divider sx={{ mb: 3 }} />
             
             {lessons.length === 0 ? (
               <Alert severity="info" sx={{ mb: 2 }}>
@@ -366,7 +508,7 @@ function ModuleDetails() {
                 >
                   {lessons.map((lesson, index) => {
                     const completed = isLessonCompleted(lesson);
-                    const locked = isLessonLocked(lesson, index); // Now always returns false
+                    const locked = isLessonLocked(lesson, index);
                     const starsEarned = lessonProgress[lesson.id]?.starsEarned || 0;
                     const lessonTitle = lesson?.title || `Lesson ${index + 1}`;
                     const lessonDescription = lesson?.description || '';
@@ -382,15 +524,16 @@ function ModuleDetails() {
                         key={lesson.id || index}
                         sx={{
                           width: 280,
-                          height: 350,
-                          borderRadius: '20px 20px 50px 20px',
+                          height: '100%',
+                          borderRadius: '16px',
                           border: '1px solid',
                           borderColor: completed ? '#4caf50' : '#e0e0e0',
                           backgroundColor: completed ? 'rgba(76, 175, 80, 0.05)' : 'white',
                           transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                           position: 'relative',
                           '&:hover': {
-                            boxShadow: '0px 10px 20px rgba(0,0,0,0.1)'
+                            transform: locked ? 'none' : 'translateY(-5px)',
+                            boxShadow: locked ? '0 2px 5px rgba(0,0,0,0.1)' : '0 10px 20px rgba(0,0,0,0.1)'
                           }
                         }}
                       >
@@ -442,7 +585,8 @@ function ModuleDetails() {
                             display: 'flex',
                             justifyContent: 'center',
                             alignItems: 'center',
-                            bgcolor: completed ? '#4caf50' : '#4a6cf7', 
+                            bgcolor: completed ? '#4caf50' : 
+                                    locked ? '#9e9e9e' : '#4a6cf7',
                             color: 'white',
                             height: 100,
                             position: 'relative'
@@ -450,8 +594,10 @@ function ModuleDetails() {
                         >
                           {completed ? (
                             <CheckCircle sx={{ fontSize: 48 }} />
+                          ) : locked ? (
+                            <Lock sx={{ fontSize: 48 }} />
                           ) : (
-                            getLessonIcon(activityType) 
+                            getLessonIcon(activityType)
                           )}
                           <Typography
                             variant="h4"
@@ -467,47 +613,97 @@ function ModuleDetails() {
                           </Typography>
                         </Box>
                         <CardContent sx={{ pt: 2 }}>
-                          <Typography variant="h5" component="div" gutterBottom noWrap title={lessonTitle}>
+                          <Typography variant="h6" component="div" gutterBottom noWrap title={lessonTitle}>
                             {lessonTitle}
                           </Typography>
-  
+                          
+                          <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                            {hasActivity && (
+                              <Chip 
+                                label="Interactive Game" 
+                                size="small" 
+                                color="primary"
+                                sx={{ mb: 1 }}
+                              />
+                            )}
+                            {formattedActivityType && (
+                              <Chip 
+                                label={formattedActivityType} 
+                                size="small" 
+                                sx={{ mb: 1 }}
+                              />
+                            )}
+                            {lesson.level && (
+                              <Chip 
+                                label={`Level ${lesson.level}`} 
+                                size="small" 
+                                sx={{ mb: 1 }}
+                              />
+                            )}
+                          </Box>
+                          
+                          {completed && starsEarned > 0 && (
+                            <Box sx={{ display: 'flex', mt: 1, mb: 1 }}>
+                              {[...Array(3)].map((_, i) => (
+                                <StarIcon 
+                                  key={i} 
+                                  sx={{ 
+                                    fontSize: 20, 
+                                    color: i < starsEarned ? 'warning.main' : 'grey.300',
+                                    mr: 0.5
+                                  }} 
+                                />
+                              ))}
+                              <Typography variant="body2" color="text.secondary" sx={{ ml: 0.5 }}>
+                                {starsEarned}/3
+                              </Typography>
+                            </Box>
+                          )}
+                          
+                          {lesson.estimatedTimeMinutes && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                              <AccessTime sx={{ mr: 1, fontSize: 16, color: 'text.secondary' }} />
+                              <Typography variant="body2" color="text.secondary">
+                                {lesson.estimatedTimeMinutes} min
+                              </Typography>
+                            </Box>
+                          )}
+                          
+                          {lessonDescription && (
+                            <Typography 
+                              variant="body2" 
+                              color="text.secondary" 
+                              sx={{ 
+                                mt: 1,
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
+                              }}
+                            >
+                              {lessonDescription}
+                            </Typography>
+                          )}
                         </CardContent>
-                        <CardActions sx={{ 
-                          pt: 10, 
-                          pb: 0, 
-                          px: 0, 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'flex-end' // Changed from 'flex-start' to 'flex-end'
-                        }}>
+                        <CardActions sx={{ pt: 0, pb: 2, px: 2 }}>
                           <Button
                             variant="contained"
+                            fullWidth
+                            startIcon={locked ? <Lock /> : <PlayArrow />}
                             onClick={() => handleStartLesson(lesson, index)}
-                            disabled={false} 
+                            disabled={locked}
                             sx={{
-                              backgroundColor: 'transparent',
-                              boxShadow: 'none',
-                              minWidth: 'auto',
-                              padding: '1px',
+                              borderRadius: '8px',
+                              backgroundColor: completed ? '#4caf50' : 
+                                            locked ? '#9e9e9e' : '#4a6cf7',
                               '&:hover': {
-                                backgroundColor: 'transparent',
-                                boxShadow: 'none',
-                                transform: 'scale(1.2)',
-                                transition: 'transform 0.2s ease-in-out'
-                              },
-                              '&:active': {
-                                transform: 'scale(1.1)'
+                                backgroundColor: completed ? '#3d8b40' : 
+                                              locked ? '#757575' : '#3a5ce5'
                               }
                             }}
                           >
-                            <img 
-                              src={playbtn} 
-                              alt="Start Lesson" 
-                              style={{ 
-                                width: 85, 
-                                height: 85
-                              }} 
-                            />
+                            {completed ? 'Review' : locked ? 'Locked' : 'Start'}
                           </Button>
                         </CardActions>
                       </Card>

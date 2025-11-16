@@ -97,7 +97,7 @@ function ManageStudents() {
   const fetchMyStudents = async () => {
     try {
       const userEmail = localStorage.getItem("userEmail");
-      const response = await fetch(`https://skillable-pdv0.onrender.com/api/teachers/students?email=${userEmail}`, {
+      const response = await fetch(`http://localhost:8080/api/teachers/students?email=${userEmail}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json"
@@ -118,7 +118,7 @@ function ManageStudents() {
 
   const fetchUnassignedStudents = async () => {
     try {
-      const response = await fetch("https://skillable-pdv0.onrender.com/api/teachers/unassigned-students", {
+      const response = await fetch("http://localhost:8080/api/teachers/unassigned-students", {
         method: "GET",
         headers: {
           "Content-Type": "application/json"
@@ -143,7 +143,7 @@ function ManageStudents() {
     setAssigning(true);
     try {
       const teacherEmail = localStorage.getItem("userEmail");
-      const response = await fetch("https://skillable-pdv0.onrender.com/api/teachers/assign-student", {
+      const response = await fetch("http://localhost:8080/api/teachers/assign-student", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -179,7 +179,7 @@ function ManageStudents() {
 
     try {
       const teacherEmail = localStorage.getItem("userEmail");
-      const response = await fetch("https://skillable-pdv0.onrender.com/api/teachers/unassign-student", {
+      const response = await fetch("http://localhost:8080/api/teachers/unassign-student", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

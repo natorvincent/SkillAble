@@ -4,6 +4,7 @@ import {
   Typography,
   Button,
   TextField,
+  Paper,
   Table,
   TableBody,
   TableCell,
@@ -84,26 +85,10 @@ const LessonManagement = () => {
     },
     {
       value: 'PersonalHygieneLevel3',
-      label: 'Personal Hygiene Level 3 - Nail Care',
+      label: 'Personal Hygiene Level 3 - Scenarios',
       description: 'Apply hygiene knowledge to real-life situations',
       component: 'PersonalHygieneLevel3',
       path: '/lesson/hygiene/level-3',
-      icon: '🎭'
-    },
-    {
-      value: 'PersonalHygieneLevel4',
-      label: 'Personal Hygiene Level 4 - Shower',
-      description: 'Apply hygiene knowledge to real-life situations',
-      component: 'PersonalHygieneLevel4',
-      path: '/lesson/hygiene/level-4',
-      icon: '🎭'
-    },
-    {
-      value: 'PersonalHygieneLevel5',
-      label: 'Personal Hygiene Level 5 - DressUp',
-      description: 'Apply hygiene knowledge to real-life situations',
-      component: 'PersonalHygieneLevel5',
-      path: '/lesson/hygiene/level-5',
       icon: '🎭'
     },
     {
@@ -227,7 +212,7 @@ const LessonManagement = () => {
 
   const fetchLessons = async () => {
     try {
-      const response = await fetch('https://skillable-pdv0.onrender.com/api/lessons');
+      const response = await fetch('http://localhost:8080/api/lessons');
       if (response.ok) {
         const data = await response.json();
         setLessons(data);
@@ -244,7 +229,7 @@ const LessonManagement = () => {
 
   const fetchModules = async () => {
     try {
-      const response = await fetch('https://skillable-pdv0.onrender.com/api/modules');
+      const response = await fetch('http://localhost:8080/api/modules');
       if (response.ok) {
         const data = await response.json();
         setModules(data);
@@ -379,8 +364,8 @@ const LessonManagement = () => {
       };
 
       const url = editingLesson 
-        ? `https://skillable-pdv0.onrender.com/api/lessons/${editingLesson.id}`
-        : 'https://skillable-pdv0.onrender.com/api/lessons';
+        ? `http://localhost:8080/api/lessons/${editingLesson.id}`
+        : 'http://localhost:8080/api/lessons';
       
       const method = editingLesson ? 'PUT' : 'POST';
 
@@ -412,7 +397,7 @@ const LessonManagement = () => {
 
   const handleDelete = async () => {
     try {
-      const response = await fetch(`https://skillable-pdv0.onrender.com/api/lessons/${selectedLesson.id}`, {
+      const response = await fetch(`http://localhost:8080/api/lessons/${selectedLesson.id}`, {
         method: 'DELETE'
       });
 

@@ -104,7 +104,7 @@ function Homepage() {
 
   const fetchUserProfile = async (email) => {
     try {
-      let response = await fetch(`https://skillable-pdv0.onrender.com/api/students/profile?email=${email}`, {
+      let response = await fetch(`http://localhost:8080/api/students/profile?email=${email}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json"
@@ -112,7 +112,7 @@ function Homepage() {
       });
 
       if (!response.ok) {
-        response = await fetch(`https://skillable-pdv0.onrender.com/api/teachers/profile?email=${email}`, {
+        response = await fetch(`http://localhost:8080/api/teachers/profile?email=${email}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json"
@@ -158,7 +158,7 @@ function Homepage() {
     setLoadingStudents(true);
     try {
       const userEmail = localStorage.getItem("userEmail");
-      const response = await fetch(`https://skillable-pdv0.onrender.com/api/teachers/students?email=${userEmail}`, {
+      const response = await fetch(`http://localhost:8080/api/teachers/students?email=${userEmail}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json"
@@ -184,7 +184,7 @@ function Homepage() {
     setLoadingCompletionRate(true);
     try {
       const userEmail = localStorage.getItem("userEmail");
-      const response = await fetch(`https://skillable-pdv0.onrender.com/api/progress/teacher/${userEmail}/completion-rate`, {
+      const response = await fetch(`http://localhost:8080/api/progress/teacher/${userEmail}/completion-rate`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json"
@@ -219,7 +219,7 @@ function Homepage() {
     try {
       const userEmail = localStorage.getItem("userEmail");
       
-      const availableResponse = await fetch("https://skillable-pdv0.onrender.com/api/modules/available", {
+      const availableResponse = await fetch("http://localhost:8080/api/modules/available", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -271,7 +271,7 @@ function Homepage() {
 
     try {
       const userEmail = localStorage.getItem("userEmail");
-      const response = await fetch("https://skillable-pdv0.onrender.com/api/students/update", {
+      const response = await fetch("http://localhost:8080/api/students/update", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -311,7 +311,7 @@ function Homepage() {
 
     try {
       const userEmail = localStorage.getItem("userEmail");
-      const response = await fetch("https://skillable-pdv0.onrender.com/api/teachers/update", {
+      const response = await fetch("http://localhost:8080/api/teachers/update", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

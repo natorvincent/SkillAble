@@ -59,7 +59,7 @@ function ModuleManagement() {
   const fetchModules = async () => {
     setLoading(true);
     try {
-      const response = await fetch('https://skillable-pdv0.onrender.com/api/modules', {
+      const response = await fetch('http://localhost:8080/api/modules', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
@@ -137,7 +137,7 @@ function ModuleManagement() {
       let response;
       
       if (dialogAction === 'create') {
-        response = await fetch('https://skillable-pdv0.onrender.com/api/modules/create', {
+        response = await fetch('http://localhost:8080/api/modules/create', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -146,7 +146,7 @@ function ModuleManagement() {
           body: JSON.stringify(moduleData)
         });
       } else {
-        response = await fetch(`https://skillable-pdv0.onrender.com/api/modules/${selectedModule.id}`, {
+        response = await fetch(`http://localhost:8080/api/modules/${selectedModule.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -170,7 +170,7 @@ function ModuleManagement() {
   
   const handleToggleActive = async (module) => {
     try {
-      const response = await fetch(`https://skillable-pdv0.onrender.com/api/modules/${module.id}/active?active=${!module.active}`, {
+      const response = await fetch(`http://localhost:8080/api/modules/${module.id}/active?active=${!module.active}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -195,7 +195,7 @@ function ModuleManagement() {
   
   const handleDelete = async () => {
     try {
-      const response = await fetch(`https://skillable-pdv0.onrender.com/api/modules/${selectedModule.id}`, {
+      const response = await fetch(`http://localhost:8080/api/modules/${selectedModule.id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json'
