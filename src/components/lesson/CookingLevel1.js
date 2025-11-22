@@ -114,6 +114,8 @@ export default function FriedEggLevel1() {
     return parsedId;
   };
 
+  
+
   // Save progress to backend
   const saveProgress = async () => {
     if (progressSaving || progressSaved) return;

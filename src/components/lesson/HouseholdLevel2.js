@@ -1,1380 +1,1417 @@
-import React, { useState, useEffect } from 'react';
+import starsImg from '../../assets/householdLevel2/stars.png';
+
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
-  Card,
-  CardContent,
   Typography,
   Button,
-  Paper,
-  Grid,
+  Stack,
+  Dialog,
   Chip,
   LinearProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  IconButton,
-  Snackbar,
-  Alert,
-  Avatar,
-  Divider,
-  Stack,
-  Fade,
-  Slide,
-  Zoom,
-  Stepper,
-  Step,
-  StepLabel,
-  StepContent,
-  Tooltip,
-  Fab
+  Paper
 } from '@mui/material';
-import {
-  VolumeUp,
-  Refresh,
-  EmojiEvents,
-  Star,
-  CheckCircle,
-  Home,
-  Info,
-  Close,
-  PlayArrow,
-  Pause,
-  School,
-  CleaningServices,
-  AutoAwesome,
-  Celebration,
-  NavigateNext,
-  NavigateBefore,
-  Build,
-  CheckBox,
-  RadioButtonUnchecked
-} from '@mui/icons-material';
-import { createTheme, ThemeProvider, keyframes } from '@mui/material/styles';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+
+// For items
+import condomImg from '../../assets/householdLevel2/condom.png';
+import toiletPaperImg from '../../assets/householdLevel2/paper towel.png';
+import blueWhiteShirtImg from '../../assets/householdLevel2/BlueWhiteShirt.png';
+import cottonBudsImg from '../../assets/householdLevel2/cotton buds.png';
+import darkBlueShirtImg from '../../assets/householdLevel2/DarkBlueShirtDirt.png';
+import dirtyShortImg from '../../assets/householdLevel2/dirty shirt.png';
+import lightBlueShirtImg from '../../assets/householdLevel2/LightBlueShirt.png';
+import padsImg from '../../assets/householdLevel2/pads.png';
+import pantsImg from '../../assets/householdLevel2/PantsDirt.png';
+import shampooImg from '../../assets/householdLevel2/shampoo.png';
+import toiletbrushImg from '../../assets/householdLevel2/toilet brush.png';
+import basinImg from '../../assets/householdLevel2/basin.png';
+import broomImg from '../../assets/householdLevel2/broom.png';  
+import trashCanImg from '../../assets/householdLevel2/trash can.png';
+import dusterImg from '../../assets/householdLevel2/duster.png';
+import bathTubImg from '../../assets/householdLevel2/BathTub.png';
+import mudStainImg1 from '../../assets/householdLevel2/mud stain1.png';
+import mudStainImg2 from '../../assets/householdLevel2/mud stain 2.png';
+import waterSpitImg from '../../assets/householdLevel2/waterspit.png';
+import web1Img from '../../assets/householdLevel2/web1.png';
+import web2Img from '../../assets/householdLevel2/web2.png';
+import web3Img from '../../assets/householdLevel2/web3.png';
+import web4Img from '../../assets/householdLevel2/web4.png';
+import bubbleImg from '../../assets/householdLevel2/bubble1.png';
+
+// For Background Images
+import bathroomBackground from '../../assets/householdLevel2/BathroomBackground1.png';
+import mainGameBackground from '../../assets/householdLevel2/MainGameBackground.png';
+
+// Import sound effects
+import bathroomBackgroundMusic from '../../assets/householdLevel2/Background-Music.mp3';
+
+import Navbar from '../Navbar';
 
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#4CAF50',
-      light: '#81C784',
-      dark: '#388E3C',
+      main: '#2196F3',
+      light: '#64B5F6',
+      dark: '#1976D2',
     },
     secondary: {
-      main: '#FF9800',
-      light: '#FFB74D',
-      dark: '#F57C00',
-    },
-    success: {
-      main: '#66BB6A',
-    },
-    warning: {
-      main: '#FFA726',
+      main: '#00BCD4',
+      light: '#4DD0E1',
+      dark: '#0097A7',
     },
     background: {
-      default: '#f0f8f0',
-    },
-  },
-  typography: {
-    h4: {
-      fontWeight: 700,
-      fontSize: '2rem',
-    },
-    h6: {
-      fontWeight: 600,
-    },
-  },
-  components: {
-    MuiCard: {
-      styleOverrides: {
-        root: {
-          borderRadius: 20,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        },
-      },
-    },
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: 16,
-          textTransform: 'none',
-          fontWeight: 600,
-          padding: '12px 24px',
-        },
-      },
+      default: '#e3f2fd',
     },
   },
 });
 
-// Animations
-const bounce = keyframes`
-  0%, 20%, 53%, 80%, 100% {
-    transform: translate3d(0,0,0);
-  }
-  40%, 43% {
-    transform: translate3d(0, -8px, 0);
-  }
-  70% {
-    transform: translate3d(0, -4px, 0);
-  }
-  90% {
-    transform: translate3d(0, -2px, 0);
-  }
-`;
-
-const sweep = keyframes`
-  0% { transform: translateX(0) rotate(0deg); }
-  25% { transform: translateX(20px) rotate(10deg); }
-  50% { transform: translateX(40px) rotate(0deg); }
-  75% { transform: translateX(20px) rotate(-10deg); }
-  100% { transform: translateX(0) rotate(0deg); }
-`;
-
-const sparkle = keyframes`
-  0%, 100% { 
-    transform: scale(0) rotate(0deg);
-    opacity: 0;
-  }
-  50% { 
-    transform: scale(1) rotate(180deg);
-    opacity: 1;
-  }
-`;
-
-const float = keyframes`
-  0%, 100% { 
-    transform: translateY(0px);
-  }
-  50% { 
-    transform: translateY(-10px);
-  }
-`;
-
-const wipe = keyframes`
-  0% { transform: translate(0, 0) rotate(0deg); }
-  25% { transform: translate(30px, -10px) rotate(15deg); }
-  50% { transform: translate(-20px, 10px) rotate(-10deg); }
-  75% { transform: translate(25px, -5px) rotate(5deg); }
-  100% { transform: translate(0, 0) rotate(0deg); }
-`;
-
-const shake = keyframes`
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
-`;
-
 const HouseholdLevel2 = () => {
-  const [activeStep, setActiveStep] = useState(0);
+  const [showStartScreen, setShowStartScreen] = useState(true);
+  const [currentStep, setCurrentStep] = useState(1); // 1: Laundry, 2: Trash, 3: Floor, 4: Walls
+  const [gameCompleted, setGameCompleted] = useState(false);
   const [score, setScore] = useState(0);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [showInstructions, setShowInstructions] = useState(true);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
-  const [celebrationItems, setCelebrationItems] = useState([]);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [completedSteps, setCompletedSteps] = useState(new Set());
-  const [selectedTools, setSelectedTools] = useState(new Set());
-  const [sweepingProgress, setSweepingProgress] = useState(0);
-  const [wipingProgress, setWipingProgress] = useState(0);
-  const [dirtItems, setDirtItems] = useState([]);
-  const [stains, setStains] = useState([]);
-  const [cursorPosition, setCursorPosition] = useState({ x: 50, y: 50 });
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [draggedItem, setDraggedItem] = useState(null);
+  const [selectedTool, setSelectedTool] = useState(null);
+  const [showHints, setShowHints] = useState(true);
+  const [backgroundAudioRef, setBackgroundAudioRef] = useState(null);
+  const [audioPlaying, setAudioPlaying] = useState(false);
+  const [showDropZone, setShowDropZone] = useState(false);
+  const [collectedLaundry, setCollectedLaundry] = useState([]);
+  const [collectedTrash, setCollectedTrash] = useState([]);
+  const [bubbles, setBubbles] = useState([]);
+  const [taskStars, setTaskStars] = useState([]);
 
-  const cleaningTools = [
-    { 
-      id: 1, 
-      name: 'Broom', 
-      emoji: '🧹', 
-      description: 'For sweeping dirt and debris from floors',
-      color: '#8D6E63',
-      bgColor: 'linear-gradient(135deg, #8D6E63, #A1887F)',
-      uses: ['sweeping floors', 'gathering dirt', 'cleaning corners']
-    },
-    { 
-      id: 2, 
-      name: 'Dustpan', 
-      emoji: '🗑️', 
-      description: 'For collecting swept dirt and debris',
-      color: '#607D8B',
-      bgColor: 'linear-gradient(135deg, #607D8B, #78909C)',
-      uses: ['collecting dirt', 'working with broom', 'disposing waste']
-    },
-    { 
-      id: 3, 
-      name: 'Cleaning Rag', 
-      emoji: '🧽', 
-      description: 'For wiping surfaces and cleaning spills',
-      color: '#2196F3',
-      bgColor: 'linear-gradient(135deg, #2196F3, #42A5F5)',
-      uses: ['wiping tables', 'cleaning spills', 'polishing surfaces']
-    },
-    { 
-      id: 4, 
-      name: 'Spray Bottle', 
-      emoji: '🧴', 
-      description: 'For applying cleaning solution to surfaces',
-      color: '#4CAF50',
-      bgColor: 'linear-gradient(135deg, #4CAF50, #66BB6A)',
-      uses: ['spraying surfaces', 'adding moisture', 'applying cleaner']
-    }
-  ];
+  // All items scattered around the bathroom - ALL ON FLOOR (higher y values)
+  const [allItems, setAllItems] = useState([
+    // Laundry Items - Keep away from edges (x: 10-85, y: 15-75)
+  { id: 1, name: 'Blue White Shirt', image: blueWhiteShirtImg, x: 15, y: 80, collected: false, type: 'laundry', step: 1, rotation: -25, size: 100 },
+  { id: 2, name: 'Dark Blue Shirt', image: darkBlueShirtImg, x: 30, y: 82, collected: false, type: 'laundry', step: 1, rotation: 30, size: 100 },
+  { id: 3, name: 'Light Blue Shirt', image: lightBlueShirtImg, x: 45, y: 80, collected: false, type: 'laundry', step: 1, rotation: -10, size: 100 },
+  { id: 4, name: 'Dirty Short', image: dirtyShortImg, x: 70, y: 85, collected: false, type: 'laundry', step: 1, rotation: 75, size: 100 },
+  { id: 5, name: 'Pants', image: pantsImg, x: 55, y: 80, collected: false, type: 'laundry', step: 1, rotation: -60, size: 100 },
 
-  const cleaningSteps = [
-    {
-      title: 'Meet Your Cleaning Tools',
-      content: 'Learn about the essential tools for cleaning',
-      activity: 'tool-introduction',
-      instruction: 'Click on each tool to learn what it does!',
-      icon: '🛠️'
-    },
-    {
-      title: 'Prepare the Area',
-      content: 'Clear the space before you start cleaning',
-      activity: 'preparation',
-      instruction: 'Make sure the area is ready for cleaning',
-      icon: '📦'
-    },
-    {
-      title: 'Sweeping Practice',
-      content: 'Learn proper sweeping technique',
-      activity: 'sweeping',
-      instruction: 'Move your mouse to sweep up all the dirt!',
-      icon: '🧹'
-    },
-    {
-      title: 'Using the Dustpan',
-      content: 'Collect the dirt with your dustpan',
-      activity: 'dustpan',
-      instruction: 'Practice using the dustpan with the broom',
-      icon: '🗑️'
-    },
-    {
-      title: 'Wiping Surfaces',
-      content: 'Clean tables and surfaces with a rag',
-      activity: 'wiping',
-      instruction: 'Move your mouse to wipe away all stains!',
-      icon: '🧽'
-    },
-    {
-      title: 'Final Check',
-      content: 'Make sure everything is clean and tidy',
-      activity: 'final-check',
-      instruction: 'Review your cleaning work!',
-      icon: '✅'
-    }
-  ];
-
-  useEffect(() => {
-    // Initialize dirt items for sweeping activity
-    if (activeStep === 2) {
-      const newDirtItems = Array.from({ length: 8 }, (_, i) => ({
-        id: i,
-        x: Math.random() * 70 + 10,
-        y: Math.random() * 60 + 20,
-        collected: false,
-        type: ['dust', 'crumb', 'leaf'][Math.floor(Math.random() * 3)]
-      }));
-      setDirtItems(newDirtItems);
-      setSweepingProgress(0);
-    }
     
-    // Initialize stains for wiping activity
-    if (activeStep === 4) {
-      const newStains = Array.from({ length: 6 }, (_, i) => ({
-        id: i,
-        x: Math.random() * 60 + 20,
-        y: Math.random() * 40 + 30,
-        cleaned: false,
-        size: Math.random() * 20 + 15
-      }));
-      setStains(newStains);
-      setWipingProgress(0);
-    }
-  }, [activeStep]);
+    // Trash Items - Adjusted (avoid x < 8 and y > 75)
+  { id: 6, name: 'Condom', image: condomImg, x: 5, y: 80, collected: false, type: 'trash', step: 2, rotation: 50, size: 80 },
+  { id: 7, name: 'Toilet Paper', image: toiletPaperImg, x: 20, y: 83, collected: false, type: 'trash', step: 2, rotation: 40, size: 100 },
+  { id: 8, name: 'Cotton Buds', image: cottonBudsImg, x: 65, y: 79, collected: false, type: 'trash', step: 2, rotation: -15, size: 100 },
+  { id: 9, name: 'Pads', image: padsImg, x: 75, y: 85, collected: false, type: 'trash', step: 2, rotation: -25, size: 100 },
+  { id: 10, name: 'Shampoo', image: shampooImg, x: 60, y: 85, collected: false, type: 'trash', step: 2, rotation: -80, size: 100 },
+  { id: 11, name: 'Toilet Brush', image: toiletbrushImg, x: 80, y: 86, collected: false, type: 'trash', step: 2, rotation: 90, size: 100 }
+]);
 
-  const createCelebrationEffect = () => {
-    const colors = ['#4CAF50', '#FF9800', '#2196F3', '#9C27B0', '#FF5722', '#00BCD4'];
-    const newItems = Array.from({ length: 12 }, (_, i) => ({
-      id: Date.now() + i,
-      color: colors[Math.floor(Math.random() * colors.length)],
-      delay: i * 100,
-      left: Math.random() * 100,
-      size: Math.random() * 10 + 5
+  // Floor dirt spots using actual images - Scattered all around floor and walls
+  const [dirtSpots, setDirtSpots] = useState([
+    // Mud stains on floor and walls
+    { id: 1, x: 20, y: 65, cleaned: false, image: mudStainImg1, size: 150 },
+    { id: 2, x: 55, y: 60, cleaned: false, image: mudStainImg2, size: 150 },
+    { id: 3, x: 70, y: 55, cleaned: false, image: mudStainImg1, size: 150 },
+    { id: 4, x: 45, y: 50, cleaned: false, image: mudStainImg2, size: 150 },
+    { id: 5, x: 25, y: 40, cleaned: false, image: mudStainImg1, size: 150 },
+    { id: 6, x: 80, y: 35, cleaned: false, image: mudStainImg2, size: 150 },
+    { id: 7, x: 35, y: 30, cleaned: false, image: mudStainImg1, size: 150 },
+    { id: 8, x: 65, y: 25, cleaned: false, image: mudStainImg2, size: 150 },
+  
+    // Water spits ONLY on floor (higher y values)
+    { id: 9, x: 1, y: 85, cleaned: false, image: waterSpitImg, size: 120 },
+    { id: 10, x: 40, y: 85, cleaned: false, image: waterSpitImg, size: 120 },
+    { id: 11, x: 60, y: 85, cleaned: false, image: waterSpitImg, size: 120 },
+    { id: 12, x: 80, y: 85, cleaned: false, image: waterSpitImg, size: 120 },
+    { id: 13, x: 30, y: 85, cleaned: false, image: waterSpitImg, size: 120 }
+  ]);
+
+  // Cobwebs using actual images - 8 webs scattered around walls, larger
+  const [cobwebs, setCobwebs] = useState([
+    // 🕸 Left wall (upper and middle)
+  { id: 1, x: 4, y: 5, cleaned: false, image: web1Img, size: 90 },
+  { id: 2, x: 30, y: 20, cleaned: false, image: web2Img, size: 90 },
+
+  // 🕸 Top middle area
+  { id: 3, x: 35, y: 3, cleaned: false, image: web3Img, size: 80 },
+  { id: 4, x: 50, y: 6, cleaned: false, image: web4Img, size: 90 },
+
+  // 🕸 Right wall (upper and mid-top)
+  { id: 5, x: 80, y: 5, cleaned: false, image: web1Img, size: 85 },
+  { id: 6, x: 68, y: 18, cleaned: false, image: web2Img, size: 90 },
+
+  // 🕸 Upper corners near walls
+  { id: 7, x: 2, y: 40, cleaned: false, image: web3Img, size: 90 },
+  { id: 8, x: 85, y: 38, cleaned: false, image: web4Img, size: 90 },
+  ]);
+
+  // Available tools for each step
+  const [availableTools, setAvailableTools] = useState([
+    { id: 1, name: 'Basin', image: basinImg, step: 1, collected: false, used: false },
+    { id: 2, name: 'Trash Can', image: trashCanImg, step: 2, collected: false, used: false },
+    { id: 3, name: 'Broom', image: broomImg, step: 3, collected: false, used: false },
+    { id: 4, name: 'Duster', image: dusterImg, step: 4, collected: false, used: false }
+  ]);
+
+  // Add twinkling stars effect for task completion
+  const triggerTaskStars = (x, y, count = 3) => {
+    const newStars = Array.from({ length: count }, (_, index) => ({
+      id: Date.now() + index,
+      x: x + (Math.random() * 40 - 20), // Random position around the task
+      y: y + (Math.random() * 40 - 20),
+      size: Math.random() * 60 + 50, // Size between 30-70px
+      delay: index * 200 // Stagger the appearance
     }));
     
-    setCelebrationItems(newItems);
-    setTimeout(() => setCelebrationItems([]), 3000);
+    setTaskStars(prev => [...prev, ...newStars]);
+    
+    // Remove stars after animation
+    setTimeout(() => {
+      setTaskStars(prev => prev.filter(star => !newStars.find(ns => ns.id === star.id)));
+    }, 2000);
   };
 
-  const handleNext = () => {
-    if (activeStep < cleaningSteps.length - 1) {
-      setCompletedSteps(prev => new Set([...prev, activeStep]));
-      setActiveStep(prev => prev + 1);
-      setScore(prev => prev + 15);
-      createCelebrationEffect();
-      
-      setSnackbar({
-        open: true,
-        message: 'Great job! Moving to the next step! 🎉',
-        severity: 'success'
+  useEffect(() => {
+  const createBubbles = () => {
+    const newBubbles = Array.from({ length: 6 }, (_, index) => ({
+      id: Date.now() + index, // Unique ID
+      x: Math.random() * 70 + 25, // Random position within bathtub width (15-85%)
+      y: Math.random() * 20 + 30, // Start from TOP of bathtub (10-30%)
+      size: Math.random() * 25 + 20, // Random size between 20-45px
+      opacity: Math.random() * 0.6 + 0.2, // Random opacity between 0.2-0.8
+      animationDelay: Math.random() * 8, // Longer delay between 0-8 seconds
+      floatSpeed: Math.random() * 5 + 2 // Longer duration (4-7 seconds),
+      }));
+    setBubbles(prev => [...prev, ...newBubbles].slice(-15)); // Keep only 15 bubbles max
+  };
+
+  // Create initial bubbles
+  createBubbles();
+  
+  // Add new bubbles every 3 seconds
+  const bubbleInterval = setInterval(createBubbles, 3000);
+  
+  return () => clearInterval(bubbleInterval);
+}, []);
+
+  // Refs for drop zones
+  const basinRef = useRef(null);
+  const trashCanRef = useRef(null);
+
+  // Filter items for current step
+  const currentStepItems = allItems.filter(item => item.step === currentStep && !item.collected);
+  const collectedItems = allItems.filter(item => item.collected);
+
+  // Progress tracking
+  const stepProgress = {
+    1: (allItems.filter(item => item.step === 1 && item.collected).length / allItems.filter(item => item.step === 1).length) * 100,
+    2: (allItems.filter(item => item.step === 2 && item.collected).length / allItems.filter(item => item.step === 2).length) * 100,
+    3: (dirtSpots.filter(spot => spot.cleaned).length / dirtSpots.length) * 100,
+    4: (cobwebs.filter(web => web.cleaned).length / cobwebs.length) * 100
+  };
+  // Background music setup
+  useEffect(() => {
+    const audio = new Audio(bathroomBackgroundMusic);
+    audio.loop = true;
+    audio.volume = 0.3;
+    setBackgroundAudioRef(audio);
+
+    const playAudio = () => {
+      audio.play().then(() => {
+        setAudioPlaying(true);
+      }).catch(error => {
+        console.log('Audio autoplay prevented:', error);
       });
-    } else {
-      setCompletedSteps(prev => new Set([...prev, activeStep]));
-      setShowSuccess(true);
-      createCelebrationEffect();
-    }
-  };
+    };
 
-  const handleBack = () => {
-    setActiveStep(prev => Math.max(prev - 1, 0));
-  };
+    const timer = setTimeout(playAudio, 1000);
 
-  const handleToolClick = (tool) => {
-    setSelectedTools(prev => new Set([...prev, tool.id]));
-    setScore(prev => prev + 5);
-    
-    setSnackbar({
-      open: true,
-      message: `You learned about the ${tool.name}! +5 points`,
-      severity: 'success'
-    });
-    
-    playSuccessSound();
-  };
-
-  const handleSweepArea = (e) => {
-    if (activeStep !== 2) return;
-    
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    
-    setCursorPosition({ x, y });
-    setIsAnimating(true);
-    setTimeout(() => setIsAnimating(false), 500);
-    
-    // Check if broom is near any dirt
-    const updatedDirt = dirtItems.map(dirt => {
-      if (!dirt.collected && 
-          Math.abs(dirt.x - x) < 15 && 
-          Math.abs(dirt.y - y) < 15) {
-        setScore(prev => prev + 3);
-        playSuccessSound();
-        return { ...dirt, collected: true };
+    return () => {
+      clearTimeout(timer);
+      if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
       }
-      return dirt;
-    });
-    
-    setDirtItems(updatedDirt);
-    
-    const newProgress = (updatedDirt.filter(d => d.collected).length / updatedDirt.length) * 100;
-    setSweepingProgress(newProgress);
-    
-    if (newProgress === 100) {
-      setTimeout(() => {
-        setSnackbar({
-          open: true,
-          message: 'Perfect sweeping! All dirt collected! 🧹✨',
-          severity: 'success'
-        });
-      }, 500);
-    }
-  };
+    };
+  }, []);
 
-  const handleWipeArea = (e) => {
-    if (activeStep !== 4) return;
-    
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    
-    setCursorPosition({ x, y });
-    setIsAnimating(true);
-    setTimeout(() => setIsAnimating(false), 500);
-    
-    // Check if cloth is near any stains
-    const updatedStains = stains.map(stain => {
-      if (!stain.cleaned && 
-          Math.abs(stain.x - x) < 20 && 
-          Math.abs(stain.y - y) < 20) {
-        setScore(prev => prev + 4);
-        playSuccessSound();
-        return { ...stain, cleaned: true };
-      }
-      return stain;
-    });
-    
-    setStains(updatedStains);
-    
-    const newProgress = (updatedStains.filter(s => s.cleaned).length / updatedStains.length) * 100;
-    setWipingProgress(newProgress);
-    
-    if (newProgress === 100) {
-      setTimeout(() => {
-        setSnackbar({
-          open: true,
-          message: 'Excellent wiping! Surface is spotless! 🧽✨',
-          severity: 'success'
-        });
-      }, 500);
-    }
-  };
 
-  const playSuccessSound = () => {
-    if ('speechSynthesis' in window) {
-      const utterance = new SpeechSynthesisUtterance('Great job!');
-      utterance.rate = 1.2;
-      utterance.pitch = 1.3;
-      utterance.volume = 0.7;
-      speechSynthesis.speak(utterance);
-    }
-  };
 
-  const playAudio = (text) => {
-    if ('speechSynthesis' in window) {
-      if (isPlaying) {
-        speechSynthesis.cancel();
-        setIsPlaying(false);
+  // Check step completion and unlock tools
+  useEffect(() => {
+    const currentProgress = stepProgress[currentStep];
+    
+    if (currentProgress === 100) {
+      // Unlock next tool
+      const nextStep = currentStep + 1;
+      if (nextStep <= 4) {
+        setAvailableTools(prev => prev.map(tool => 
+          tool.step === nextStep ? { ...tool, collected: true } : tool
+        ));
+        setTimeout(() => {
+          setCurrentStep(nextStep);
+          setScore(prev => prev + 25);
+          setSelectedTool(null); // Deselect tool when moving to next step
+        }, 1500);
       } else {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.rate = 0.9;
-        utterance.pitch = 1.1;
-        utterance.volume = 0.8;
-        utterance.onend = () => setIsPlaying(false);
-        speechSynthesis.speak(utterance);
-        setIsPlaying(true);
+        setTimeout(() => {
+          setGameCompleted(true);
+          setScore(prev => prev + 25);
+        }, 1500);
       }
     }
+  }, [stepProgress, currentStep]);
+
+  // Start with basin available
+  useEffect(() => {
+    setAvailableTools(prev => prev.map(tool => 
+      tool.step === 1 ? { ...tool, collected: true } : tool
+    ));
+  }, []);
+
+  // Start screen handler
+  const handleStartGame = () => {
+    setShowStartScreen(false);
   };
 
-  const resetLesson = () => {
-    setActiveStep(0);
-    setScore(0);
-    setCompletedSteps(new Set());
-    setSelectedTools(new Set());
-    setSweepingProgress(0);
-    setWipingProgress(0);
-    setDirtItems([]);
-    setStains([]);
-    setShowSuccess(false);
+  // REPLACE WITH THIS UPDATED VERSION:
+const handleToolSelect = (tool) => {
+  if (tool.collected && tool.step === currentStep) {
+    setSelectedTool(tool);
+    // Trigger animation when basin or trash can is selected
+    if (tool.step === 1 || tool.step === 2) {
+      setShowDropZone(true);
+    }
+  }
+};
+  
+
+  // Drag and drop handlers
+  const handleDragStart = (e, item) => {
+    e.dataTransfer.setData('text/plain', JSON.stringify(item));
+    setDraggedItem(item);
   };
 
-  const renderActivity = () => {
-    const currentStep = cleaningSteps[activeStep];
-    
-    switch (currentStep.activity) {
-      case 'tool-introduction':
-        return (
-          <Grid container spacing={3}>
-            {cleaningTools.map((tool, index) => (
-              <Grid item xs={12} sm={6} md={3} key={tool.id}>
-                <Zoom in={true} timeout={300 + index * 100}>
-                  <Card
-                    onClick={() => handleToolClick(tool)}
-                    sx={{
-                      cursor: 'pointer',
-                      minHeight: 280,
-                      background: selectedTools.has(tool.id) 
-                        ? 'linear-gradient(135deg, #4CAF50, #81C784)'
-                        : tool.bgColor,
-                      border: selectedTools.has(tool.id) ? '3px solid #2E7D32' : '2px solid rgba(255,255,255,0.3)',
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      position: 'relative',
-                      overflow: 'hidden',
-                      '&:hover': {
-                        transform: 'translateY(-8px) scale(1.02)',
-                        boxShadow: '0 12px 28px rgba(0,0,0,0.25)',
-                      }
-                    }}
-                  >
-                    <CardContent sx={{ textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', p: 3 }}>
-                      <Typography variant="h1" sx={{ mb: 3, fontSize: '4rem' }}>
-                        {tool.emoji}
-                      </Typography>
-                      <Typography 
-                        variant="h6" 
-                        gutterBottom
-                        sx={{ 
-                          color: 'white',
-                          fontWeight: 700,
-                          textShadow: '0 2px 4px rgba(0,0,0,0.3)'
-                        }}
-                      >
-                        {tool.name}
-                      </Typography>
-                      <Typography 
-                        variant="body2" 
-                        sx={{ 
-                          color: 'rgba(255,255,255,0.9)',
-                          mb: 2,
-                          lineHeight: 1.4
-                        }}
-                      >
-                        {tool.description}
-                      </Typography>
-                      {selectedTools.has(tool.id) && (
-                        <Fade in={true}>
-                          <Box sx={{ mt: 2 }}>
-                            <CheckCircle 
-                              sx={{ 
-                                color: 'white', 
-                                fontSize: 40,
-                                animation: `${bounce} 0.6s ease-out`
-                              }} 
-                            />
-                            <Typography variant="caption" sx={{ color: 'white', display: 'block', mt: 1, fontWeight: 600 }}>
-                              Learned! +5 points
-                            </Typography>
-                          </Box>
-                        </Fade>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Zoom>
-              </Grid>
-            ))}
-          </Grid>
-        );
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  // Updated handleDrop function with stars for each item completion
+  const handleDrop = (e, target) => {
+    e.preventDefault();
+    if (!draggedItem || !selectedTool) return;
+
+    if (currentStep === 1 && target === 'basin' && draggedItem.type === 'laundry' && selectedTool.step === 1) {
+      // Handle laundry drop in basin
+      setAllItems(prev => 
+        prev.map(item => 
+          item.id === draggedItem.id ? { ...item, collected: true } : item
+        )
+      );
+      // Add to collected laundry with position for display
+      setCollectedLaundry(prev => [
+        ...prev,
+        {
+          ...draggedItem,
+          containerPosition: {
+            x: Math.random() * 60 + 20, // Random position inside basin (20-80%)
+            y: Math.random() * 30 + 50  // Random position inside basin (30-70%)
+          },
+          size: 40 // Smaller size for inside container
+        }
+      ]);
+      setScore(prev => prev + 8);
       
-      case 'sweeping':
-        return (
-          <Box>
-            <Card sx={{ mb: 3, background: 'linear-gradient(135deg, #fff3e0, #ffe0b2)', border: '2px solid #ff9800' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                  <Avatar sx={{ bgcolor: '#ff9800', width: 48, height: 48 }}>
-                    <span style={{ fontSize: '1.5rem' }}>🧹</span>
-                  </Avatar>
-                  <Box>
-                    <Typography variant="h6" sx={{ color: '#E65100', fontWeight: 700 }}>
-                      Sweeping Practice Area
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#BF360C' }}>
-                      Move your mouse around to sweep up all the dirt and debris!
-                    </Typography>
-                  </Box>
-                </Box>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={sweepingProgress} 
-                  sx={{ 
-                    height: 12, 
-                    borderRadius: 6,
-                    backgroundColor: 'rgba(230, 81, 0, 0.2)',
-                    mb: 1,
-                    '& .MuiLinearProgress-bar': {
-                      backgroundColor: '#4CAF50',
-                      borderRadius: 6
-                    }
-                  }}
-                />
-                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                  Progress: {Math.round(sweepingProgress)}% complete
-                </Typography>
-              </CardContent>
-            </Card>
-            
-            <Paper
-              onMouseMove={handleSweepArea}
-              sx={{
-                minHeight: 400,
-                background: 'linear-gradient(135deg, #f5f5f5, #e8e8e8)',
-                border: '4px solid #8D6E63',
-                borderRadius: 4,
-                position: 'relative',
-                cursor: 'none',
-                overflow: 'hidden',
+      // Show stars at the item's original position
+      triggerTaskStars(draggedItem.x, draggedItem.y, 6);
+      
+    } else if (currentStep === 2 && target === 'trash' && draggedItem.type === 'trash' && selectedTool.step === 2) {
+      // Handle trash drop in trash can
+      setAllItems(prev => 
+        prev.map(item => 
+          item.id === draggedItem.id ? { ...item, collected: true } : item
+        )
+      );
+      // Add to collected trash with position for display
+      setCollectedTrash(prev => [
+        ...prev,
+        {
+          ...draggedItem,
+          containerPosition: {
+            x: Math.random() * 50 + 25, // Random position inside trash can
+            y: Math.random() * 30 + 35  // Random position inside trash can
+          },
+          size: 35 // Smaller size for inside container
+        }
+      ]);
+      setScore(prev => prev + 8);
+      
+      // Show stars at the item's original position
+      triggerTaskStars(draggedItem.x, draggedItem.y, 6);
+    }
+
+    setDraggedItem(null);
+  };
+
+  // Floor cleaning handler with improved fade-out animation and stars
+const handleFloorClean = (e) => {
+  if (currentStep !== 3 || selectedTool?.step !== 3) return;
+
+  const rect = e.currentTarget.getBoundingClientRect();
+  const x = ((e.clientX - rect.left) / rect.width) * 100;
+  const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+  // Show broom image at cursor position
+  setSelectedTool(prev => ({ ...prev, cleaningPosition: { x, y } }));
+
+  // Check if broom is near any dirt spot
+  const updatedDirt = dirtSpots.map(spot => {
+    if (!spot.cleaned && !spot.cleaning && Math.abs(spot.x - x) < 10 && Math.abs(spot.y - y) < 10) {
+      setScore(prev => prev + 6);
+      
+      // Mark as cleaning to start animation
+      const cleaningSpot = { ...spot, cleaning: true, cleaningProgress: 0 };
+      setDirtSpots(prev => prev.map(s => 
+        s.id === spot.id ? cleaningSpot : s
+      ));
+
+      // Animate the cleaning progress with smoother fade
+      const startTime = Date.now();
+      const animateCleaning = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / 1500, 1); // Faster animation - 1.5 seconds
+        
+        setDirtSpots(prev => prev.map(s => 
+          s.id === spot.id ? { 
+            ...s, 
+            cleaningProgress: progress,
+            // Apply fade effect based on progress
+            opacity: 1 - progress,
+            scale: 1 - (progress * 0.5) // Scale down while fading
+          } : s
+        ));
+
+        if (progress < 1) {
+          requestAnimationFrame(animateCleaning);
+        } else {
+          // Set cleaned to true after animation completes
+          setDirtSpots(prev => prev.map(s => 
+            s.id === spot.id ? { ...s, cleaned: true, cleaning: false } : s
+          ));
+          
+          // Show stars at the cleaned spot position
+          triggerTaskStars(spot.x, spot.y, 8);
+        }
+      };
+
+      requestAnimationFrame(animateCleaning);
+      return cleaningSpot;
+    }
+    return spot;
+  });
+
+  setDirtSpots(updatedDirt);
+};
+
+// Wall cleaning handler with improved fade-out animation and stars
+const handleWallClean = (e) => {
+  if (currentStep !== 4 || selectedTool?.step !== 4) return;
+
+  const rect = e.currentTarget.getBoundingClientRect();
+  const x = ((e.clientX - rect.left) / rect.width) * 100;
+  const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+  // Show duster image at cursor position
+  setSelectedTool(prev => ({ ...prev, cleaningPosition: { x, y } }));
+
+  // Check if duster is near any cobweb
+  const updatedWebs = cobwebs.map(web => {
+    if (!web.cleaned && !web.cleaning && Math.abs(web.x - x) < 12 && Math.abs(web.y - y) < 12) {
+      setScore(prev => prev + 8);
+      
+      // Mark as cleaning to start animation
+      const cleaningWeb = { ...web, cleaning: true, cleaningProgress: 0 };
+      setCobwebs(prev => prev.map(w => 
+        w.id === web.id ? cleaningWeb : w
+      ));
+
+      // Animate the cleaning progress with smoother fade
+      const startTime = Date.now();
+      const animateCleaning = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / 1500, 1); // Faster animation - 1.5 seconds
+        
+        setCobwebs(prev => prev.map(w => 
+          w.id === web.id ? { 
+            ...w, 
+            cleaningProgress: progress,
+            // Apply fade effect based on progress
+            opacity: 1 - progress,
+            scale: 1 - (progress * 0.5) // Scale down while fading
+          } : w
+        ));
+
+        if (progress < 1) {
+          requestAnimationFrame(animateCleaning);
+        } else {
+          // Set cleaned to true after animation completes
+          setCobwebs(prev => prev.map(w => 
+            w.id === web.id ? { ...w, cleaned: true, cleaning: false } : w
+          ));
+          
+          // Show stars at the cleaned web position
+          triggerTaskStars(web.x, web.y, 8);
+        }
+      };
+
+      requestAnimationFrame(animateCleaning);
+      return cleaningWeb;
+    }
+    return web;
+  });
+
+  setCobwebs(updatedWebs);
+}
+
+  const resetGame = () => {
+  setCurrentStep(1);
+  setGameCompleted(false);
+  setScore(0);
+  setSelectedTool(null);
+  setAllItems(prev => prev.map(item => ({ ...item, collected: false })));
+  setDirtSpots(prev => prev.map(spot => ({ ...spot, cleaned: false })));
+  setCobwebs(prev => prev.map(web => ({ ...web, cleaned: false })));
+  setAvailableTools(prev => prev.map(tool => ({ ...tool, collected: tool.step === 1, used: false 
+
+  })));
+  // Reset collected items in containers
+  setCollectedLaundry([]);
+  setCollectedTrash([]);
+  setTaskStars([]);
+};
+
+  const handleGoHome = () => {
+    window.location.href = '/homepage';
+  };
+
+  const handleNextLevel = () => {
+    alert('Next level coming soon!');
+  };
+
+  const toggleHints = () => {
+    setShowHints(prev => !prev);
+  };
+
+  // Start screen
+  if (showStartScreen) {
+    return (
+      <div style={{
+        minHeight: "100vh",
+        width: "100%",
+        backgroundImage: `url(${bathroomBackground})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden" // Prevent scrolling on start screen
+      }}>
+        <Navbar />
+        <Box sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'linear-gradient(135deg, rgba(144, 190, 109, 0.8) 0%, rgba(25, 130, 196, 0.8) 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          zIndex: 1
+        }}>
+          <Typography variant="h1" sx={{ 
+            color: 'white', 
+            fontWeight: 'bold', 
+            mb: 2,
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: { xs: '3rem', md: '5rem' },
+            textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
+            textAlign: 'center'
+          }}>
+            Bathroom Cleanup
+          </Typography>
+          
+          <Typography variant="h4" sx={{ 
+            color: 'rgba(255, 255, 255, 0.95)', 
+            mb: 6,
+            fontFamily: 'Inter, sans-serif',
+            lineHeight: 1.5,
+            textAlign: 'center',
+            textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+            maxWidth: '600px',
+            px: 2
+          }}>
+            Find and clean all items scattered around the bathroom!
+          </Typography>
+          
+          <Stack direction="row" spacing={3}>
+            <Button 
+              variant="contained"
+              onClick={handleStartGame}
+              sx={{ 
+                background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+                color: 'white',
+                px: 8,
+                py: 2,
+                borderRadius: '25px',
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: '700',
+                fontSize: '1.5rem',
+                textTransform: 'none',
+                boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
                 '&:hover': {
-                  borderColor: '#5D4037'
+                  background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
+                  transform: 'translateY(-2px)'
                 }
               }}
             >
-              {/* Dirt items */}
-              {dirtItems.map((dirt) => (
-                <Box
-                  key={dirt.id}
-                  sx={{
-                    position: 'absolute',
-                    left: `${dirt.x}%`,
-                    top: `${dirt.y}%`,
-                    fontSize: '1.8rem',
-                    opacity: dirt.collected ? 0 : 1,
-                    transition: 'all 0.5s ease',
-                    transform: dirt.collected ? 'scale(0)' : 'scale(1)',
-                    pointerEvents: 'none',
-                    textShadow: '0 2px 4px rgba(0,0,0,0.3)'
-                  }}
-                >
-                  {dirt.type === 'dust' ? '💨' : dirt.type === 'crumb' ? '🍞' : '🍃'}
-                </Box>
-              ))}
-              
-              {/* Broom cursor */}
+              Start Cleaning!
+            </Button>
+          </Stack>
+        </Box>
+      </div>
+    );
+  }
+
+  // Main game screen
+  return (
+    <ThemeProvider theme={theme}>
+      {/* Single Root Container with Background */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        backgroundImage: `url(${mainGameBackground})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundColor: '#d0eaff',
+        overflow: 'hidden'
+      }}>
+        
+        {/* Task Completion Stars */}
+        {taskStars.map(star => (
+          <div
+            key={star.id}
+            style={{
+              position: 'absolute',
+              left: `${star.x}%`,
+              top: `${star.y}%`,
+              width: `${star.size}px`,
+              height: `${star.size}px`,
+              backgroundImage: `url(${starsImg})`,
+              backgroundSize: 'contain',
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'center',
+              animation: `taskStarBlink 2s ease-out ${star.delay}ms forwards`,
+              opacity: 0,
+              transform: 'scale(0)',
+              zIndex: 25,
+              pointerEvents: 'none',
+              filter: 'brightness(1.3) drop-shadow(0 0 8px rgba(255, 255, 255, 0.8))'
+            }}
+          />
+        ))}
+        
+        {/* Audio Control Button */}
+        <Box sx={{ 
+          position: 'absolute',
+          top: 100,
+          right: 16,
+          zIndex: 1000
+        }}>
+          <Button
+            onClick={() => {
+              if (backgroundAudioRef) {
+                if (audioPlaying) {
+                  backgroundAudioRef.pause();
+                  setAudioPlaying(false);
+                } else {
+                  backgroundAudioRef.play().then(() => {
+                    setAudioPlaying(true);
+                  }).catch(error => {
+                    console.log('Audio play failed:', error);
+                  });
+                }
+              }
+            }}
+            sx={{
+              width: '60px',
+              height: '60px',
+              borderRadius: '50%',
+              background: audioPlaying 
+                ? 'linear-gradient(135deg, #90BE6D 0%, #7BA05B 100%)'
+                : 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+              color: 'white',
+              fontSize: '1.5rem',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+              '&:hover': {
+                transform: 'scale(1.1)',
+                boxShadow: '0 6px 20px rgba(0,0,0,0.4)'
+              }
+            }}
+          >
+            {audioPlaying ? '🔊' : '🔇'}
+          </Button>
+        </Box>
+
+        {/* Main Layout Container */}
+        <div style={{
+          display: 'flex',
+          height: '100vh',
+          width: '100vw',
+          position: 'relative',
+          userSelect: 'none'
+        }}>
+          {/* Sidebar - Tools Collection */}
+          <Paper sx={{
+            width: '120px',
+            height: '100%',
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            borderRadius: '0 20px 20px 0',
+            boxShadow: '4px 0 20px rgba(0,0,0,0.2)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: 2,
+            gap: 2,
+            zIndex: 100
+          }}>
+            <Typography variant="h6" sx={{ 
+              fontWeight: 'bold', 
+              color: '#2196F3',
+              textAlign: 'center',
+              mb: 2
+            }}>
+              Tools
+            </Typography>
+
+            {availableTools.map(tool => (
               <Box
+                key={tool.id}
+                onClick={() => handleToolSelect(tool)}
                 sx={{
-                  position: 'absolute',
-                  left: `${cursorPosition.x}%`,
-                  top: `${cursorPosition.y}%`,
-                  transform: 'translate(-50%, -50%)',
-                  fontSize: '3rem',
-                  pointerEvents: 'none',
-                  animation: isAnimating ? `${sweep} 0.5s ease-in-out` : 'none',
-                  filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))'
+                  width: '80px',
+                  height: '80px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '12px',
+                  cursor: tool.collected ? 'pointer' : 'default',
+                  backgroundColor: tool.collected 
+                    ? (selectedTool?.id === tool.id ? '#E3F2FD' : '#F5F5F5')
+                    : '#E0E0E0',
+                  border: tool.collected 
+                    ? (selectedTool?.id === tool.id ? '3px solid #2196F3' : '2px solid #BDBDBD')
+                    : '2px solid #BDBDBD',
+                  transition: 'all 0.3s ease',
+                  opacity: tool.collected ? 1 : 0.5,
+                  '&:hover': tool.collected ? {
+                    backgroundColor: '#E3F2FD',
+                    transform: 'scale(1.05)'
+                  } : {},
+                  position: 'relative'
                 }}
               >
-                🧹
-              </Box>
-              
-              {sweepingProgress === 100 && (
-                <Box
-                  sx={{
+                <img 
+                  src={tool.image} 
+                  alt={tool.name}
+                  style={{
+                    width: '50px',
+                    height: '50px',
+                    objectFit: 'contain',
+                    filter: tool.collected ? 'none' : 'grayscale(1)'
+                  }}
+                />
+                <Typography variant="caption" sx={{ 
+                  fontSize: '0.7rem', 
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                  color: tool.collected ? '#333' : '#999'
+                }}>
+                  {tool.name}
+                </Typography>
+                
+                {/* Step indicator */}
+                <Box sx={{
+                  position: 'absolute',
+                  top: 4,
+                  right: 4,
+                  width: '20px',
+                  height: '20px',
+                  backgroundColor: tool.collected ? '#4CAF50' : '#9E9E9E',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.7rem',
+                  fontWeight: 'bold',
+                  color: 'white'
+                }}>
+                  {tool.step}
+                </Box>
+
+                {/* Lock icon for unavailable tools */}
+                {!tool.collected && (
+                  <Box sx={{
                     position: 'absolute',
                     top: '50%',
                     left: '50%',
                     transform: 'translate(-50%, -50%)',
-                    textAlign: 'center',
-                    animation: `${bounce} 1s ease-out infinite`,
-                    background: 'rgba(255,255,255,0.95)',
-                    borderRadius: 4,
-                    p: 4,
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
-                  }}
-                >
-                  <Typography variant="h3" sx={{ color: '#4CAF50', fontWeight: 700, mb: 1 }}>
-                    ✨ Perfect! ✨
-                  </Typography>
-                  <Typography variant="h6" sx={{ color: '#2E7D32' }}>
-                    All dirt swept up!
-                  </Typography>
-                </Box>
-              )}
-            </Paper>
-          </Box>
-        );
-      
-      case 'wiping':
-        return (
-          <Box>
-            <Card sx={{ mb: 3, background: 'linear-gradient(135deg, #e3f2fd, #bbdefb)', border: '2px solid #2196f3' }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                  <Avatar sx={{ bgcolor: '#2196f3', width: 48, height: 48 }}>
-                    <span style={{ fontSize: '1.5rem' }}>🧽</span>
-                  </Avatar>
-                  <Box>
-                    <Typography variant="h6" sx={{ color: '#1565C0', fontWeight: 700 }}>
-                      Table Wiping Practice
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: '#0D47A1' }}>
-                      Move your mouse around to wipe away all the stains on the table!
-                    </Typography>
+                    fontSize: '1.5rem',
+                    color: '#757575'
+                  }}>
+                    🔒
                   </Box>
-                </Box>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={wipingProgress} 
-                  sx={{ 
-                    height: 12, 
-                    borderRadius: 6,
-                    backgroundColor: 'rgba(21, 101, 192, 0.2)',
-                    mb: 1,
-                    '& .MuiLinearProgress-bar': {
-                      backgroundColor: '#4CAF50',
-                      borderRadius: 6
-                    }
-                  }}
-                />
-                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                  Progress: {Math.round(wipingProgress)}% complete
-                </Typography>
-              </CardContent>
-            </Card>
-            
-            <Paper
-              onMouseMove={handleWipeArea}
+                )}
+              </Box>
+            ))}
+
+            {/* Hints Toggle Button */}
+            <Button
+              onClick={toggleHints}
+              variant="outlined"
+              size="small"
               sx={{
-                minHeight: 400,
-                background: 'linear-gradient(135deg, #8D6E63, #A1887F)',
-                border: '4px solid #5D4037',
-                borderRadius: 4,
-                position: 'relative',
-                cursor: 'none',
-                overflow: 'hidden',
-                '&:hover': {
-                  borderColor: '#3E2723'
-                }
+                mt: 2,
+                fontSize: '0.7rem',
+                fontWeight: 'bold'
               }}
             >
-              {/* Table surface */}
-              <Box
-                sx={{
+              {showHints ? 'Hide Hints' : 'Show Hints'}
+            </Button>
+          </Paper>
+
+          {/* Game Content Area */}
+          <Box sx={{
+            flex: 1,
+            height: '100%',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+
+            {/* Progress Header */}
+            <Box sx={{ 
+              position: 'absolute',
+              top: '20px',
+              left: '20px',
+              right: '20px',
+              zIndex: 1000
+            }}>
+              <Typography variant="h6" sx={{ 
+                color: 'white', 
+                fontWeight: 'bold',
+                fontFamily: 'Poppins, sans-serif',
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                px: 2,
+                py: 1,
+                borderRadius: '10px',
+                boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+                mb: 1,
+                display: 'inline-block' // <-- makes background wrap to content
+              }}>
+                Step {currentStep}/4: {
+                  currentStep === 1 ? 'Collect Laundry' :
+                  currentStep === 2 ? 'Dispose Trash' :
+                  currentStep === 3 ? 'Sweep Floor' :
+                  'Wipe Walls'
+                }
+                {selectedTool && ` - Using: ${selectedTool.name}`}
+              </Typography>
+
+              {/* Progress Bar */}
+              <LinearProgress 
+                variant="determinate" 
+                value={stepProgress[currentStep]}
+                sx={{ 
+                  height: 12, 
+                  borderRadius: '10px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                  boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                  '& .MuiLinearProgress-bar': {
+                    borderRadius: '10px',
+                    backgroundColor: '#4CAF50'
+                  }
+                }} 
+              />
+            </Box>
+
+            {/* Interactive Game Area */}
+            <div style={{
+              position: 'absolute',
+              top: '100px',
+              left: 0,
+              right: 0,
+              bottom: '10px', 
+              top: '10px',
+              cursor: (currentStep === 3 || currentStep === 4) && selectedTool ? 'crosshair' : 'default',
+              overflow: 'hidden'
+            }}
+            onMouseMove={currentStep === 3 ? handleFloorClean : currentStep === 4 ? handleWallClean : undefined}
+            >
+              {/* BathTub Image with Bubbles */}
+              <div
+                style={{
                   position: 'absolute',
-                  inset: 20,
-                  background: 'linear-gradient(135deg, #D7CCC8, #BCAAA4)',
-                  borderRadius: 3,
-                  border: '3px solid #8D6E63',
-                  boxShadow: 'inset 0 4px 8px rgba(0,0,0,0.1)'
+                  left: '0%',
+                  bottom: '50px',
+                  width: '700px',
+                  height: '500px',
+                  zIndex: 8
                 }}
               >
-                {/* Stains */}
-                {stains.map((stain) => (
-                  <Box
-                    key={stain.id}
-                    sx={{
-                      position: 'absolute',
-                      left: `${stain.x}%`,
-                      top: `${stain.y}%`,
-                      width: stain.size,
-                      height: stain.size,
-                      backgroundColor: 'rgba(139, 69, 19, 0.7)',
-                      borderRadius: '50%',
-                      opacity: stain.cleaned ? 0 : 1,
-                      transition: 'all 0.5s ease',
-                      transform: stain.cleaned ? 'scale(0)' : 'scale(1)',
-                      pointerEvents: 'none',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
-                    }}
-                  />
-                ))}
+                <img 
+                  src={bathTubImg} 
+                  alt="Bath Tub"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))'
+                  }}
+                />
                 
-                {/* Cleaning cloth cursor */}
-                <Box
-                  sx={{
+                 {/* Bubbles starting from higher positions, floating upward */}
+                  {bubbles.map(bubble => (
+                    <div
+                      key={bubble.id}
+                      style={{
+                        position: 'absolute',
+                        left: `${bubble.x}%`,
+                        top: `${bubble.y}%`, // Higher starting point
+                        width: `${bubble.size}px`,
+                        height: `${bubble.size}px`,
+                        opacity: bubble.opacity,
+                        animation: `floatUpLong ${bubble.floatSpeed}s ease-in-out ${bubble.animationDelay}s infinite`,
+                        zIndex: 9
+                      }}
+                    >
+                      <img 
+                        src={bubbleImg} 
+                        alt="Bubble"
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'contain',
+                          filter: 'drop-shadow(0 1px 3px rgba(255,255,255,0.5)) brightness(1.1)'
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+              {/* All Scattered Items with Hints */}
+              {allItems.map(item => !item.collected && (
+                <div
+                  key={item.id}
+                  draggable={selectedTool?.step === item.step}
+                  onDragStart={(e) => handleDragStart(e, item)}
+                  style={{
                     position: 'absolute',
-                    left: `${cursorPosition.x}%`,
-                    top: `${cursorPosition.y}%`,
-                    transform: 'translate(-50%, -50%)',
-                    fontSize: '3rem',
-                    pointerEvents: 'none',
-                    animation: isAnimating ? `${wipe} 0.8s ease-in-out` : 'none',
-                    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))'
+                    left: `${item.x}%`,
+                    top: `${item.y}%`,
+                    width: `${item.size || 80}px`,
+                    height: `${item.size || 80}px`,
+                    cursor: selectedTool?.step === item.step ? 'grab' : 'not-allowed',
+                    transition: 'all 0.3s ease',
+                    zIndex: 10,
+                    opacity: selectedTool?.step === item.step ? 1 : 0.7,
+                    transform: `rotate(${item.rotation || 0}deg)`
                   }}
                 >
-                  🧽
-                </Box>
-                
-                {wipingProgress === 100 && (
-                  <Box
-                    sx={{
+                  {/* Hint Circle */}
+                  {showHints && selectedTool?.step === item.step && (
+                    <div style={{
                       position: 'absolute',
                       top: '50%',
                       left: '50%',
                       transform: 'translate(-50%, -50%)',
-                      textAlign: 'center',
-                      animation: `${bounce} 1s ease-out infinite`,
-                      background: 'rgba(255,255,255,0.95)',
-                      borderRadius: 4,
-                      p: 4,
-                      boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
-                    }}
-                  >
-                    <Typography variant="h3" sx={{ color: '#4CAF50', fontWeight: 700, mb: 1 }}>
-                      ✨ Spotless! ✨
-                    </Typography>
-                    <Typography variant="h6" sx={{ color: '#2E7D32' }}>
-                      Table is perfectly clean!
-                    </Typography>
-                  </Box>
-                )}
-              </Box>
-            </Paper>
-          </Box>
-        );
-      
-      default:
-        return (
-          <Paper sx={{ 
-            p: 6, 
-            textAlign: 'center', 
-            background: 'linear-gradient(135deg, #f0f8f0, #e8f5e8)',
-            border: '2px solid #4CAF50',
-            borderRadius: 4
-          }}>
-            <Avatar 
-              sx={{ 
-                width: 80, 
-                height: 80, 
-                bgcolor: '#4CAF50', 
-                mx: 'auto', 
-                mb: 3,
-                fontSize: '2.5rem'
-              }}
-            >
-              {currentStep.icon}
-            </Avatar>
-            <Typography variant="h4" gutterBottom sx={{ color: '#2E7D32', fontWeight: 700 }}>
-              {currentStep.title}
-            </Typography>
-            <Typography variant="h6" sx={{ mb: 3, color: '#388E3C' }}>
-              {currentStep.content}
-            </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ fontWeight: 500 }}>
-              {currentStep.instruction}
-            </Typography>
-          </Paper>
-        );
-    }
-  };
-
-  const canProceed = () => {
-    switch (activeStep) {
-      case 0:
-        return selectedTools.size === cleaningTools.length;
-      case 2:
-        return sweepingProgress === 100;
-      case 4:
-        return wipingProgress === 100;
-      default:
-        return true;
-    }
-  };
-
-  return (
-    <ThemeProvider theme={theme}>
-      <Box sx={{ 
-        minHeight: '100vh', 
-        background: 'linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%)',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        {/* Celebration particles */}
-        {celebrationItems.map(item => (
-          <Box
-            key={item.id}
-            sx={{
-              position: 'absolute',
-              left: `${item.left}%`,
-              top: '20%',
-              width: `${item.size}px`,
-              height: `${item.size}px`,
-              backgroundColor: item.color,
-              borderRadius: '50%',
-              animation: `${sparkle} 2s ease-out ${item.delay}ms`,
-              zIndex: 1000,
-              pointerEvents: 'none'
-            }}
-          />
-        ))}
-
-        <Box sx={{ position: 'relative', zIndex: 1, p: { xs: 2, md: 3 } }}>
-          {/* Enhanced Header */}
-          <Card sx={{ 
-            mb: 3, 
-            background: 'linear-gradient(135deg, #ffffff 0%, #f0f8f0 100%)',
-            border: '2px solid rgba(255,255,255,0.8)'
-          }}>
-            <CardContent>
-              <Box sx={{ 
-                display: 'flex', 
-                flexDirection: { xs: 'column', md: 'row' },
-                justifyContent: 'space-between', 
-                alignItems: { xs: 'flex-start', md: 'center' },
-                gap: 2
-              }}>
-                <Box>
-                  <Typography 
-                    variant="h4" 
-                    component="h1" 
-                    sx={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: 2,
-                      background: 'linear-gradient(45deg, #4CAF50, #2E7D32)',
-                      backgroundClip: 'text',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      animation: `${float} 3s ease-in-out infinite`
-                    }}
-                  >
-                    <CleaningServices sx={{ color: '#4CAF50', fontSize: '2.5rem' }} />
-                    Level 2: Sweeping & Cleaning
-                    <AutoAwesome sx={{ color: '#2E7D32', fontSize: '1.5rem' }} />
-                  </Typography>
-                  <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 1, fontSize: '1.1rem' }}>
-                    Master the basics of sweeping and surface cleaning! 🧹✨
-                  </Typography>
-                </Box>
-                
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  <Tooltip title="Go back to homepage">
-                    <Button
-                      variant="outlined"
-                      startIcon={<Home />}
-                      sx={{ 
-                        borderWidth: 2,
-                        '&:hover': { borderWidth: 2 }
-                      }}
-                    >
-                      Home
-                    </Button>
-                  </Tooltip>
+                      width: `${(item.size || 80)}px`,
+                      height: `${(item.size || 80)}px`,
+                      border: '2px solid #FFD700',
+                      borderRadius: '50%',
+                      animation: 'pulse 2s infinite',
+                      zIndex: -1
+                    }} />
+                  )}
                   
-                  <Tooltip title={isPlaying ? "Stop instructions" : "Play instructions"}>
-                    <Button
-                      variant="contained"
-                      startIcon={isPlaying ? <Pause /> : <VolumeUp />}
-                      onClick={() => playAudio("Welcome to cleaning basics! You'll learn to use cleaning tools, sweep floors, and wipe surfaces. Follow each step carefully to become a cleaning expert!")}
-                      sx={{ 
-                        background: 'linear-gradient(45deg, #4CAF50, #2E7D32)',
-                        '&:hover': {
-                          background: 'linear-gradient(45deg, #45a049, #256029)'
-                        }
-                      }}
-                    >
-                      {isPlaying ? 'Stop' : 'Instructions'}
-                    </Button>
-                  </Tooltip>
-                  
-                  <Tooltip title="Show help">
-                    <Button
-                      variant="outlined"
-                      startIcon={<School />}
-                      onClick={() => setShowInstructions(true)}
-                      sx={{ 
-                        borderWidth: 2,
-                        '&:hover': { borderWidth: 2 }
-                      }}
-                    >
-                      Help
-                    </Button>
-                  </Tooltip>
-                </Box>
-              </Box>
-              
-              {/* Enhanced Progress and Score */}
-              <Box sx={{ mt: 3 }}>
-                <Box sx={{ 
-                  display: 'flex', 
-                  flexDirection: { xs: 'column', md: 'row' },
-                  justifyContent: 'space-between', 
-                  alignItems: { xs: 'flex-start', md: 'center' }, 
-                  mb: 2,
-                  gap: 2
-                }}>
-                  <Typography variant="body1" color="text.secondary" sx={{ fontWeight: 600 }}>
-                    Step {activeStep + 1} of {cleaningSteps.length}: {cleaningSteps[activeStep].title}
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    <Chip 
-                      icon={<Star />} 
-                      label={`Score: ${score}`} 
-                      color="primary" 
-                      variant="filled"
-                      sx={{ 
-                        fontWeight: 600,
-                        background: 'linear-gradient(45deg, #4CAF50, #2E7D32)',
-                        color: 'white'
-                      }}
-                    />
-                    <Chip 
-                      icon={<CheckCircle />}
-                      label={`Completed: ${completedSteps.size}/${cleaningSteps.length}`} 
-                      color="success" 
-                      variant="filled"
-                      sx={{ fontWeight: 600 }}
-                    />
-                  </Box>
-                </Box>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={(activeStep / (cleaningSteps.length - 1)) * 100} 
-                  sx={{ 
-                    height: 12, 
-                    borderRadius: 6,
-                    background: 'rgba(0,0,0,0.1)',
-                    '& .MuiLinearProgress-bar': {
-                      background: 'linear-gradient(90deg, #4CAF50, #2E7D32)',
-                      borderRadius: 6
-                    }
-                  }}
-                />
-              </Box>
-            </CardContent>
-          </Card>
-
-          {/* Main Content */}
-          <Grid container spacing={3}>
-            {/* Enhanced Stepper */}
-            <Grid item xs={12} md={4}>
-              <Card sx={{ 
-                background: 'linear-gradient(135deg, #ffffff 0%, #f0f8f0 100%)',
-                maxHeight: 600,
-                overflowY: 'auto'
-              }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom sx={{ color: '#2E7D32', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    📋 Cleaning Steps
-                  </Typography>
-                  <Stepper activeStep={activeStep} orientation="vertical">
-                    {cleaningSteps.map((step, index) => (
-                      <Step key={index} completed={completedSteps.has(index)}>
-                        <StepLabel
-                          sx={{
-                            '& .MuiStepLabel-label': {
-                              fontWeight: activeStep === index ? 700 : 500,
-                              color: activeStep === index ? '#2E7D32' : 'text.secondary'
-                            },
-                            '& .MuiStepIcon-root': {
-                              color: completedSteps.has(index) ? '#4CAF50' : activeStep === index ? '#4CAF50' : '#e0e0e0'
-                            }
-                          }}
-                        >
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <span style={{ fontSize: '1.2rem' }}>{step.icon}</span>
-                            {step.title}
-                          </Box>
-                        </StepLabel>
-                        <StepContent>
-                          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                            {step.content}
-                          </Typography>
-                          <Typography variant="caption" sx={{ 
-                            fontWeight: 600,
-                            color: '#4CAF50',
-                            display: 'block',
-                            mb: 1
-                          }}>
-                            💡 {step.instruction}
-                          </Typography>
-                        </StepContent>
-                      </Step>
-                    ))}
-                  </Stepper>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            {/* Enhanced Activity Area */}
-            <Grid item xs={12} md={8}>
-              <Card sx={{ 
-                background: 'linear-gradient(135deg, #ffffff 0%, #f8fff8 100%)',
-                minHeight: 500
-              }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom sx={{ color: '#2E7D32', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    🎯 {cleaningSteps[activeStep].title}
-                  </Typography>
-                  <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary' }}>
-                    {cleaningSteps[activeStep].instruction}
-                  </Typography>
-                  
-                  {renderActivity()}
-                  
-                  {/* Enhanced Navigation Buttons */}
-                  <Box sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center', 
-                    mt: 4,
-                    pt: 3,
-                    borderTop: '2px solid #e8f5e8'
-                  }}>
-                    <Button
-                      variant="outlined"
-                      startIcon={<NavigateBefore />}
-                      onClick={handleBack}
-                      disabled={activeStep === 0}
-                      size="large"
-                      sx={{ 
-                        borderWidth: 2,
-                        '&:hover': { borderWidth: 2 },
-                        '&:disabled': { borderWidth: 2 }
-                      }}
-                    >
-                      Previous
-                    </Button>
-                    
-                    <Chip 
-                      label={`Step ${activeStep + 1} of ${cleaningSteps.length}`} 
-                      color="primary"
-                      variant="outlined"
-                      sx={{ fontWeight: 600 }}
-                    />
-                    
-                    <Button
-                      variant="contained"
-                      endIcon={activeStep === cleaningSteps.length - 1 ? <CheckCircle /> : <NavigateNext />}
-                      onClick={handleNext}
-                      disabled={!canProceed()}
-                      size="large"
-                      sx={{
-                        background: canProceed() ? 'linear-gradient(45deg, #4CAF50, #2E7D32)' : undefined,
-                        '&:hover': {
-                          background: canProceed() ? 'linear-gradient(45deg, #45a049, #256029)' : undefined
-                        },
-                        '&:disabled': {
-                          background: '#e0e0e0'
-                        }
-                      }}
-                    >
-                      {activeStep === cleaningSteps.length - 1 ? 'Complete' : 'Next'}
-                    </Button>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-
-          {/* Enhanced Reset Button */}
-          <Box sx={{ mt: 4, textAlign: 'center' }}>
-            <Button
-              variant="contained"
-              startIcon={<Refresh />}
-              onClick={resetLesson}
-              size="large"
-              sx={{
-                background: 'linear-gradient(45deg, #FF9800, #F57C00)',
-                color: 'white',
-                px: 4,
-                py: 1.5,
-                fontSize: '1.1rem',
-                '&:hover': {
-                  background: 'linear-gradient(45deg, #FB8C00, #EF6C00)',
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 8px 25px rgba(255, 152, 0, 0.4)'
-                }
-              }}
-            >
-              Start Over
-            </Button>
-          </Box>
-
-          {/* Enhanced Success Dialog */}
-          <Dialog
-            open={showSuccess}
-            maxWidth="sm"
-            fullWidth
-            PaperProps={{
-              sx: { 
-                borderRadius: 4,
-                background: 'linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%)',
-                color: 'white'
-              }
-            }}
-          >
-            <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <Box sx={{ position: 'relative', mb: 2 }}>
-                  <EmojiEvents 
-                    sx={{ 
-                      fontSize: 80, 
-                      color: '#FFD700',
-                      animation: `${bounce} 1s ease-out infinite`
-                    }} 
-                  />
-                  <Celebration
-                    sx={{
-                      position: 'absolute',
-                      top: -10,
-                      right: -10,
-                      fontSize: 30,
-                      color: '#ff6b6b',
-                      animation: `${sparkle} 2s ease-out infinite`
+                  <img 
+                    src={item.image} 
+                    alt={item.name}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))'
                     }}
                   />
-                </Box>
-                <Typography variant="h4" component="h2" sx={{ fontWeight: 700 }}>
-                  Outstanding! 🎉
-                </Typography>
-                <Typography variant="h6" sx={{ opacity: 0.9, mt: 1 }}>
-                  Cleaning Master Certified!
-                </Typography>
-              </Box>
-            </DialogTitle>
-            <DialogContent sx={{ textAlign: 'center' }}>
-              <Typography variant="body1" sx={{ mb: 3, fontSize: '1.1rem' }}>
-                You've mastered the basics of sweeping and cleaning! You know your tools and techniques!
-              </Typography>
-              <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid item xs={6}>
-                  <Paper sx={{ p: 2, bgcolor: 'rgba(255,255,255,0.2)' }}>
-                    <Typography variant="h4" sx={{ color: '#FFD700', fontWeight: 700 }}>
-                      {score}
-                    </Typography>
-                    <Typography variant="body2">Final Score</Typography>
-                  </Paper>
-                </Grid>
-                <Grid item xs={6}>
-                  <Paper sx={{ p: 2, bgcolor: 'rgba(255,255,255,0.2)' }}>
-                    <Typography variant="h4" sx={{ color: '#81C784', fontWeight: 700 }}>
-                      {completedSteps.size + 1}
-                    </Typography>
-                    <Typography variant="body2">Steps Completed</Typography>
-                  </Paper>
-                </Grid>
-              </Grid>
-              <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                Congratulations! You're ready for more advanced household skills!
-              </Typography>
-            </DialogContent>
-            <DialogActions sx={{ justifyContent: 'center', gap: 2, pb: 3 }}>
-              <Button
-                variant="outlined"
-                startIcon={<Refresh />}
-                onClick={() => {
-                  setShowSuccess(false);
-                  resetLesson();
-                }}
-                sx={{ 
-                  color: 'white',
-                  borderColor: 'white',
-                  '&:hover': {
-                    borderColor: 'white',
-                    bgcolor: 'rgba(255,255,255,0.1)'
-                  }
-                }}
-              >
-                Practice Again
-              </Button>
-              <Button
-                variant="contained"
-                startIcon={<PlayArrow />}
-                onClick={() => alert('Next level coming soon!')}
-                sx={{
-                  bgcolor: 'white',
-                  color: '#4CAF50',
-                  '&:hover': {
-                    bgcolor: '#f5f5f5'
-                  }
-                }}
-              >
-                Next Level
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<Home />}
-                onClick={() => alert('Going home...')}
-                sx={{ 
-                  color: 'white',
-                  borderColor: 'white',
-                  '&:hover': {
-                    borderColor: 'white',
-                    bgcolor: 'rgba(255,255,255,0.1)'
-                  }
-                }}
-              >
-                Home
-              </Button>
-            </DialogActions>
-          </Dialog>
+                </div>
+              ))}
 
-          {/* Enhanced Instructions Dialog */}
-          <Dialog
-            open={showInstructions}
-            onClose={() => setShowInstructions(false)}
-            maxWidth="md"
-            fullWidth
-            PaperProps={{
-              sx: { 
-                borderRadius: 4,
-                background: 'linear-gradient(135deg, #ffffff 0%, #f0f8f0 100%)'
-              }
-            }}
-          >
-            <DialogTitle>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="h5" sx={{ fontWeight: 700, color: '#2E7D32' }}>
-                  🧹 Cleaning Basics Guide
-                </Typography>
-                <IconButton 
-                  onClick={() => setShowInstructions(false)}
-                  sx={{ 
-                    bgcolor: 'rgba(76, 175, 80, 0.1)',
-                    '&:hover': { bgcolor: 'rgba(76, 175, 80, 0.2)' }
+              {/* Dirt Spots with fade-out animation */}
+              {dirtSpots.map(spot => !spot.cleaned && (
+                <div
+                  key={spot.id}
+                  style={{
+                    position: 'absolute',
+                    left: `${spot.x}%`,
+                    top: `${spot.y}%`,
+                    width: `${spot.size || 60}px`,
+                    height: `${spot.size || 60}px`,
+                    zIndex: 5,
+                    opacity: spot.cleaning ? 1 - (spot.cleaningProgress || 0) : 1,
+                    transform: spot.cleaning ? `scale(${1 - ((spot.cleaningProgress || 0) * 0.5)})` : 'scale(1)',
+                    transition: spot.cleaning ? 'all 0.1s ease-out' : 'none'
                   }}
                 >
-                  <Close />
-                </IconButton>
-              </Box>
-            </DialogTitle>
-            <DialogContent>
-              <Typography variant="h6" gutterBottom sx={{ color: '#2E7D32', fontWeight: 700 }}>
-                🛠️ What You'll Learn:
-              </Typography>
-              <Grid container spacing={2} sx={{ mb: 3 }}>
-                {cleaningTools.map((tool) => (
-                  <Grid item xs={12} sm={6} key={tool.id}>
-                    <Paper sx={{ 
-                      p: 2, 
-                      border: '2px solid #4CAF50', 
-                      borderRadius: 2,
-                      background: 'rgba(76, 175, 80, 0.05)'
-                    }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Typography variant="h3">{tool.emoji}</Typography>
-                        <Box>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-                            {tool.name}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {tool.description}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Paper>
-                  </Grid>
-                ))}
-              </Grid>
+                  {/* Hint Circle for Dirt Spots */}
+                  {showHints && currentStep === 3 && selectedTool?.step === 3 && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: `${(spot.size || 60) + 5}px`,
+                      height: `${(spot.size || 60) + 5}px`,
+                      border: '2px solid #FF6B6B',
+                      borderRadius: '50%',
+                      animation: 'pulse 2s infinite',
+                      zIndex: -1
+                    }} />
+                  )}
+                  <img 
+                    src={spot.image} 
+                    alt="Dirt spot"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))'
+                    }}
+                  />
+                </div>
+              ))}
+
+              {/* Cobwebs with fade-out animation */}
+              {cobwebs.map(web => !web.cleaned && (
+                <div
+                  key={web.id}
+                  style={{
+                    position: 'absolute',
+                    left: `${web.x}%`,
+                    top: `${web.y}%`,
+                    width: `${web.size || 80}px`,
+                    height: `${web.size || 80}px`,
+                    zIndex: 5,
+                    opacity: web.cleaning ? 1 - (web.cleaningProgress || 0) : 1,
+                    transform: web.cleaning ? `scale(${1 - ((web.cleaningProgress || 0) * 0.5)})` : 'scale(1)',
+                    transition: web.cleaning ? 'all 0.1s ease-out' : 'none'
+                  }}
+                > 
+                  {/* Glowing Pulse Hint for Cobwebs */}
+                  {showHints && currentStep === 4 && selectedTool?.step === 4 && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      width: `${(web.size || 80) + 20}px`,
+                      height: `${(web.size || 80) + 20}px`,
+                      background: 'radial-gradient(circle, rgba(78,205,196,0.3) 0%, rgba(78,205,196,0) 70%)',
+                      borderRadius: '50%',
+                      animation: 'glowPulse 2s infinite',
+                      zIndex: -1  
+                    }} />
+                  )}
+                  <img 
+                    src={web.image} 
+                    alt="Cobweb"
+                    style={{
+                      width: '200%',
+                      height: '200%',
+                      objectFit: 'contain',
+                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))'
+                    }}
+                  />
+                </div>
+              ))}
+              {/* Cleaning Tool Display */}
+              {selectedTool?.cleaningPosition && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: `${selectedTool.cleaningPosition.x}%`,
+                    top: `${selectedTool.cleaningPosition.y}%`,
+                    width: '250px',
+                    height: '250px',
+                    transform: 'translate(-50%, -50%)',
+                    zIndex: 15,
+                    pointerEvents: 'none'
+                  }}
+                >
+                  <img 
+                    src={currentStep === 3 ? broomImg : dusterImg} 
+                    alt="Cleaning tool"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))'
+                    }}
+                  />
+                </div>
+              )}
+
+
+              {/* Drop Zones with Fade-in Animation from Right */}
+              {currentStep === 1 && selectedTool?.step === 1 && (
+                <Box
+                  ref={basinRef}
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, 'basin')}
+                  sx={{
+                    position: 'absolute',
+                    bottom: '20px',
+                    right: '30px',
+                    width: '200px',
+                    height: '200px',
+                    zIndex: 20,
+                    opacity: 0,
+                    animation: 'fadeInFromRight 0.8s ease-out forwards',
+                    '@keyframes fadeInFromRight': {
+                      '0%': {
+                        opacity: 0,
+                        transform: 'translateX(50px) scale(0.9)',
+                      },
+                      '100%': {
+                        opacity: 1,
+                        transform: 'translateX(0) scale(1)',
+                      }
+                    }
+                  }}
+                >
+                  {/* Basin Image */}
+                  <img 
+                    src={basinImg} 
+                    alt="Drop laundry here"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      filter: 'drop-shadow(0 4px 12px rgba(33,150,243,0.5))',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0
+                    }}
+                  />
+                </Box>
+              )}
+
+              {currentStep === 2 && selectedTool?.step === 2 && (
+                <Box
+                  ref={trashCanRef}
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, 'trash')}
+                  sx={{
+                    position: 'absolute',
+                    bottom: '20px',
+                    right: '30px',
+                    width: '200px',
+                    height: '200px',
+                    zIndex: 20,
+                    opacity: 0,
+                    animation: 'fadeInFromRight 0.8s ease-out forwards',
+                    '@keyframes fadeInFromRight': {
+                      '0%': {
+                        opacity: 0,
+                        transform: 'translateX(50px) scale(0.9)',
+                      },
+                      '100%': {
+                        opacity: 1,
+                        transform: 'translateX(0) scale(1)',
+                      }
+                    }
+                  }}
+                >
+                  {/* Trash Can Image */}
+                  <img 
+                    src={trashCanImg} 
+                    alt="Drop trash here"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      filter: 'drop-shadow(0 4px 12px rgba(255,87,34,0.5))',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0
+                    }}
+                  />
+                  
+                </Box>
+              )}
+            </div>
+
+            {/* Control Buttons */}
+            <Box sx={{
+              position: 'absolute',
+              bottom: '20px',
+              left: '20px',
+              display: 'flex',
+              gap: 2,
+              zIndex: 1000
+            }}>
+              <Button 
+                variant="contained"
+                onClick={resetGame}
+                sx={{
+                  background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+                  color: 'white',
+                  borderRadius: '20px',
+                  fontFamily: 'Poppins, sans-serif',
+                  fontWeight: '600',
+                  textTransform: 'none'
+                }}
+              >
+                Restart
+              </Button>
               
-              <Paper sx={{ p: 3, bgcolor: 'rgba(76, 175, 80, 0.05)', borderRadius: 3 }}>
-                <Typography variant="h6" gutterBottom sx={{ color: '#2E7D32', fontWeight: 700 }}>
-                  📚 Step-by-Step Learning:
-                </Typography>
-                <Box component="ol" sx={{ pl: 2, '& li': { mb: 1 } }}>
-                  <li>
-                    <Typography variant="body1">
-                      <strong>Learn your tools</strong> - Click on each cleaning tool to discover its purpose
-                    </Typography>
-                  </li>
-                  <li>
-                    <Typography variant="body1">
-                      <strong>Practice sweeping</strong> - Move your mouse to sweep up dirt and debris
-                    </Typography>
-                  </li>
-                  <li>
-                    <Typography variant="body1">
-                      <strong>Master wiping</strong> - Clean stains from surfaces with proper technique
-                    </Typography>
-                  </li>
-                  <li>
-                    <Typography variant="body1">
-                      <strong>Complete all steps</strong> - Finish each activity to become a cleaning expert!
-                    </Typography>
-                  </li>
-                </Box>
+              <Button 
+                variant="contained"
+                onClick={handleGoHome}
+                sx={{
+                  background: 'linear-gradient(135deg, #1982C4 0%, #1568A0 100%)',
+                  color: 'white',
+                  borderRadius: '20px',
+                  fontFamily: 'Poppins, sans-serif',
+                  fontWeight: '600',
+                  textTransform: 'none'
+                }}
+              >
+                Go Home
+              </Button>
+            </Box>
+          </Box>
+        </div>
+
+        {/* Success Dialog */}
+          <Dialog
+            open={gameCompleted}
+            fullScreen
+            PaperProps={{
+              sx: { 
+                background: 'linear-gradient(135deg, rgba(255, 202, 58, 0.95) 0%, rgba(230, 184, 0, 0.95) 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'column'
+              }
+            }}
+          >
+            <Box sx={{
+              textAlign: 'center',
+              color: 'white',
+              zIndex: 1001
+            }}>
+              <Typography variant="h1" sx={{ 
+                fontSize: '150px',
+                mb: 4
+              }}>
+                🏆
+              </Typography>
+              
+              <Typography variant="h1" sx={{ 
+                fontWeight: 'bold',
+                color: 'white',
+                fontFamily: 'Poppins, sans-serif',
+                fontSize: { xs: '2rem', md: '3rem' },
+                textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
+                mb: 2
+              }}>
+                Bathroom Perfectly Cleaned!
+              </Typography>
+              
+              <Chip 
+                label="All Steps Completed!"
+                sx={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  fontSize: '1.1rem',
+                  fontFamily: 'Poppins, sans-serif',
+                  mb: 4,
+                  px: 3,
+                  py: 1
+                }}
+              />
+              
+              <Typography variant="h6" sx={{ 
+                color: 'white',
+                fontFamily: 'Inter, sans-serif',
+                lineHeight: 1.6,
+                mb: 6,
+                maxWidth: '800px',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+              }}>
+                Excellent work! You've successfully cleaned the entire bathroom!
+              </Typography>
+              
+              <Box sx={{ display: 'flex', gap: 3, justifyContent: 'center', flexWrap: 'wrap' }}>
+                <Button 
+                  onClick={resetGame}
+                  variant="outlined"
+                  sx={{ 
+                    borderColor: 'white',
+                    color: 'white',
+                    px: 4,
+                    py: 2,
+                    borderRadius: '25px',
+                    fontFamily: 'Poppins, sans-serif',
+                    fontWeight: '600',
+                    fontSize: '1.2rem',
+                    borderWidth: '2px',
+                    textTransform: 'none',
+                    '&:hover': {
+                      borderColor: 'white',
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      borderWidth: '2px'
+                    }
+                  }}
+                >
+                  Play Again
+                </Button>
                 
-                <Box sx={{ mt: 2, p: 2, bgcolor: 'rgba(76, 175, 80, 0.1)', borderRadius: 2 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 600, color: '#2E7D32' }}>
-                    💡 Pro Tips: Follow the steps in order, complete each activity fully, and use the audio instructions for guidance!
-                  </Typography>
-                </Box>
-              </Paper>
-            </DialogContent>
+                <Button 
+                  variant="contained"
+                  onClick={handleNextLevel}
+                  sx={{ 
+                    background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)',
+                    color: 'white',
+                    px: 6,
+                    py: 2,
+                    borderRadius: '25px',
+                    fontFamily: 'Poppins, sans-serif',
+                    fontWeight: '700',
+                    fontSize: '1.2rem',
+                    textTransform: 'none',
+                    boxShadow: '0 10px 25px rgba(33, 150, 243, 0.5)',
+                    '&:hover': { 
+                      background: 'linear-gradient(135deg, #42A5F5 0%, #2196F3 100%)',
+                      transform: 'translateY(-2px)'
+                    }
+                  }}
+                >
+                  Next Level
+                </Button>
+              </Box>
+            </Box>  
           </Dialog>
 
-          {/* Enhanced Snackbar */}
-          <Snackbar
-            open={snackbar.open}
-            autoHideDuration={3000}
-            onClose={() => setSnackbar({ ...snackbar, open: false })}
-            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-          >
-            <Alert
-              onClose={() => setSnackbar({ ...snackbar, open: false })}
-              severity={snackbar.severity}
-              sx={{ 
-                width: '100%',
-                borderRadius: 3,
-                fontWeight: 600,
-                fontSize: '1rem'
-              }}
-            >
-              {snackbar.message}
-            </Alert>
-          </Snackbar>
-        </Box>
-      </Box>
+        <style>
+          {`
+            @keyframes pulse {
+              0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+              50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.7; }
+              100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            }
+            @keyframes slideInFromLeft {
+              0% {
+                transform: translateX(-100px);
+                opacity: 0;
+              }
+              100% {
+                transform: translateX(0);
+                opacity: 1;
+              }
+            }
+            .drop-zone-animation {
+              animation: slideInFromLeft 0.6s ease-out forwards;
+            }
+              @keyframes glowPulse {
+              0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+              50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
+            }
+
+            @keyframes dashPulse {
+              0%, 100% { opacity: 0.7; border-color: #4ECDC4; }
+              50% { opacity: 1; border-color: #26C6DA; }
+            }
+
+            @keyframes sparkle {
+              0%, 100% { opacity: 0; transform: scale(0); }
+              50% { opacity: 1; transform: scale(1); }
+            }
+
+            @keyframes rotate {
+              0% { transform: translate(-50%, -50%) rotate(0deg); }
+              100% { transform: translate(-50%, -50%) rotate(360deg); }
+            }
+            @keyframes pulse {
+              0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+              50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.7; }
+              100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            }
+            @keyframes floatUpLong {
+              0% {
+                transform: translateY(0) scale(1) rotate(0deg);
+                opacity: 0.7;
+              }
+              20% {
+                transform: translateY(-15px) scale(1.05) rotate(3deg);
+                opacity: 0.9;
+              }
+              40% {
+                transform: translateY(-30px) scale(1.1) rotate(0deg);
+                opacity: 1;
+              }
+              60% {
+                transform: translateY(-45px) scale(1.05) rotate(-3deg);
+                opacity: 0.8;
+              }
+              80% {
+                transform: translateY(-60px) scale(1.02) rotate(0deg);
+                opacity: 0.6;
+              }
+              100% {
+                transform: translateY(-75px) scale(0.95) rotate(0deg);
+                opacity: 0;
+              }
+            }
+
+            @keyframes taskStarBlink {
+              0% {
+                opacity: 0;
+                transform: scale(0) rotate(0deg);
+              }
+              25% {
+                opacity: 1;
+                transform: scale(1.3) rotate(15deg);
+              }
+              50% {
+                opacity: 0.9;
+                transform: scale(1.1) rotate(-10deg);
+              }
+              75% {
+                opacity: 1;
+                transform: scale(1.2) rotate(5deg);
+              }
+              100% {
+                opacity: 0;
+                transform: scale(0.6) rotate(10deg);
+              }
+            }
+          `}
+        </style>
+      </div>
     </ThemeProvider>
   );
 };
