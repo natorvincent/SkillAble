@@ -50,7 +50,6 @@ import module3 from "../assets/chores.jpg";
 import { useGlobalBackgroundMusic } from "./background music/useGlobalBackgroundMusic";
 import AudioToggleButton from "../components/background music/AudioToggleButton";
 import backgroundMusic from '../assets/background-music.mp3';
-import playbtn from '../assets/playbtn.png';
 import exitbtn from '../assets/exitbtn.png'; // ADD THIS IMPORT
 
 
@@ -501,7 +500,7 @@ function ModuleDetails() {
                             }}
                           >
                             <img 
-                              src={playbtn} 
+                              src="/assets/playbtn.png" 
                               alt="Start Lesson" 
                               style={{ 
                                 width: 85, 
