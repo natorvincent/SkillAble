@@ -1,12 +1,22 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Box, Button, CircularProgress, Typography, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
-import { Droplet, Sparkles } from 'lucide-react';
+import { Droplet, Sparkles, ChefHat, Clock, Thermometer } from 'lucide-react';
 import Navbar from '../Navbar';
 
-// Import kitchen background
-import kitchenBg from "../../assets/sortingLevel1/kitchen.jpg";
+// Import realistic kitchen background
+import kitchenBg from "../../assets/cookingLevel3/bgkitchen.jpg";
 import baconardoImg from "../../assets/cookingLevel3/Baconardo.png";
+
+// Import realistic kitchen assets
+import countertopImg from "../../assets/cookingLevel4/countertop.png";
+import sinkImg from "../../assets/cookingLevel4/sink.png";
+import riceCookerImg from "../../assets/cookingLevel4/rice-cooker.png";
+import cookingPotImg from "../../assets/cookingLevel4/cooking-pot.png";
+import riceBagImg from "../../assets/cookingLevel4/rice-bag.png";
+import waterBottleImg from "../../assets/cookingLevel4/water-bottle.png";
+import ricePaddleImg from "../../assets/cookingLevel4/rice-paddle.png";
 
 // Progress service imports
 import { 
@@ -44,18 +54,20 @@ export default function RiceCookerSimulator() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [showIntro, setShowIntro] = useState(true);
+  const [cookerTemperature, setCookerTemperature] = useState(25);
+  const [cookerTimer, setCookerTimer] = useState(0);
 
   const panRef = useRef(null);
 
   const riceCookingSteps = [
-    { id: 0, instruction: "🍲 Drag pot to counter", focus: 'setup' },
-    { id: 1, instruction: "🌾 Add rice to pot", focus: 'setup' },
-    { id: 2, instruction: "🚰 Rinse rice at sink", focus: 'preparation' },
-    { id: 3, instruction: "💧 Add perfect water", focus: 'preparation' },
-    { id: 4, instruction: "⚡ Place in cooker", focus: 'cooking' },
-    { id: 5, instruction: "🔥 Start cooking", focus: 'cooking' },
-    { id: 6, instruction: "⏱️ Wait patiently", focus: 'cooking' },
-    { id: 7, instruction: "🥄 Serve the rice", focus: 'serving' }
+    { id: 0, instruction: "🍲 Place the cooking pot on the counter", focus: 'setup' },
+    { id: 1, instruction: "🌾 Add uncooked rice to the pot", focus: 'setup' },
+    { id: 2, instruction: "🚰 Rinse the rice at the sink (2-3 times)", focus: 'preparation' },
+    { id: 3, instruction: "💧 Add the perfect amount of water", focus: 'preparation' },
+    { id: 4, instruction: "⚡ Place the pot in the rice cooker", focus: 'cooking' },
+    { id: 5, instruction: "🔥 Start the cooking process", focus: 'cooking' },
+    { id: 6, instruction: "⏱️ Wait for cooking to complete", focus: 'cooking' },
+    { id: 7, instruction: "🥄 Serve the cooked rice", focus: 'serving' }
   ];
 
   // Determine current phase for focus management
@@ -65,6 +77,7 @@ export default function RiceCookerSimulator() {
   const isCookingPhase = currentPhase === 'cooking';
   const isServingPhase = currentPhase === 'serving';
 
+  // Realistic cooking effects
   useEffect(() => {
     let interval;
     if (isCooking) {
@@ -74,11 +87,19 @@ export default function RiceCookerSimulator() {
             setIsCooking(false);
             setIsResting(true);
             setShowSteam(true);
+            setCookerTemperature(85); // Keep warm temperature
             return 100;
           }
-          return prev + 1.5;
+          // Realistic temperature progression
+          const newTemp = 25 + (prev * 0.6); // From 25°C to 85°C
+          setCookerTemperature(Math.min(newTemp, 85));
+          
+          // Realistic timer
+          setCookerTimer(prevTimer => prevTimer + 1);
+          
+          return prev + 1;
         });
-      }, 100);
+      }, 200); // Slower, more realistic cooking
     }
     return () => clearInterval(interval);
   }, [isCooking]);
@@ -91,11 +112,12 @@ export default function RiceCookerSimulator() {
           if (prev >= 100) {
             setIsResting(false);
             setShowSteam(false);
+            setCookerTemperature(65); // Cooling down
             return 100;
           }
-          return prev + 3;
+          return prev + 2;
         });
-      }, 100);
+      }, 200);
     }
     return () => clearInterval(interval);
   }, [isResting]);
@@ -121,9 +143,6 @@ export default function RiceCookerSimulator() {
     setProgressSaving(true);
     
     try {
-      // Add your progress saving logic here
-      // await saveStudentLessonProgress(moduleId, lessonId, { completed: true });
-      
       setTimeout(() => {
         setProgressSaved(true);
         setProgressSaving(false);
@@ -139,7 +158,7 @@ export default function RiceCookerSimulator() {
     setShowFeedback(true);
     setTimeout(() => {
       setShowFeedback(false);
-    }, 2000);
+    }, 3000);
   };
 
   const playSound = (type) => {
@@ -151,23 +170,23 @@ export default function RiceCookerSimulator() {
       gainNode.connect(audioContext.destination);
       
       if (type === 'drop') {
-        oscillator.frequency.value = 200;
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.3);
-      } else if (type === 'water') {
-        oscillator.frequency.value = 600;
+        oscillator.frequency.value = 150;
         gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.5);
-      } else if (type === 'success') {
-        oscillator.frequency.value = 800;
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
         oscillator.start(audioContext.currentTime);
         oscillator.stop(audioContext.currentTime + 0.4);
+      } else if (type === 'water') {
+        oscillator.frequency.value = 400;
+        gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.6);
+      } else if (type === 'success') {
+        oscillator.frequency.value = 600;
+        gainNode.gain.setValueAtTime(0.25, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.5);
       }
     } catch (e) {
       console.log('Audio not available');
@@ -177,7 +196,6 @@ export default function RiceCookerSimulator() {
   const handleDragStart = (e, item) => {
     setDraggedItem(item);
     e.dataTransfer.effectAllowed = 'move';
-    // Hide instruction when dragging starts
     setShowFeedback(false);
   };
 
@@ -197,7 +215,7 @@ export default function RiceCookerSimulator() {
     if (draggedItem === 'pot' && zone === 'table' && !potOnTable) {
       setPotOnTable(true);
       playSound('drop');
-      showFeedbackMessage("Great! Pot is on the counter!");
+      showFeedbackMessage("Perfect! Cooking pot is on the counter");
     }
     else if (draggedItem === 'rice' && zone === 'pot-on-table' && potOnTable && !riceInPot) {
       setShowPourAnimation(true);
@@ -206,9 +224,9 @@ export default function RiceCookerSimulator() {
         setRiceInPot(true);
         setShowPourAnimation(false);
         setShowSparkles(true);
-        showFeedbackMessage("Perfect! Rice added to the pot!");
+        showFeedbackMessage("Rice added! Now rinse it 2-3 times");
         setTimeout(() => setShowSparkles(false), 1000);
-      }, 800);
+      }, 1200);
     }
     else if (draggedItem === 'pot-with-rice' && zone === 'sink' && riceInPot && waterAmount === null) {
       setShowWaterSplash(true);
@@ -216,38 +234,40 @@ export default function RiceCookerSimulator() {
       setTimeout(() => {
         setRinseCount(prev => prev + 1);
         setShowWaterSplash(false);
-        showFeedbackMessage(`Rice rinsed ${rinseCount + 1} time${rinseCount + 1 !== 1 ? 's' : ''}!`);
         if (rinseCount + 1 >= 2) {
+          showFeedbackMessage(`Perfect! Rice rinsed ${rinseCount + 1} times. Ready for water!`);
           setShowSparkles(true);
           setTimeout(() => setShowSparkles(false), 1000);
+        } else {
+          showFeedbackMessage(`Rice rinsed ${rinseCount + 1} time${rinseCount + 1 !== 1 ? 's' : ''}. Rinse 1-2 more times`);
         }
-      }, 600);
+      }, 800);
     }
     else if (draggedItem === 'water-low' && zone === 'pot-on-table' && rinseCount >= 1) {
       setWaterAmount('low');
       playSound('water');
-      showFeedbackMessage("Water added, but it might be too little...");
+      showFeedbackMessage("Water added, but this might be too little for perfect rice");
       setShowSparkles(true);
       setTimeout(() => setShowSparkles(false), 800);
     }
     else if (draggedItem === 'water-perfect' && zone === 'pot-on-table' && rinseCount >= 1) {
       setWaterAmount('perfect');
       playSound('success');
-      showFeedbackMessage("Perfect water amount! Great job!");
+      showFeedbackMessage("Perfect water amount! This will make fluffy rice!");
       setShowSparkles(true);
       setTimeout(() => setShowSparkles(false), 800);
     }
     else if (draggedItem === 'water-high' && zone === 'pot-on-table' && rinseCount >= 1) {
       setWaterAmount('high');
       playSound('water');
-      showFeedbackMessage("Water added, but it might be too much...");
+      showFeedbackMessage("Water added, but this might be too much - rice could get mushy");
       setShowSparkles(true);
       setTimeout(() => setShowSparkles(false), 800);
     }
     else if (draggedItem === 'pot-ready' && zone === 'cooker' && waterAmount && !potInCooker) {
       setPotInCooker(true);
       playSound('drop');
-      showFeedbackMessage("Excellent! Pot is in the rice cooker!");
+      showFeedbackMessage("Great! Pot is securely in the rice cooker");
       setShowSparkles(true);
       setTimeout(() => setShowSparkles(false), 1000);
     }
@@ -261,8 +281,10 @@ export default function RiceCookerSimulator() {
   const handleCookButton = () => {
     if (potInCooker && !isCooking && cookingProgress === 0) {
       setIsCooking(true);
+      setCookerTimer(0);
+      setCookerTemperature(25);
       playSound('success');
-      showFeedbackMessage("Cooking started! 🔥");
+      showFeedbackMessage("Cooking started! Rice cooker is heating up...");
     }
   };
 
@@ -277,25 +299,25 @@ export default function RiceCookerSimulator() {
     const newMistakes = [];
     
     if (rinseCount < 2) {
-      newMistakes.push(`Only rinsed ${rinseCount} time${rinseCount !== 1 ? 's' : ''} (should rinse 2-3 times)`);
+      newMistakes.push(`Only rinsed ${rinseCount} time${rinseCount !== 1 ? 's' : ''} (should rinse 2-3 times for best results)`);
     }
     
     if (waterAmount === 'low') {
-      newMistakes.push('Too little water - rice will be hard and undercooked');
+      newMistakes.push('Too little water - rice will be hard, dry, and undercooked');
     } else if (waterAmount === 'high') {
-      newMistakes.push('Too much water - rice will be mushy and overcooked');
+      newMistakes.push('Too much water - rice will be mushy, sticky, and overcooked');
     }
     
     setMistakes(newMistakes);
     
     if (newMistakes.length === 0 && waterAmount === 'perfect') {
-      setRiceQuality('Perfect Rice! 🏆');
+      setRiceQuality('Perfect Fluffy Rice! 🏆');
     } else if (rinseCount < 2) {
-      setRiceQuality('Sticky Rice 😕');
+      setRiceQuality('Sticky Clumpy Rice 😕');
     } else if (waterAmount === 'high') {
-      setRiceQuality('Mushy Rice 💦');
+      setRiceQuality('Mushy Overcooked Rice 💦');
     } else if (waterAmount === 'low') {
-      setRiceQuality('Hard Rice 🪨');
+      setRiceQuality('Hard Undercooked Rice 🪨');
     } else {
       setRiceQuality('Good Rice ⭐');
     }
@@ -326,6 +348,8 @@ export default function RiceCookerSimulator() {
     setShowSteam(false);
     setProgressSaved(false);
     setCurrentStep(0);
+    setCookerTemperature(25);
+    setCookerTimer(0);
   };
 
   const DraggableItem = ({ type, isActive, isCompleted, children, style = {} }) => (
@@ -333,16 +357,16 @@ export default function RiceCookerSimulator() {
       draggable={isActive}
       onDragStart={(e) => handleDragStart(e, type)}
       style={{
-        cursor: isActive ? 'grab' : 'default',
-        opacity: isCompleted ? 0.3 : isActive ? 1 : 0.6,
-        border: isActive ? '3px solid #FF9800' : isCompleted ? '3px solid #4CAF50' : '2px solid #ccc',
-        borderRadius: '12px',
-        padding: '10px',
-        backgroundColor: isCompleted ? '#E8F5E8' : isActive ? '#FFF8E1' : 'white',
+        cursor: isActive ? 'grab' : 'not-allowed',
+        opacity: isCompleted ? 0.4 : isActive ? 1 : 0.7,
+        border: isActive ? '2px solid #8B4513' : isCompleted ? '2px solid #228B22' : '1px solid #A9A9A9',
+        borderRadius: '8px',
+        padding: '12px',
+        backgroundColor: isCompleted ? '#F0FFF0' : isActive ? '#FFF8DC' : '#F5F5F5',
         position: 'relative',
-        transform: isActive ? 'scale(1.05)' : 'scale(1)',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        boxShadow: isActive ? '0 4px 20px rgba(255, 152, 0, 0.6)' : '0 2px 8px rgba(0,0,0,0.1)',
+        transform: isActive ? 'scale(1.02)' : 'scale(1)',
+        transition: 'all 0.3s ease',
+        boxShadow: isActive ? '0 4px 12px rgba(139, 69, 19, 0.4)' : '0 2px 6px rgba(0,0,0,0.1)',
         ...style
       }}
     >
@@ -350,48 +374,48 @@ export default function RiceCookerSimulator() {
       {isActive && (
         <div style={{
           position: 'absolute',
-          top: '-8px',
-          right: '-8px',
-          width: '24px',
-          height: '24px',
-          background: 'linear-gradient(135deg, #FF9800, #F57C00)',
+          top: '-6px',
+          right: '-6px',
+          width: '20px',
+          height: '20px',
+          background: '#8B4513',
           borderRadius: '50%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           color: 'white',
-          fontSize: '14px',
+          fontSize: '12px',
           fontWeight: 'bold',
           animation: 'pulse 1.5s infinite',
-          boxShadow: '0 2px 8px rgba(255, 152, 0, 0.5)'
-        }}>!</div>
+          boxShadow: '0 2px 6px rgba(139, 69, 19, 0.5)'
+        }}>↑</div>
       )}
       {isCompleted && (
         <div style={{
           position: 'absolute',
-          top: '-8px',
-          right: '-8px',
-          width: '24px',
-          height: '24px',
-          background: 'linear-gradient(135deg, #4CAF50, #45a049)',
+          top: '-6px',
+          right: '-6px',
+          width: '20px',
+          height: '20px',
+          background: '#228B22',
           borderRadius: '50%',
           color: 'white',
-          fontSize: '14px',
+          fontSize: '12px',
           fontWeight: 'bold',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 2px 8px rgba(76, 175, 80, 0.5)'
+          boxShadow: '0 2px 6px rgba(34, 139, 34, 0.5)'
         }}>✓</div>
       )}
     </div>
   );
 
-  // Add Chef Baconardo Character
+  // Realistic Chef Baconardo Character
   const BaconardoGuide = () => (
     <div style={{
       position: 'fixed',
-      top: '120px',
+      top: '100px',
       right: '20px',
       zIndex: 100,
       display: 'flex',
@@ -399,48 +423,58 @@ export default function RiceCookerSimulator() {
       alignItems: 'center',
       animation: 'chefBounce 3s infinite ease-in-out'
     }}>
-      <img 
-        src={baconardoImg} 
-        alt="Chef Baconardo" 
-        style={{ 
-          width: '180px', 
-          height: '180px', 
-          objectFit: 'contain',
-          filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.3))'
-        }} 
-      />
       <div style={{
-        background: 'linear-gradient(45deg, #FF9800, #F57C00)',
+        width: '140px',
+        height: '140px',
+        borderRadius: '50%',
+        overflow: 'hidden',
+        border: '3px solid #8B4513',
+        background: 'linear-gradient(135deg, #FFE4B5, #FFD700)',
+        boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
+        marginBottom: '8px'
+      }}>
+        <img 
+          src={baconardoImg} 
+          alt="Chef Baconardo" 
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        />
+      </div>
+      <div style={{
+        background: 'linear-gradient(45deg, #8B4513, #A0522D)',
         color: 'white',
-        padding: '12px 20px',
-        borderRadius: '25px',
-        fontSize: '18px',
+        padding: '10px 16px',
+        borderRadius: '20px',
+        fontSize: '14px',
         fontWeight: 'bold',
         textAlign: 'center',
-        marginTop: '10px',
-        boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-        border: '3px solid white'
+        marginBottom: '8px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+        border: '2px solid #D2691E',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px'
       }}>
-        👨‍🍳 Chef Baconardo
+        <ChefHat size={16} />
+        Chef Baconardo
       </div>
       <div style={{
         background: 'rgba(255, 255, 255, 0.95)',
-        padding: '15px',
-        borderRadius: '20px',
-        fontSize: '16px',
-        color: '#E65100',
+        padding: '12px',
+        borderRadius: '16px',
+        fontSize: '14px',
+        color: '#8B4513',
         textAlign: 'center',
-        border: '3px solid #FF9800',
-        fontWeight: 'bold',
-        marginTop: '15px',
-        maxWidth: '220px',
+        border: '2px solid #D2691E',
+        fontWeight: '600',
+        maxWidth: '200px',
         boxShadow: '0 6px 20px rgba(0,0,0,0.15)',
-        minHeight: '60px',
+        minHeight: '50px',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        fontFamily: 'Arial, sans-serif'
       }}>
-        {riceCookingSteps[currentStep]?.instruction || "Congratulations! Perfect rice! 🎉"}
+        {riceCookingSteps[currentStep]?.instruction || "Excellent! Perfect rice achieved! 🎉"}
       </div>
     </div>
   );
@@ -456,7 +490,6 @@ export default function RiceCookerSimulator() {
         backgroundImage: `url(${kitchenBg})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
-        backgroundAttachment: "fixed",
       }}>
         <Box sx={{
           position: "absolute",
@@ -464,7 +497,7 @@ export default function RiceCookerSimulator() {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: "rgba(0, 0, 0, 0.4)",
+          backgroundColor: "rgba(0, 0, 0, 0.5)",
           zIndex: 1
         }} />
         
@@ -485,16 +518,17 @@ export default function RiceCookerSimulator() {
             padding: '20px'
           }}>
             <div style={{
-              backgroundColor: 'white',
-              borderRadius: '24px',
-              padding: '48px',
-              maxWidth: '600px',
+              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              borderRadius: '20px',
+              padding: '40px',
+              maxWidth: '500px',
               width: '100%',
               textAlign: 'center',
               boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
+              border: '3px solid #8B4513',
               animation: 'bounceIn 0.6s ease-out'
             }}>
-              <div style={{ fontSize: '100px', marginBottom: '20px', animation: 'float 3s ease-in-out infinite' }}>
+              <div style={{ fontSize: '80px', marginBottom: '20px', animation: 'float 3s ease-in-out infinite' }}>
                 {riceQuality.includes('Perfect') ? '🏆' : 
                  riceQuality.includes('Sticky') ? '😕' :
                  riceQuality.includes('Mushy') ? '💦' :
@@ -502,40 +536,41 @@ export default function RiceCookerSimulator() {
               </div>
               
               <h2 style={{
-                fontSize: '36px',
-                color: '#1a202c',
+                fontSize: '28px',
+                color: '#8B4513',
                 marginBottom: '16px',
-                fontWeight: '700'
+                fontWeight: '700',
+                fontFamily: 'Georgia, serif'
               }}>
                 {riceQuality}
               </h2>
 
               {mistakes.length > 0 ? (
                 <div style={{
-                  backgroundColor: '#fef2f2',
-                  borderRadius: '16px',
-                  padding: '24px',
-                  marginBottom: '24px',
+                  backgroundColor: '#FAF0E6',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  marginBottom: '20px',
                   textAlign: 'left',
-                  border: '2px solid #fca5a5'
+                  border: '2px solid #DEB887'
                 }}>
                   <div style={{
                     fontSize: '16px',
                     fontWeight: '700',
-                    color: '#991b1b',
+                    color: '#8B4513',
                     marginBottom: '12px',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px'
                   }}>
-                    ⚠️ What went wrong:
+                    ⚠️ Cooking Notes:
                   </div>
                   {mistakes.map((mistake, idx) => (
                     <div key={idx} style={{
                       fontSize: '14px',
-                      color: '#dc2626',
+                      color: '#654321',
                       marginBottom: '8px',
-                      lineHeight: '1.6'
+                      lineHeight: '1.5'
                     }}>
                       • {mistake}
                     </div>
@@ -543,44 +578,44 @@ export default function RiceCookerSimulator() {
                   <div style={{
                     marginTop: '16px',
                     padding: '12px',
-                    backgroundColor: '#fff7ed',
+                    backgroundColor: '#FFF8DC',
                     borderRadius: '8px',
                     fontSize: '13px',
-                    color: '#9a3412',
+                    color: '#8B4513',
                     fontWeight: '600'
                   }}>
-                    💡 Tip: Rinse rice 2-3 times and use the "Perfect Water" option for best results!
+                    💡 Pro Tip: Rinse rice 2-3 times and use the "Perfect Water" measurement for restaurant-quality rice!
                   </div>
                 </div>
               ) : (
                 <div style={{
-                  backgroundColor: '#f0fdf4',
-                  borderRadius: '16px',
-                  padding: '24px',
-                  marginBottom: '24px',
-                  border: '2px solid #86efac'
+                  backgroundColor: '#F0FFF0',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  marginBottom: '20px',
+                  border: '2px solid #90EE90'
                 }}>
                   <div style={{
                     fontSize: '16px',
-                    color: '#166534',
+                    color: '#228B22',
                     fontWeight: '600',
-                    lineHeight: '1.6'
+                    lineHeight: '1.5'
                   }}>
-                    🎉 Excellent work! You rinsed the rice properly and used the perfect water amount. Your rice is fluffy, separate, and delicious!
+                    🎉 Masterful cooking! You followed all the steps perfectly. Your rice is fluffy, separate, and professionally cooked!
                   </div>
                 </div>
               )}
 
               {progressSaving && (
-                <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(33, 150, 243, 0.9)', borderRadius: '12px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(139, 69, 19, 0.9)', borderRadius: '10px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
                   <CircularProgress size={16} sx={{ color: 'white' }} />
                   <Typography variant="body2">Saving progress...</Typography>
                 </Box>
               )}
               
               {progressSaved && (
-                <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(76, 175, 80, 0.9)', borderRadius: '12px', color: 'white' }}>
-                  ✅ Progress saved!
+                <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(34, 139, 34, 0.9)', borderRadius: '10px', color: 'white' }}>
+                  ✅ Progress saved successfully!
                 </Box>
               )}
 
@@ -590,19 +625,17 @@ export default function RiceCookerSimulator() {
                   variant="outlined"
                   startIcon={<span>🔄</span>}
                   sx={{ 
-                    borderColor: '#667eea', 
-                    color: '#667eea',
-                    borderRadius: '12px',
+                    borderColor: '#8B4513', 
+                    color: '#8B4513',
+                    borderRadius: '20px',
                     borderWidth: '2px',
-                    padding: '14px 28px',
-                    fontSize: '15px',
+                    padding: '12px 24px',
+                    fontSize: '14px',
                     fontWeight: '700',
                     textTransform: 'none',
                     '&:hover': {
                       borderWidth: '2px',
-                      backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)'
+                      backgroundColor: 'rgba(139, 69, 19, 0.1)',
                     },
                     transition: 'all 0.3s ease'
                   }}
@@ -615,21 +648,19 @@ export default function RiceCookerSimulator() {
                   variant="contained"
                   startIcon={<span>🏠</span>}
                   sx={{ 
-                    backgroundColor: '#2196F3',
-                    borderRadius: '12px',
-                    padding: '14px 28px',
-                    fontSize: '15px',
+                    backgroundColor: '#8B4513',
+                    borderRadius: '20px',
+                    padding: '12px 24px',
+                    fontSize: '14px',
                     fontWeight: '700',
                     textTransform: 'none',
                     '&:hover': { 
-                      backgroundColor: '#1976D2',
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 6px 16px rgba(33, 150, 243, 0.4)'
+                      backgroundColor: '#654321',
                     },
                     transition: 'all 0.3s ease'
                   }}
                 >
-                  Home
+                  Kitchen Home
                 </Button>
 
                 <Button
@@ -637,23 +668,21 @@ export default function RiceCookerSimulator() {
                   variant="contained"
                   startIcon={<span>🚀</span>}
                   sx={{ 
-                    backgroundColor: '#4CAF50',
-                    borderRadius: '12px',
-                    padding: '14px 28px',
-                    fontSize: '15px',
+                    backgroundColor: '#228B22',
+                    borderRadius: '20px',
+                    padding: '12px 24px',
+                    fontSize: '14px',
                     fontWeight: '700',
                     textTransform: 'none',
-                    boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
+                    boxShadow: '0 4px 12px rgba(34, 139, 34, 0.3)',
                     '&:hover': { 
-                      backgroundColor: '#45a049',
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 6px 16px rgba(76, 175, 80, 0.4)'
+                      backgroundColor: '#1F7A1F',
                     },
                     animation: 'pulse 2s infinite',
                     transition: 'all 0.3s ease'
                   }}
                 >
-                  Next Level
+                  Next Recipe
                 </Button>
               </div>
             </div>
@@ -663,7 +692,7 @@ export default function RiceCookerSimulator() {
         <style>{`
           @keyframes float {
             0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-15px); }
+            50% { transform: translateY(-10px); }
           }
           @keyframes bounceIn {
             0% { transform: scale(0.3); opacity: 0; }
@@ -673,7 +702,7 @@ export default function RiceCookerSimulator() {
           }
           @keyframes chefBounce {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
+            50% { transform: translateY(-5px); }
           }
         `}</style>
       </div>
@@ -690,7 +719,6 @@ export default function RiceCookerSimulator() {
       backgroundImage: `url(${kitchenBg})`,
       backgroundSize: "cover",
       backgroundPosition: "center",
-      backgroundAttachment: "fixed",
     }}>
       <Box sx={{
         position: "absolute",
@@ -698,7 +726,7 @@ export default function RiceCookerSimulator() {
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.35)",
+        backgroundColor: "rgba(0, 0, 0, 0.4)",
         zIndex: 1
       }} />
       
@@ -711,7 +739,7 @@ export default function RiceCookerSimulator() {
       }}>
         <Navbar />
         
-        {/* Chef Baconardo Character */}
+        {/* Realistic Chef Baconardo Character */}
         <BaconardoGuide />
 
         {/* Introduction Dialog */}
@@ -721,60 +749,63 @@ export default function RiceCookerSimulator() {
           fullWidth
           PaperProps={{
             style: {
-              borderRadius: '20px',
-              background: 'linear-gradient(135deg, #FFF8E1, #FFECB3)',
-              border: '4px solid #FF9800'
+              borderRadius: '15px',
+              background: 'linear-gradient(135deg, #FAF0E6, #FFEBCD)',
+              border: '3px solid #8B4513'
             }
           }}
         >
           <DialogTitle style={{ 
             textAlign: 'center', 
-            background: 'linear-gradient(45deg, #FF9800, #F57C00)',
+            background: 'linear-gradient(45deg, #8B4513, #A0522D)',
             color: 'white',
-            borderRadius: '15px 15px 0 0',
-            padding: '20px'
+            borderRadius: '12px 12px 0 0',
+            padding: '20px',
+            fontFamily: 'Georgia, serif'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px' }}>
-              <div style={{ fontSize: '40px' }}>👨‍🍳</div>
-              <h2 style={{ margin: 0, fontSize: '28px' }}>Welcome to Cooking Level 4!</h2>
-              <div style={{ fontSize: '40px' }}>🍚</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+              <ChefHat size={32} />
+              <h2 style={{ margin: 0, fontSize: '24px' }}>Welcome to Cooking Level 4</h2>
+              <span style={{ fontSize: '32px' }}>🍚</span>
             </div>
           </DialogTitle>
           
-          <DialogContent style={{ padding: '30px' }}>
+          <DialogContent style={{ padding: '25px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '20px' }}>
-              <img 
-                src={baconardoImg} 
-                alt="Chef Baconardo" 
-                style={{ 
-                  width: '120px', 
-                  height: '120px', 
-                  objectFit: 'contain',
-                  borderRadius: '50%',
-                  border: '3px solid #FF9800'
-                }} 
-              />
+              <div style={{
+                width: '100px',
+                height: '100px',
+                borderRadius: '50%',
+                overflow: 'hidden',
+                border: '2px solid #8B4513'
+              }}>
+                <img 
+                  src={baconardoImg} 
+                  alt="Chef Baconardo" 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              </div>
               <div>
-                <h3 style={{ color: '#E65100', marginBottom: '10px', fontSize: '24px' }}>
-                  Meet Chef Baconardo! 🥓
+                <h3 style={{ color: '#8B4513', marginBottom: '8px', fontSize: '20px', fontFamily: 'Georgia, serif' }}>
+                  Meet Chef Baconardo! 👨‍🍳
                 </h3>
-                <p style={{ fontSize: '16px', lineHeight: '1.6', color: '#5D4037' }}>
-                  "Hello! I'm Chef Baconardo! Ready to master the art of perfect rice cooking? 
-                  I'll guide you through each step to make fluffy, delicious rice every time!"
+                <p style={{ fontSize: '15px', lineHeight: '1.5', color: '#654321', fontFamily: 'Arial, sans-serif' }}>
+                  "Welcome to my kitchen! Today we're mastering the art of perfect rice cooking. 
+                  I'll guide you through each step to create fluffy, delicious rice that would make any chef proud!"
                 </p>
               </div>
             </div>
 
             <div style={{ 
-              background: 'rgba(76, 175, 80, 0.1)', 
+              background: 'rgba(139, 69, 19, 0.1)', 
               padding: '15px', 
-              borderRadius: '12px',
-              border: '2px solid rgba(76, 175, 80, 0.3)',
+              borderRadius: '10px',
+              border: '2px solid rgba(139, 69, 19, 0.3)',
               textAlign: 'center',
-              marginTop: '20px'
+              marginTop: '15px'
             }}>
-              <p style={{ margin: 0, color: '#2E7D32', fontWeight: 'bold', fontSize: '16px' }}>
-                👉 I'll guide you through each step from the side! Follow my instructions carefully!
+              <p style={{ margin: 0, color: '#8B4513', fontWeight: 'bold', fontSize: '14px', fontFamily: 'Arial, sans-serif' }}>
+                👉 I'll be here to guide you through each cooking step. Follow the instructions carefully!
               </p>
             </div>
           </DialogContent>
@@ -785,19 +816,18 @@ export default function RiceCookerSimulator() {
               variant="contained"
               size="large"
               sx={{
-                backgroundColor: '#4CAF50',
-                borderRadius: '25px',
-                padding: '12px 40px',
-                fontSize: '16px',
+                backgroundColor: '#8B4513',
+                borderRadius: '20px',
+                padding: '12px 35px',
+                fontSize: '15px',
                 fontWeight: 'bold',
+                fontFamily: 'Arial, sans-serif',
                 '&:hover': {
-                  backgroundColor: '#45a049',
-                  transform: 'scale(1.05)'
-                },
-                transition: 'all 0.3s ease'
+                  backgroundColor: '#654321',
+                }
               }}
             >
-              🚀 Start Cooking Rice!
+              🍳 Start Cooking
             </Button>
           </DialogActions>
         </Dialog>
@@ -806,33 +836,33 @@ export default function RiceCookerSimulator() {
         {`
           @keyframes pulse {
             0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+            50% { transform: scale(1.02); }
           }
           @keyframes waterDrop {
-            0% { transform: translateY(-30px); opacity: 0; }
+            0% { transform: translateY(-20px); opacity: 0; }
             50% { opacity: 1; }
-            100% { transform: translateY(40px); opacity: 0; }
+            100% { transform: translateY(30px); opacity: 0; }
           }
           @keyframes pourRice {
-            0% { transform: translateY(-20px) rotate(-15deg); opacity: 0; }
+            0% { transform: translateY(-15px) rotate(-10deg); opacity: 0; }
             50% { opacity: 1; }
-            100% { transform: translateY(30px) rotate(-15deg); opacity: 0; }
+            100% { transform: translateY(25px) rotate(-10deg); opacity: 0; }
           }
           @keyframes steamRise {
             0% { transform: translateY(0) scale(0.8); opacity: 0.7; }
-            100% { transform: translateY(-60px) scale(1.2); opacity: 0; }
+            100% { transform: translateY(-50px) scale(1.1); opacity: 0; }
           }
           @keyframes sparkle {
             0%, 100% { transform: scale(0) rotate(0deg); opacity: 0; }
             50% { transform: scale(1) rotate(180deg); opacity: 1; }
           }
           @keyframes glow {
-            0%, 100% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.6); }
-            50% { box-shadow: 0 0 35px rgba(16, 185, 129, 0.9); }
+            0%, 100% { box-shadow: 0 0 15px rgba(139, 69, 19, 0.6); }
+            50% { box-shadow: 0 0 25px rgba(139, 69, 19, 0.9); }
           }
           @keyframes float {
             0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-15px); }
+            50% { transform: translateY(-8px); }
           }
           @keyframes bounceIn {
             0% { transform: scale(0.3); opacity: 0; }
@@ -841,47 +871,44 @@ export default function RiceCookerSimulator() {
             100% { transform: scale(1); opacity: 1; }
           }
           @keyframes slideIn {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
           }
           @keyframes focusPulse {
-            0%, 100% { transform: scale(1); border-color: #FF9800; }
-            50% { transform: scale(1.02); border-color: #FFC107; }
+            0%, 100% { transform: scale(1); border-color: #8B4513; }
+            50% { transform: scale(1.01); border-color: #D2691E; }
           }
           @keyframes chefBounce {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
+            50% { transform: translateY(-5px); }
           }
           .draggable {
             cursor: grab;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s ease;
             user-select: none;
           }
           .draggable:hover {
-            transform: scale(1.08) translateY(-4px);
-            filter: brightness(1.1);
+            transform: scale(1.03) translateY(-2px);
           }
           .draggable:active {
             cursor: grabbing;
             transform: scale(0.98);
           }
           .drop-zone {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s ease;
           }
           .drop-zone.hovered {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.15) 100%) !important;
-            border-color: #10b981 !important;
-            border-width: 4px !important;
-            transform: scale(1.02);
-            animation: glow 1s infinite;
+            background: rgba(139, 69, 19, 0.1) !important;
+            border-color: #8B4513 !important;
+            border-width: 3px !important;
+            transform: scale(1.01);
           }
           .focused-area {
             animation: focusPulse 2s infinite;
-            border-width: 3px !important;
+            border-width: 2px !important;
           }
           .dimmed-area {
-            opacity: 0.5;
-            filter: grayscale(0.3);
+            opacity: 0.6;
             transition: all 0.3s ease;
           }
         `}
@@ -891,8 +918,8 @@ export default function RiceCookerSimulator() {
           flex: 1,
           overflowY: 'auto',
           overflowX: 'hidden',
-          padding: '15px',
-          paddingTop: '20px',
+          padding: '12px',
+          paddingTop: '15px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center'
@@ -900,85 +927,86 @@ export default function RiceCookerSimulator() {
 
           {/* Progress Bar */}
           <div style={{
-            background: 'white',
-            borderRadius: '16px',
-            padding: '16px 20px',
-            marginBottom: '20px',
+            background: 'rgba(255, 255, 255, 0.9)',
+            borderRadius: '12px',
+            padding: '14px 18px',
+            marginBottom: '15px',
             width: '100%',
-            maxWidth: '900px',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-            animation: 'slideIn 0.7s ease-out'
+            maxWidth: '800px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            border: '1px solid #D2B48C',
+            animation: 'slideIn 0.6s ease-out'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', alignItems: 'center' }}>
-              <span style={{ fontWeight: '700', color: '#764ba2', fontSize: '15px' }}>Cooking Progress:</span>
-              <span style={{ color: '#667eea', fontWeight: '700', fontSize: '15px' }}>
-                {currentStep}/8 steps completed
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', alignItems: 'center' }}>
+              <span style={{ fontWeight: '600', color: '#8B4513', fontSize: '14px', fontFamily: 'Arial, sans-serif' }}>Cooking Progress:</span>
+              <span style={{ color: '#8B4513', fontWeight: '600', fontSize: '14px', fontFamily: 'Arial, sans-serif' }}>
+                Step {currentStep + 1} of 8
               </span>
             </div>
             <div style={{
               background: '#E8E8E8',
-              borderRadius: '10px',
-              height: '12px',
+              borderRadius: '8px',
+              height: '10px',
               overflow: 'hidden',
-              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
+              boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)'
             }}>
               <div style={{
-                background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
+                background: 'linear-gradient(90deg, #8B4513, #A0522D)',
                 height: '100%',
-                width: `${(currentStep / 8) * 100}%`,
-                transition: 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
-                borderRadius: '10px',
-                boxShadow: '0 0 10px rgba(102, 126, 234, 0.5)'
+                width: `${((currentStep + 1) / 8) * 100}%`,
+                transition: 'width 0.5s ease',
+                borderRadius: '8px',
               }} />
             </div>
           </div>
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '260px 1fr',
-            gap: '16px',
+            gridTemplateColumns: '220px 1fr',
+            gap: '12px',
             width: '100%',
-            maxWidth: '1200px'
+            maxWidth: '1100px'
           }}>
-            {/* Tools & Ingredients Panel - Phase-based styling */}
+            {/* Kitchen Tools & Ingredients - Realistic Style */}
             <div style={{
-              background: 'white',
-              borderRadius: '16px',
-              padding: '18px',
-              border: isSetupPhase ? '3px solid #FF9800' : '2px solid rgba(102, 126, 234, 0.25)',
+              background: 'rgba(255, 255, 255, 0.9)',
+              borderRadius: '12px',
+              padding: '15px',
+              border: isSetupPhase ? '2px solid #8B4513' : '1px solid #D2B48C',
               height: 'fit-content',
-              boxShadow: isSetupPhase ? '0 8px 25px rgba(255, 152, 0, 0.3)' : '0 4px 16px rgba(0,0,0,0.1)',
-              animation: isSetupPhase ? 'focusPulse 2s infinite' : 'slideIn 0.8s ease-out',
-              opacity: isSetupPhase ? 1 : 0.7,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              animation: isSetupPhase ? 'focusPulse 2s infinite' : 'slideIn 0.7s ease-out',
+              opacity: isSetupPhase ? 1 : 0.8,
               transition: 'all 0.3s ease'
             }}>
               <h3 style={{ 
-                margin: '0 0 14px 0', 
-                color: isSetupPhase ? '#FF9800' : '#667eea',
+                margin: '0 0 12px 0', 
+                color: isSetupPhase ? '#8B4513' : '#A0522D',
                 textAlign: 'center',
-                fontSize: '15px',
-                fontWeight: '800',
-                borderBottom: `2px solid ${isSetupPhase ? 'rgba(255, 152, 0, 0.3)' : 'rgba(102, 126, 234, 0.25)'}`,
-                paddingBottom: '10px',
+                fontSize: '14px',
+                fontWeight: '600',
+                borderBottom: `1px solid ${isSetupPhase ? '#D2B48C' : '#E8E8E8'}`,
+                paddingBottom: '8px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '6px'
+                gap: '6px',
+                fontFamily: 'Arial, sans-serif'
               }}>
-                <span style={{ fontSize: '20px' }}>🧰</span>
-                {isSetupPhase ? 'ACTIVE: Tools & Items' : 'Tools & Items'}
+                <span style={{ fontSize: '18px' }}>🔪</span>
+                {isSetupPhase ? 'ACTIVE: Kitchen Tools' : 'Kitchen Tools'}
               </h3>
               
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'center' }}>
                 {!potOnTable && (
                   <DraggableItem 
                     type="pot"
                     isActive={currentStep === 0}
                     isCompleted={potOnTable}
-                    style={{ width: '100%', height: '65px', textAlign: 'center' }}
+                    style={{ width: '100%', height: '60px', textAlign: 'center' }}
                   >
-                    <div style={{ fontSize: '36px' }}>🍲</div>
-                    <div style={{ fontSize: '11px', fontWeight: 'bold', marginTop: '4px' }}>Cooking Pot</div>
+                    <div style={{ fontSize: '32px' }}>🍲</div>
+                    <div style={{ fontSize: '11px', fontWeight: '600', marginTop: '4px', color: '#8B4513' }}>Cooking Pot</div>
                   </DraggableItem>
                 )}
 
@@ -987,32 +1015,30 @@ export default function RiceCookerSimulator() {
                     type="rice"
                     isActive={currentStep === 1}
                     isCompleted={riceInPot}
-                    style={{ width: '100%', height: '65px', textAlign: 'center' }}
+                    style={{ width: '100%', height: '60px', textAlign: 'center' }}
                   >
-                    <div style={{ fontSize: '36px' }}>🌾</div>
-                    <div style={{ fontSize: '11px', fontWeight: 'bold', marginTop: '4px' }}>Uncooked Rice</div>
+                    <div style={{ fontSize: '32px' }}>🌾</div>
+                    <div style={{ fontSize: '11px', fontWeight: '600', marginTop: '4px', color: '#8B4513' }}>Uncooked Rice</div>
                   </DraggableItem>
                 )}
 
                 {riceInPot && waterAmount === null && rinseCount < 3 && (
                   <div style={{
-                    background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
-                    borderRadius: '14px',
-                    padding: '14px',
+                    background: 'rgba(139, 69, 19, 0.05)',
+                    borderRadius: '10px',
+                    padding: '12px',
                     textAlign: 'center',
-                    border: isPreparationPhase ? '3px solid #3b82f6' : '2px solid rgba(59, 130, 246, 0.4)',
-                    boxShadow: isPreparationPhase ? '0 6px 20px rgba(59, 130, 246, 0.3)' : '0 4px 12px rgba(59, 130, 246, 0.2)',
-                    animation: isPreparationPhase ? 'focusPulse 2s infinite' : 'none',
+                    border: isPreparationPhase ? '2px solid #8B4513' : '1px solid #D2B48C',
                     width: '100%',
                     opacity: isPreparationPhase ? 1 : 0.8
                   }}>
-                    <div style={{ fontSize: '40px', marginBottom: '8px' }}>
+                    <div style={{ fontSize: '36px', marginBottom: '6px' }}>
                       🍲💧
                     </div>
-                    <div style={{ fontSize: '13px', fontWeight: '700', color: '#1f2937', marginBottom: '4px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: '600', color: '#8B4513', marginBottom: '4px' }}>
                       Rinse at Sink
                     </div>
-                    <div style={{ fontSize: '11px', color: '#6b7280', fontWeight: '600' }}>
+                    <div style={{ fontSize: '10px', color: '#A0522D', fontWeight: '500' }}>
                       Rinsed: {rinseCount}/2-3 times
                     </div>
                   </div>
@@ -1021,46 +1047,46 @@ export default function RiceCookerSimulator() {
                 {rinseCount >= 2 && waterAmount === null && (
                   <>
                     <div style={{
-                      fontSize: '12px',
-                      fontWeight: '700',
-                      color: '#6b7280',
+                      fontSize: '11px',
+                      fontWeight: '600',
+                      color: '#8B4513',
                       marginTop: '8px',
                       marginBottom: '4px',
                       width: '100%',
                       textAlign: 'left',
                       paddingLeft: '4px'
                     }}>
-                      💦 Water Level:
+                      💧 Water Measurement:
                     </div>
                     
                     <DraggableItem 
                       type="water-low"
                       isActive={currentStep === 3 && !waterAmount}
                       isCompleted={waterAmount === 'low'}
-                      style={{ width: '100%', height: '58px', textAlign: 'center' }}
+                      style={{ width: '100%', height: '50px', textAlign: 'center' }}
                     >
-                      <div style={{ fontSize: '30px' }}>💧</div>
-                      <div style={{ fontSize: '10px', fontWeight: 'bold', marginTop: '2px' }}>Too Little</div>
+                      <div style={{ fontSize: '28px' }}>💧</div>
+                      <div style={{ fontSize: '10px', fontWeight: '600', marginTop: '2px', color: '#8B4513' }}>Too Little</div>
                     </DraggableItem>
                     
                     <DraggableItem 
                       type="water-perfect"
                       isActive={currentStep === 3 && !waterAmount}
                       isCompleted={waterAmount === 'perfect'}
-                      style={{ width: '100%', height: '58px', textAlign: 'center' }}
+                      style={{ width: '100%', height: '50px', textAlign: 'center' }}
                     >
-                      <div style={{ fontSize: '30px' }}>💧💧</div>
-                      <div style={{ fontSize: '10px', fontWeight: 'bold', marginTop: '2px' }}>Perfect ✓</div>
+                      <div style={{ fontSize: '28px' }}>💧💧</div>
+                      <div style={{ fontSize: '10px', fontWeight: '600', marginTop: '2px', color: '#228B22' }}>Perfect ✓</div>
                     </DraggableItem>
                     
                     <DraggableItem 
                       type="water-high"
                       isActive={currentStep === 3 && !waterAmount}
                       isCompleted={waterAmount === 'high'}
-                      style={{ width: '100%', height: '58px', textAlign: 'center' }}
+                      style={{ width: '100%', height: '50px', textAlign: 'center' }}
                     >
-                      <div style={{ fontSize: '30px' }}>💧💧💧</div>
-                      <div style={{ fontSize: '10px', fontWeight: 'bold', marginTop: '2px' }}>Too Much</div>
+                      <div style={{ fontSize: '28px' }}>💧💧💧</div>
+                      <div style={{ fontSize: '10px', fontWeight: '600', marginTop: '2px', color: '#8B4513' }}>Too Much</div>
                     </DraggableItem>
                   </>
                 )}
@@ -1070,35 +1096,35 @@ export default function RiceCookerSimulator() {
                     type="paddle"
                     isActive={currentStep === 7}
                     isCompleted={isServed}
-                    style={{ width: '100%', height: '65px', textAlign: 'center' }}
+                    style={{ width: '100%', height: '60px', textAlign: 'center' }}
                   >
-                    <div style={{ fontSize: '36px' }}>🥄</div>
-                    <div style={{ fontSize: '11px', fontWeight: 'bold', marginTop: '4px' }}>Rice Paddle</div>
+                    <div style={{ fontSize: '32px' }}>🥄</div>
+                    <div style={{ fontSize: '11px', fontWeight: '600', marginTop: '4px', color: '#8B4513' }}>Rice Paddle</div>
                   </DraggableItem>
                 )}
               </div>
 
-              {/* Progress Checklist - Simplified */}
+              {/* Progress Checklist */}
               <div style={{
-                marginTop: '20px',
-                paddingTop: '16px',
-                borderTop: '2px solid #e5e7eb'
+                marginTop: '15px',
+                paddingTop: '12px',
+                borderTop: '1px solid #E8E8E8'
               }}>
                 <h4 style={{
-                  fontSize: '14px',
-                  fontWeight: '700',
-                  color: '#374151',
-                  marginBottom: '10px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  color: '#8B4513',
+                  marginBottom: '8px',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px'
                 }}>
-                  ✅ Progress
+                  📋 Cooking Steps
                 </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                   <ChecklistItem completed={potOnTable} text="Pot on counter" />
                   <ChecklistItem completed={riceInPot} text="Rice added" />
-                  <ChecklistItem completed={rinseCount >= 2} text={`Rice rinsed ${rinseCount >= 2 ? '✓' : ''}`} />
+                  <ChecklistItem completed={rinseCount >= 2} text={`Rinsed ${rinseCount >= 2 ? '✓' : ''}`} />
                   <ChecklistItem completed={waterAmount !== null} text="Water added" />
                   <ChecklistItem completed={potInCooker} text="In cooker" />
                   <ChecklistItem completed={cookingProgress === 100} text="Cooked" />
@@ -1107,53 +1133,54 @@ export default function RiceCookerSimulator() {
               </div>
             </div>
 
-            {/* Main Cooking Area */}
+            {/* Main Kitchen Area - Realistic Layout */}
             <div style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '14px'
+              gap: '12px'
             }}>
-              {/* Cooking Station Banner */}
+              {/* Kitchen Station Header */}
               <div style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                padding: '10px 20px',
-                borderRadius: '16px',
+                background: 'rgba(139, 69, 19, 0.9)',
+                padding: '8px 16px',
+                borderRadius: '12px',
                 color: 'white',
-                fontWeight: '800',
+                fontWeight: '600',
                 alignSelf: 'center',
-                fontSize: '16px',
-                boxShadow: '0 4px 16px rgba(102, 126, 234, 0.4)',
+                fontSize: '14px',
+                boxShadow: '0 4px 12px rgba(139, 69, 19, 0.4)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                animation: 'slideIn 0.9s ease-out'
+                animation: 'slideIn 0.8s ease-out',
+                fontFamily: 'Arial, sans-serif'
               }}>
-                <span style={{ fontSize: '24px' }}>🍳</span>
-                Cooking Station
+                <span style={{ fontSize: '20px' }}>🍳</span>
+                Professional Kitchen Station
               </div>
 
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
-                gap: '14px'
+                gap: '12px'
               }}>
-                {/* Kitchen Counter - Phase-based styling */}
+                {/* Kitchen Counter - Realistic */}
                 <div
                   onDragOver={(e) => handleDragOver(e, potOnTable ? 'pot-on-table' : 'table')}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, potOnTable ? 'pot-on-table' : 'table')}
                   className={`drop-zone ${(hoveredZone === 'table' || hoveredZone === 'pot-on-table') ? 'hovered' : ''} ${isSetupPhase ? 'focused-area' : ''} ${!isSetupPhase && !isPreparationPhase ? 'dimmed-area' : ''}`}
                   style={{
-                    background: 'linear-gradient(135deg, #ffffff 0%, #f9fafb 100%)',
-                    borderRadius: '18px',
-                    padding: '32px',
-                    border: isSetupPhase ? '3px dashed #FF9800' : '3px dashed #d1d5db',
-                    minHeight: '260px',
+                    background: 'rgba(255, 255, 255, 0.85)',
+                    borderRadius: '12px',
+                    padding: '25px',
+                    border: isSetupPhase ? '2px dashed #8B4513' : '1px dashed #D2B48C',
+                    minHeight: '220px',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 6px 24px rgba(0,0,0,0.12)',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
                     position: 'relative',
                     overflow: 'hidden',
                     transition: 'all 0.3s ease'
@@ -1161,39 +1188,40 @@ export default function RiceCookerSimulator() {
                 >
                   <div style={{
                     position: 'absolute',
-                    top: '12px',
-                    left: '16px',
-                    fontSize: '16px',
-                    fontWeight: '700',
-                    color: isSetupPhase ? '#FF9800' : '#6b7280',
+                    top: '8px',
+                    left: '12px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: isSetupPhase ? '#8B4513' : '#A0522D',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
-                    transition: 'all 0.3s ease'
+                    transition: 'all 0.3s ease',
+                    fontFamily: 'Arial, sans-serif'
                   }}>
-                    <span style={{ fontSize: '22px' }}>🪵</span>
-                    Counter
+                    <span style={{ fontSize: '18px' }}></span>
+                    Preparation Counter
                   </div>
 
                   {/* Pour Rice Animation */}
                   {showPourAnimation && (
                     <div style={{
                       position: 'absolute',
-                      top: '70px',
+                      top: '60px',
                       left: '50%',
                       transform: 'translateX(-50%)',
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: '4px',
+                      gap: '3px',
                       zIndex: 10
                     }}>
-                      {[...Array(8)].map((_, i) => (
+                      {[...Array(6)].map((_, i) => (
                         <div
                           key={i}
                           style={{
-                            fontSize: '14px',
+                            fontSize: '12px',
                             animation: `pourRice 0.8s ease-out ${i * 0.1}s`,
-                            marginLeft: `${Math.random() * 30 - 15}px`
+                            marginLeft: `${Math.random() * 20 - 10}px`
                           }}
                         >
                           🌾
@@ -1211,16 +1239,16 @@ export default function RiceCookerSimulator() {
                       transform: 'translate(-50%, -50%)',
                       zIndex: 10
                     }}>
-                      {[...Array(6)].map((_, i) => (
+                      {[...Array(4)].map((_, i) => (
                         <Sparkles
                           key={i}
-                          size={22}
-                          color="#fbbf24"
+                          size={18}
+                          color="#D2691E"
                           style={{
                             position: 'absolute',
                             animation: `sparkle 0.8s ease-out ${i * 0.1}s`,
-                            left: `${Math.cos(i * 60 * Math.PI / 180) * 45}px`,
-                            top: `${Math.sin(i * 60 * Math.PI / 180) * 45}px`
+                            left: `${Math.cos(i * 90 * Math.PI / 180) * 35}px`,
+                            top: `${Math.sin(i * 90 * Math.PI / 180) * 35}px`
                           }}
                         />
                       ))}
@@ -1249,110 +1277,124 @@ export default function RiceCookerSimulator() {
                           display: 'inline-block'
                         }}
                       >
-                        <svg width="180" height="140" viewBox="0 0 200 150">
-                          <ellipse cx="100" cy="130" rx="70" ry="15" fill="#4b5563" opacity="0.25" />
-                          <rect x="40" y="60" width="120" height="70" rx="8" fill="#6b7280" />
-                          <rect x="40" y="60" width="120" height="15" rx="8" fill="#9ca3af" />
-                          <path d="M 30 80 Q 20 80, 20 90 Q 20 100, 30 100" fill="none" stroke="#4b5563" strokeWidth="8" strokeLinecap="round" />
-                          <path d="M 170 80 Q 180 80, 180 90 Q 180 100, 170 100" fill="none" stroke="#4b5563" strokeWidth="8" strokeLinecap="round" />
-                          <rect x="50" y="65" width="40" height="60" rx="4" fill="white" opacity="0.25" />
-                        </svg>
-
-                        {riceInPot && (
+                        {/* Realistic Pot Visualization */}
+                        <div style={{
+                          width: '120px',
+                          height: '80px',
+                          background: 'linear-gradient(135deg, #C0C0C0, #A9A9A9)',
+                          borderRadius: '8px 8px 20px 20px',
+                          position: 'relative',
+                          border: '2px solid #808080',
+                          boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                        }}>
+                          {/* Pot rim */}
                           <div style={{
                             position: 'absolute',
-                            top: '35px',
-                            left: '50%',
-                            transform: 'translateX(-50%)',
-                            width: '90px',
-                            height: '35px',
-                            background: 'radial-gradient(circle, #fef3c7 0%, #fde68a 100%)',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}>
-                            <span style={{ fontSize: '20px' }}>🌾🌾🌾</span>
-                          </div>
-                        )}
+                            top: '-5px',
+                            left: '-5px',
+                            right: '-5px',
+                            height: '10px',
+                            background: 'linear-gradient(135deg, #B0B0B0, #D3D3D3)',
+                            borderRadius: '12px 12px 8px 8px',
+                            border: '1px solid #808080'
+                          }} />
 
-                        {waterAmount && (
-                          <div style={{
-                            position: 'absolute',
-                            top: '30px',
-                            left: '50%',
-                            transform: 'translateX(-50%)',
-                            width: '90px',
-                            height: waterAmount === 'low' ? '18px' : waterAmount === 'perfect' ? '32px' : '45px',
-                            background: 'rgba(59, 130, 246, 0.45)',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}>
-                            <Droplet size={18} color="#3b82f6" />
-                          </div>
-                        )}
+                          {/* Rice content */}
+                          {riceInPot && (
+                            <div style={{
+                              position: 'absolute',
+                              bottom: '5px',
+                              left: '5px',
+                              right: '5px',
+                              height: '30px',
+                              background: 'radial-gradient(circle, #FFF8DC, #F5DEB3)',
+                              borderRadius: '5px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <span style={{ fontSize: '16px', opacity: 0.7 }}>🌾🌾</span>
+                            </div>
+                          )}
+
+                          {/* Water level */}
+                          {waterAmount && (
+                            <div style={{
+                              position: 'absolute',
+                              bottom: '5px',
+                              left: '5px',
+                              right: '5px',
+                              height: waterAmount === 'low' ? '15px' : waterAmount === 'perfect' ? '25px' : '35px',
+                              background: `rgba(173, 216, 230, ${waterAmount === 'perfect' ? 0.6 : 0.4})`,
+                              borderRadius: '5px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <Droplet size={14} color="#4682B4" />
+                            </div>
+                          )}
+                        </div>
 
                         <div style={{
-                          marginTop: '14px',
+                          marginTop: '12px',
                           display: 'flex',
                           flexDirection: 'column',
-                          gap: '5px',
-                          fontSize: '12px',
-                          fontWeight: '600'
+                          gap: '4px',
+                          fontSize: '11px',
+                          fontWeight: '500'
                         }}>
                           {rinseCount > 0 && (
                             <div style={{
-                              color: rinseCount >= 2 ? '#059669' : '#f59e0b',
+                              color: rinseCount >= 2 ? '#228B22' : '#D2691E',
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '5px',
+                              gap: '4px',
                               justifyContent: 'center'
                             }}>
-                              {rinseCount >= 2 ? '✓' : '⚠️'} Rinsed {rinseCount} time{rinseCount !== 1 ? 's' : ''}
+                              {rinseCount >= 2 ? '✓' : '↻'} Rinsed {rinseCount} time{rinseCount !== 1 ? 's' : ''}
                             </div>
                           )}
                           {waterAmount && (
                             <div style={{
-                              color: waterAmount === 'perfect' ? '#059669' : '#dc2626',
+                              color: waterAmount === 'perfect' ? '#228B22' : '#8B4513',
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '5px',
+                              gap: '4px',
                               justifyContent: 'center'
                             }}>
-                              {waterAmount === 'perfect' ? '✓' : '⚠️'} Water: {waterAmount === 'low' ? 'Low' : waterAmount === 'perfect' ? 'Perfect' : 'High'}
+                              {waterAmount === 'perfect' ? '✓' : '💧'} Water: {waterAmount}
                             </div>
                           )}
                           {riceInPot && waterAmount === null && rinseCount < 2 && (
                             <div style={{
-                              color: '#3b82f6',
+                              color: '#8B4513',
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '5px',
+                              gap: '4px',
                               justifyContent: 'center',
                               animation: 'pulse 2s infinite',
-                              fontSize: '11px',
-                              backgroundColor: '#dbeafe',
-                              padding: '5px 10px',
-                              borderRadius: '8px',
+                              fontSize: '10px',
+                              backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                              padding: '4px 8px',
+                              borderRadius: '6px',
                               marginTop: '4px'
                             }}>
-                              👆 Drag to sink to rinse
+                              👉 Drag to sink to rinse
                             </div>
                           )}
                           {riceInPot && waterAmount === null && rinseCount >= 2 && (
                             <div style={{
-                              color: '#059669',
+                              color: '#228B22',
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '5px',
+                              gap: '4px',
                               justifyContent: 'center',
                               animation: 'pulse 2s infinite',
-                              fontSize: '11px',
-                              backgroundColor: '#d1fae5',
-                              padding: '5px 10px',
-                              borderRadius: '8px',
+                              fontSize: '10px',
+                              backgroundColor: 'rgba(34, 139, 34, 0.1)',
+                              padding: '4px 8px',
+                              borderRadius: '6px',
                               marginTop: '4px'
                             }}>
                               💧 Add water now
@@ -1360,19 +1402,19 @@ export default function RiceCookerSimulator() {
                           )}
                           {waterAmount && !potInCooker && (
                             <div style={{
-                              color: '#ef4444',
+                              color: '#8B4513',
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '5px',
+                              gap: '4px',
                               justifyContent: 'center',
                               animation: 'pulse 2s infinite',
-                              fontSize: '11px',
-                              backgroundColor: '#fee2e2',
-                              padding: '5px 10px',
-                              borderRadius: '8px',
+                              fontSize: '10px',
+                              backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                              padding: '4px 8px',
+                              borderRadius: '6px',
                               marginTop: '4px'
                             }}>
-                              👆 Drag to rice cooker
+                              👉 Drag to rice cooker
                             </div>
                           )}
                         </div>
@@ -1382,38 +1424,39 @@ export default function RiceCookerSimulator() {
 
                   {!potOnTable && (
                     <div style={{
-                      fontSize: '16px',
-                      color: '#FF9800',
-                      fontWeight: '700',
+                      fontSize: '14px',
+                      color: '#8B4513',
+                      fontWeight: '600',
                       textAlign: 'center',
                       animation: 'pulse 2s infinite',
-                      backgroundColor: '#FFF8E1',
-                      padding: '12px 20px',
-                      borderRadius: '12px',
-                      border: '2px solid #FFE082'
+                      backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                      padding: '10px 16px',
+                      borderRadius: '8px',
+                      border: '1px solid #D2B48C',
+                      fontFamily: 'Arial, sans-serif'
                     }}>
-                      👆 Drop cooking pot here
+                      👆 Place cooking pot here
                     </div>
                   )}
                 </div>
 
-                {/* Kitchen Sink - Phase-based styling */}
+                {/* Kitchen Sink - Realistic */}
                 <div
                   onDragOver={(e) => handleDragOver(e, 'sink')}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, 'sink')}
                   className={`drop-zone ${hoveredZone === 'sink' ? 'hovered' : ''} ${isPreparationPhase ? 'focused-area' : ''} ${!isPreparationPhase ? 'dimmed-area' : ''}`}
                   style={{
-                    background: 'linear-gradient(135deg, #ffffff 0%, #dbeafe 100%)',
-                    borderRadius: '18px',
-                    padding: '32px',
-                    border: isPreparationPhase ? '3px dashed #3b82f6' : '3px dashed #d1d5db',
-                    minHeight: '260px',
+                    background: 'rgba(255, 255, 255, 0.85)',
+                    borderRadius: '12px',
+                    padding: '25px',
+                    border: isPreparationPhase ? '2px dashed #8B4513' : '1px dashed #D2B48C',
+                    minHeight: '220px',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 6px 24px rgba(0,0,0,0.12)',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
                     position: 'relative',
                     overflow: 'hidden',
                     transition: 'all 0.3s ease'
@@ -1421,142 +1464,156 @@ export default function RiceCookerSimulator() {
                 >
                   <div style={{
                     position: 'absolute',
-                    top: '12px',
-                    left: '16px',
-                    fontSize: '16px',
-                    fontWeight: '700',
-                    color: isPreparationPhase ? '#1e40af' : '#6b7280',
+                    top: '8px',
+                    left: '12px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: isPreparationPhase ? '#8B4513' : '#A0522D',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
-                    transition: 'all 0.3s ease'
+                    transition: 'all 0.3s ease',
+                    fontFamily: 'Arial, sans-serif'
                   }}>
-                    <span style={{ fontSize: '22px' }}>🚰</span>
-                    Sink
+                    <span style={{ fontSize: '18px' }}></span>
+                    Kitchen Sink
                   </div>
 
-                  <svg width="180" height="180" viewBox="0 0 200 200">
-                    <ellipse cx="100" cy="150" rx="75" ry="25" fill="#cbd5e1" />
-                    <rect x="25" y="125" width="150" height="25" fill="#94a3b8" />
-                    <ellipse cx="100" cy="125" rx="75" ry="25" fill="#e2e8f0" />
-                    <ellipse cx="100" cy="125" rx="60" ry="20" fill="#f1f5f9" />
-                    <circle cx="100" cy="125" r="8" fill="#64748b" />
-                    <circle cx="100" cy="125" r="6" fill="#475569" />
-                    <rect x="90" y="100" width="20" height="30" rx="4" fill="#71717a" />
-                    <ellipse cx="100" cy="100" rx="15" ry="6" fill="#52525b" />
-                    <path d="M 100 100 Q 100 60, 120 40" stroke="#71717a" strokeWidth="12" fill="none" strokeLinecap="round" />
-                    <path d="M 120 40 L 120 60" stroke="#71717a" strokeWidth="12" strokeLinecap="round" />
-                    <ellipse cx="120" cy="62" rx="10" ry="8" fill="#52525b" />
-                    <rect x="115" y="62" width="10" height="15" rx="3" fill="#71717a" />
-                    <ellipse cx="120" cy="77" rx="8" ry="5" fill="#52525b" />
-                    <circle cx="80" cy="90" r="8" fill="#ef4444" opacity="0.8" />
-                    <circle cx="80" cy="90" r="6" fill="#dc2626" />
-                    <circle cx="120" cy="90" r="8" fill="#3b82f6" opacity="0.8" />
-                    <circle cx="120" cy="90" r="6" fill="#2563eb" />
-                    <path d="M 105 70 Q 105 55, 115 45" stroke="white" strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.4" />
-                  </svg>
-
-                  {showWaterSplash && (
+                  {/* Realistic Sink Visualization */}
+                  <div style={{
+                    width: '140px',
+                    height: '100px',
+                    background: 'linear-gradient(135deg, #E8E8E8, #D3D3D3)',
+                    borderRadius: '8px',
+                    position: 'relative',
+                    border: '2px solid #C0C0C0',
+                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
+                  }}>
+                    {/* Sink basin */}
                     <div style={{
                       position: 'absolute',
-                      top: '90px',
+                      top: '5px',
+                      left: '10px',
+                      right: '10px',
+                      bottom: '5px',
+                      background: 'linear-gradient(135deg, #F0F8FF, #E6E6FA)',
+                      borderRadius: '6px',
+                      border: '1px solid #B0C4DE'
+                    }} />
+
+                    {/* Faucet */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '-15px',
                       left: '50%',
                       transform: 'translateX(-50%)',
-                      zIndex: 10
-                    }}>
+                      width: '8px',
+                      height: '20px',
+                      background: 'linear-gradient(135deg, #C0C0C0, #A9A9A9)',
+                      borderRadius: '4px 4px 0 0'
+                    }} />
+
+                    {showWaterSplash && (
                       <div style={{
                         position: 'absolute',
-                        left: '20px',
-                        top: '-20px',
-                        width: '4px',
-                        height: '55px',
-                        background: 'linear-gradient(180deg, rgba(59, 130, 246, 0.8) 0%, rgba(59, 130, 246, 0.3) 100%)',
-                        borderRadius: '2px',
-                        animation: 'waterDrop 0.4s ease-out'
-                      }} />
-                      
-                      {[...Array(12)].map((_, i) => (
-                        <Droplet
-                          key={i}
-                          size={14}
-                          color="#3b82f6"
-                          style={{
-                            position: 'absolute',
-                            animation: `waterDrop 0.6s ease-out ${i * 0.05}s`,
-                            left: `${Math.random() * 50 - 25}px`,
-                            top: '35px'
-                          }}
-                        />
-                      ))}
-                    </div>
-                  )}
+                        top: '15px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        zIndex: 10
+                      }}>
+                        <div style={{
+                          position: 'absolute',
+                          left: '0px',
+                          top: '-15px',
+                          width: '3px',
+                          height: '40px',
+                          background: 'linear-gradient(180deg, rgba(173, 216, 230, 0.8) 0%, rgba(173, 216, 230, 0.3) 100%)',
+                          borderRadius: '2px',
+                          animation: 'waterDrop 0.4s ease-out'
+                        }} />
+                        
+                        {[...Array(8)].map((_, i) => (
+                          <Droplet
+                            key={i}
+                            size={12}
+                            color="#87CEEB"
+                            style={{
+                              position: 'absolute',
+                              animation: `waterDrop 0.6s ease-out ${i * 0.05}s`,
+                              left: `${Math.random() * 30 - 15}px`,
+                              top: '20px'
+                            }}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
                   <div style={{
-                    marginTop: '16px',
-                    fontSize: '13px',
+                    marginTop: '12px',
+                    fontSize: '12px',
                     fontWeight: '600',
-                    color: '#1e40af',
+                    color: '#8B4513',
                     textAlign: 'center'
                   }}>
                     {riceInPot && waterAmount === null && rinseCount < 2 ? (
                       <div style={{
-                        backgroundColor: '#dbeafe',
-                        padding: '12px 18px',
-                        borderRadius: '14px',
-                        border: isPreparationPhase ? '3px solid #3b82f6' : '2px solid #3b82f6',
+                        backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                        padding: '10px 14px',
+                        borderRadius: '8px',
+                        border: isPreparationPhase ? '2px solid #8B4513' : '1px solid #8B4513',
                         animation: isPreparationPhase ? 'pulse 2s infinite' : 'none',
-                        boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)'
                       }}>
-                        <div style={{ fontSize: '28px', marginBottom: '6px' }}>👇</div>
-                        <div style={{ fontSize: '14px', fontWeight: '700', color: '#1e40af' }}>
+                        <div style={{ fontSize: '24px', marginBottom: '4px' }}>👇</div>
+                        <div style={{ fontSize: '12px', fontWeight: '600', color: '#8B4513' }}>
                           Drop pot here to rinse!
                         </div>
-                        <div style={{ fontSize: '12px', color: '#3b82f6', marginTop: '4px' }}>
+                        <div style={{ fontSize: '10px', color: '#A0522D', marginTop: '2px' }}>
                           Rinsed: {rinseCount}/2-3 times
                         </div>
                     </div>
                     ) : rinseCount >= 2 && waterAmount === null ? (
                       <div style={{
-                        backgroundColor: '#d1fae5',
-                        padding: '10px 16px',
-                        borderRadius: '12px',
-                        border: '2px solid #10b981',
-                        color: '#059669'
+                        backgroundColor: 'rgba(34, 139, 34, 0.1)',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        border: '1px solid #228B22',
+                        color: '#228B22'
                       }}>
                         ✓ Rice rinsed {rinseCount} times
                       </div>
                     ) : (
-                      <div style={{ color: '#64748b', fontStyle: 'italic', fontSize: '12px' }}>
-                        Rinse rice here (2-3 times)
+                      <div style={{ color: '#A0522D', fontStyle: 'italic', fontSize: '10px' }}>
+                        Rinse rice here (2-3 times recommended)
                       </div>
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* Rice Cooker and Serving Area */}
+              {/* Rice Cooker and Serving Area - Realistic */}
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
-                gap: '14px'
+                gap: '12px'
               }}>
-                {/* Rice Cooker - Phase-based styling */}
+                {/* Rice Cooker - Realistic */}
                 <div
                   onDragOver={(e) => handleDragOver(e, 'cooker')}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, 'cooker')}
                   className={`drop-zone ${hoveredZone === 'cooker' ? 'hovered' : ''} ${isCookingPhase ? 'focused-area' : ''} ${!isCookingPhase ? 'dimmed-area' : ''}`}
                   style={{
-                    background: 'linear-gradient(135deg, #ffffff 0%, #fef2f2 100%)',
-                    borderRadius: '18px',
-                    padding: '28px',
-                    border: isCookingPhase ? '3px dashed #ef4444' : '3px dashed #d1d5db',
-                    minHeight: '320px',
+                    background: 'rgba(255, 255, 255, 0.85)',
+                    borderRadius: '12px',
+                    padding: '20px',
+                    border: isCookingPhase ? '2px dashed #8B4513' : '1px dashed #D2B48C',
+                    minHeight: '250px',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 6px 24px rgba(0,0,0,0.12)',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
                     position: 'relative',
                     overflow: 'hidden',
                     transition: 'all 0.3s ease'
@@ -1564,36 +1621,37 @@ export default function RiceCookerSimulator() {
                 >
                   <div style={{
                     position: 'absolute',
-                    top: '12px',
-                    left: '16px',
-                    fontSize: '16px',
-                    fontWeight: '700',
-                    color: isCookingPhase ? '#991b1b' : '#6b7280',
+                    top: '8px',
+                    left: '12px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: isCookingPhase ? '#8B4513' : '#A0522D',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
-                    transition: 'all 0.3s ease'
+                    transition: 'all 0.3s ease',
+                    fontFamily: 'Arial, sans-serif'
                   }}>
-                    <span style={{ fontSize: '22px' }}>⚡</span>
+                    <span style={{ fontSize: '18px' }}></span>
                     Rice Cooker
                   </div>
 
                   {showSteam && (
                     <div style={{
                       position: 'absolute',
-                      top: '50px',
+                      top: '40px',
                       left: '50%',
                       transform: 'translateX(-50%)',
                       zIndex: 10
                     }}>
-                      {[...Array(5)].map((_, i) => (
+                      {[...Array(4)].map((_, i) => (
                         <div
                           key={i}
                           style={{
                             position: 'absolute',
-                            fontSize: '28px',
+                            fontSize: '24px',
                             animation: `steamRise 2s ease-out infinite ${i * 0.3}s`,
-                            left: `${(i - 2) * 18}px`
+                            left: `${(i - 1.5) * 15}px`
                           }}
                         >
                           💨
@@ -1602,25 +1660,99 @@ export default function RiceCookerSimulator() {
                     </div>
                   )}
 
-                  <svg width="160" height="160" viewBox="0 0180 180">
-                    <ellipse cx="90" cy="165" rx="70" ry="12" fill="#4b5563" opacity="0.25" />
-                    <rect x="30" y="80" width="120" height="80" rx="12" fill="#dc2626" />
-                    <rect x="35" y="85" width="110" height="70" rx="8" fill="#ef4444" />
-                    <ellipse cx="90" cy="80" rx="60" ry="20" fill="#b91c1c" />
-                    <ellipse cx="90" cy="77" rx="55" ry="18" fill="#dc2626" />
-                    <circle cx="90" cy="70" r="12" fill="#4b5563" />
-                    <circle cx="90" cy="70" r="8" fill="#6b7280" />
-                    <rect x="50" y="110" width="80" height="30" rx="6" fill="#1f2937" />
-                    <circle cx="70" cy="125" r="6" fill={isCooking ? '#10b981' : '#6b7280'} />
-                    <circle cx="110" cy="125" r="6" fill={potInCooker && !isCooking ? '#ef4444' : '#6b7280'} />
-                    <rect x="45" y="90" width="30" height="60" rx="8" fill="white" opacity="0.25" />
-                  </svg>
+                  {/* Realistic Rice Cooker */}
+                  <div style={{
+                    width: '120px',
+                    height: '100px',
+                    background: 'linear-gradient(135deg, #DC143C, #B22222)',
+                    borderRadius: '8px',
+                    position: 'relative',
+                    border: '2px solid #8B0000',
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                  }}>
+                    {/* Cooker lid */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '-8px',
+                      left: '-5px',
+                      right: '-5px',
+                      height: '15px',
+                      background: 'linear-gradient(135deg, #B22222, #8B0000)',
+                      borderRadius: '10px 10px 5px 5px',
+                      border: '1px solid #8B0000'
+                    }} />
+
+                    {/* Control panel */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '15px',
+                      left: '10px',
+                      right: '10px',
+                      height: '25px',
+                      background: 'linear-gradient(135deg, #2F4F4F, #1C1C1C)',
+                      borderRadius: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-around',
+                      padding: '0 8px'
+                    }}>
+                      <div style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        background: isCooking ? '#32CD32' : '#808080',
+                        boxShadow: isCooking ? '0 0 8px #32CD32' : 'none'
+                      }} />
+                      <div style={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        background: potInCooker && !isCooking ? '#FF4500' : '#808080'
+                      }} />
+                    </div>
+
+                    {/* Display area */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '45px',
+                      left: '15px',
+                      right: '15px',
+                      height: '20px',
+                      background: 'rgba(0, 0, 0, 0.7)',
+                      borderRadius: '3px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#32CD32',
+                      fontSize: '10px',
+                      fontWeight: '600',
+                      fontFamily: 'monospace'
+                    }}>
+                      {isCooking ? 'COOKING' : isResting ? 'WARM' : 'READY'}
+                    </div>
+
+                    {/* Temperature and timer display */}
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '8px',
+                      left: '10px',
+                      right: '10px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      fontSize: '9px',
+                      color: 'white',
+                      fontWeight: '500'
+                    }}>
+                      <span>🌡️{Math.round(cookerTemperature)}°C</span>
+                      <span>⏰{cookerTimer}s</span>
+                    </div>
+                  </div>
 
                   {potInCooker && (
                     <div style={{
                       position: 'absolute',
-                      top: '110px',
-                      fontSize: '36px',
+                      top: '85px',
+                      fontSize: '32px',
                       animation: 'float 3s ease-in-out infinite'
                     }}>
                       🍲
@@ -1631,26 +1763,19 @@ export default function RiceCookerSimulator() {
                     <button
                       onClick={handleCookButton}
                       style={{
-                        marginTop: '20px',
-                        backgroundColor: '#ef4444',
+                        marginTop: '15px',
+                        backgroundColor: '#8B4513',
                         color: 'white',
                         border: 'none',
-                        borderRadius: '14px',
-                        padding: '14px 32px',
-                        fontSize: '16px',
-                        fontWeight: '700',
+                        borderRadius: '20px',
+                        padding: '10px 20px',
+                        fontSize: '13px',
+                        fontWeight: '600',
                         cursor: 'pointer',
-                        boxShadow: '0 6px 20px rgba(239, 68, 68, 0.5)',
-                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                        animation: 'pulse 2s infinite'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.transform = 'scale(1.05) translateY(-2px)';
-                        e.target.style.boxShadow = '0 8px 25px rgba(239, 68, 68, 0.6)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.transform = 'scale(1) translateY(0)';
-                        e.target.style.boxShadow = '0 6px 20px rgba(239, 68, 68, 0.5)';
+                        boxShadow: '0 4px 8px rgba(139, 69, 19, 0.4)',
+                        transition: 'all 0.3s ease',
+                        animation: 'pulse 2s infinite',
+                        fontFamily: 'Arial, sans-serif'
                       }}
                     >
                       🔥 START COOKING
@@ -1660,42 +1785,41 @@ export default function RiceCookerSimulator() {
                   {(isCooking || cookingProgress > 0) && (
                     <div style={{
                       position: 'absolute',
-                      bottom: '20px',
-                      left: '20px',
-                      right: '20px'
+                      bottom: '15px',
+                      left: '15px',
+                      right: '15px'
                     }}>
                       <div style={{
-                        fontSize: '13px',
-                        fontWeight: '700',
-                        color: '#991b1b',
-                        marginBottom: '8px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        color: '#8B4513',
+                        marginBottom: '6px',
                         textAlign: 'center'
                       }}>
                         {isCooking ? '🔥 Cooking...' : isResting ? '⏱️ Resting...' : '✓ Done!'}
                       </div>
                       <div style={{
                         width: '100%',
-                        height: '14px',
-                        backgroundColor: '#fee2e2',
-                        borderRadius: '8px',
+                        height: '8px',
+                        backgroundColor: '#F5F5DC',
+                        borderRadius: '4px',
                         overflow: 'hidden',
-                        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
+                        boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.1)'
                       }}>
                         <div style={{
                           width: `${isCooking ? cookingProgress : isResting ? restingProgress : 100}%`,
                           height: '100%',
-                          background: isCooking ? 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)' : 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)',
-                          transition: 'width 0.4s ease',
-                          borderRadius: '8px',
-                          boxShadow: '0 0 8px rgba(239, 68, 68, 0.4)'
+                          background: isCooking ? 'linear-gradient(90deg, #8B4513, #A0522D)' : 'linear-gradient(90deg, #D2691E, #CD853F)',
+                          transition: 'width 0.3s ease',
+                          borderRadius: '4px',
                         }} />
                       </div>
                       <div style={{
-                        fontSize: '11px',
-                        color: '#991b1b',
+                        fontSize: '10px',
+                        color: '#8B4513',
                         textAlign: 'center',
-                        marginTop: '5px',
-                        fontWeight: '600'
+                        marginTop: '4px',
+                        fontWeight: '500'
                       }}>
                         {Math.round(isCooking ? cookingProgress : isResting ? restingProgress : 100)}%
                       </div>
@@ -1703,58 +1827,72 @@ export default function RiceCookerSimulator() {
                   )}
                 </div>
 
-                {/* Serving Area - Phase-based styling */}
+                {/* Serving Area - Realistic */}
                 <div
                   onDragOver={(e) => handleDragOver(e, 'serving-area')}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, 'serving-area')}
                   className={`drop-zone ${hoveredZone === 'serving-area' ? 'hovered' : ''} ${isServingPhase ? 'focused-area' : ''} ${!isServingPhase ? 'dimmed-area' : ''}`}
                   style={{
-                    background: 'linear-gradient(135deg, #ffffff 0%, #fef3c7 100%)',
-                    borderRadius: '18px',
-                    padding: '28px',
-                    border: isServingPhase ? '3px dashed #f59e0b' : '3px dashed #d1d5db',
-                    minHeight: '320px',
+                    background: 'rgba(255, 255, 255, 0.85)',
+                    borderRadius: '12px',
+                    padding: '20px',
+                    border: isServingPhase ? '2px dashed #8B4513' : '1px dashed #D2B48C',
+                    minHeight: '250px',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 6px 24px rgba(0,0,0,0.12)',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
                     position: 'relative',
                     transition: 'all 0.3s ease'
                   }}
                 >
                   <div style={{
                     position: 'absolute',
-                    top: '12px',
-                    left: '16px',
-                    fontSize: '16px',
-                    fontWeight: '700',
-                    color: isServingPhase ? '#92400e' : '#6b7280',
+                    top: '8px',
+                    left: '12px',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: isServingPhase ? '#8B4513' : '#A0522D',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '6px',
-                    transition: 'all 0.3s ease'
+                    transition: 'all 0.3s ease',
+                    fontFamily: 'Arial, sans-serif'
                   }}>
-                    <span style={{ fontSize: '22px' }}>🍽️</span>
+                    <span style={{ fontSize: '18px' }}></span>
                     Serving Area
                   </div>
 
-                  <svg width="140" height="140" viewBox="0 0 160 160">
-                    <ellipse cx="80" cy="135" rx="65" ry="10" fill="#4b5563" opacity="0.2" />
-                    <ellipse cx="80" cy="80" rx="70" ry="18" fill="#d1d5db" />
-                    <ellipse cx="80" cy="78" rx="68" ry="17" fill="#e5e7eb" />
-                    <ellipse cx="80" cy="75" rx="65" ry="16" fill="#f3f4f6" />
-                    <ellipse cx="80" cy="73" rx="60" ry="15" fill="white" />
-                    <ellipse cx="80" cy="73" rx="50" ry="12" fill="#f9fafb" />
-                    <ellipse cx="65" cy="68" rx="15" ry="4" fill="white" opacity="0.6" />
-                  </svg>
+                  {/* Realistic Serving Bowl */}
+                  <div style={{
+                    width: '100px',
+                    height: '60px',
+                    background: 'linear-gradient(135deg, #FFF8DC, #F5DEB3)',
+                    borderRadius: '8px 8px 20px 20px',
+                    position: 'relative',
+                    border: '2px solid #DEB887',
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                  }}>
+                    {/* Bowl rim */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '-3px',
+                      left: '-5px',
+                      right: '-5px',
+                      height: '8px',
+                      background: 'linear-gradient(135deg, #FFF8DC, #F5DEB3)',
+                      borderRadius: '10px 10px 5px 5px',
+                      border: '1px solid #DEB887'
+                    }} />
+                  </div>
 
                   {isServed && (
                     <div style={{
                       position: 'absolute',
-                      top: '90px',
-                      fontSize: '64px',
+                      top: '70px',
+                      fontSize: '48px',
                       animation: 'bounceIn 0.6s ease-out'
                     }}>
                       🍚
@@ -1763,33 +1901,33 @@ export default function RiceCookerSimulator() {
 
                   {cookingProgress === 100 && !isResting && !isServed && (
                     <div style={{
-                      marginTop: '16px',
-                      fontSize: '14px',
-                      fontWeight: '700',
-                      color: '#92400e',
+                      marginTop: '12px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      color: '#8B4513',
                       textAlign: 'center',
                       animation: 'pulse 2s infinite',
-                      backgroundColor: '#fef3c7',
-                      padding: '12px 18px',
-                      borderRadius: '12px',
-                      border: '3px solid #fbbf24'
+                      backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      border: '2px solid #D2691E'
                     }}>
-                      🥄 Drag rice paddle here to serve!
+                      🥄 Use rice paddle to serve!
                     </div>
                   )}
 
                   {isResting && (
                     <div style={{
-                      marginTop: '16px',
-                      fontSize: '13px',
+                      marginTop: '12px',
+                      fontSize: '11px',
                       fontWeight: '600',
-                      color: '#92400e',
+                      color: '#8B4513',
                       textAlign: 'center',
-                      backgroundColor: '#fef3c7',
-                      padding: '10px 16px',
-                      borderRadius: '12px'
+                      backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                      padding: '6px 10px',
+                      borderRadius: '6px'
                     }}>
-                      ⏱️ Rice is resting...
+                      ⏱️ Rice is resting for perfect texture...
                     </div>
                   )}
                 </div>
@@ -1798,39 +1936,38 @@ export default function RiceCookerSimulator() {
           </div>
         </Box>
 
-        {/* Single Control Bar - Enhanced with Next Level button */}
+        {/* Control Bar - Realistic Style */}
         <Box sx={{
           position: 'fixed',
-          bottom: 16,
+          bottom: 12,
           left: '50%',
           transform: 'translateX(-50%)',
           display: 'flex',
-          gap: 1.5,
-          backgroundColor: 'rgba(255, 255, 255, 0.98)',
-          padding: '10px 20px',
-          borderRadius: '24px',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+          gap: 1,
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          padding: '8px 16px',
+          borderRadius: '20px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
           zIndex: 1000,
-          border: '1px solid rgba(0,0,0,0.05)'
+          border: '1px solid #D2B48C'
         }}>
           <Button
             onClick={resetGame}
             variant="contained"
             startIcon={<span>🔄</span>}
             sx={{
-              backgroundColor: '#667eea',
-              borderRadius: '16px',
-              padding: '10px 20px',
-              fontSize: '14px',
-              fontWeight: '700',
+              backgroundColor: '#8B4513',
+              borderRadius: '15px',
+              padding: '8px 16px',
+              fontSize: '13px',
+              fontWeight: '600',
               textTransform: 'none',
-              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+              boxShadow: '0 2px 8px rgba(139, 69, 19, 0.3)',
               '&:hover': { 
-                backgroundColor: '#5568d3',
-                transform: 'translateY(-2px)',
-                boxShadow: '0 6px 16px rgba(102, 126, 234, 0.4)'
+                backgroundColor: '#654321',
               },
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              fontFamily: 'Arial, sans-serif'
             }}
           >
             Reset
@@ -1841,19 +1978,18 @@ export default function RiceCookerSimulator() {
             variant="contained"
             startIcon={<span>🏠</span>}
             sx={{
-              backgroundColor: '#2196F3',
-              borderRadius: '16px',
-              padding: '10px 20px',
-              fontSize: '14px',
-              fontWeight: '700',
+              backgroundColor: '#8B4513',
+              borderRadius: '15px',
+              padding: '8px 16px',
+              fontSize: '13px',
+              fontWeight: '600',
               textTransform: 'none',
-              boxShadow: '0 4px 12px rgba(33, 150, 243, 0.3)',
+              boxShadow: '0 2px 8px rgba(139, 69, 19, 0.3)',
               '&:hover': { 
-                backgroundColor: '#1976D2',
-                transform: 'translateY(-2px)',
-                boxShadow: '0 6px 16px rgba(33, 150, 243, 0.4)'
+                backgroundColor: '#654321',
               },
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              fontFamily: 'Arial, sans-serif'
             }}
           >
             Home
@@ -1865,44 +2001,45 @@ export default function RiceCookerSimulator() {
               variant="contained"
               startIcon={<span>🚀</span>}
               sx={{
-                backgroundColor: '#4CAF50',
-                borderRadius: '16px',
-                padding: '10px 20px',
-                fontSize: '14px',
-                fontWeight: '700',
+                backgroundColor: '#228B22',
+                borderRadius: '15px',
+                padding: '8px 16px',
+                fontSize: '13px',
+                fontWeight: '600',
                 textTransform: 'none',
-                boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
+                boxShadow: '0 2px 8px rgba(34, 139, 34, 0.3)',
                 '&:hover': { 
-                  backgroundColor: '#45a049',
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 6px 16px rgba(76, 175, 80, 0.4)'
+                  backgroundColor: '#1F7A1F',
                 },
                 animation: 'pulse 2s infinite',
-                transition: 'all 0.3s ease'
+                transition: 'all 0.3s ease',
+                fontFamily: 'Arial, sans-serif'
               }}
             >
-              Next Level
+              Next Recipe
             </Button>
           )}
         </Box>
 
-        {/* Feedback Message - Enhanced */}
+        {/* Feedback Message - Realistic */}
         {showFeedback && (
           <div style={{
             position: 'fixed',
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            background: 'linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%)',
+            background: 'linear-gradient(135deg, #8B4513, #A0522D)',
             color: 'white',
-            padding: '20px 32px',
-            borderRadius: '16px',
-            fontSize: '17px',
-            fontWeight: '700',
+            padding: '16px 24px',
+            borderRadius: '12px',
+            fontSize: '15px',
+            fontWeight: '600',
             zIndex: 2000,
-            boxShadow: '0 12px 40px rgba(76, 175, 80, 0.5)',
+            boxShadow: '0 8px 25px rgba(139, 69, 19, 0.5)',
             animation: 'bounceIn 0.4s ease-out',
-            border: '2px solid rgba(255, 255, 255, 0.3)'
+            border: '2px solid rgba(255, 255, 255, 0.3)',
+            fontFamily: 'Arial, sans-serif',
+            textAlign: 'center'
           }}>
             {feedbackMessage}
           </div>
@@ -1918,21 +2055,21 @@ function ChecklistItem({ completed, text }) {
       display: 'flex',
       alignItems: 'center',
       gap: '8px',
-      padding: '8px 10px',
-      backgroundColor: completed ? '#f0fdf4' : '#f9fafb',
-      borderRadius: '10px',
-      border: `2px solid ${completed ? '#86efac' : '#e5e7eb'}`,
+      padding: '6px 8px',
+      backgroundColor: completed ? 'rgba(34, 139, 34, 0.1)' : 'rgba(139, 69, 19, 0.05)',
+      borderRadius: '6px',
+      border: `1px solid ${completed ? '#90EE90' : '#D2B48C'}`,
       transition: 'all 0.3s ease'
     }}>
       <span style={{ 
-        fontSize: '16px',
-        color: completed ? '#059669' : '#9ca3af'
+        fontSize: '14px',
+        color: completed ? '#228B22' : '#A0522D'
       }}>
         {completed ? '✓' : '○'}
       </span>
       <span style={{ 
-        fontSize: '12px',
-        color: completed ? '#166534' : '#6b7280',
+        fontSize: '11px',
+        color: completed ? '#228B22' : '#8B4513',
         fontWeight: completed ? '600' : '500'
       }}>
         {text}
