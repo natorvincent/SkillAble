@@ -12,6 +12,7 @@ import {
   Paper
 } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { useNavigate, useParams } from 'react-router-dom';
 
 // For items
 import condomImg from '../../assets/householdLevel2/condom.png';
@@ -81,6 +82,8 @@ const HouseholdLevel2 = () => {
   const [collectedTrash, setCollectedTrash] = useState([]);
   const [bubbles, setBubbles] = useState([]);
   const [taskStars, setTaskStars] = useState([]);
+  const navigate = useNavigate();
+  const { lessonId } = useParams();
 
   // All items scattered around the bathroom - ALL ON FLOOR (higher y values)
   const [allItems, setAllItems] = useState([
@@ -490,7 +493,32 @@ const handleWallClean = (e) => {
   };
 
   const handleNextLevel = () => {
-    alert('Next level coming soon!');
+    try {
+      // Try to save progress (with error handling)
+      try {
+        saveStudentLessonProgress('household', 'level3', 100);
+      } catch (error) {
+        console.log('Progress saving not available in demo');
+      }
+      
+      try {
+        updateModuleProgress('household', 'level3');
+      } catch (error) {
+        console.log('Module progress update not available in demo');
+      }
+      
+      // Navigate to next level
+      if (lessonId) {
+        navigate(`/lesson/household-chores/level-3/${lessonId}`);
+      } else {
+        navigate('/lesson/household-chores/level-3');
+      }
+      
+    } catch (error) {
+      console.log('Next level functionality:', error);
+      // Fallback navigation
+      navigate('/lesson/household-chores/level-3');
+    }
   };
 
   const toggleHints = () => {

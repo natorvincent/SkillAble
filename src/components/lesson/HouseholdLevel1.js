@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Box, Button, Stack, LinearProgress, Chip, Typography, Dialog } from '@mui/material';
+import { useNavigate, useParams } from 'react-router-dom';
 
 // Import all images
 import whiteShirtImg from '../../assets/householdLevel1/BlueWhiteShirt.png';
@@ -151,6 +152,9 @@ const BubbleBurstEffect = ({ position }) => {
 };
 
 const HouseholdLevel1 = () => {
+  const navigate = useNavigate();
+  const { lessonId } = useParams();
+  
   const [showStartScreen, setShowStartScreen] = useState(true);
   const [avatar, setAvatar] = useState('wonder');
   const [gameWon, setGameWon] = useState(false);
@@ -165,6 +169,7 @@ const HouseholdLevel1 = () => {
   const [bubbleBursts, setBubbleBursts] = useState([]);
   const [correctItems, setCorrectItems] = useState(0);
   const [isTablet, setIsTablet] = useState(false);
+  
 
   // Detect tablet size
   useEffect(() => {
@@ -177,6 +182,15 @@ const HouseholdLevel1 = () => {
     
     return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
+
+  const handleContinue = async () => {
+    if (lessonId) {
+      navigate(`/lesson/household-chores/level-2/${lessonId}`);
+    } else {
+      // Fallback if lessonId is not available
+      navigate('/lesson/household-chores/level-2');
+    }
+  };
 
   const handleNextLevel = () => {
     try {
@@ -260,7 +274,7 @@ const HouseholdLevel1 = () => {
       setGameWon(true);
       setAvatar('happy');
     }
-  }, [currentItemIndex]);
+  }, [currentItemIndex, clothingItems.length]);
 
   // Hide pre-game confetti after animation
   useEffect(() => {
@@ -393,7 +407,7 @@ const HouseholdLevel1 = () => {
   };
 
   const handleGoHome = () => {
-    window.location.href = '/homepage';
+    navigate('/homepage');
   };
 
   const avatarImages = {
@@ -564,7 +578,8 @@ const HouseholdLevel1 = () => {
       position: "relative",
       display: "flex",
       flexDirection: "column",
-      overflow: "hidden"
+      overflow: "hidden",
+      backgroundColor: "#f0f0f0" // Added fallback background color
     }}>
       {/* Progress Indicator - Only show when game is not won */}
       {!gameWon && (
@@ -914,7 +929,7 @@ const HouseholdLevel1 = () => {
             
             <Button 
               variant="contained"
-              onClick={handleNextLevel}
+              onClick={handleContinue}
               sx={{ 
                 background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)',
                 color: 'white',

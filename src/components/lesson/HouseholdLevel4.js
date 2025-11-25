@@ -678,8 +678,6 @@ export default function HouseholdLevel4() {
   };
 
   // Game page handlers
-<<<<<<< Updated upstream
-=======
   const handleDrop = (category, event) => {
     event.preventDefault();
     const itemId = parseInt(event.dataTransfer.getData('itemId'));
@@ -708,7 +706,6 @@ export default function HouseholdLevel4() {
     }
   };
 
->>>>>>> Stashed changes
   const handleDropWithAnimation = (category, event) => {
     if (showTutorial) return; // Disable during tutorial
     
