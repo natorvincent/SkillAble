@@ -183,14 +183,6 @@ const HouseholdLevel1 = () => {
     return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
-  const handleContinue = async () => {
-    if (lessonId) {
-      navigate(`/lesson/household-chores/level-2/${lessonId}`);
-    } else {
-      // Fallback if lessonId is not available
-      navigate('/lesson/household-chores/level-2');
-    }
-  };
 
   const handleNextLevel = () => {
     try {
@@ -207,13 +199,17 @@ const HouseholdLevel1 = () => {
         console.log('Module progress update not available in demo');
       }
       
-      // Navigate to next level or show success message
-      alert('Congratulations! You completed Bathroom Cleaning! Next level coming soon!');
+      // Navigate to next level
+      if (lessonId) {
+        navigate(`/lesson/household-chores/level-2/${lessonId}`);
+      } else {
+        navigate('/lesson/household-chores/level-2');
+      }
       
     } catch (error) {
       console.log('Next level functionality:', error);
-      // Fallback - just show success message
-      alert('Congratulations! You completed Bathroom Cleaning Level!');
+      // Fallback navigation
+      navigate('/lesson/household-chores/level-2');
     }
   };
   
@@ -929,7 +925,7 @@ const HouseholdLevel1 = () => {
             
             <Button 
               variant="contained"
-              onClick={handleContinue}
+              onClick={handleNextLevel}
               sx={{ 
                 background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)',
                 color: 'white',

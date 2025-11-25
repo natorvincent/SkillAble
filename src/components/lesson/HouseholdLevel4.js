@@ -677,35 +677,7 @@ export default function HouseholdLevel4() {
     navigate(`/homepage`);
   };
 
-  // Game page handlers
-  const handleDrop = (category, event) => {
-    event.preventDefault();
-    const itemId = parseInt(event.dataTransfer.getData('itemId'));
-    const item = gameItems.find(item => item.id === itemId);
-    
-    if (item) {
-      if (item.category === category) {
-        // Correct category
-        setSortedItems(prev => ({
-          ...prev,
-          [category]: [...prev[category], item]
-        }));
-        setGameItems(prev => prev.filter(gameItem => gameItem.id !== itemId));
-        setItemsRemaining(prev => prev - 1);
-        setScore(prev => prev + 10);
-        setAssistantMessage(`Correct! ${item.name} goes in ${getCategoryName(category)}.`);
-        setAssistantVisible(true);
-        setIsHappyMascot(true);
-      } else {
-        // Wrong category
-        setScore(prev => Math.max(0, prev - 5));
-        setAssistantMessage(`Try again! ${item.name} doesn't belong in ${getCategoryName(category)}.`);
-        setAssistantVisible(true);
-        setIsHappyMascot(false);
-      }
-    }
-  };
-
+  // Game page handlers  
   const handleDropWithAnimation = (category, event) => {
     if (showTutorial) return; // Disable during tutorial
     
