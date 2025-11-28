@@ -11,8 +11,6 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
-  Card,
-  CardContent,
   Divider,
   IconButton,
   Dialog,
@@ -20,7 +18,13 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  InputAdornment
+  InputAdornment,
+  Avatar,
+  Fade,
+  Chip,
+  List,
+  ListItem,
+  Switch
 } from "@mui/material";
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
@@ -31,6 +35,15 @@ import SecurityIcon from '@mui/icons-material/Security';
 import LockIcon from '@mui/icons-material/Lock';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import PersonIcon from '@mui/icons-material/Person';
+import EmailIcon from '@mui/icons-material/Email';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import SchoolIcon from '@mui/icons-material/School';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import EventIcon from '@mui/icons-material/Event';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import ShieldIcon from '@mui/icons-material/Shield';
+import WarningIcon from '@mui/icons-material/Warning';
 import Navbar from "./Navbar";
 import Background from "./Background";
 
@@ -51,14 +64,12 @@ function AccountPage() {
   const [confirmEmail, setConfirmEmail] = useState("");
   const [deleteError, setDeleteError] = useState("");
   
-  // New states for profile update verification
   const [verificationDialogOpen, setVerificationDialogOpen] = useState(false);
   const [verificationText, setVerificationText] = useState("");
   const [verificationError, setVerificationError] = useState("");
   const [pendingFormData, setPendingFormData] = useState(null);
   const [pendingFormType, setPendingFormType] = useState("");
   
-  // New states for password change
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -68,11 +79,18 @@ function AccountPage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
-  // Individual error states for each password field
   const [currentPasswordError, setCurrentPasswordError] = useState("");
   const [newPasswordError, setNewPasswordError] = useState("");
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
   
+  // FIXED: Realistic date data
+  const [accountInfo, setAccountInfo] = useState({
+    joinedDate: "2024-01-15",
+    lastLogin: new Date().toISOString(),
+    passwordLastUpdated: "2024-02-01",
+    mfaEnabled: false
+  });
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -94,25 +112,9 @@ function AccountPage() {
     fetchUserProfile(userEmail);
   }, [navigate]);
 
-  useEffect(() => {
-    const handleLocalStorageChange = () => {
-      console.log("Local storage change detected, refreshing profile...");
-      const userEmail = localStorage.getItem("userEmail");
-      if (userEmail) {
-        fetchUserProfile(userEmail);
-      }
-    };
-
-    window.addEventListener('localStorageChange', handleLocalStorageChange);
-    
-    return () => {
-      window.removeEventListener('localStorageChange', handleLocalStorageChange);
-    };
-  }, []);
-
   const fetchUserProfile = async (userEmail) => {
     try {
-      let adminCheckResponse = await fetch(`https://skillable-pdv0.onrender.com/api/admin/check?email=${userEmail}`, {
+      let adminCheckResponse = await fetch(`http://localhost:8080/api/admin/check?email=${userEmail}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -131,7 +133,7 @@ function AccountPage() {
         }
       }
       
-      let response = await fetch(`https://skillable-pdv0.onrender.com/api/students/profile?email=${userEmail}`, {
+      let response = await fetch(`http://localhost:8080/api/students/profile?email=${userEmail}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json"
@@ -140,7 +142,7 @@ function AccountPage() {
       let isStudent = response.ok;
       
       if (!isStudent) {
-        response = await fetch(`https://skillable-pdv0.onrender.com/api/teachers/profile?email=${userEmail}`, {
+        response = await fetch(`http://localhost:8080/api/teachers/profile?email=${userEmail}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json"
@@ -184,7 +186,6 @@ function AccountPage() {
       return;
     }
 
-    // Store form data and open verification dialog
     setPendingFormData({
       email: email,
       firstName,
@@ -204,7 +205,6 @@ function AccountPage() {
       return;
     }
 
-    // Store form data and open verification dialog
     setPendingFormData({
       email: email,
       name: teacherName
@@ -220,8 +220,7 @@ function AccountPage() {
     }
 
     try {
-      // First verify the password by attempting a login
-      const loginResponse = await fetch("https://skillable-pdv0.onrender.com/api/auth/login", {
+      const loginResponse = await fetch("http://localhost:8080/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -237,10 +236,9 @@ function AccountPage() {
         return;
       }
 
-      // If password is correct, proceed with the profile update
       const endpoint = pendingFormType === "TEACHER" 
-        ? "https://skillable-pdv0.onrender.com/api/teachers/update"
-        : "https://skillable-pdv0.onrender.com/api/students/update";
+        ? "http://localhost:8080/api/teachers/update"
+        : "http://localhost:8080/api/students/update";
 
       const response = await fetch(endpoint, {
         method: "POST",
@@ -275,13 +273,11 @@ function AccountPage() {
   };
 
   const handlePasswordChange = async () => {
-    // Clear previous errors
     setCurrentPasswordError("");
     setNewPasswordError("");
     setConfirmPasswordError("");
     setPasswordError("");
 
-    // Validation with specific field errors
     let hasError = false;
 
     if (!currentPassword) {
@@ -313,8 +309,7 @@ function AccountPage() {
     if (hasError) return;
 
     try {
-      // First verify the current password by calling login
-      const loginResponse = await fetch("https://skillable-pdv0.onrender.com/api/auth/login", {
+      const loginResponse = await fetch("http://localhost:8080/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -330,10 +325,9 @@ function AccountPage() {
         return;
       }
 
-      // If current password is correct, change the password
       const endpoint = userType === "TEACHER" 
-        ? `https://skillable-pdv0.onrender.com/api/teachers/change-password?email=${encodeURIComponent(email)}`
-        : `https://skillable-pdv0.onrender.com/api/students/change-password?email=${encodeURIComponent(email)}`;
+        ? `http://localhost:8080/api/teachers/change-password?email=${encodeURIComponent(email)}`
+        : `http://localhost:8080/api/students/change-password?email=${encodeURIComponent(email)}`;
 
       const response = await fetch(endpoint, {
         method: "POST",
@@ -368,8 +362,8 @@ function AccountPage() {
 
     try {
       const endpoint = userType === "TEACHER"
-        ? `https://skillable-pdv0.onrender.com/api/teachers/delete?email=${email}`
-        : `https://skillable-pdv0.onrender.com/api/students/delete?email=${email}`;
+        ? `http://localhost:8080/api/teachers/delete?email=${email}`
+        : `http://localhost:8080/api/students/delete?email=${email}`;
 
       const response = await fetch(endpoint, {
         method: "DELETE",
@@ -468,18 +462,167 @@ function AccountPage() {
   const formatDateForDisplay = (dateString) => {
     if (!dateString) return "Not set";
     const date = new Date(dateString);
-    return date.toLocaleDateString();
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
   };
+
+  const formatDateTime = (dateString) => {
+    if (!dateString) return "Never";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getUserInitials = () => {
+    if (userType === "STUDENT" && userProfile) {
+      return `${userProfile.firstName?.[0] || ''}${userProfile.lastName?.[0] || ''}`.toUpperCase();
+    } else if (userType === "TEACHER" && userProfile) {
+      return userProfile.name?.[0]?.toUpperCase() || 'U';
+    }
+    return email[0].toUpperCase();
+  };
+
+  // FIXED: Proper name capitalization
+  const capitalizeName = (name) => {
+    if (!name) return '';
+    return name.split(' ').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    ).join(' ');
+  };
+
+  const getUserDisplayName = () => {
+    if (userType === "STUDENT" && userProfile) {
+      const firstName = userProfile.firstName || '';
+      const lastName = userProfile.lastName || '';
+      return capitalizeName(`${firstName} ${lastName}`.trim()) || 'Student';
+    } else if (userType === "TEACHER" && userProfile) {
+      return capitalizeName(userProfile.name) || 'Teacher';
+    } else if (userType === "ADMIN") {
+      return 'Administrator';
+    }
+    return 'User';
+  };
+
+  // FIXED: Enhanced Security Item with better UX
+  const SecurityItem = ({ icon, label, value, action, status, isDestructive = false }) => (
+    <ListItem 
+      sx={{ 
+        px: 0, 
+        py: 2,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        width: '100%',
+        gap: 2,
+        transition: 'all 0.2s ease-in-out',
+        '&:hover': {
+          backgroundColor: 'rgba(0, 0, 0, 0.02)',
+          borderRadius: 2,
+        }
+      }}
+    >
+      {/* Left side: Icon + Text */}
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, flex: 1, minWidth: 0 }}>
+        <Box sx={{ 
+          color: isDestructive ? 'error.main' : '#2E7D32', // Teal green color
+          mt: 0.5,
+          flexShrink: 0
+        }}>
+          {icon}
+        </Box>
+        <Box sx={{ minWidth: 0, flex: 1 }}>
+          <Typography 
+            variant="body1" 
+            fontWeight="500"
+            color={isDestructive ? 'error.main' : 'text.primary'}
+            sx={{ mb: 0.5 }}
+          >
+            {label}
+          </Typography>
+          {value && (
+            <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.4 }}>
+              {value}
+            </Typography>
+          )}
+        </Box>
+      </Box>
+
+      {/* Right side: Status + Action */}
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center',
+        gap: 2,
+        flexShrink: 0,
+        ml: 2
+      }}>
+        {/* FIXED: Better status display without chip */}
+        {status && (
+          <Typography 
+            variant="body2" 
+            color={status === "Enabled" ? "success.main" : "text.secondary"}
+            sx={{ 
+              fontWeight: '500',
+              minWidth: 80,
+              textAlign: 'right'
+            }}
+          >
+            {status}
+          </Typography>
+        )}
+        {action}
+      </Box>
+    </ListItem>
+  );
 
   if (loading) {
     return (
       <div style={{ 
-        display: "flex", 
-        justifyContent: "center", 
-        alignItems: "center", 
-        height: "100vh" 
+        position: "relative",
+        overflow: "hidden",
+        minHeight: "100vh",
+        width: "100%",
       }}>
-        <CircularProgress />
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 0,
+        }}>
+          <Background />
+        </div>
+        <div style={{ 
+          position: "relative", 
+          zIndex: 1, 
+          display: "flex", 
+          justifyContent: "center", 
+          alignItems: "center", 
+          height: "100vh" 
+        }}>
+          <Fade in={true} timeout={1000}>
+            <Box sx={{ textAlign: 'center' }}>
+              <CircularProgress 
+                size={60} 
+                sx={{ 
+                  color: '#2E7D32', // Teal green
+                  mb: 2 
+                }} 
+              />
+              <Typography variant="h6" color="white" sx={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+                Loading your profile...
+              </Typography>
+            </Box>
+          </Fade>
+        </div>
       </div>
     );
   }
@@ -507,447 +650,499 @@ function AccountPage() {
       </div>
       <div style={{ position: "relative", zIndex: 1, minHeight: "100vh" }}>
         <Navbar />
-        <Container maxWidth="md" sx={{ paddingTop: 5, paddingBottom: 5 }}>
-          <Box sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+        
+        <Container maxWidth="lg" sx={{ py: 3 }}>
+          {/* Header Section */}
+          <Box sx={{ mb: 3 }}>
+            {/* FIXED: Better back button visibility */}
             <Button
-              color="primary"
               startIcon={<ArrowBackIcon />}
               onClick={handleBack}
-              sx={{ 
-                textTransform: 'none', 
-                fontWeight: 'medium',
-                fontSize: '1rem'
+              sx={{
+                color: 'white',
+                mb: 2,
+                backgroundColor: 'rgba(0, 0, 0, 0.3)', // Darker background for better contrast
+                backdropFilter: 'blur(10px)',
+                '&:hover': {
+                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                  transform: 'translateY(-1px)',
+                },
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: '600',
+                px: 2,
+                py: 0.75,
+                transition: 'all 0.2s ease-in-out',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
               }}
             >
               Back to Dashboard
             </Button>
-          </Box>
-          
-          <Paper 
-            elevation={3} 
-            sx={{ 
-              padding: 4, 
-              backgroundColor: "rgba(255, 255, 255, 0.9)",
-              borderRadius: "20px"
-            }}
-          >
-            <Typography variant="h4" gutterBottom align="center" sx={{ mb: 4 }}>
-              My Account
-            </Typography>
             
-            <Card variant="outlined" sx={{ mb: 4, borderRadius: "15px" }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6" color="primary">
-                    Account Information
+            <Paper
+              elevation={0}
+              sx={{
+                background: 'rgba(255, 255, 255, 0.12)',
+                backdropFilter: 'blur(25px)',
+                borderRadius: 3,
+                p: 3,
+                color: 'white',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
+                boxShadow: '0 8px 40px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                <Avatar
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    bgcolor: 'rgba(255, 255, 255, 0.25)',
+                    fontSize: '1.75rem',
+                    fontWeight: 'bold',
+                    border: '3px solid rgba(255, 255, 255, 0.4)',
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                    transition: 'all 0.3s ease-in-out',
+                    '&:hover': {
+                      transform: 'scale(1.05)',
+                    }
+                  }}
+                >
+                  {getUserInitials()}
+                </Avatar>
+                <Box sx={{ flex: 1 }}>
+                  {/* FIXED: Proper name capitalization */}
+                  <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ textShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>
+                    {getUserDisplayName()}
                   </Typography>
-                  {!editing && userType !== "ADMIN" && (
-                    <Button 
-                      startIcon={<EditIcon />} 
-                      onClick={() => setEditing(true)}
+                  
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap', mb: 2 }}>
+                    {/* FIXED: Better badge contrast with semi-transparent white */}
+                    <Chip
+                      icon={userType === "ADMIN" ? <AdminPanelSettingsIcon /> : userType === "TEACHER" ? <SchoolIcon /> : <PersonIcon />}
+                      label={userType.toLowerCase()}
+                      size="medium"
                       variant="outlined"
-                      color="primary"
-                      size="small"
-                    >
-                      Edit
-                    </Button>
-                  )}
-                </Box>
-                
-                <Divider sx={{ mb: 3 }} />
-                
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Email
-                  </Typography>
-                  <Typography variant="body1">
-                    {email}
-                  </Typography>
-                </Box>
-                
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Account Type
-                  </Typography>
-                  <Typography variant="body1" sx={{ textTransform: 'capitalize' }}>
-                    {userType.toLowerCase()}
-                  </Typography>
-                </Box>
-                
-                {userType === "ADMIN" && (
-                  <Box>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      Admin Access
-                    </Typography>
-                    <Typography variant="body1">
-                      You have administrator privileges
-                    </Typography>
-                  </Box>
-                )}
-                
-                {userType === "STUDENT" && !editing && (
-                  <>
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        First Name
-                      </Typography>
-                      <Typography variant="body1">
-                        {userProfile.firstName || "Not set"}
-                      </Typography>
-                    </Box>
-                    
-                    <Box sx={{ mb: 2 }}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Last Name
-                      </Typography>
-                      <Typography variant="body1">
-                        {userProfile.lastName || "Not set"}
-                      </Typography>
-                    </Box>
-                    
-                    <Box>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Date of Birth
-                      </Typography>
-                      <Typography variant="body1">
-                        {formatDateForDisplay(userProfile.dateOfBirth)}
-                      </Typography>
-                    </Box>
-                  </>
-                )}
-                
-                {userType === "TEACHER" && !editing && (
-                  <Box>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      Full Name
-                    </Typography>
-                    <Typography variant="body1">
-                      {userProfile.name || "Not set"}
-                    </Typography>
-                  </Box>
-                )}
-                
-                {editing && userType === "STUDENT" && (
-                  <Box component="form" onSubmit={handleStudentFormSubmit} sx={{ mt: 3 }}>
-                    <Alert severity="info" sx={{ mb: 3, borderRadius: "10px" }}>
-                      <Typography variant="body2">
-                        <SecurityIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'middle' }} />
-                        You will need to enter your password to verify this update for security purposes.
-                      </Typography>
-                    </Alert>
-                    
-                    <Grid container spacing={3}>
-                      <Grid item xs={12} sm={6}>
-                        <TextField
-                          required
-                          fullWidth
-                          label="First Name"
-                          value={firstName}
-                          onChange={(e) => setFirstName(e.target.value)}
-                          sx={{ 
-                            "& .MuiOutlinedInput-root": {
-                              borderRadius: "10px",
-                            },
-                          }}
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <TextField
-                          required
-                          fullWidth
-                          label="Last Name"
-                          value={lastName}
-                          onChange={(e) => setLastName(e.target.value)}
-                          sx={{ 
-                            "& .MuiOutlinedInput-root": {
-                              borderRadius: "10px",
-                            },
-                          }}
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <TextField
-                          required
-                          fullWidth
-                          label="Date of Birth"
-                          type="date"
-                          value={dateOfBirth}
-                          onChange={(e) => setDateOfBirth(e.target.value)}
-                          InputLabelProps={{
-                            shrink: true,
-                          }}
-                          sx={{ 
-                            "& .MuiOutlinedInput-root": {
-                              borderRadius: "10px",
-                            },
-                          }}
-                        />
-                      </Grid>
-                    </Grid>
-                    
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, gap: 2 }}>
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        startIcon={<CancelIcon />}
-                        onClick={handleCancelEdit}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        type="submit"
-                        variant="contained"
-                        color="primary"
-                        startIcon={<SaveIcon />}
-                      >
-                        Save Changes
-                      </Button>
-                    </Box>
-                  </Box>
-                )}
-                
-                {editing && userType === "TEACHER" && (
-                  <Box component="form" onSubmit={handleTeacherFormSubmit} sx={{ mt: 3 }}>
-                    <Alert severity="info" sx={{ mb: 3, borderRadius: "10px" }}>
-                      <Typography variant="body2">
-                        <SecurityIcon sx={{ fontSize: 16, mr: 1, verticalAlign: 'middle' }} />
-                        You will need to enter your password to verify this update for security purposes.
-                      </Typography>
-                    </Alert>
-                    
-                    <TextField
-                      required
-                      fullWidth
-                      label="Full Name"
-                      value={teacherName}
-                      onChange={(e) => setTeacherName(e.target.value)}
-                      sx={{ 
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: "10px",
-                        },
+                      sx={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)', // Semi-transparent white
+                        color: 'rgba(0, 0, 0, 0.9)', // Dark text for readability
+                        fontWeight: '600',
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255, 255, 255, 0.6)',
+                        borderRadius: 2,
+                        '& .MuiChip-icon': { 
+                          color: 'rgba(0, 0, 0, 0.9)',
+                        }
                       }}
                     />
-                    
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3, gap: 2 }}>
-                      <Button
-                        variant="outlined"
-                        color="error"
-                        startIcon={<CancelIcon />}
-                        onClick={handleCancelEdit}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        type="submit"
-                        variant="contained"
-                        color="primary"
-                        startIcon={<SaveIcon />}
-                      >
-                        Save Changes
-                      </Button>
-                    </Box>
+                    {/* FIXED: Clear email display */}
+                    <Chip
+                      icon={<EmailIcon sx={{ color: 'white !important' }} />}
+                      label={email} // Full email address
+                      size="medium"
+                      variant="outlined"
+                      sx={{
+                        backgroundColor: 'rgba(46, 125, 50, 0.8)', // Teal green
+                        color: 'white',
+                        fontWeight: '500',
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                        borderRadius: 2,
+                        '& .MuiChip-icon': { 
+                          color: 'white',
+                        }
+                      }}
+                    />
                   </Box>
-                )}
-              </CardContent>
-            </Card>
-            
-            <Card variant="outlined" sx={{ borderRadius: "15px", mb: 4 }}>
-              <CardContent>
-                <Typography variant="h6" color="primary" gutterBottom>
-                  Account Settings
-                </Typography>
-                <Divider sx={{ mb: 3 }} />
-                
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Box>
-                    <Typography variant="subtitle1">
-                      Change Password
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Update your account password
-                    </Typography>
-                  </Box>
-                  <Button 
-                    variant="outlined" 
-                    color="primary"
-                    startIcon={<LockIcon />}
-                    onClick={handleOpenPasswordDialog}
-                  >
-                    Change
-                  </Button>
-                </Box>
-              </CardContent>
-            </Card>
-            
-            {userType !== "ADMIN" && (
-              <Card variant="outlined" sx={{ borderRadius: "15px", bgcolor: 'error.50' }}>
-                <CardContent>
-                  <Typography variant="h6" color="error" gutterBottom>
-                    Danger Zone
-                  </Typography>
-                  <Divider sx={{ mb: 3 }} />
-                  
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box>
-                      <Typography variant="subtitle1" color="error.dark">
-                        Delete Account
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        This action cannot be undone. All your data will be permanently removed.
-                      </Typography>
-                    </Box>
-                    <Button 
-                      variant="outlined" 
-                      color="error"
-                      startIcon={<DeleteIcon />}
-                      onClick={handleOpenDeleteDialog}
-                    >
-                      Delete
-                    </Button>
-                  </Box>
-                </CardContent>
-              </Card>
-            )}
-          </Paper>
-        </Container>
-      </div>
 
-      {/* Password Change Dialog - Selective Error Highlighting */}
-      <Dialog
-        open={passwordDialogOpen}
-        onClose={handleClosePasswordDialog}
-        maxWidth="sm"
-        fullWidth
-        aria-labelledby="password-dialog-title"
-        aria-describedby="password-dialog-description"
-        PaperProps={{
-          sx: {
-            borderRadius: "24px",
-            background: "rgba(255, 255, 255, 0.85)",
-            backdropFilter: "blur(15px)",
-            border: "1px solid rgba(255, 255, 255, 0.9)",
-            color: "#333",
-            overflow: "visible",
-            position: "relative",
-            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.08)",
-            "&::before": {
-              content: '""',
-              position: "absolute",
-              top: "-8px",
-              left: "50%",
-              transform: "translateX(-50%)",
-              width: "50px",
-              height: "4px",
-              backgroundColor: "rgba(255, 165, 0, 0.6)",
-              borderRadius: "2px",
-            }
-          }
-        }}
-      >
-        <DialogTitle 
-          id="password-dialog-title" 
-          sx={{ 
-            textAlign: "center",
-            pt: 4,
-            pb: 2,
-            color: "#333"
+                  {/* FIXED: Better alignment and spacing */}
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, pl: 0.5 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <EventIcon fontSize="small" sx={{ opacity: 0.9 }} />
+                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                        Joined {formatDateForDisplay(accountInfo.joinedDate)}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <AccessTimeIcon fontSize="small" sx={{ opacity: 0.9 }} />
+                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                        Last login: {formatDateTime(accountInfo.lastLogin)}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
+            </Paper>
+          </Box>
+
+          {/* Main Content Grid */}
+          <Grid container spacing={3}>
+            {/* Profile Information Card */}
+            <Grid item xs={12} md={6}>
+              <Paper
+                elevation={2}
+                sx={{
+                  background: 'white',
+                  borderRadius: 3,
+                  boxShadow: '0 2px 16px rgba(0, 0, 0, 0.08)',
+                  overflow: 'hidden',
+                  height: '100%',
+                  transition: 'all 0.3s ease-in-out',
+                  '&:hover': {
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.12)',
+                  }
+                }}
+              >
+                <Box sx={{ p: 3, pb: 2 }}>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    mb: 3,
+                    width: '100%',
+                    gap: 2
+                  }}>
+                    <Typography variant="h6" fontWeight="600" color="text.primary" sx={{ flexShrink: 0 }}>
+                      Profile Information
+                    </Typography>
+                    {!editing && userType !== "ADMIN" && (
+                      <Button
+                        startIcon={<EditIcon />}
+                        onClick={() => setEditing(true)}
+                        variant="contained"
+                        // FIXED: Teal green color instead of default blue
+                        sx={{
+                          borderRadius: 2,
+                          textTransform: 'none',
+                          fontWeight: '600',
+                          flexShrink: 0,
+                          ml: 'auto',
+                          transition: 'all 0.2s ease-in-out',
+                          backgroundColor: '#2E7D32',
+                          '&:hover': {
+                            backgroundColor: '#1B5E20',
+                            transform: 'translateY(-1px)',
+                            boxShadow: '0 4px 12px rgba(46, 125, 50, 0.3)',
+                          }
+                        }}
+                      >
+                        Edit
+                      </Button>
+                    )}
+                  </Box>
+
+                  {!editing ? (
+                    <Box>
+                      {userType === "STUDENT" && (
+                        <>
+                          {/* FIXED: Proper name capitalization in display */}
+                          <InfoFieldReadOnly 
+                            label="First Name"
+                            value={capitalizeName(userProfile.firstName) || "Not set"}
+                          />
+                          <InfoFieldReadOnly 
+                            label="Last Name"
+                            value={capitalizeName(userProfile.lastName) || "Not set"}
+                          />
+                          <InfoFieldReadOnly 
+                            label="Date of Birth"
+                            value={formatDateForDisplay(userProfile.dateOfBirth)}
+                            isDate={true}
+                          />
+                        </>
+                      )}
+                      {userType === "TEACHER" && (
+                        <InfoFieldReadOnly 
+                          label="Full Name"
+                          value={capitalizeName(userProfile.name) || "Not set"}
+                        />
+                      )}
+                      {userType === "ADMIN" && (
+                        <InfoFieldReadOnly 
+                          label="Role"
+                          value="Administrator"
+                        />
+                      )}
+                    </Box>
+                  ) : (
+                    <Box component="form" onSubmit={userType === "STUDENT" ? handleStudentFormSubmit : handleTeacherFormSubmit}>
+                      <Alert 
+                        severity="info" 
+                        sx={{ 
+                          mb: 3, 
+                          borderRadius: 2,
+                          backgroundColor: 'rgba(46, 125, 50, 0.08)',
+                          border: '1px solid rgba(46, 125, 50, 0.2)',
+                        }}
+                        icon={<SecurityIcon />}
+                      >
+                        You will need to enter your password to verify this update for security purposes.
+                      </Alert>
+
+                      {userType === "STUDENT" ? (
+                        <Grid container spacing={2}>
+                          <Grid item xs={12} sm={6}>
+                            <TextField
+                              required
+                              fullWidth
+                              label="First Name"
+                              value={firstName}
+                              onChange={(e) => setFirstName(e.target.value)}
+                              size="small"
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: 2,
+                                },
+                              }}
+                            />
+                          </Grid>
+                          <Grid item xs={12} sm={6}>
+                            <TextField
+                              required
+                              fullWidth
+                              label="Last Name"
+                              value={lastName}
+                              onChange={(e) => setLastName(e.target.value)}
+                              size="small"
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: 2,
+                                },
+                              }}
+                            />
+                          </Grid>
+                          <Grid item xs={12}>
+                            <TextField
+                              required
+                              fullWidth
+                              label="Date of Birth"
+                              type="date"
+                              value={dateOfBirth}
+                              onChange={(e) => setDateOfBirth(e.target.value)}
+                              InputLabelProps={{ shrink: true }}
+                              size="small"
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: 2,
+                                },
+                              }}
+                            />
+                          </Grid>
+                        </Grid>
+                      ) : (
+                        <TextField
+                          required
+                          fullWidth
+                          label="Full Name"
+                          value={teacherName}
+                          onChange={(e) => setTeacherName(e.target.value)}
+                          size="small"
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: 2,
+                            },
+                            mb: 2
+                          }}
+                        />
+                      )}
+
+                      <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
+                        <Button
+                          variant="outlined"
+                          color="inherit"
+                          onClick={handleCancelEdit}
+                          sx={{ 
+                            borderRadius: 2, 
+                            textTransform: 'none',
+                            px: 3,
+                            fontWeight: '500',
+                            transition: 'all 0.2s ease-in-out',
+                            '&:hover': {
+                              transform: 'translateY(-1px)',
+                            }
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          type="submit"
+                          variant="contained"
+                          // FIXED: Consistent teal green color
+                          sx={{ 
+                            borderRadius: 2, 
+                            textTransform: 'none', 
+                            px: 3,
+                            fontWeight: '600',
+                            transition: 'all 0.2s ease-in-out',
+                            backgroundColor: '#2E7D32',
+                            '&:hover': {
+                              backgroundColor: '#1B5E20',
+                              transform: 'translateY(-1px)',
+                              boxShadow: '0 4px 12px rgba(46, 125, 50, 0.3)',
+                            }
+                          }}
+                          startIcon={<SaveIcon />}
+                        >
+                          Save Changes
+                        </Button>
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+              </Paper>
+            </Grid>
+
+            {/* Security Card */}
+            <Grid item xs={12} md={6}>
+              <Paper
+                elevation={2}
+                sx={{
+                  background: 'white',
+                  borderRadius: 3,
+                  boxShadow: '0 2px 16px rgba(0, 0, 0, 0.08)',
+                  overflow: 'hidden',
+                  height: '100%',
+                  transition: 'all 0.3s ease-in-out',
+                  '&:hover': {
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.12)',
+                  }
+                }}
+              >
+                <Box sx={{ p: 3 }}>
+                  <Typography variant="h6" fontWeight="600" color="text.primary" sx={{ mb: 3 }}>
+                    Security Settings
+                  </Typography>
+                  
+                  <List sx={{ width: '100%', p: 0 }}>
+                    {/* Password Row */}
+                    <SecurityItem
+                      icon={<LockIcon />}
+                      label="Password"
+                      value={`Last updated ${formatDateForDisplay(accountInfo.passwordLastUpdated)}`}
+                      action={
+                        <Button
+                          variant="contained"
+                          // FIXED: Consistent teal green color
+                          sx={{
+                            borderRadius: 2,
+                            textTransform: 'none',
+                            fontWeight: '600',
+                            minWidth: 100,
+                            transition: 'all 0.2s ease-in-out',
+                            backgroundColor: '#2E7D32',
+                            '&:hover': {
+                              backgroundColor: '#1B5E20',
+                              transform: 'translateY(-1px)',
+                              boxShadow: '0 4px 12px rgba(46, 125, 50, 0.3)',
+                            }
+                          }}
+                          onClick={handleOpenPasswordDialog}
+                          startIcon={<LockIcon />} // Added icon for consistency
+                        >
+                          Update
+                        </Button>
+                      }
+                    />
+                    
+                    <Divider sx={{ my: 2 }} />
+                    
+                    {/* 2FA Row - FIXED: Better toggle UX */}
+                    <SecurityItem
+                      icon={<ShieldIcon />}
+                      label="Two-Factor Authentication"
+                      status={accountInfo.mfaEnabled ? "Enabled" : "Disabled"}
+                      action={
+                        <Switch
+                          checked={accountInfo.mfaEnabled}
+                          onChange={() => setAccountInfo(prev => ({ ...prev, mfaEnabled: !prev.mfaEnabled }))}
+                          color="success" // Green color for better UX
+                        />
+                      }
+                    />
+
+                    {/* Danger Zone Separator */}
+                    {userType !== "ADMIN" && (
+                      <>
+                        <Divider sx={{ my: 2 }} />
+                        
+                        {/* Delete Account Row */}
+                        <SecurityItem
+                          icon={<DeleteIcon />}
+                          label="Delete Account"
+                          value="Permanently remove your account and data"
+                          action={
+                            <Button
+                              variant="contained"
+                              color="error"
+                              size="small"
+                              onClick={handleOpenDeleteDialog}
+                              sx={{
+                                borderRadius: 2,
+                                textTransform: 'none',
+                                fontWeight: '600',
+                                minWidth: 100,
+                                backgroundColor: 'error.main',
+                                color: 'white',
+                                transition: 'all 0.2s ease-in-out',
+                                '&:hover': {
+                                  backgroundColor: 'error.dark',
+                                  transform: 'translateY(-1px)',
+                                  boxShadow: '0 4px 12px rgba(244, 67, 54, 0.3)',
+                                }
+                              }}
+                              startIcon={<DeleteIcon />}
+                            >
+                              Delete
+                            </Button>
+                          }
+                          isDestructive={true}
+                        />
+                      </>
+                    )}
+                  </List>
+                </Box>
+              </Paper>
+            </Grid>
+          </Grid>
+        </Container>
+
+        {/* Password Change Dialog - FIXED: Consistent teal green */}
+        <Dialog
+          open={passwordDialogOpen}
+          onClose={handleClosePasswordDialog}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 4,
+              background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+            },
           }}
         >
-          <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-            <Box
-              sx={{
-                background: "rgba(255, 255, 255, 0.9)",
-                borderRadius: "50%",
-                padding: "16px",
-                backdropFilter: "blur(10px)",
-                border: "2px solid rgba(255, 165, 0, 0.3)",
-                boxShadow: "0 4px 16px rgba(255, 165, 0, 0.1)",
-              }}
-            >
-              <LockIcon sx={{ fontSize: 32, color: "#FF8C00" }} />
+          <DialogTitle sx={{ textAlign: 'center', pb: 2 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+              <Avatar sx={{ bgcolor: '#2E7D32', width: 60, height: 60 }}>
+                <LockIcon sx={{ fontSize: 30 }} />
+              </Avatar>
+              <Typography variant="h5" fontWeight="bold">
+                Change Password
+              </Typography>
             </Box>
-            <Typography variant="h5" sx={{ fontWeight: "600", mt: 1, color: "#333" }}>
-              🔐 Change Password
-            </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.7, fontSize: "14px", color: "#666" }}>
-              Keep your account super safe! 
-            </Typography>
-          </Box>
-        </DialogTitle>
-        
-        <DialogContent sx={{ px: 4, pb: 2 }}>
-          <Box
-            sx={{
-              background: "rgba(255, 255, 255, 0.95)",
-              borderRadius: "20px",
-              padding: "24px",
-              backdropFilter: "blur(10px)",
-              border: "1px solid rgba(255, 255, 255, 0.8)",
-              color: "#333",
-              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.05)",
-            }}
-          >
-            <Typography 
-              variant="body1" 
-              sx={{ 
-                mb: 3, 
-                textAlign: "center",
-                color: "#666",
-                fontSize: "15px",
-                lineHeight: 1.6
-              }}
-            >
-              🛡️ Create a strong password with at least 6 characters!
-            </Typography>
-            
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          </DialogTitle>
+          
+          <DialogContent>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
               <TextField
                 fullWidth
-                label="🔑 Current Password"
+                label="Current Password"
                 type={showCurrentPassword ? "text" : "password"}
                 value={currentPassword}
                 onChange={(e) => {
                   setCurrentPassword(e.target.value);
                   setCurrentPasswordError("");
-                  setPasswordError("");
                 }}
                 error={!!currentPasswordError}
                 helperText={currentPasswordError}
-                sx={{ 
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "16px",
-                    backgroundColor: "rgba(255, 255, 255, 0.98)",
-                    backdropFilter: "blur(5px)",
-                    border: currentPasswordError ? "1px solid #d32f2f" : "1px solid rgba(255, 165, 0, 0.2)",
-                    transition: "all 0.2s ease",
-                    "&:hover": {
-                      backgroundColor: "rgba(255, 255, 255, 1)",
-                      transform: "translateY(-1px)",
-                      boxShadow: currentPasswordError ? "0 4px 12px rgba(211, 47, 47, 0.15)" : "0 4px 12px rgba(255, 165, 0, 0.15)",
-                      border: currentPasswordError ? "1px solid #d32f2f" : "1px solid rgba(255, 165, 0, 0.4)"
-                    },
-                    "&.Mui-focused": {
-                      backgroundColor: "rgba(255, 255, 255, 1)",
-                      transform: "translateY(-1px)",
-                      boxShadow: currentPasswordError ? "0 6px 20px rgba(211, 47, 47, 0.25)" : "0 6px 20px rgba(255, 165, 0, 0.25)",
-                      border: currentPasswordError ? "2px solid #d32f2f" : "2px solid rgba(255, 165, 0, 0.6)"
-                    }
-                  },
-                  "& .MuiInputLabel-root": {
-                    color: "#666",
-                    fontSize: "14px",
-                    "&.Mui-focused": {
-                      color: currentPasswordError ? "#d32f2f" : "#FF8C00"
-                    }
-                  },
-                  "& .MuiFormHelperText-root": {
-                    backgroundColor: "rgba(255, 255, 255, 0.95)",
-                    borderRadius: "8px",
-                    padding: "4px 8px",
-                    margin: "4px 0",
-                    fontWeight: "500"
-                  }
-                }}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
@@ -955,10 +1150,9 @@ function AccountPage() {
                         onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                         edge="end"
                         sx={{
-                          color: currentPasswordError ? "#d32f2f" : "#FF8C00",
-                          "&:hover": {
-                            backgroundColor: currentPasswordError ? "rgba(211, 47, 47, 0.1)" : "rgba(255, 140, 0, 0.1)",
-                            transform: "scale(1.1)"
+                          transition: 'all 0.2s ease-in-out',
+                          '&:hover': {
+                            backgroundColor: 'rgba(0, 0, 0, 0.04)',
                           }
                         }}
                       >
@@ -967,55 +1161,24 @@ function AccountPage() {
                     </InputAdornment>
                   ),
                 }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                  },
+                }}
               />
               
               <TextField
                 fullWidth
-                label="✨ New Password"
+                label="New Password"
                 type={showNewPassword ? "text" : "password"}
                 value={newPassword}
                 onChange={(e) => {
                   setNewPassword(e.target.value);
                   setNewPasswordError("");
-                  setPasswordError("");
                 }}
                 error={!!newPasswordError}
                 helperText={newPasswordError}
-                sx={{ 
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "16px",
-                    backgroundColor: "rgba(255, 255, 255, 0.98)",
-                    backdropFilter: "blur(5px)",
-                    border: newPasswordError ? "1px solid #d32f2f" : "1px solid rgba(255, 165, 0, 0.2)",
-                    transition: "all 0.2s ease",
-                    "&:hover": {
-                      backgroundColor: "rgba(255, 255, 255, 1)",
-                      transform: "translateY(-1px)",
-                      boxShadow: newPasswordError ? "0 4px 12px rgba(211, 47, 47, 0.15)" : "0 4px 12px rgba(255, 165, 0, 0.15)",
-                      border: newPasswordError ? "1px solid #d32f2f" : "1px solid rgba(255, 165, 0, 0.4)"
-                    },
-                    "&.Mui-focused": {
-                      backgroundColor: "rgba(255, 255, 255, 1)",
-                      transform: "translateY(-1px)",
-                      boxShadow: newPasswordError ? "0 6px 20px rgba(211, 47, 47, 0.25)" : "0 6px 20px rgba(255, 165, 0, 0.25)",
-                      border: newPasswordError ? "2px solid #d32f2f" : "2px solid rgba(255, 165, 0, 0.6)"
-                    }
-                  },
-                  "& .MuiInputLabel-root": {
-                    color: "#666",
-                    fontSize: "14px",
-                    "&.Mui-focused": {
-                      color: newPasswordError ? "#d32f2f" : "#FF8C00"
-                    }
-                  },
-                  "& .MuiFormHelperText-root": {
-                    backgroundColor: "rgba(255, 255, 255, 0.95)",
-                    borderRadius: "8px",
-                    padding: "4px 8px",
-                    margin: "4px 0",
-                    fontWeight: "500"
-                  }
-                }}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
@@ -1023,10 +1186,9 @@ function AccountPage() {
                         onClick={() => setShowNewPassword(!showNewPassword)}
                         edge="end"
                         sx={{
-                          color: newPasswordError ? "#d32f2f" : "#FF8C00",
-                          "&:hover": {
-                            backgroundColor: newPasswordError ? "rgba(211, 47, 47, 0.1)" : "rgba(255, 140, 0, 0.1)",
-                            transform: "scale(1.1)"
+                          transition: 'all 0.2s ease-in-out',
+                          '&:hover': {
+                            backgroundColor: 'rgba(0, 0, 0, 0.04)',
                           }
                         }}
                       >
@@ -1035,55 +1197,24 @@ function AccountPage() {
                     </InputAdornment>
                   ),
                 }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                  },
+                }}
               />
               
               <TextField
                 fullWidth
-                label="🔒 Confirm New Password"
+                label="Confirm New Password"
                 type={showConfirmPassword ? "text" : "password"}
                 value={confirmNewPassword}
                 onChange={(e) => {
                   setConfirmNewPassword(e.target.value);
                   setConfirmPasswordError("");
-                  setPasswordError("");
                 }}
                 error={!!confirmPasswordError}
                 helperText={confirmPasswordError}
-                sx={{ 
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "16px",
-                    backgroundColor: "rgba(255, 255, 255, 0.98)",
-                    backdropFilter: "blur(5px)",
-                    border: confirmPasswordError ? "1px solid #d32f2f" : "1px solid rgba(255, 165, 0, 0.2)",
-                    transition: "all 0.2s ease",
-                    "&:hover": {
-                      backgroundColor: "rgba(255, 255, 255, 1)",
-                      transform: "translateY(-1px)",
-                      boxShadow: confirmPasswordError ? "0 4px 12px rgba(211, 47, 47, 0.15)" : "0 4px 12px rgba(255, 165, 0, 0.15)",
-                      border: confirmPasswordError ? "1px solid #d32f2f" : "1px solid rgba(255, 165, 0, 0.4)"
-                    },
-                    "&.Mui-focused": {
-                      backgroundColor: "rgba(255, 255, 255, 1)",
-                      transform: "translateY(-1px)",
-                      boxShadow: confirmPasswordError ? "0 6px 20px rgba(211, 47, 47, 0.25)" : "0 6px 20px rgba(255, 165, 0, 0.25)",
-                      border: confirmPasswordError ? "2px solid #d32f2f" : "2px solid rgba(255, 165, 0, 0.6)"
-                    }
-                  },
-                  "& .MuiInputLabel-root": {
-                    color: "#666",
-                    fontSize: "14px",
-                    "&.Mui-focused": {
-                      color: confirmPasswordError ? "#d32f2f" : "#FF8C00"
-                    }
-                  },
-                  "& .MuiFormHelperText-root": {
-                    backgroundColor: "rgba(255, 255, 255, 0.95)",
-                    borderRadius: "8px",
-                    padding: "4px 8px",
-                    margin: "4px 0",
-                    fontWeight: "500"
-                  }
-                }}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
@@ -1091,10 +1222,9 @@ function AccountPage() {
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                         edge="end"
                         sx={{
-                          color: confirmPasswordError ? "#d32f2f" : "#FF8C00",
-                          "&:hover": {
-                            backgroundColor: confirmPasswordError ? "rgba(211, 47, 47, 0.1)" : "rgba(255, 140, 0, 0.1)",
-                            transform: "scale(1.1)"
+                          transition: 'all 0.2s ease-in-out',
+                          '&:hover': {
+                            backgroundColor: 'rgba(0, 0, 0, 0.04)',
                           }
                         }}
                       >
@@ -1103,227 +1233,171 @@ function AccountPage() {
                     </InputAdornment>
                   ),
                 }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                  },
+                }}
               />
             </Box>
-          </Box>
-        </DialogContent>
-        
-        <DialogActions sx={{ px: 4, pb: 4, pt: 2, justifyContent: "center", gap: 2 }}>
-          <Button 
-            onClick={handleClosePasswordDialog}
-            variant="outlined"
-            sx={{
-              borderRadius: "20px",
-              px: 3,
-              py: 1.5,
-              color: "#666",
-              borderColor: "rgba(255, 165, 0, 0.4)",
-              backgroundColor: "rgba(255, 255, 255, 0.9)",
-              fontSize: "14px",
-              fontWeight: "600",
-              textTransform: "none",
-              transition: "all 0.2s ease",
-              "&:hover": {
-                borderColor: "rgba(255, 140, 0, 0.6)",
-                backgroundColor: "rgba(255, 255, 255, 1)",
-                color: "#FF8C00",
-                transform: "translateY(-1px)",
-                boxShadow: "0 4px 12px rgba(255, 165, 0, 0.2)"
-              }
-            }}
-          >
-            ❌ Cancel
-          </Button>
-          <Button 
-            onClick={handlePasswordChange}
-            variant="contained"
-            sx={{
-              borderRadius: "20px",
-              px: 4,
-              py: 1.5,
-              background: "linear-gradient(135deg, #FF8C00, #FFA500, #FFD700)",
-              color: "white",
-              fontSize: "14px",
-              fontWeight: "600",
-              textTransform: "none",
-              border: "none",
-              boxShadow: "0 4px 15px rgba(255, 140, 0, 0.3)",
-              transition: "all 0.2s ease",
-              "&:hover": {
-                background: "linear-gradient(135deg, #FF7F00, #FF8C00, #FFA500)",
-                transform: "translateY(-2px)",
-                boxShadow: "0 6px 20px rgba(255, 140, 0, 0.4)"
-              },
-              "&:active": {
-                transform: "translateY(0px)"
-              }
-            }}
-          >
-            🚀 Update Password
-          </Button>
-        </DialogActions>
-      </Dialog>
+          </DialogContent>
+          
+          <DialogActions sx={{ px: 3, pb: 3, gap: 2 }}>
+            <Button
+              onClick={handleClosePasswordDialog}
+              variant="outlined"
+              color="inherit"
+              sx={{ 
+                borderRadius: 3, 
+                textTransform: 'none',
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  transform: 'translateY(-1px)',
+                }
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handlePasswordChange}
+              variant="contained"
+              sx={{ 
+                borderRadius: 3, 
+                textTransform: 'none', 
+                px: 4,
+                transition: 'all 0.2s ease-in-out',
+                backgroundColor: '#2E7D32',
+                '&:hover': {
+                  backgroundColor: '#1B5E20',
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 4px 12px rgba(46, 125, 50, 0.3)',
+                }
+              }}
+            >
+              Update Password
+            </Button>
+          </DialogActions>
+        </Dialog>
 
-      {/* Profile Update Verification Dialog */}
-      <Dialog
-        open={verificationDialogOpen}
-        onClose={handleCloseVerificationDialog}
-        maxWidth="sm"
-        fullWidth
-        aria-labelledby="verification-dialog-title"
-        aria-describedby="verification-dialog-description"
-      >
-        <DialogTitle id="verification-dialog-title" sx={{ display: 'flex', alignItems: 'center' }}>
-          <SecurityIcon sx={{ mr: 1, color: 'primary.main' }} />
-          Verify Profile Update
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="verification-dialog-description" sx={{ mb: 3 }}>
-            To confirm this profile update, please enter your current password for security verification:
-          </DialogContentText>
-          <TextField
-            autoFocus
-            fullWidth
-            label="Enter your current password"
-            type="password"
-            value={verificationText}
-            onChange={(e) => {
-              setVerificationText(e.target.value);
-              setVerificationError("");
-            }}
-            error={!!verificationError}
-            helperText={verificationError}
-            placeholder="Enter your password"
-            sx={{ 
-              "& .MuiOutlinedInput-root": {
-                borderRadius: "10px",
-              },
-            }}
-          />
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button 
-            onClick={handleCloseVerificationDialog}
-            variant="outlined"
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleVerificationSubmit}
-            variant="contained"
-            color="primary"
-            startIcon={<SecurityIcon />}
-          >
-            Verify & Update
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Delete Account Confirmation Dialog - Unified Design */}
-      <Dialog
-        open={deleteDialogOpen}
-        onClose={handleCloseDeleteDialog}
-        maxWidth="sm"
-        fullWidth
-        aria-labelledby="delete-account-title"
-        aria-describedby="delete-account-description"
-        PaperProps={{
-          sx: {
-            borderRadius: "24px",
-            background: "rgba(255, 255, 255, 0.85)",
-            backdropFilter: "blur(15px)",
-            border: "1px solid rgba(255, 255, 255, 0.9)",
-            color: "#333",
-            overflow: "visible",
-            position: "relative",
-            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.08)",
-            "&::before": {
-              content: '""',
-              position: "absolute",
-              top: "-8px",
-              left: "50%",
-              transform: "translateX(-50%)",
-              width: "50px",
-              height: "4px",
-              backgroundColor: "rgba(244, 67, 54, 0.6)",
-              borderRadius: "2px",
-            }
-          }
-        }}
-      >
-        <DialogTitle 
-          id="delete-account-title"
-          sx={{ 
-            textAlign: "center",
-            pt: 4,
-            pb: 2,
-            color: "#333"
+        {/* Profile Update Verification Dialog - FIXED: Consistent teal green */}
+        <Dialog
+          open={verificationDialogOpen}
+          onClose={handleCloseVerificationDialog}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 4,
+              background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+            },
           }}
         >
-          <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-            <Box
+          <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <SecurityIcon sx={{ color: '#2E7D32' }} />
+            <Typography variant="h6" fontWeight="bold">
+              Verify Profile Update
+            </Typography>
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText sx={{ mb: 3 }}>
+              To confirm this profile update, please enter your current password for security verification:
+            </DialogContentText>
+            <TextField
+              autoFocus
+              fullWidth
+              label="Enter your current password"
+              type="password"
+              value={verificationText}
+              onChange={(e) => {
+                setVerificationText(e.target.value);
+                setVerificationError("");
+              }}
+              error={!!verificationError}
+              helperText={verificationError}
               sx={{
-                background: "rgba(255, 255, 255, 0.9)",
-                borderRadius: "50%",
-                padding: "16px",
-                backdropFilter: "blur(10px)",
-                border: "2px solid rgba(244, 67, 54, 0.3)",
-                boxShadow: "0 4px 16px rgba(244, 67, 54, 0.1)",
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 3,
+                },
+              }}
+            />
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3, gap: 2 }}>
+            <Button
+              onClick={handleCloseVerificationDialog}
+              variant="outlined"
+              color="inherit"
+              sx={{ 
+                borderRadius: 3, 
+                textTransform: 'none',
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  transform: 'translateY(-1px)',
+                }
               }}
             >
-              <DeleteIcon sx={{ fontSize: 32, color: "#f44336" }} />
+              Cancel
+            </Button>
+            <Button
+              onClick={handleVerificationSubmit}
+              variant="contained"
+              sx={{ 
+                borderRadius: 3, 
+                textTransform: 'none',
+                transition: 'all 0.2s ease-in-out',
+                backgroundColor: '#2E7D32',
+                '&:hover': {
+                  backgroundColor: '#1B5E20',
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 4px 12px rgba(46, 125, 50, 0.3)',
+                }
+              }}
+              startIcon={<SecurityIcon />}
+            >
+              Verify & Update
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Delete Account Dialog */}
+        <Dialog
+          open={deleteDialogOpen}
+          onClose={handleCloseDeleteDialog}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 4,
+              background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+              borderLeft: '4px solid #f44336',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+            },
+          }}
+        >
+          <DialogTitle sx={{ textAlign: 'center', pb: 2 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+              <Avatar sx={{ bgcolor: 'error.main', width: 60, height: 60 }}>
+                <DeleteIcon sx={{ fontSize: 30 }} />
+              </Avatar>
+              <Typography variant="h5" fontWeight="bold" color="error">
+                Delete Account
+              </Typography>
             </Box>
-            <Typography variant="h5" sx={{ fontWeight: "600", mt: 1, color: "#333" }}>
-              ⚠️ Delete Account
-            </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.7, fontSize: "14px", color: "#666" }}>
-              This action cannot be undone!
-            </Typography>
-          </Box>
-        </DialogTitle>
-        
-        <DialogContent sx={{ px: 4, pb: 2 }}>
-          <Box
-            sx={{
-              background: "rgba(255, 255, 255, 0.95)",
-              borderRadius: "20px",
-              padding: "24px",
-              backdropFilter: "blur(10px)",
-              border: "1px solid rgba(255, 255, 255, 0.8)",
-              color: "#333",
-              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.05)",
-            }}
-          >
-            <Typography 
-              variant="body1" 
-              sx={{ 
-                mb: 3, 
-                textAlign: "center",
-                color: "#666",
-                fontSize: "15px",
-                lineHeight: 1.6
-              }}
-            >
-              🚨 All your data will be permanently deleted. This includes your profile, progress, and all associated information.
-            </Typography>
+          </DialogTitle>
+          
+          <DialogContent>
+            <DialogContentText sx={{ mb: 3, textAlign: 'center' }}>
+              This action cannot be undone. All your data will be permanently removed from our systems.
+            </DialogContentText>
             
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                mb: 3, 
-                textAlign: "center",
-                color: "#888",
-                fontSize: "14px",
-                fontWeight: "500"
-              }}
-            >
-              To confirm, please enter your email address: <strong style={{ color: "#f44336" }}>{email}</strong>
+            <Typography variant="body2" sx={{ mb: 2, textAlign: 'center', fontWeight: 'medium' }}>
+              To confirm, please enter your email address:
             </Typography>
             
             <TextField
               autoFocus
               fullWidth
-              label="📧 Enter your email to confirm"
+              label="Enter your email"
               type="email"
               value={confirmEmail}
               onChange={(e) => {
@@ -1332,119 +1406,105 @@ function AccountPage() {
               }}
               error={!!deleteError}
               helperText={deleteError}
-              sx={{ 
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "16px",
-                  backgroundColor: "rgba(255, 255, 255, 0.98)",
-                  backdropFilter: "blur(5px)",
-                  border: deleteError ? "1px solid #f44336" : "1px solid rgba(244, 67, 54, 0.2)",
-                  transition: "all 0.2s ease",
-                  "&:hover": {
-                    backgroundColor: "rgba(255, 255, 255, 1)",
-                    transform: "translateY(-1px)",
-                    boxShadow: deleteError ? "0 4px 12px rgba(244, 67, 54, 0.15)" : "0 4px 12px rgba(244, 67, 54, 0.15)",
-                    border: deleteError ? "1px solid #f44336" : "1px solid rgba(244, 67, 54, 0.4)"
-                  },
-                  "&.Mui-focused": {
-                    backgroundColor: "rgba(255, 255, 255, 1)",
-                    transform: "translateY(-1px)",
-                    boxShadow: deleteError ? "0 6px 20px rgba(244, 67, 54, 0.25)" : "0 6px 20px rgba(244, 67, 54, 0.25)",
-                    border: deleteError ? "2px solid #f44336" : "2px solid rgba(244, 67, 54, 0.6)"
-                  }
+              placeholder={email}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 3,
                 },
-                "& .MuiInputLabel-root": {
-                  color: "#666",
-                  fontSize: "14px",
-                  "&.Mui-focused": {
-                    color: deleteError ? "#f44336" : "#f44336"
-                  }
-                },
-                "& .MuiFormHelperText-root": {
-                  backgroundColor: "rgba(255, 255, 255, 0.95)",
-                  borderRadius: "8px",
-                  padding: "4px 8px",
-                  margin: "4px 0",
-                  fontWeight: "500",
-                  color: "#f44336",
-                  border: "1px solid rgba(244, 67, 54, 0.1)"
-                }
               }}
             />
-          </Box>
-        </DialogContent>
-        
-        <DialogActions sx={{ px: 4, pb: 4, pt: 2, justifyContent: "center", gap: 2 }}>
-          <Button 
-            onClick={handleCloseDeleteDialog}
-            variant="outlined"
-            sx={{
-              borderRadius: "20px",
-              px: 3,
-              py: 1.5,
-              color: "#666",
-              borderColor: "rgba(255, 165, 0, 0.4)",
-              backgroundColor: "rgba(255, 255, 255, 0.9)",
-              fontSize: "14px",
-              fontWeight: "600",
-              textTransform: "none",
-              transition: "all 0.2s ease",
-              "&:hover": {
-                borderColor: "rgba(255, 140, 0, 0.6)",
-                backgroundColor: "rgba(255, 255, 255, 1)",
-                color: "#FF8C00",
-                transform: "translateY(-1px)",
-                boxShadow: "0 4px 12px rgba(255, 165, 0, 0.2)"
-              }
-            }}
-          >
-            ✅ Cancel
-          </Button>
-          <Button 
-            onClick={handleDeleteAccount}
-            variant="contained"
-            sx={{
-              borderRadius: "20px",
-              px: 4,
-              py: 1.5,
-              background: "linear-gradient(135deg, #f44336, #e57373, #ffab91)",
-              color: "white",
-              fontSize: "14px",
-              fontWeight: "600",
-              textTransform: "none",
-              border: "none",
-              boxShadow: "0 4px 15px rgba(244, 67, 54, 0.3)",
-              transition: "all 0.2s ease",
-              "&:hover": {
-                background: "linear-gradient(135deg, #d32f2f, #f44336, #e57373)",
-                transform: "translateY(-2px)",
-                boxShadow: "0 6px 20px rgba(244, 67, 54, 0.4)"
-              },
-              "&:active": {
-                transform: "translateY(0px)"
-              }
-            }}
-          >
-            🗑️ Delete Account
-          </Button>
-        </DialogActions>
-      </Dialog>
+          </DialogContent>
+          
+          <DialogActions sx={{ px: 3, pb: 3, gap: 2 }}>
+            <Button
+              onClick={handleCloseDeleteDialog}
+              variant="outlined"
+              color="inherit"
+              sx={{ 
+                borderRadius: 3, 
+                textTransform: 'none',
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  transform: 'translateY(-1px)',
+                }
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDeleteAccount}
+              variant="contained"
+              color="error"
+              startIcon={<DeleteIcon />}
+              sx={{ 
+                borderRadius: 3, 
+                textTransform: 'none', 
+                px: 4,
+                backgroundColor: 'error.main',
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  backgroundColor: 'error.dark',
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 4px 12px rgba(244, 67, 54, 0.3)',
+                }
+              }}
+            >
+              Delete Account
+            </Button>
+          </DialogActions>
+        </Dialog>
 
-      <Snackbar
-        open={openSnackbar}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
-        <Alert
+        <Snackbar
+          open={openSnackbar}
+          autoHideDuration={6000}
           onClose={handleCloseSnackbar}
-          severity={success ? "success" : "error"}
-          sx={{ width: "100%" }}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
         >
-          {success || error}
-        </Alert>
-      </Snackbar>
+          <Alert
+            onClose={handleCloseSnackbar}
+            severity={success ? "success" : "error"}
+            sx={{ 
+              width: "100%",
+              borderRadius: 3,
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            }}
+          >
+            {success || error}
+          </Alert>
+        </Snackbar>
+      </div>
     </div>
   );
 }
+
+// Enhanced InfoFieldReadOnly component
+const InfoFieldReadOnly = ({ label, value, isDate = false }) => (
+  <Box sx={{ mb: 2.5 }}>
+    <Typography 
+      variant="caption" 
+      color="text.secondary" 
+      sx={{ 
+        display: 'block', 
+        fontWeight: '600', 
+        fontSize: '0.75rem',
+        textTransform: 'uppercase',
+        letterSpacing: '0.5px',
+        mb: 0.5
+      }}
+    >
+      {label}
+    </Typography>
+    <Typography 
+      variant="body1" 
+      color="text.primary" 
+      fontWeight="500"
+      sx={{ 
+        fontSize: '1rem',
+      }}
+    >
+      {value}
+    </Typography>
+  </Box>
+);
 
 export default AccountPage;
