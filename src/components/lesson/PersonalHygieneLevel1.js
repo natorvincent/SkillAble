@@ -37,8 +37,7 @@ import characterCatWorried from "../../assets/hygienelevel3/cat_worried.png"
 import characterCatHelpful from "../../assets/hygienelevel3/cat_helpful.png"
 import characterCatExcited from "../../assets/hygienelevel3/cat_excited.png"
 
-// Audio files
-import backgroundMusic from "../../assets/hygienelevel1/background-music.mp3"
+// Audio files (background music removed)
 import correctSound from "../../assets/hygienelevel1/correct-sound.mp3"
 import incorrectSound from "../../assets/hygienelevel1/incorrect-sound.mp3"
 import successSound from "../../assets/hygienelevel1/success-sound.mp3"
@@ -169,7 +168,6 @@ export default function PersonalHygieneLevel1() {
   const [progressSaving, setProgressSaving] = useState(false);
   const [progressSaved, setProgressSaved] = useState(false);
   const [audioPlaying, setAudioPlaying] = useState(false);
-  const audioRef = useRef(null);
   const correctSoundRef = useRef(null);
   const incorrectSoundRef = useRef(null);
   const successSoundRef = useRef(null);
@@ -608,14 +606,6 @@ const saveProgress = async () => {
     setSinkPulseScale(1);
 
     setGermBlobs(initializeGerms());
-
-    if (audioRef.current) {
-      try {
-        audioRef.current.play().then(() => {
-          setAudioPlaying(true);
-        }).catch(() => {});
-      } catch (err) {}
-    }
   };
 
   const getStarRating = () => {
@@ -633,11 +623,6 @@ const saveProgress = async () => {
     return;
   }
   
-  if (audioRef.current) {
-    audioRef.current.pause();
-    setAudioPlaying(false);
-  }
-  
   console.log('Navigating back...');
   setTimeout(() => {
     navigate(-1);
@@ -645,10 +630,6 @@ const saveProgress = async () => {
 };
 
   const handleGoHome = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      setAudioPlaying(false);
-    }
     navigate(-1);
   };
 
@@ -670,11 +651,6 @@ const saveProgress = async () => {
   }, [showSuccess, gameCompleted]);
 
   useEffect(() => {
-    const audio = new Audio(backgroundMusic);
-    audio.loop = true;
-    audio.volume = 0.3;
-    audioRef.current = audio;
-
     const correctAudio = new Audio(correctSound);
     const incorrectAudio = new Audio(incorrectSound);
     const successAudio = new Audio(successSound);
@@ -686,24 +662,6 @@ const saveProgress = async () => {
     correctSoundRef.current = correctAudio;
     incorrectSoundRef.current = incorrectAudio;
     successSoundRef.current = successAudio;
-
-    const playAudio = () => {
-      audio.play().then(() => {
-        setAudioPlaying(true);
-      }).catch(error => {
-        console.log('Audio autoplay prevented:', error);
-      });
-    };
-
-    const timer = setTimeout(playAudio, 1000);
-
-    return () => {
-      clearTimeout(timer);
-      if (audio) {
-        audio.pause();
-        audio.currentTime = 0;
-      }
-    };
   }, []);
 
   useEffect(() => {
@@ -2369,193 +2327,6 @@ const saveProgress = async () => {
           </Box>
         </Box>
 
-        <Box sx={{ 
-          position: 'fixed',
-          top: 100,
-          right: 20,
-          zIndex: 1000
-        }}>
-          <Button
-            onClick={() => {
-              if (audioRef) {
-                if (audioPlaying) {
-                  audioRef.pause();
-                  setAudioPlaying(false);
-                } else {
-                  audioRef.play().then(() => {
-                    setAudioPlaying(true);
-                  }).catch(error => {
-                    console.log('Audio play failed:', error);
-                  });
-                }
-              }
-            }}
-            sx={{
-              minWidth: '60px',
-              width: '60px',
-              height: '60px',
-              borderRadius: '50%',
-              background: audioPlaying 
-                ? 'linear-gradient(135deg, #90BE6D 0%, #7BA05B 100%)'
-                : 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
-              color: 'white',
-              fontSize: '1.5rem',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
-              '&:hover': {
-                transform: 'scale(1.1)',
-                boxShadow: '0 6px 20px rgba(0,0,0,0.4)'
-              }
-            }}
-          >
-            {audioPlaying ? '🔊' : '🔇'}
-          </Button>
-        </Box>
-
-        <Box sx={{ 
-          mb: 1,
-          textAlign: 'center',
-          position: 'relative',
-          zIndex: 1010
-        }}>
-          <Typography variant="body1" sx={{ 
-            color: 'white', 
-            fontWeight: 'bold',
-            fontFamily: 'Poppins, sans-serif',
-            backgroundColor: gameStep === 3 ? '#FF9800' : gameStep === 4 ? '#4CAF50' : gameStep === 5 ? '#2196F3' : 'rgba(25, 130, 196, 0.9)',
-            display: 'inline-block',
-            px: 3,
-            py: 1,
-            borderRadius: '15px',
-            fontSize: '1rem',
-            boxShadow: gameStep === 3 ? '0 4px 15px rgba(255, 152, 0, 0.4)' : gameStep === 4 ? '0 4px 15px rgba(76, 175, 80, 0.4)' : gameStep === 5 ? '0 4px 15px rgba(33, 150, 243, 0.4)' : '0 4px 15px rgba(25, 130, 196, 0.4)'
-          }}>
-            {gameStep === 0 ? 'Let\'s learn about handwashing!' : 
-             gameStep === 1 ? 'Click the sink to turn on water!' : 
-             gameStep === 2 ? 'Drag hands to sink to wet hands!' :
-             gameStep === 3 ? 'Click the soap dispenser (upper right) to get soap!' :
-             gameStep === 4 ? 'Click on hands to rub them together!' :
-             'Drag clean hands to sink to rinse!'}
-          </Typography>
-        </Box>
-
-        {/* Character Introduction Popup */}
-        {showCharacterIntroduction && <CharacterIntroductionPopup />}
-
-        {/* Hand Introduction Popup */}
-        {showHandIntroduction && <HandIntroductionPopup />}
-
-        {/* Sink Introduction Popup */}
-        {showSinkIntroduction && <SinkIntroductionPopup />}
-
-        {/* Step 2 Introduction Popup */}
-        {showStep2Introduction && <Step2IntroductionPopup />}
-
-        {/* Step 3 Introduction Popup */}
-        {showStep3Introduction && <Step3IntroductionPopup />}
-
-        {/* Step 4 Introduction Popup - NEW POPUP */}
-        {showStep4Introduction && <Step4IntroductionPopup />}
-
-        {/* Step 5 Introduction Popup - NEW POPUP */}
-        {showStep5Introduction && <Step5IntroductionPopup />}
-
-        {/* Scrub Video Overlay */}
-        {showScrubVideo && (
-          <Box sx={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 2000
-          }}>
-            <Box sx={{ 
-              position: 'relative', 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center',
-              maxWidth: '90%',
-              maxHeight: '90%'
-            }}>
-              <video
-                key={scrubVideos[currentScrubVideoIndex]} // Use the current video URL as key
-                autoPlay
-                muted
-                loop
-                style={{
-                  maxWidth: '100%',
-                  maxHeight: '80%',
-                  borderRadius: '15px',
-                  boxShadow: '0 0 30px rgba(255, 255, 255, 0.5)'
-                }}
-              >
-                <source src={scrubVideos[currentScrubVideoIndex]} type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
-              
-              {/* Video Description */}
-              <Typography variant="h6" sx={{ 
-                color: 'white', 
-                mt: 2, 
-                textAlign: 'center',
-                fontFamily: 'Poppins, sans-serif',
-                fontWeight: 'bold',
-                textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
-              }}>
-                {currentScrubVideoIndex === 0 && "Step 1: Rub palms together"}
-                {currentScrubVideoIndex === 1 && "Step 2: Back of hand and palm"}
-                {currentScrubVideoIndex === 2 && "Step 3: Between fingers"}
-                {currentScrubVideoIndex === 3 && "Step 4: Knuckle and palm"}
-                {currentScrubVideoIndex === 4 && "Step 5: Cleaning thumb"}
-                {currentScrubVideoIndex === 5 && "Step 6: Fingertips and palm"}
-                {currentScrubVideoIndex === 6 && "Step 7: Wrist"}
-              </Typography>
-              
-              {/* NEXT/FINISH Button */}
-              <Button
-                variant="contained"
-                onClick={() => {
-                  if (currentScrubVideoIndex < scrubVideos.length - 1) {
-                    // If not the last video, go to next video
-                    setCurrentScrubVideoIndex(prev => prev + 1);
-                  } else {
-                    // If on the last video (scrub7.mp4), proceed to step 5
-                    setShowScrubVideo(false);
-                    setHandsRubbed(true);
-                    setGameStep(5); // Move to step 5
-                    // Show step 5 introduction after scrubbing
-                    setShowStep5Introduction(true);
-                  }
-                }}
-                sx={{
-                  mt: 3,
-                  background: 'linear-gradient(135deg, #90BE6D 0%, #7BA05B 100%)',
-                  color: 'white',
-                  px: 6,
-                  py: 2,
-                  borderRadius: '25px',
-                  fontFamily: 'Poppins, sans-serif',
-                  fontWeight: '700',
-                  fontSize: '1.2rem',
-                  textTransform: 'none',
-                  boxShadow: '0 8px 20px rgba(144, 190, 109, 0.5)',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #A8D08D 0%, #90BE6D 100%)',
-                    transform: 'translateY(-2px)'
-                  }
-                }}
-              >
-                {currentScrubVideoIndex < scrubVideos.length - 1 ? 'NEXT' : 'FINISH'}
-              </Button>
-            </Box>
-          </Box>
-        )}
-
         {/* Conditionally render game content based on hideAllImages state */}
         {!hideAllImages && !gameCompleted && !showCharacterIntroduction && !showHandIntroduction && !showSinkIntroduction && !showStep2Introduction && !showStep3Introduction && !showStep4Introduction && !showStep5Introduction && (
           <Box 
@@ -3086,6 +2857,124 @@ const saveProgress = async () => {
             </Box>
           </Box>
         </Dialog>
+
+        {/* Character Introduction Popup */}
+        {showCharacterIntroduction && <CharacterIntroductionPopup />}
+
+        {/* Hand Introduction Popup */}
+        {showHandIntroduction && <HandIntroductionPopup />}
+
+        {/* Sink Introduction Popup */}
+        {showSinkIntroduction && <SinkIntroductionPopup />}
+
+        {/* Step 2 Introduction Popup */}
+        {showStep2Introduction && <Step2IntroductionPopup />}
+
+        {/* Step 3 Introduction Popup */}
+        {showStep3Introduction && <Step3IntroductionPopup />}
+
+        {/* Step 4 Introduction Popup - NEW POPUP */}
+        {showStep4Introduction && <Step4IntroductionPopup />}
+
+        {/* Step 5 Introduction Popup - NEW POPUP */}
+        {showStep5Introduction && <Step5IntroductionPopup />}
+
+        {/* Scrub Video Overlay */}
+        {showScrubVideo && (
+          <Box sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000
+          }}>
+            <Box sx={{ 
+              position: 'relative', 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center',
+              maxWidth: '90%',
+              maxHeight: '90%'
+            }}>
+              <video
+                key={scrubVideos[currentScrubVideoIndex]} // Use the current video URL as key
+                autoPlay
+                muted
+                loop
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '80%',
+                  borderRadius: '15px',
+                  boxShadow: '0 0 30px rgba(255, 255, 255, 0.5)'
+                }}
+              >
+                <source src={scrubVideos[currentScrubVideoIndex]} type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
+              
+              {/* Video Description */}
+              <Typography variant="h6" sx={{ 
+                color: 'white', 
+                mt: 2, 
+                textAlign: 'center',
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: 'bold',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
+              }}>
+                {currentScrubVideoIndex === 0 && "Step 1: Rub palms together"}
+                {currentScrubVideoIndex === 1 && "Step 2: Back of hand and palm"}
+                {currentScrubVideoIndex === 2 && "Step 3: Between fingers"}
+                {currentScrubVideoIndex === 3 && "Step 4: Knuckle and palm"}
+                {currentScrubVideoIndex === 4 && "Step 5: Cleaning thumb"}
+                {currentScrubVideoIndex === 5 && "Step 6: Fingertips and palm"}
+                {currentScrubVideoIndex === 6 && "Step 7: Wrist"}
+              </Typography>
+              
+              {/* NEXT/FINISH Button */}
+              <Button
+                variant="contained"
+                onClick={() => {
+                  if (currentScrubVideoIndex < scrubVideos.length - 1) {
+                    // If not the last video, go to next video
+                    setCurrentScrubVideoIndex(prev => prev + 1);
+                  } else {
+                    // If on the last video (scrub7.mp4), proceed to step 5
+                    setShowScrubVideo(false);
+                    setHandsRubbed(true);
+                    setGameStep(5); // Move to step 5
+                    // Show step 5 introduction after scrubbing
+                    setShowStep5Introduction(true);
+                  }
+                }}
+                sx={{
+                  mt: 3,
+                  background: 'linear-gradient(135deg, #90BE6D 0%, #7BA05B 100%)',
+                  color: 'white',
+                  px: 6,
+                  py: 2,
+                  borderRadius: '25px',
+                  fontFamily: 'Poppins, sans-serif',
+                  fontWeight: '700',
+                  fontSize: '1.2rem',
+                  textTransform: 'none',
+                  boxShadow: '0 8px 20px rgba(144, 190, 109, 0.5)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #A8D08D 0%, #90BE6D 100%)',
+                    transform: 'translateY(-2px)'
+                  }
+                }}
+              >
+                {currentScrubVideoIndex < scrubVideos.length - 1 ? 'NEXT' : 'FINISH'}
+              </Button>
+            </Box>
+          </Box>
+        )}
 
         {/* Wet hands popup (temporary image) - shown on top when everything else is hidden */}
         {showWetHands && (
