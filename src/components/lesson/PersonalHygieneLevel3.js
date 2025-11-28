@@ -53,9 +53,9 @@ import characterCatWorried from "../../assets/hygienelevel3/cat_worried.png"
 import nailClippingVideo from "../../assets/hygienelevel3/trim.mp4"
 
 import backgroundMusic from '../../assets/background-music.mp3';
-import correctSound from "../../assets/hygienelevel1/correct-sound.mp3"
-import incorrectSound from "../../assets/hygienelevel1/incorrect-sound.mp3"
-import successSound from "../../assets/hygienelevel1/success-sound.mp3"
+import correctSound from "../../assets/hygieneLevel1/correct-sound.mp3"
+import incorrectSound from "../../assets/hygieneLevel1/incorrect-sound.mp3"
+import successSound from "../../assets/hygieneLevel1/success-sound.mp3"
 
 const SparkleAnimation = ({ position }) => {
   const [sparkles, setSparkles] = useState([]);
