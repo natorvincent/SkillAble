@@ -49,6 +49,12 @@ import bathroomBackgroundMusic from '../../assets/householdLevel2/Background-Mus
 
 import Navbar from '../Navbar';
 
+import { 
+  getStudentLessonProgress, 
+  saveStudentLessonProgress,
+  updateModuleProgress
+} from '../../services/progressService';
+
 const theme = createTheme({
   palette: {
     primary: {
