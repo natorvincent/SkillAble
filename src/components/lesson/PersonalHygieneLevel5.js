@@ -57,10 +57,10 @@ import shoesClean from "../../assets/hygienelevel5/shoes_clean.png"
 import rainCoat from "../../assets/hygienelevel5/rain_coat.png"
 
 // Audio files
-import backgroundMusic from "../../assets/hygienelevel1/background-music.mp3"
-import correctSound from "../../assets/hygienelevel1/correct-sound.mp3"
-import incorrectSound from "../../assets/hygienelevel1/incorrect-sound.mp3"
-import successSound from "../../assets/hygienelevel1/success-sound.mp3"
+import backgroundMusic from '../../assets/background-music.mp3';
+import correctSound from "../../assets/hygieneLevel1/correct-sound.mp3"
+import incorrectSound from "../../assets/hygieneLevel1/incorrect-sound.mp3"
+import successSound from "../../assets/hygieneLevel1/success-sound.mp3"
 
 // Enhanced Character Introduction Component
 const CharacterIntroductionPopup = ({ onComplete }) => {
