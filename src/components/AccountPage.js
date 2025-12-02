@@ -114,7 +114,7 @@ function AccountPage() {
 
   const fetchUserProfile = async (userEmail) => {
     try {
-      let adminCheckResponse = await fetch(`http://localhost:8080/api/admin/check?email=${userEmail}`, {
+      let adminCheckResponse = await fetch(`https://skillable-pdv0.onrender.com/api/admin/check?email=${userEmail}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -133,7 +133,7 @@ function AccountPage() {
         }
       }
       
-      let response = await fetch(`http://localhost:8080/api/students/profile?email=${userEmail}`, {
+      let response = await fetch(`https://skillable-pdv0.onrender.com/api/students/profile?email=${userEmail}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json"
@@ -142,7 +142,7 @@ function AccountPage() {
       let isStudent = response.ok;
       
       if (!isStudent) {
-        response = await fetch(`http://localhost:8080/api/teachers/profile?email=${userEmail}`, {
+        response = await fetch(`https://skillable-pdv0.onrender.com/api/teachers/profile?email=${userEmail}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json"
@@ -220,7 +220,7 @@ function AccountPage() {
     }
 
     try {
-      const loginResponse = await fetch("http://localhost:8080/api/auth/login", {
+      const loginResponse = await fetch("https://skillable-pdv0.onrender.com/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -237,8 +237,8 @@ function AccountPage() {
       }
 
       const endpoint = pendingFormType === "TEACHER" 
-        ? "http://localhost:8080/api/teachers/update"
-        : "http://localhost:8080/api/students/update";
+        ? "https://skillable-pdv0.onrender.com/api/teachers/update"
+        : "https://skillable-pdv0.onrender.com/api/students/update";
 
       const response = await fetch(endpoint, {
         method: "POST",
@@ -309,7 +309,7 @@ function AccountPage() {
     if (hasError) return;
 
     try {
-      const loginResponse = await fetch("http://localhost:8080/api/auth/login", {
+      const loginResponse = await fetch("https://skillable-pdv0.onrender.com/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -326,8 +326,8 @@ function AccountPage() {
       }
 
       const endpoint = userType === "TEACHER" 
-        ? `http://localhost:8080/api/teachers/change-password?email=${encodeURIComponent(email)}`
-        : `http://localhost:8080/api/students/change-password?email=${encodeURIComponent(email)}`;
+        ? `https://skillable-pdv0.onrender.com/api/teachers/change-password?email=${encodeURIComponent(email)}`
+        : `https://skillable-pdv0.onrender.com/api/students/change-password?email=${encodeURIComponent(email)}`;
 
       const response = await fetch(endpoint, {
         method: "POST",
@@ -362,8 +362,8 @@ function AccountPage() {
 
     try {
       const endpoint = userType === "TEACHER"
-        ? `http://localhost:8080/api/teachers/delete?email=${email}`
-        : `http://localhost:8080/api/students/delete?email=${email}`;
+        ? `https://skillable-pdv0.onrender.com/api/teachers/delete?email=${email}`
+        : `https://skillable-pdv0.onrender.com/api/students/delete?email=${email}`;
 
       const response = await fetch(endpoint, {
         method: "DELETE",
