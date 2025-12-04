@@ -31,14 +31,15 @@ import SchoolIcon from '@mui/icons-material/School';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import Navbar from "./Navbar";
 import Background from "./Background";
-import module1 from "../assets/hygiene.png"
-import module2 from "../assets/culinary-skills.jpg"
-import module3 from "../assets/chores.jpg"
 import { 
   getAllModuleProgress
 } from '../services/progressService';
 import AudioToggleButton from "../components/background music/AudioToggleButton";
 import backgroundMusic from '../assets/background-music.mp3';
+
+import hygieneImg from '../assets/studentDashboard/hygiene.png';
+import cookingImg from '../assets/studentDashboard/cooking.png';
+import householdImg from '../assets/studentDashboard/household.png';
 
 // Simple audio hook to prevent infinite re-renders
 const useSimpleAudio = (audioFile) => {
@@ -107,11 +108,9 @@ function StudentDashboard() {
   const roleSelectionShownRef = useRef(false);
   const modulesFetchedRef = useRef(false);
 
-  const moduleImages = [
-    module1,
-    module2,
-    module3
-  ];
+  const moduleImages = [hygieneImg, cookingImg, householdImg];
+  const moduleTitles = ["Hygiene", "Cooking", "Household"];
+  const moduleRoutes = [1, 2, 3]; // Routes for each module
 
   // FIXED: Simplified authentication check - only run once
   useEffect(() => {
@@ -402,24 +401,10 @@ function StudentDashboard() {
     navigate(`/module/${moduleId}`);
   };
 
-  const getModuleButtonText = (moduleId) => {
-    const progress = moduleProgress[moduleId];
-    if (!progress) return "Start Learning";
-    
-    if (progress.completed) return "Review Module";
-    
-    return progress.completedLessons > 0 ? "Continue Learning" : "Start Learning";
-  };
-
-  const getModuleImage = (index) => {
-    const image = moduleImages[index % moduleImages.length];
-    return image || module1;
-  };
-
-  const getProgressPercentage = (moduleId) => {
-    const progress = moduleProgress[moduleId];
-    if (!progress || !progress.totalLessons || progress.totalLessons === 0) return 0;
-    return Math.round((progress.completedLessons / progress.totalLessons) * 100);
+  // Handle module image click
+  const handleModuleClick = (moduleRoute) => {
+    console.log(`Navigating to module: ${moduleRoute}`);
+    navigate(`/module/${moduleRoute}`);
   };
 
   if (loading) {
@@ -443,6 +428,8 @@ function StudentDashboard() {
         overflow: "hidden",
         minHeight: "100vh",
         width: "100%",
+        height: "100vh",
+        overflowY: "hidden"
       }}
     >
       <div
@@ -461,239 +448,58 @@ function StudentDashboard() {
         <Navbar />
         
         <Container maxWidth="lg" sx={{ paddingTop: 5, paddingBottom: 5 }}> 
-          <Paper 
-            sx={{ 
-              padding: 2, 
-              backgroundColor: "transparent",
-              mb: 4,
-              boxShadow: "none"
-            }}
-          >
-            <AudioToggleButton audioPlaying={audioPlaying} toggleAudio={toggleAudio} />
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="h5" color="#2d3748" fontWeight={600} gutterBottom>
-                Learning Modules
-              </Typography>
-            </Box>
-            
-            {loadingModules ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-                <CircularProgress size={40} sx={{ color: "#4a6cf7" }} />
-              </Box>
-            ) : modules.length > 0 ? (
-              <Grid container spacing={4} sx={{ justifyContent: 'center'}}>
-                {modules.map((module, index) => {
-                  const progress = moduleProgress[module.id];
-                  const progressPercentage = getProgressPercentage(module.id);
-                  
-                  return (
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={module.id} sx={{ display: 'flex', justifyContent: 'center' }}>
-                      <Card 
-                        sx={{ 
-                          height: '535px', 
-                          width: '339px',
-                          display: 'flex', 
-                          flexDirection: 'column',
-                          borderRadius: '15px',
-                          overflow: 'hidden',
-                          margin: '0 auto',
-                          backgroundColor: 'white',
-                          boxShadow: "none",
-                          border: '1px solid #e0e0e0'
-                        }}
-                      >
-                        <Box sx={{ position: 'relative', overflow: 'hidden' }}>
-                          <CardMedia
-                            component="img"
-                            sx={{
-                              height: 200,
-                              objectFit: 'cover',
-                              transition: 'transform 0.6s ease',
-                              '&:hover': {
-                                transform: 'scale(1.1)'
-                              }
-                            }}
-                            image={getModuleImage(index)}
-                            alt={`${module.name || 'Module'} cover`}
-                            onError={(e) => {
-                              e.target.src = module1;
-                            }}
-                          />
-                          
-                          {progress && (
-                            <Chip
-                              label={`${progressPercentage}%`}
-                              sx={{
-                                position: 'absolute',
-                                top: 16,
-                                right: 16,
-                                backgroundColor: progress.completed ? '#4caf50' : '#4a6cf7',
-                                color: 'white',
-                                fontWeight: 700,
-                                fontSize: '0.8rem',
-                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                                '& .MuiChip-label': {
-                                  px: 1.5
-                                }
-                              }}
-                            />
-                          )}
-                          
-                          {progress?.completed && (
-                            <Box
-                              sx={{
-                                position: 'absolute',
-                                top: 16,
-                                left: 16,
-                                backgroundColor: '#4caf50',
-                                color: 'white',
-                                borderRadius: '12px',
-                                padding: '4px 12px',
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 0.5
-                              }}
-                            >
-                              ✓ Completed
-                            </Box>
-                          )}
-                        </Box>
-
-                        <CardContent sx={{ flexGrow: 1, pb: 1, px: 3, pt: 3 }}>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                            <Typography variant="h6">
-                              {module.name || "Module"}
-                            </Typography>
-                          </Box>
-                          <Typography gutterBottom variant="h6" component="div" fontWeight={600}>
-                            {module.title}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                            {module.description}
-                          </Typography>
-                          
-                          <Box sx={{ mt: 2, mb: 2 }}>
-                            {progress ? (
-                              <>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                  <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-                                    Progress:
-                                  </Typography>
-                                  <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                                    {progress.completedLessons || 0}/{progress.totalLessons || 0} Lessons
-                                  </Typography>
-                                </Box>
-                                <LinearProgress 
-                                  variant="determinate" 
-                                  value={progressPercentage} 
-                                  sx={{ 
-                                    height: 8, 
-                                    borderRadius: 4,
-                                    mb: 2,
-                                    backgroundColor: 'rgba(0,0,0,0.05)',
-                                    '& .MuiLinearProgress-bar': {
-                                      backgroundColor: progress.completed ? '#4caf50' : '#4a6cf7'
-                                    }
-                                  }}
-                                />
-                                
-                                <Grid container spacing={2} sx={{ mb: 1 }}>
-                                  <Grid item xs={6}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                      <StarIcon sx={{ color: '#f59e0b', fontSize: 16, mr: 0.5 }} />
-                                      <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                                        {progress.totalStars || 0} Stars
-                                      </Typography>
-                                    </Box>
-                                  </Grid>
-                                </Grid>
-
-                                {progress.completed && (
-                                  <Chip
-                                    label="Completed"
-                                    color="success"
-                                    size="small"
-                                    sx={{ fontWeight: 500 }}
-                                  />
-                                )}
-                              </>
-                            ) : (
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <Typography variant="body2" color="text.secondary" sx={{ mr: 1, fontWeight: 500 }}>
-                                  Progress:
-                                </Typography>
-                                <Box
-                                  sx={{
-                                    width: '100%',
-                                    height: 8,
-                                    backgroundColor: '#e9ecef',
-                                    borderRadius: 4,
-                                    overflow: 'hidden',
-                                    mr: 1
-                                  }}
-                                >
-                                  <Box
-                                    sx={{
-                                      width: '0%',
-                                      height: '100%',
-                                      backgroundColor: '#4a6cf7',
-                                      borderRadius: 4
-                                    }}
-                                  />
-                                </Box>
-                                <Typography variant="body2" color="text.secondary" fontWeight={500}>
-                                  0%
-                                </Typography>
-                              </Box>
-                            )}
-                          </Box>
-                        </CardContent>
-                        <CardActions sx={{ p: 3, pt: 0, mt: 'auto' }}>
-                          <Button 
-                            size="medium" 
-                            variant="contained"
-                            fullWidth
-                            onClick={() => handleStartModule(module.id)}
-                            endIcon={<ArrowForwardIcon />}
-                            sx={{ 
-                              borderRadius: "8px",
-                              backgroundColor: progress?.completed ? "#4caf50" : "#4a6cf7",
-                              py: 1,
-                              "&:hover": {
-                                backgroundColor: progress?.completed ? "#3d8b40" : "#3a5ce5"
-                              },
-                              textTransform: 'none',
-                              fontWeight: 500
-                            }}
-                          >
-                            {getModuleButtonText(module.id)}
-                          </Button>
-                        </CardActions>
-                      </Card>
-                    </Grid>
-                  );
-                })}
-              </Grid>
-            ) : (
-              <Box sx={{ 
-                p: 5, 
-                textAlign: 'center', 
-                backgroundColor: '#f8f9fa',
-                borderRadius: '15px',
-                border: '1px dashed #dee2e6'
+        <Paper 
+          sx={{ 
+            padding: 2, 
+            backgroundColor: "transparent",
+            mb: 4,
+            boxShadow: "none",
+            marginLeft: { xs: '-20px', sm: '-40px', md: '-200px' }
+          }}
+        >
+          <AudioToggleButton audioPlaying={audioPlaying} toggleAudio={toggleAudio} />
+          
+          <Grid container spacing={3} sx={{ 
+            justifyContent: 'center',
+            flexWrap: 'nowrap',
+          }}>
+            {moduleImages.map((image, index) => (
+              <Grid item key={index} sx={{ 
+                flexShrink: 0, // Prevents items from shrinking
+                width: { xs: '300px', sm: '350px', md: '400px' }
               }}>
-                <Typography variant="h6" color="#4a5568" gutterBottom>
-                  No Modules Available
-                </Typography>
-                <Typography variant="body1" color="#4a5568" sx={{ mb: 3 }}>
-                  No learning modules are available for you at the moment.
-                </Typography>
-              </Box>
-            )}
-          </Paper>
+                <Box
+                  onClick={() => handleModuleClick(moduleRoutes[index])}
+                  sx={{
+                    height: '600px',
+                    borderRadius: '15px',
+                    overflow: 'hidden',
+                    margin: '0 auto',
+                    transition: 'transform 0.3s ease',
+                    width: '550px',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      transform: 'translateY(-5px)',
+                    }
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src={image}
+                    alt={moduleTitles[index]}
+                    sx={{
+                      width: '600px',
+                      height: '550px',
+                      objectFit: 'contain',
+                      display: 'block',
+                      backgroundColor: 'transparent'
+                    }}
+                  />
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        </Paper>
         </Container>
       </div>
 
