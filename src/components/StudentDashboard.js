@@ -40,6 +40,7 @@ import backgroundMusic from '../assets/background-music.mp3';
 import hygieneImg from '../assets/studentDashboard/hygiene.png';
 import cookingImg from '../assets/studentDashboard/cooking.png';
 import householdImg from '../assets/studentDashboard/household.png';
+import sparkleImg from '../assets/sparkle.png'; // Import sparkle image
 
 // Simple audio hook to prevent infinite re-renders
 const useSimpleAudio = (audioFile) => {
@@ -79,6 +80,119 @@ const useSimpleAudio = (audioFile) => {
   return { audioPlaying, toggleAudio };
 };
 
+// Sparkle Component with continuous animation
+const Sparkle = ({ position, index, isActive }) => {
+  const animationDuration = `${0.8 + Math.random() * 0.4}s`;
+  const size = `${15 + Math.random() * 40}px`;
+  const initialRotation = Math.random() * 360;
+
+  // Multiple position presets for more sparkles
+  const positions = {
+    // Corner sparkles
+    topLeft: { top: '-25px', left: '-25px' },
+    topRight: { top: '-25px', right: '-25px' },
+    bottomLeft: { bottom: '-25px', left: '-25px' },
+    bottomRight: { bottom: '-25px', right: '-25px' },
+    
+    // Edge center sparkles
+    topCenter: { top: '-25px', left: '50%', transform: 'translateX(-50%)' },
+    bottomCenter: { bottom: '-25px', left: '50%', transform: 'translateX(-50%)' },
+    leftCenter: { top: '50%', left: '-25px', transform: 'translateY(-50%)' },
+    rightCenter: { top: '50%', right: '-25px', transform: 'translateY(-50%)' },
+    
+    // Diagonal sparkles
+    topLeftInner: { top: '20px', left: '20px' },
+    topRightInner: { top: '20px', right: '20px' },
+    bottomLeftInner: { bottom: '20px', left: '20px' },
+    bottomRightInner: { bottom: '20px', right: '20px' },
+    
+    // Middle edges
+    topMiddle: { top: '50px', left: '50%', transform: 'translateX(-50%)' },
+    bottomMiddle: { bottom: '50px', left: '50%', transform: 'translateX(-50%)' },
+    leftMiddle: { top: '50%', left: '50px', transform: 'translateY(-50%)' },
+    rightMiddle: { top: '50%', right: '50px', transform: 'translateY(-50%)' },
+    
+    // Random positions along edges
+    random1: { top: '30%', left: '-20px' },
+    random2: { top: '70%', right: '-20px' },
+    random3: { top: '-20px', left: '30%' },
+    random4: { bottom: '-20px', right: '70%' },
+    random5: { top: '25%', right: '-15px' },
+    random6: { bottom: '25%', left: '-15px' },
+  };
+
+  const positionStyle = positions[position] || positions.topLeft;
+
+  return (
+    <Box
+      sx={{
+        position: 'absolute',
+        ...positionStyle,
+        width: size,
+        height: size,
+        opacity: isActive ? 1 : 0,
+        animation: isActive 
+          ? `sparkleAnimation ${animationDuration} ease-in-out infinite ${Math.random() * 0.5}s` 
+          : 'none',
+        '@keyframes sparkleAnimation': {
+          '0%': {
+            opacity: 0,
+            transform: `scale(0.1) rotate(${initialRotation}deg) ${positionStyle.transform || ''}`,
+          },
+          '20%': {
+            opacity: 0.8,
+            transform: `scale(0.5) rotate(${initialRotation + 45}deg) ${positionStyle.transform || ''}`,
+          },
+          '40%': {
+            opacity: 1,
+            transform: `scale(1) rotate(${initialRotation + 90}deg) ${positionStyle.transform || ''}`,
+          },
+          '60%': {
+            opacity: 1,
+            transform: `scale(1.2) rotate(${initialRotation + 135}deg) ${positionStyle.transform || ''}`,
+          },
+          '80%': {
+            opacity: 0.6,
+            transform: `scale(0.8) rotate(${initialRotation + 180}deg) ${positionStyle.transform || ''}`,
+          },
+          '100%': {
+            opacity: 0,
+            transform: `scale(0.1) rotate(${initialRotation + 225}deg) ${positionStyle.transform || ''}`,
+          },
+        },
+        pointerEvents: 'none',
+        transition: 'opacity 0.3s ease',
+      }}
+    >
+      <Box
+        component="img"
+        src={sparkleImg}
+        alt="sparkle"
+        sx={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'contain',
+          filter: `hue-rotate(${index * 40}deg) brightness(1.3) drop-shadow(0 0 4px rgba(255, 255, 255, 0.7))`,
+        }}
+      />
+    </Box>
+  );
+};
+
+// Generate sparkle positions
+const generateSparklePositions = () => {
+  const allPositions = [
+    'topLeft', 'topRight', 'bottomLeft', 'bottomRight',
+    'topCenter', 'bottomCenter', 'leftCenter', 'rightCenter',
+    'topLeftInner', 'topRightInner', 'bottomLeftInner', 'bottomRightInner',
+    'topMiddle', 'bottomMiddle', 'leftMiddle', 'rightMiddle',
+    'random1', 'random2', 'random3', 'random4', 'random5', 'random6'
+  ];
+  
+  // Take all positions for maximum sparkles
+  return allPositions;
+};
+
 function StudentDashboard() {
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState(null);
@@ -96,6 +210,8 @@ function StudentDashboard() {
   const [loadingModules, setLoadingModules] = useState(false);
   const [savingRole, setSavingRole] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [hoveredModule, setHoveredModule] = useState(null);
+  const [sparklePositions] = useState(generateSparklePositions());
   
   // Use the simple audio hook
   const { audioPlaying, toggleAudio } = useSimpleAudio(backgroundMusic);
@@ -407,6 +523,15 @@ function StudentDashboard() {
     navigate(`/module/${moduleRoute}`);
   };
 
+  // Handle module hover
+  const handleModuleHover = (index) => {
+    setHoveredModule(index);
+  };
+
+  const handleModuleLeave = () => {
+    setHoveredModule(null);
+  };
+
   if (loading) {
     return (
       <div style={{ 
@@ -470,19 +595,36 @@ function StudentDashboard() {
               }}>
                 <Box
                   onClick={() => handleModuleClick(moduleRoutes[index])}
+                  onMouseEnter={() => handleModuleHover(index)}
+                  onMouseLeave={handleModuleLeave}
                   sx={{
+                    position: 'relative',
                     height: '600px',
                     borderRadius: '15px',
-                    overflow: 'hidden',
+                    overflow: 'visible',
                     margin: '0 auto',
-                    transition: 'transform 0.3s ease',
+                    transition: 'transform 0.3s ease, scale 0.3s ease',
                     width: '550px',
                     cursor: 'pointer',
+                    transform: hoveredModule === index ? 'scale(1.05)' : 'scale(1)',
+                    transformOrigin: 'center center',
+                    zIndex: hoveredModule === index ? 2 : 1,
                     '&:hover': {
-                      transform: 'translateY(-5px)',
+                      transform: 'scale(1.05)',
+                      zIndex: 2,
                     }
                   }}
                 >
+                  {/* Continuous sparkle effects while hovering */}
+                  {sparklePositions.map((position, sparkleIndex) => (
+                    <Sparkle 
+                      key={sparkleIndex} 
+                      position={position} 
+                      index={sparkleIndex}
+                      isActive={hoveredModule === index}
+                    />
+                  ))}
+                  
                   <Box
                     component="img"
                     src={image}
@@ -492,7 +634,13 @@ function StudentDashboard() {
                       height: '550px',
                       objectFit: 'contain',
                       display: 'block',
-                      backgroundColor: 'transparent'
+                      backgroundColor: 'transparent',
+                      borderRadius: '15px',
+                      position: 'relative',
+                      zIndex: 1,
+                      transition: 'transform 0.3s ease',
+                      transform: hoveredModule === index ? 'scale(1.02)' : 'scale(1)',
+                      transformOrigin: 'center center',
                     }}
                   />
                 </Box>
