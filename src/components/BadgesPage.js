@@ -28,7 +28,8 @@ function BadgesPage() {
           const badgesResponse = await fetch(`https://skillable-pdv0.onrender.com/api/badges/student/${studentId}`, {
             method: "GET",
             headers: {
-              "Content-Type": "application/json"
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${localStorage.getItem('token') || ''}`
             }
           });
           
@@ -69,9 +70,9 @@ function BadgesPage() {
           console.log("Backend endpoint not available, using fallback:", backendError);
         }
         
-        // Fallback to local calculation if backend fails
-        const progressResponse = await getStudentModuleProgressStats(studentId, 1);
-        console.log("Progress stats:", progressResponse);
+        // Fallback to local calculation if backend fails - FETCHES REAL DATA
+        const progressResponse = await getStudentModuleProgressStats(studentId);
+        console.log("Progress stats from database:", progressResponse);
         setProgressStats(progressResponse);
         const calculatedBadges = calculateBadges(progressResponse);
         setBadges(calculatedBadges);
@@ -259,24 +260,26 @@ function BadgesPage() {
       <div style={{ position: "relative", zIndex: 1, minHeight: "100vh" }}>
         <Navbar />
         
-        <Container maxWidth="xl" sx={{ paddingTop: 3, paddingBottom: 5 }}>
+        <Container maxWidth="xl" sx={{ paddingTop: { xs: 2, sm: 3 }, paddingBottom: { xs: 3, sm: 5 }, px: { xs: 2, sm: 3 } }}>
           {/* Enhanced Achievements Section */}
-          <Box sx={{ mb: 6 }}>
+          <Box sx={{ mb: { xs: 4, sm: 6 } }}>
             {/* Centered Header with Fun Design */}
             <Box sx={{ 
               display: 'flex', 
               flexDirection: 'column', 
               alignItems: 'center', 
-              mb: 5,
-              textAlign: 'center'
+              mb: { xs: 3, sm: 5 },
+              textAlign: 'center',
+              px: { xs: 2, sm: 0 }
             }}>
               {/* Main Title */}
               <Typography variant="h3" sx={{ 
                 color: '#2c3e50', 
                 fontWeight: 700, 
-                mb: 2,
+                mb: { xs: 1.5, sm: 2 },
                 textShadow: '2px 2px 4px rgba(0,0,0,0.1)',
-                fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' }
+                fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem', lg: '3rem' },
+                px: { xs: 1, sm: 0 }
               }}>
                 🏆 Your Amazing Achievements! 🏆
               </Typography>
@@ -284,15 +287,15 @@ function BadgesPage() {
               {/* Colorful Achievement Button */}
               <Box sx={{
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                borderRadius: '25px',
-                padding: '12px 30px',
+                borderRadius: { xs: '20px', sm: '25px' },
+                padding: { xs: '10px 20px', sm: '12px 30px' },
                 color: 'white',
-                fontSize: '18px',
+                fontSize: { xs: '14px', sm: '16px', md: '18px' },
                 fontWeight: 700,
                 boxShadow: '0 8px 20px rgba(102, 126, 234, 0.4)',
                 transform: 'translateY(-2px)',
                 transition: 'all 0.3s ease',
-                marginBottom: 3,
+                marginBottom: { xs: 2, sm: 3 },
                 '&:hover': {
                   transform: 'translateY(-4px)',
                   boxShadow: '0 12px 30px rgba(102, 126, 234, 0.6)',
@@ -305,9 +308,10 @@ function BadgesPage() {
               <Typography variant="h6" sx={{
                 color: '#34495e',
                 fontWeight: 500,
-                maxWidth: '600px',
+                maxWidth: { xs: '100%', sm: '600px' },
                 lineHeight: 1.6,
-                fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' }
+                fontSize: { xs: '0.875rem', sm: '1rem', md: '1.1rem', lg: '1.25rem' },
+                px: { xs: 2, sm: 0 }
               }}>
                 🌟 Every achievement is a step forward on your learning journey! 
                 Keep up the fantastic work! 🌟
@@ -315,7 +319,7 @@ function BadgesPage() {
             </Box>
 
             {/* Badges Grid - Centered */}
-            <Grid container spacing={4} sx={{ justifyContent: 'center' }}>
+            <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ justifyContent: 'center' }}>
               {badges.map((badge, index) => {
                 // Additional safety check for each badge
                 if (!badge) return null;
@@ -328,12 +332,13 @@ function BadgesPage() {
                       width: '100%'
                     }}>
                       <Card sx={{
-                        height: '280px',
-                        width: '260px',
+                        height: { xs: '240px', sm: '260px', md: '280px' },
+                        width: '100%',
+                        maxWidth: { xs: '100%', sm: '280px', md: '260px' },
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
-                        padding: '24px',
+                        padding: { xs: '16px', sm: '20px', md: '24px' },
                         background: badge.earned 
                           ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
                           : 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
@@ -428,8 +433,8 @@ function BadgesPage() {
                         }}>
                           {/* Badge Icon with Enhanced Styling */}
                           <Box sx={{
-                            width: 80,
-                            height: 80,
+                            width: { xs: 60, sm: 70, md: 80 },
+                            height: { xs: 60, sm: 70, md: 80 },
                             background: badge.earned 
                               ? 'linear-gradient(135deg, #fff 0%, #f8f9fa 100%)'
                               : 'linear-gradient(135deg, #fff 0%, #f1f3f4 100%)',
@@ -446,7 +451,7 @@ function BadgesPage() {
                             transition: 'all 0.3s ease'
                           }}>
                             {React.cloneElement(badge.icon || <HelpOutlineIcon />, {
-                              sx: { fontSize: 48, color: badge.earned ? badge.icon?.props?.sx?.color || '#4a6cf7' : '#adb5bd' }
+                              sx: { fontSize: { xs: 36, sm: 42, md: 48 }, color: badge.earned ? badge.icon?.props?.sx?.color || '#4a6cf7' : '#adb5bd' }
                             })}
                           </Box>
 
@@ -454,11 +459,11 @@ function BadgesPage() {
                           <Typography variant="h6" sx={{
                             color: badge.earned ? '#fff' : '#495057',
                             fontWeight: 700,
-                            fontSize: '16px',
-                            mb: 1,
+                            fontSize: { xs: '14px', sm: '15px', md: '16px' },
+                            mb: { xs: 0.5, sm: 1 },
                             lineHeight: 1.2,
                             textAlign: 'center',
-                            minHeight: '44px',
+                            minHeight: { xs: '36px', sm: '40px', md: '44px' },
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -470,11 +475,11 @@ function BadgesPage() {
                           {/* Badge Description with Better Contrast */}
                           <Typography variant="body2" sx={{
                             color: badge.earned ? 'rgba(255,255,255,0.9)' : '#6c757d',
-                            fontSize: '13px',
-                            mb: 1.5,
+                            fontSize: { xs: '11px', sm: '12px', md: '13px' },
+                            mb: { xs: 1, sm: 1.5 },
                             lineHeight: 1.4,
                             textAlign: 'center',
-                            minHeight: '40px',
+                            minHeight: { xs: '32px', sm: '36px', md: '40px' },
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -489,16 +494,16 @@ function BadgesPage() {
                               ? 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)'
                               : 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
                             color: badge.earned ? '#2c3e50' : '#6c757d',
-                            fontSize: '14px',
+                            fontSize: { xs: '12px', sm: '13px', md: '14px' },
                             fontWeight: 700,
-                            padding: '8px 16px',
-                            borderRadius: '20px',
+                            padding: { xs: '6px 12px', sm: '8px 16px' },
+                            borderRadius: { xs: '15px', sm: '20px' },
                             display: 'inline-block',
                             boxShadow: badge.earned 
                               ? '0 4px 12px rgba(255, 215, 0, 0.3)'
                               : '0 2px 8px rgba(0,0,0,0.1)',
                             border: badge.earned ? '2px solid #fff' : '2px solid #dee2e6',
-                            minWidth: '80px'
+                            minWidth: { xs: '70px', sm: '80px' }
                           }}>
                             {badge.progress || '0/0'}
                           </Box>

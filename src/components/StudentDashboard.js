@@ -572,26 +572,27 @@ function StudentDashboard() {
       <div style={{ position: "relative", zIndex: 1, minHeight: "100vh" }}>
         <Navbar />
         
-        <Container maxWidth="lg" sx={{ paddingTop: 5, paddingBottom: 5 }}> 
+        <Container maxWidth="lg" sx={{ paddingTop: { xs: 3, sm: 4, md: 5 }, paddingBottom: { xs: 3, sm: 4, md: 5 }, px: { xs: 2, sm: 3 } }}> 
         <Paper 
           sx={{ 
-            padding: 2, 
+            padding: { xs: 1, sm: 2 }, 
             backgroundColor: "transparent",
-            mb: 4,
+            mb: { xs: 2, sm: 3, md: 4 },
             boxShadow: "none",
-            marginLeft: { xs: '-20px', sm: '-40px', md: '-200px' }
+            marginLeft: { xs: 0, sm: '-20px', md: '-40px', lg: '-200px' }
           }}
         >
           <AudioToggleButton audioPlaying={audioPlaying} toggleAudio={toggleAudio} />
           
-          <Grid container spacing={3} sx={{ 
+          <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ 
             justifyContent: 'center',
-            flexWrap: 'nowrap',
+            flexWrap: { xs: 'wrap', md: 'nowrap' },
           }}>
             {moduleImages.map((image, index) => (
-              <Grid item key={index} sx={{ 
-                flexShrink: 0, // Prevents items from shrinking
-                width: { xs: '300px', sm: '350px', md: '400px' }
+              <Grid item key={index} xs={12} sm={6} md={4} sx={{ 
+                display: 'flex',
+                justifyContent: 'center',
+                width: { xs: '100%', md: 'auto' }
               }}>
                 <Box
                   onClick={() => handleModuleClick(moduleRoutes[index])}
@@ -599,18 +600,19 @@ function StudentDashboard() {
                   onMouseLeave={handleModuleLeave}
                   sx={{
                     position: 'relative',
-                    height: '600px',
-                    borderRadius: '15px',
+                    height: { xs: '300px', sm: '400px', md: '500px', lg: '600px' },
+                    borderRadius: { xs: '12px', sm: '15px' },
                     overflow: 'visible',
                     margin: '0 auto',
                     transition: 'transform 0.3s ease, scale 0.3s ease',
-                    width: '550px',
+                    width: { xs: '100%', sm: '90%', md: '100%' },
+                    maxWidth: { xs: '350px', sm: '450px', md: '500px', lg: '550px' },
                     cursor: 'pointer',
                     transform: hoveredModule === index ? 'scale(1.05)' : 'scale(1)',
                     transformOrigin: 'center center',
                     zIndex: hoveredModule === index ? 2 : 1,
                     '&:hover': {
-                      transform: 'scale(1.05)',
+                      transform: { xs: 'scale(1.02)', sm: 'scale(1.05)' },
                       zIndex: 2,
                     }
                   }}
@@ -630,12 +632,12 @@ function StudentDashboard() {
                     src={image}
                     alt={moduleTitles[index]}
                     sx={{
-                      width: '600px',
-                      height: '550px',
+                      width: '100%',
+                      height: { xs: '280px', sm: '380px', md: '480px', lg: '550px' },
                       objectFit: 'contain',
                       display: 'block',
                       backgroundColor: 'transparent',
-                      borderRadius: '15px',
+                      borderRadius: { xs: '12px', sm: '15px' },
                       position: 'relative',
                       zIndex: 1,
                       transition: 'transform 0.3s ease',

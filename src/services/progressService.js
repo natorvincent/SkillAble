@@ -41,10 +41,90 @@ export const getStudentModuleProgress = async (studentId, moduleId) => {
   }
 };
 
-// SIMPLIFIED: Get stats - just return default stats to avoid API calls
+// Get student progress stats - FETCHES REAL DATA FROM DATABASE
 export const getStudentModuleProgressStats = async (studentId) => {
-  console.log('Returning default progress stats to avoid API calls');
-  return getDefaultProgressStats();
+  try {
+    console.log('Fetching real progress stats for student:', studentId);
+    
+    // Try to fetch from a stats endpoint if available
+    const statsResponse = await fetch(`${API_BASE_URL}/student/${studentId}/stats`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+      },
+    });
+
+    if (statsResponse.ok) {
+      const stats = await statsResponse.json();
+      console.log('Fetched stats from API:', stats);
+      return {
+        completedLessons: stats.completedLessons || 0,
+        totalStars: stats.totalStars || 0,
+        completedModules: stats.completedModules || 0,
+        currentStreak: stats.currentStreak || 0,
+        totalProgress: stats.totalProgress || 0.0
+      };
+    }
+
+    // Fallback: Calculate stats by aggregating from all modules
+    console.log('Stats endpoint not available, calculating from modules...');
+    
+    // Fetch all available modules first
+    const modulesResponse = await fetch('https://skillable-pdv0.onrender.com/api/modules/available', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Email': localStorage.getItem('userEmail') || ''
+      },
+    });
+
+    if (!modulesResponse.ok) {
+      throw new Error('Failed to fetch modules');
+    }
+
+    const modules = await modulesResponse.json();
+    let totalCompletedLessons = 0;
+    let totalStars = 0;
+    let completedModules = 0;
+
+    // Fetch progress for each module
+    for (const module of modules) {
+      try {
+        const moduleProgress = await getStudentModuleProgress(studentId, module.id);
+        
+        if (moduleProgress) {
+          totalCompletedLessons += moduleProgress.completedLessons || 0;
+          totalStars += moduleProgress.totalStars || 0;
+          
+          // Check if module is completed (all lessons done)
+          if (moduleProgress.completedLessons > 0 && 
+              moduleProgress.completedLessons === moduleProgress.totalLessons) {
+            completedModules++;
+          }
+        }
+      } catch (error) {
+        console.warn(`Error fetching progress for module ${module.id}:`, error);
+        // Continue with other modules
+      }
+    }
+
+    const stats = {
+      completedLessons: totalCompletedLessons,
+      totalStars: totalStars,
+      completedModules: completedModules,
+      currentStreak: 0, // Would need separate endpoint for this
+      totalProgress: modules.length > 0 ? (completedModules / modules.length) * 100 : 0
+    };
+
+    console.log('Calculated stats:', stats);
+    return stats;
+
+  } catch (error) {
+    console.error('Error fetching student progress stats:', error);
+    // Return defaults on error
+    return getDefaultProgressStats();
+  }
 };
 
 // Default progress objects

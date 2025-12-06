@@ -294,38 +294,46 @@ function Login() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            minHeight: "90vh",
-            paddingBottom: "100px",
+            minHeight: { xs: "85vh", sm: "90vh" },
+            paddingBottom: { xs: "50px", sm: "100px" },
+            px: { xs: 2, sm: 3 },
           }}
         >
           <Box
             className="login-box"
             sx={{
-              marginTop: 8,
+              marginTop: { xs: 4, sm: 6, md: 8 },
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              gap: "20px",
+              gap: { xs: "15px", sm: "20px" },
               backgroundColor: "rgba(255, 255, 255, 0.9)",
-              padding: "30px",
-              borderRadius: "20px",
+              padding: { xs: "20px", sm: "25px", md: "30px" },
+              borderRadius: { xs: "15px", sm: "20px" },
               boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
               position: "relative",
+              width: "100%",
+              maxWidth: "450px",
             }}
           >
             <Typography
               component="h1"
               variant="h5"
-              sx={{ fontSize: "32px", fontFamily: "Arial", fontWeight: "600", color: "#28313B" }}
+              sx={{ 
+                fontSize: { xs: "24px", sm: "28px", md: "32px" }, 
+                fontFamily: "Arial", 
+                fontWeight: "600", 
+                color: "#28313B" 
+              }}
             >
               Welcome Back!
             </Typography>
 
-            <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+            <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: "100%" }}>
               <TextField
                 margin="normal"
                 required
-                fullWidth={false}
+                fullWidth
                 id="email"
                 label="Email"
                 name="email"
@@ -335,17 +343,16 @@ function Login() {
                 error={!!emailError}
                 helperText={emailError}
                 sx={{
-                  width: 380,
                   "& .MuiOutlinedInput-root": {
-                    height: 65,
-                    borderRadius: "15px",
+                    height: { xs: 55, sm: 60, md: 65 },
+                    borderRadius: { xs: "12px", sm: "15px" },
                   },
                 }}
               />
               <TextField
                 margin="normal"
                 required
-                fullWidth={false}
+                fullWidth
                 name="password"
                 label="Password"
                 type={showPassword ? "text" : "password"}
@@ -355,10 +362,9 @@ function Login() {
                 error={!!passwordError}
                 helperText={passwordError}
                 sx={{
-                  width: 380,
                   "& .MuiOutlinedInput-root": {
-                    height: 65,
-                    borderRadius: "15px",
+                    height: { xs: 55, sm: 60, md: 65 },
+                    borderRadius: { xs: "12px", sm: "15px" },
                   },
                 }}
                 InputProps={{
@@ -369,6 +375,7 @@ function Login() {
                         onMouseDown={handleMouseDownPassword} 
                         edge="end"
                         disabled={isLoggingIn}
+                        size="small"
                       >
                         {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>

@@ -651,17 +651,17 @@ function AccountPage() {
       <div style={{ position: "relative", zIndex: 1, minHeight: "100vh" }}>
         <Navbar />
         
-        <Container maxWidth="lg" sx={{ py: 3 }}>
+        <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 2.5, md: 3 }, px: { xs: 2, sm: 3 } }}>
           {/* Header Section */}
-          <Box sx={{ mb: 3 }}>
+          <Box sx={{ mb: { xs: 2, sm: 2.5, md: 3 } }}>
             {/* FIXED: Better back button visibility */}
             <Button
               startIcon={<ArrowBackIcon />}
               onClick={handleBack}
               sx={{
                 color: 'white',
-                mb: 2,
-                backgroundColor: 'rgba(0, 0, 0, 0.3)', // Darker background for better contrast
+                mb: { xs: 1.5, sm: 2 },
+                backgroundColor: 'rgba(0, 0, 0, 0.3)',
                 backdropFilter: 'blur(10px)',
                 '&:hover': {
                   backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -670,8 +670,9 @@ function AccountPage() {
                 borderRadius: 2,
                 textTransform: 'none',
                 fontWeight: '600',
-                px: 2,
+                px: { xs: 1.5, sm: 2 },
                 py: 0.75,
+                fontSize: { xs: '0.875rem', sm: '1rem' },
                 transition: 'all 0.2s ease-in-out',
                 border: '1px solid rgba(255, 255, 255, 0.2)',
               }}
@@ -684,20 +685,20 @@ function AccountPage() {
               sx={{
                 background: 'rgba(255, 255, 255, 0.12)',
                 backdropFilter: 'blur(25px)',
-                borderRadius: 3,
-                p: 3,
+                borderRadius: { xs: 2, sm: 3 },
+                p: { xs: 2, sm: 2.5, md: 3 },
                 color: 'white',
                 border: '1px solid rgba(255, 255, 255, 0.25)',
                 boxShadow: '0 8px 40px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)',
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 2, sm: 2.5, md: 3 }, flexWrap: { xs: 'wrap', sm: 'nowrap' } }}>
                 <Avatar
                   sx={{
-                    width: 80,
-                    height: 80,
+                    width: { xs: 60, sm: 70, md: 80 },
+                    height: { xs: 60, sm: 70, md: 80 },
                     bgcolor: 'rgba(255, 255, 255, 0.25)',
-                    fontSize: '1.75rem',
+                    fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' },
                     fontWeight: 'bold',
                     border: '3px solid rgba(255, 255, 255, 0.4)',
                     boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
@@ -709,13 +710,16 @@ function AccountPage() {
                 >
                   {getUserInitials()}
                 </Avatar>
-                <Box sx={{ flex: 1 }}>
+                <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: 0 } }}>
                   {/* FIXED: Proper name capitalization */}
-                  <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ textShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>
+                  <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ 
+                    textShadow: '0 2px 8px rgba(0,0,0,0.4)',
+                    fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' }
+                  }}>
                     {getUserDisplayName()}
                   </Typography>
                   
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap', mb: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, flexWrap: 'wrap', mb: 2 }}>
                     {/* FIXED: Better badge contrast with semi-transparent white */}
                     <Chip
                       icon={userType === "ADMIN" ? <AdminPanelSettingsIcon /> : userType === "TEACHER" ? <SchoolIcon /> : <PersonIcon />}
@@ -775,14 +779,14 @@ function AccountPage() {
           </Box>
 
           {/* Main Content Grid */}
-          <Grid container spacing={3}>
+          <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
             {/* Profile Information Card */}
             <Grid item xs={12} md={6}>
               <Paper
                 elevation={2}
                 sx={{
                   background: 'white',
-                  borderRadius: 3,
+                  borderRadius: { xs: 2, sm: 3 },
                   boxShadow: '0 2px 16px rgba(0, 0, 0, 0.08)',
                   overflow: 'hidden',
                   height: '100%',
@@ -792,7 +796,7 @@ function AccountPage() {
                   }
                 }}
               >
-                <Box sx={{ p: 3, pb: 2 }}>
+                <Box sx={{ p: { xs: 2, sm: 2.5, md: 3 }, pb: { xs: 1.5, sm: 2 } }}>
                   <Box sx={{ 
                     display: 'flex', 
                     justifyContent: 'space-between', 

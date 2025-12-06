@@ -143,16 +143,16 @@ const DemoteUsers = () => {
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
+      <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1.125rem', sm: '1.25rem', md: '1.5rem' } }}>
         Demote Teachers to Students
       </Typography>
       
-      <Typography color="text.secondary" sx={{ mb: 3 }}>
+      <Typography color="text.secondary" sx={{ mb: { xs: 2, sm: 2.5, md: 3 }, fontSize: { xs: '0.875rem', sm: '1rem' } }}>
         Select any teacher to demote them back to student status. They will need to complete their profile information when they next log in.
       </Typography>
       
       {/* Search and refresh section */}
-      <Box sx={{ display: 'flex', mb: 3, gap: 2 }}>
+      <Box sx={{ display: 'flex', mb: { xs: 2, sm: 2.5, md: 3 }, gap: { xs: 1, sm: 2 }, flexWrap: { xs: 'wrap', sm: 'nowrap' } }}>
         <TextField
           placeholder="Search teachers by name or email..."
           variant="outlined"
@@ -167,13 +167,14 @@ const DemoteUsers = () => {
               </InputAdornment>
             ),
           }}
-          sx={{ borderRadius: "10px" }}
+          sx={{ borderRadius: "10px", minWidth: { xs: '100%', sm: '200px' } }}
         />
         <Button
           variant="outlined"
           startIcon={<RefreshIcon fontSize="small" />}
           onClick={fetchTeachers}
           disabled={loading}
+          sx={{ whiteSpace: 'nowrap', minWidth: { xs: '100%', sm: 'auto' } }}
         >
           Refresh
         </Button>
@@ -181,29 +182,29 @@ const DemoteUsers = () => {
       
       {/* Error and success messages */}
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert severity="error" sx={{ mb: { xs: 2, sm: 2.5, md: 3 } }}>
           {error}
         </Alert>
       )}
       
       {successMessage && (
-        <Alert severity="success" sx={{ mb: 3 }}>
+        <Alert severity="success" sx={{ mb: { xs: 2, sm: 2.5, md: 3 } }}>
           {successMessage}
         </Alert>
       )}
       
       {/* Teachers table */}
-      <TableContainer component={Paper} sx={{ mb: 4, borderRadius: "10px" }}>
-        <Table>
-          <TableHead sx={{ bgcolor: '#f5f5f5' }}>
-            <TableRow>
-              <TableCell width="60px"></TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Email</TableCell>
-             
-              <TableCell width="100px">Action</TableCell>
-            </TableRow>
-          </TableHead>
+      <Box sx={{ overflowX: 'auto', width: '100%', mb: { xs: 2, sm: 3, md: 4 } }}>
+        <TableContainer component={Paper} sx={{ borderRadius: "10px", minWidth: 600 }}>
+          <Table>
+            <TableHead sx={{ bgcolor: '#f5f5f5' }}>
+              <TableRow>
+                <TableCell width="60px" sx={{ py: { xs: 1, sm: 1.5 } }}></TableCell>
+                <TableCell sx={{ py: { xs: 1, sm: 1.5 }, fontSize: { xs: '0.875rem', sm: '1rem' } }}>Name</TableCell>
+                <TableCell sx={{ py: { xs: 1, sm: 1.5 }, fontSize: { xs: '0.875rem', sm: '1rem' } }}>Email</TableCell>
+                <TableCell width="100px" sx={{ py: { xs: 1, sm: 1.5 }, fontSize: { xs: '0.875rem', sm: '1rem' } }}>Action</TableCell>
+              </TableRow>
+            </TableHead>
           <TableBody>
             {loading ? (
               <TableRow>
@@ -233,26 +234,28 @@ const DemoteUsers = () => {
                     }
                   }}
                 >
-                  <TableCell padding="checkbox">
+                  <TableCell padding="checkbox" sx={{ py: { xs: 1, sm: 1.5 } }}>
                     <Radio
                       checked={selectedTeacher && selectedTeacher.id === teacher.id}
                       onChange={() => handleTeacherSelect(teacher)}
                       disabled={demoting}
+                      size="small"
                     />
                   </TableCell>
-                  <TableCell>
-                    <Typography fontWeight="medium">
+                  <TableCell sx={{ py: { xs: 1, sm: 1.5 } }}>
+                    <Typography fontWeight="medium" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                       {teacher.name || 'Not specified'}
                     </Typography>
                   </TableCell>
-                  <TableCell>{teacher.email}</TableCell>
+                  <TableCell sx={{ py: { xs: 1, sm: 1.5 }, fontSize: { xs: '0.875rem', sm: '1rem' } }}>{teacher.email}</TableCell>
               
-                  <TableCell>
+                  <TableCell sx={{ py: { xs: 1, sm: 1.5 } }}>
                     <Button
                       size="small"
                       color="primary"
                       onClick={() => handleTeacherSelect(teacher)}
                       disabled={demoting}
+                      sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
                     >
                       Select
                     </Button>
@@ -263,6 +266,7 @@ const DemoteUsers = () => {
           </TableBody>
         </Table>
       </TableContainer>
+      </Box>
       
       {/* Demotion form */}
       {selectedTeacher && (

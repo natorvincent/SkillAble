@@ -68,10 +68,10 @@ const AdminDashboard = () => {
       <div style={{ position: "relative", zIndex: 1, minHeight: "100vh" }}>
         <Navbar />
         
-        <Container maxWidth="lg" sx={{ paddingTop: 5, paddingBottom: 5 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-            <ShieldIcon sx={{ width: 32, height: 32, color: '#4a6cf7', mr: 2 }} />
-            <Typography variant="h4" component="h1" fontWeight="600">
+        <Container maxWidth="lg" sx={{ paddingTop: { xs: 3, sm: 4, md: 5 }, paddingBottom: { xs: 3, sm: 4, md: 5 }, px: { xs: 2, sm: 3 } }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 2, sm: 3, md: 4 }, flexWrap: 'wrap' }}>
+            <ShieldIcon sx={{ width: { xs: 24, sm: 28, md: 32 }, height: { xs: 24, sm: 28, md: 32 }, color: '#4a6cf7', mr: { xs: 1, sm: 2 } }} />
+            <Typography variant="h4" component="h1" fontWeight="600" sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' } }}>
               Admin Dashboard
             </Typography>
           </Box>
@@ -86,7 +86,7 @@ const AdminDashboard = () => {
           </Button> */}
           
           <Paper sx={{ 
-            borderRadius: "15px", 
+            borderRadius: { xs: "10px", sm: "15px" }, 
             overflow: 'hidden', 
             bgcolor: 'rgba(255, 255, 255, 0.9)',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
@@ -100,45 +100,46 @@ const AdminDashboard = () => {
                 borderBottom: 1,
                 borderColor: 'divider',
                 '& .MuiTab-root': {
-                  py: 2,
+                  py: { xs: 1.5, sm: 2 },
                   fontWeight: 500,
-                  minWidth: 120
+                  minWidth: { xs: 80, sm: 100, md: 120 },
+                  fontSize: { xs: '0.75rem', sm: '0.875rem', md: '1rem' }
                 }
               }}
             >
               <Tab 
-                icon={<PeopleIcon />} 
+                icon={<PeopleIcon sx={{ fontSize: { xs: 18, sm: 20, md: 24 } }} />} 
                 iconPosition="start" 
-                label="Students List" 
+                label="Students"
               />
               <Tab 
-                icon={<GroupIcon />} 
+                icon={<GroupIcon sx={{ fontSize: { xs: 18, sm: 20, md: 24 } }} />} 
                 iconPosition="start" 
-                label="Teachers List" 
+                label="Teachers"
               />
               <Tab 
-                icon={<SchoolIcon />} 
+                icon={<SchoolIcon sx={{ fontSize: { xs: 18, sm: 20, md: 24 } }} />} 
                 iconPosition="start" 
-                label="Modules" 
+                label="Modules"
               />
               <Tab 
-                icon={<MenuBookIcon />} 
+                icon={<MenuBookIcon sx={{ fontSize: { xs: 18, sm: 20, md: 24 } }} />} 
                 iconPosition="start" 
-                label="Lessons" 
+                label="Lessons"
               />
               <Tab 
-                icon={<PersonAddIcon />} 
+                icon={<PersonAddIcon sx={{ fontSize: { xs: 18, sm: 20, md: 24 } }} />} 
                 iconPosition="start" 
-                label="Promote User" 
+                label="Promote"
               />
               <Tab 
-                icon={<PersonRemoveIcon />} 
+                icon={<PersonRemoveIcon sx={{ fontSize: { xs: 18, sm: 20, md: 24 } }} />} 
                 iconPosition="start" 
-                label="Demote User" 
+                label="Demote"
               />
             </Tabs>
             
-            <Box sx={{ p: 3 }}>
+            <Box sx={{ p: { xs: 2, sm: 2.5, md: 3 }, overflowX: 'auto' }}>
               {/* Updated content rendering to match new tab order */}
               {activeTab === 0 && <StudentsList />}
               {activeTab === 1 && <TeachersList />}
