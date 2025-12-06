@@ -584,15 +584,14 @@ function StudentDashboard() {
         >
           <AudioToggleButton audioPlaying={audioPlaying} toggleAudio={toggleAudio} />
           
-          <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ 
+          <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ 
             justifyContent: 'center',
-            flexWrap: { xs: 'wrap', md: 'nowrap' },
           }}>
             {moduleImages.map((image, index) => (
-              <Grid item key={index} xs={12} sm={6} md={4} sx={{ 
+              <Grid item key={index} xs={12} sm={6} md={4} lg={3} sx={{ 
                 display: 'flex',
                 justifyContent: 'center',
-                width: { xs: '100%', md: 'auto' }
+                width: '100%'
               }}>
                 <Box
                   onClick={() => handleModuleClick(moduleRoutes[index])}
@@ -600,13 +599,13 @@ function StudentDashboard() {
                   onMouseLeave={handleModuleLeave}
                   sx={{
                     position: 'relative',
-                    height: { xs: '300px', sm: '400px', md: '500px', lg: '600px' },
-                    borderRadius: { xs: '12px', sm: '15px' },
+                    height: { xs: '240px', sm: '260px', md: '280px' },
+                    width: '100%',
+                    maxWidth: { xs: '100%', sm: '280px', md: '260px' },
+                    borderRadius: { xs: '12px', sm: '15px', md: '20px' },
                     overflow: 'visible',
                     margin: '0 auto',
                     transition: 'transform 0.3s ease, scale 0.3s ease',
-                    width: { xs: '100%', sm: '90%', md: '100%' },
-                    maxWidth: { xs: '350px', sm: '450px', md: '500px', lg: '550px' },
                     cursor: 'pointer',
                     transform: hoveredModule === index ? 'scale(1.05)' : 'scale(1)',
                     transformOrigin: 'center center',
@@ -633,11 +632,11 @@ function StudentDashboard() {
                     alt={moduleTitles[index]}
                     sx={{
                       width: '100%',
-                      height: { xs: '280px', sm: '380px', md: '480px', lg: '550px' },
+                      height: '100%',
                       objectFit: 'contain',
                       display: 'block',
                       backgroundColor: 'transparent',
-                      borderRadius: { xs: '12px', sm: '15px' },
+                      borderRadius: { xs: '12px', sm: '15px', md: '20px' },
                       position: 'relative',
                       zIndex: 1,
                       transition: 'transform 0.3s ease',
