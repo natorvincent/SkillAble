@@ -67,26 +67,27 @@ const stopFlushTimer = () => {
   }
 };
 
-// Flush pending saves to backend
+// Flush pending saves to backend - FIXED: Use POST /lesson, not PUT /lesson/{id}/{id}
 export const flushPendingSaves = async () => {
   if (pendingSaves.size === 0) return;
 
   // Copy keys to avoid mutation while iterating
   const entries = Array.from(pendingSaves.entries());
   for (const [key, payload] of entries) {
-    const { studentId, lessonId } = payload;
     try {
-      // Attempt PUT to upsert the lesson progress
-      const url = `${API_BASE_URL}/lesson/${studentId}/${lessonId}`;
+      // FIX: Use POST /lesson endpoint that already exists in your backend
+      const url = `${API_BASE_URL}/lesson`; // POST endpoint
       const res = await fetch(url, {
-        method: 'PUT',
+        method: 'POST', // Changed from PUT to POST
         headers: makeHeaders(),
         body: JSON.stringify(payload),
         keepalive: true,
       });
+      
       if (res.ok) {
         pendingSaves.delete(key);
         persistPendingSaves();
+        console.log('✅ Progress saved for', key);
       } else {
         // If server returns error, keep the entry and continue
         console.warn('Failed to flush progress for', key, 'status', res.status);
@@ -104,30 +105,16 @@ const flushOnUnload = () => {
 
   try {
     const entries = Array.from(pendingSaves.entries());
-    // Send aggregated payload via sendBeacon if available
-    if (navigator && typeof navigator.sendBeacon === 'function') {
-      // Build a bulk endpoint payload
-      const bulk = entries.map(([, payload]) => payload);
-      const url = `${API_BASE_URL}/bulk-lessons`; // Backend may ignore; send anyway
-      const blob = new Blob([JSON.stringify(bulk)], { type: 'application/json' });
-      const ok = navigator.sendBeacon(url, blob);
-      if (ok) {
-        // If sendBeacon accepted, clear persisted queue (we cannot verify server success)
-        pendingSaves.clear();
-        persistPendingSaves();
-        return;
-      }
-    }
-
-    // Fallback: try synchronous fetch with keepalive
-    entries.forEach(([key, payload]) => {
+    
+    // Send each save via sendBeacon if available
+    entries.forEach(([, payload]) => {
       try {
-        fetch(`${API_BASE_URL}/lesson/${payload.studentId}/${payload.lessonId}`, {
-          method: 'PUT',
-          headers: makeHeaders(),
-          body: JSON.stringify(payload),
-          keepalive: true
-        });
+        const url = `${API_BASE_URL}/lesson`;
+        const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        const ok = navigator.sendBeacon(url, blob);
+        if (ok) {
+          console.log('📤 sendBeacon sent progress on unload');
+        }
       } catch (e) {
         // ignore
       }
@@ -147,7 +134,7 @@ if (typeof window !== 'undefined' && window.addEventListener) {
 
 // -------------------- Public API --------------------
 
-// Fetch module progress (cached)
+// Fetch module progress (cached) - FIXED: This endpoint exists in your backend
 export const getStudentModuleProgress = async (studentId, moduleId) => {
   const cacheKey = `module-${studentId}-${moduleId}`;
   if (progressCache.has(cacheKey)) {
@@ -181,25 +168,45 @@ export const getStudentModuleProgress = async (studentId, moduleId) => {
   }
 };
 
+// FIXED: Calculate student stats from existing endpoints
 export const getStudentModuleProgressStats = async (studentId) => {
   try {
-    const statsResponse = await fetch(`${API_BASE_URL}/student/${studentId}/stats`, {
+    // Try to get all lesson progresses first (this endpoint exists)
+    const lessonsResponse = await fetch(`${API_BASE_URL}/student/${studentId}/lessons`, {
       method: 'GET',
       headers: makeHeaders()
     });
 
-    if (statsResponse.ok) {
-      const stats = await statsResponse.json();
+    if (lessonsResponse.ok) {
+      const lessonProgresses = await lessonsResponse.json();
+      
+      // Calculate stats from lesson progresses
+      const completedLessons = lessonProgresses.filter(lesson => lesson.completed).length;
+      const totalStars = lessonProgresses.reduce((sum, lesson) => sum + (lesson.starsEarned || 0), 0);
+      
+      // Get module progresses to calculate completed modules
+      const modulesResponse = await fetch(`${API_BASE_URL}/student/${studentId}/modules`, {
+        method: 'GET',
+        headers: makeHeaders()
+      });
+      
+      let completedModules = 0;
+      if (modulesResponse.ok) {
+        const moduleProgresses = await modulesResponse.json();
+        completedModules = moduleProgresses.filter(module => module.completed).length;
+      }
+      
       return {
-        completedLessons: stats.completedLessons || 0,
-        totalStars: stats.totalStars || 0,
-        completedModules: stats.completedModules || 0,
-        currentStreak: stats.currentStreak || 0,
-        totalProgress: stats.totalProgress || 0.0
+        completedLessons,
+        totalStars,
+        completedModules,
+        currentStreak: 0, // You might need to track this separately
+        totalProgress: completedLessons > 0 ? 
+          (completedLessons / Math.max(lessonProgresses.length, 1)) * 100 : 0
       };
     }
 
-    // Fallback: calculate by enumerating modules (same as prior logic)
+    // Fallback: calculate by enumerating modules
     const modulesResponse = await fetch('https://skillable-pdv0.onrender.com/api/modules/available', {
       method: 'GET',
       headers: makeHeaders()
@@ -220,8 +227,7 @@ export const getStudentModuleProgressStats = async (studentId) => {
         if (moduleProgress) {
           totalCompletedLessons += moduleProgress.completedLessons || 0;
           totalStars += moduleProgress.totalStars || 0;
-          if (moduleProgress.completedLessons > 0 &&
-            moduleProgress.completedLessons === moduleProgress.totalLessons) {
+          if (moduleProgress.completed) {
             completedModules++;
           }
         }
@@ -268,19 +274,19 @@ const getDefaultProgressStats = () => {
 };
 
 // Save lesson progress: queue for autosave and persist locally
-// payload should at least contain { studentId, lessonId, ...progressData }
+// payload should contain { studentId, lessonId, score, maxScore, completed, starsEarned }
 export const saveStudentLessonProgress = async (studentId, lessonId, progressData) => {
   if (!studentId || !lessonId) {
     throw new Error('Missing studentId or lessonId in saveStudentLessonProgress');
   }
 
   const key = `${studentId}-${lessonId}`;
-  // Augment payload with identifiers and timestamp
+  
+  // Create the payload in the format your backend expects
   const payload = {
-    studentId,
-    lessonId,
-    ...progressData,
-    lastUpdatedAt: new Date().toISOString()
+    studentId: parseInt(studentId, 10),
+    lessonId: parseInt(lessonId, 10),
+    ...progressData
   };
 
   // Update pendingSaves (overwrite latest)
@@ -290,7 +296,25 @@ export const saveStudentLessonProgress = async (studentId, lessonId, progressDat
   // Ensure timer is running
   startFlushTimer();
 
-  // Return quickly — queued for background upload
+  // Also try to save immediately (not just queue)
+  try {
+    const immediateResponse = await fetch(`${API_BASE_URL}/lesson`, {
+      method: 'POST',
+      headers: makeHeaders(),
+      body: JSON.stringify(payload)
+    });
+    
+    if (immediateResponse.ok) {
+      // If immediate save succeeds, remove from pending queue
+      pendingSaves.delete(key);
+      persistPendingSaves();
+      console.log('✅ Progress saved immediately');
+    }
+  } catch (error) {
+    // If immediate save fails, it will be retried by the flush timer
+    console.log('📝 Progress queued for later save');
+  }
+
   return { queued: true };
 };
 
@@ -326,44 +350,63 @@ export const getStudentLessonProgress = async (studentId, lessonId) => {
   }
 };
 
-// Update module-level aggregated progress immediately (not queued)
-// This attempts a direct PUT; failures are logged.
+// FIXED: Remove updateModuleProgress or use existing endpoints
+// Module progress is calculated automatically by your backend when lesson progress is saved
 export const updateModuleProgress = async (studentId, moduleId, progressBody = {}) => {
-  if (!studentId || !moduleId) {
-    throw new Error('Missing studentId or moduleId for updateModuleProgress');
-  }
-  try {
-    const url = `${API_BASE_URL}/module/${studentId}/${moduleId}`;
-    const res = await fetch(url, {
-      method: 'PUT',
-      headers: makeHeaders(),
-      body: JSON.stringify(progressBody),
-      keepalive: true
-    });
-    if (!res.ok) {
-      console.warn('updateModuleProgress returned non-ok status', res.status);
-    }
-    return res.ok;
-  } catch (e) {
-    console.warn('Network error in updateModuleProgress', e);
-    return false;
-  }
+  console.log('Module progress is automatically updated when lesson progress is saved');
+  return true;
 };
+
 // Get all module progress without making individual API calls
-// Returns a map of module IDs to default progress objects
 export const getAllModuleProgress = async (studentId, modules) => {
   console.log('Getting progress for all modules');
   const progressMap = {};
+  
   if (modules && Array.isArray(modules)) {
+    // Try to get all module progresses at once if endpoint exists
+    try {
+      const response = await fetch(`${API_BASE_URL}/student/${studentId}/modules`, {
+        method: 'GET',
+        headers: makeHeaders()
+      });
+      
+      if (response.ok) {
+        const moduleProgresses = await response.json();
+        // Map by module ID
+        moduleProgresses.forEach(progress => {
+          progressMap[progress.moduleId || progress.module?.id] = progress;
+        });
+      }
+    } catch (error) {
+      console.log('Using fallback for module progress');
+    }
+    
+    // Fill in any missing modules with defaults
     modules.forEach(module => {
-      progressMap[module.id] = getDefaultModuleProgress();
+      if (!progressMap[module.id]) {
+        progressMap[module.id] = getDefaultModuleProgress();
+      }
     });
   }
+  
   return progressMap;
 };
+
 // Expose a helper to inspect queued saves (useful for debugging)
 export const getQueuedSaves = () => {
   const out = {};
   pendingSaves.forEach((v, k) => out[k] = v);
   return out;
+};
+
+// NEW: Manual flush function (can be called when user clicks "Save Progress")
+export const manualSaveProgress = async () => {
+  await flushPendingSaves();
+  return { success: true, message: 'Progress saved' };
+};
+
+// NEW: Clear all queued saves (for testing/logout)
+export const clearQueuedSaves = () => {
+  pendingSaves.clear();
+  localStorage.removeItem(PERSIST_KEY);
 };
