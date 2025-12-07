@@ -88,26 +88,25 @@ function LandingPage() {
             objectFit: "contain",
             zIndex: 0,
           }}
-        />  
+        />
           {/* Boy Image - Lower Right */}
          
-            <img
-              src={boy}
-              alt="Boy Illustration"
-              className="landing-boy-image"
-              style={{
-                position: "absolute",
-                bottom: "0", // Changed from -290px
-                right: 0,
-                height: "auto", // Changed from 860px
-                maxHeight: "70vh", // Slightly increased
-                width: "auto",
-                maxWidth: "40%",
-                objectFit: "contain",
-                zIndex: 0,
-              }}
-            />  
-
+                  <img
+          src={boy}
+          alt="Boy Illustration"
+          className="landing-boy-image"
+          style={{
+            position: "absolute",
+            bottom: "0", // Changed from -290px
+            right: 0,
+            height: "auto", // Changed from 860px
+            maxHeight: "70vh", // Slightly increased
+            width: "auto",
+            maxWidth: "40%",
+            objectFit: "contain",
+            zIndex: 0,
+          }}
+/>
           {/* Center Content */}
           <div
             style={{
