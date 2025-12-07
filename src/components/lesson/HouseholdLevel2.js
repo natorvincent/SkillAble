@@ -14,6 +14,7 @@ import {
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useNavigate, useParams } from 'react-router-dom';
 
+
 // For items
 import condomImg from '../../assets/householdLevel2/condom.png';
 import toiletPaperImg from '../../assets/householdLevel2/paper towel.png';
