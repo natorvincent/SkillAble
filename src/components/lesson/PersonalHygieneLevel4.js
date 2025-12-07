@@ -44,7 +44,7 @@ import glassesImg from "../../assets/hygienelevel4/glasses.png"
 import boyWithClothesImg from "../../assets/hygienelevel4/boywithclothes.png"
 import boyNakedImg from "../../assets/hygienelevel4/boynaked.png"
 import laundryBasketImg from "../../assets/hygienelevel4/laundrybasket.png"
-import clothesOnlyImg from "../../assets/hygieneLevel4/clothes.png"
+// import clothesOnlyImg from "../../assets/hygienelevel4/clothes.png"
 
 //step3
 import wetshowerImg from "../../assets/hygienelevel4/wetshower.png"
