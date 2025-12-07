@@ -429,7 +429,8 @@ function ModuleManagement() {
               </TableBody>
             </Table>
           </TableContainer>
-        </Card>
+        </Box> {/* This closing Box tag was missing */}
+      </Card>
       )}
       
       {/* Create/Edit Module Dialog - Professional Table Style */}
