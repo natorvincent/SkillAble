@@ -46,6 +46,28 @@ const makeHeaders = () => {
   return headers;
 };
 
+export const updateModuleProgress = async (studentId, moduleId, progressBody = {}) => {
+  console.log('Module progress is automatically updated when lesson progress is saved');
+  
+  // If you need to explicitly update module progress, you could:
+  try {
+    const response = await fetch(`${API_BASE_URL}/module/${studentId}/${moduleId}`, {
+      method: 'PUT',
+      headers: makeHeaders(),
+      body: JSON.stringify(progressBody)
+    });
+    
+    if (response.ok) {
+      console.log('Module progress updated');
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('Error updating module progress:', error);
+    return false;
+  }
+};
+
 // Flush pending saves to backend
 export const flushPendingSaves = async () => {
   if (pendingSaves.size === 0) return;
