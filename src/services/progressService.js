@@ -1,18 +1,14 @@
 const API_BASE_URL = 'https://skillable-pdv0.onrender.com/api/progress';
 
-// Simple in-memory cache to prevent duplicate reads
+// Simple in-memory cache
 const progressCache = new Map();
 
-// Pending saves: Map keyed by `${studentId}-${lessonId}` storing progress payload
+// Pending saves
 let pendingSaves = new Map();
-
-// Persisted key in localStorage for crash recovery
 const PERSIST_KEY = 'skillable_pending_progress_saves';
+const FLUSH_INTERVAL_MS = 30000; // 30 seconds
 
-// Flush interval (ms)
-const FLUSH_INTERVAL_MS = 15000; // 15 seconds
-
-// Internal: load persisted pending saves from localStorage into memory on module load
+// Load persisted saves
 (function loadPersistedSaves() {
   try {
     const raw = localStorage.getItem(PERSIST_KEY);
@@ -27,7 +23,7 @@ const FLUSH_INTERVAL_MS = 15000; // 15 seconds
   }
 })();
 
-// Internal: persist pendingSaves Map -> localStorage
+// Persist pending saves
 const persistPendingSaves = () => {
   try {
     const plain = {};
@@ -50,38 +46,19 @@ const makeHeaders = () => {
   return headers;
 };
 
-// Periodic flush logic
-let flushTimer = null;
-const startFlushTimer = () => {
-  if (flushTimer) return;
-  flushTimer = setInterval(() => {
-    flushPendingSaves().catch(() => { /* swallow */ });
-  }, FLUSH_INTERVAL_MS);
-};
-
-// Stop timer (not usually needed)
-const stopFlushTimer = () => {
-  if (flushTimer) {
-    clearInterval(flushTimer);
-    flushTimer = null;
-  }
-};
-
-// Flush pending saves to backend - FIXED: Use POST /lesson, not PUT /lesson/{id}/{id}
+// Flush pending saves to backend
 export const flushPendingSaves = async () => {
   if (pendingSaves.size === 0) return;
 
-  // Copy keys to avoid mutation while iterating
   const entries = Array.from(pendingSaves.entries());
+  
   for (const [key, payload] of entries) {
     try {
-      // FIX: Use POST /lesson endpoint that already exists in your backend
-      const url = `${API_BASE_URL}/lesson`; // POST endpoint
-      const res = await fetch(url, {
-        method: 'POST', // Changed from PUT to POST
+      // Use POST /lesson endpoint that exists in your backend
+      const res = await fetch(`${API_BASE_URL}/lesson`, {
+        method: 'POST',
         headers: makeHeaders(),
-        body: JSON.stringify(payload),
-        keepalive: true,
+        body: JSON.stringify(payload)
       });
       
       if (res.ok) {
@@ -89,77 +66,58 @@ export const flushPendingSaves = async () => {
         persistPendingSaves();
         console.log('✅ Progress saved for', key);
       } else {
-        // If server returns error, keep the entry and continue
-        console.warn('Failed to flush progress for', key, 'status', res.status);
+        console.warn('Failed to save progress for', key, 'status', res.status);
       }
     } catch (err) {
-      // Network error; keep entry for next attempt
-      console.warn('Network error flushing progress for', key, err);
+      console.warn('Network error saving progress for', key, err);
     }
   }
 };
 
-// Attempt fast synchronous flush on page unload
-const flushOnUnload = () => {
-  if (pendingSaves.size === 0) return;
-
-  try {
-    const entries = Array.from(pendingSaves.entries());
-    
-    // Send each save via sendBeacon if available
-    entries.forEach(([, payload]) => {
-      try {
-        const url = `${API_BASE_URL}/lesson`;
-        const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-        const ok = navigator.sendBeacon(url, blob);
-        if (ok) {
-          console.log('📤 sendBeacon sent progress on unload');
-        }
-      } catch (e) {
-        // ignore
-      }
-    });
-  } catch (e) {
-    // ignore
-  }
+// Start periodic flush
+let flushTimer = null;
+const startFlushTimer = () => {
+  if (flushTimer) return;
+  flushTimer = setInterval(() => {
+    flushPendingSaves().catch(() => {});
+  }, FLUSH_INTERVAL_MS);
 };
-
-// Attach unload listener to try to flush on page close
-if (typeof window !== 'undefined' && window.addEventListener) {
-  window.addEventListener('beforeunload', () => {
-    flushOnUnload();
-  });
-  startFlushTimer();
-}
 
 // -------------------- Public API --------------------
 
-// Fetch module progress (cached) - FIXED: This endpoint exists in your backend
+// 1. Get module progress - THIS ENDPOINT EXISTS
 export const getStudentModuleProgress = async (studentId, moduleId) => {
   const cacheKey = `module-${studentId}-${moduleId}`;
+  
+  // Return cached if available
   if (progressCache.has(cacheKey)) {
     return progressCache.get(cacheKey);
   }
 
   try {
+    console.log(`Fetching module progress: ${studentId}/${moduleId}`);
     const response = await fetch(`${API_BASE_URL}/module/${studentId}/${moduleId}`, {
       method: 'GET',
       headers: makeHeaders()
     });
 
+    // Handle 404 - return default progress
     if (response.status === 404) {
+      console.log(`No module progress found for ${studentId}/${moduleId}, using default`);
       const defaultProgress = getDefaultModuleProgress();
       progressCache.set(cacheKey, defaultProgress);
       return defaultProgress;
     }
 
     if (!response.ok) {
-      throw new Error('Failed to fetch module progress');
+      throw new Error(`HTTP ${response.status}: Failed to fetch module progress`);
     }
 
     const progress = await response.json();
+    console.log('Module progress received:', progress);
     progressCache.set(cacheKey, progress);
     return progress;
+    
   } catch (error) {
     console.error('Error fetching module progress:', error);
     const defaultProgress = getDefaultModuleProgress();
@@ -168,87 +126,201 @@ export const getStudentModuleProgress = async (studentId, moduleId) => {
   }
 };
 
-// FIXED: Calculate student stats from existing endpoints
+// 2. Get lesson progress - THIS ENDPOINT EXISTS
+export const getStudentLessonProgress = async (studentId, lessonId) => {
+  // Check pending saves first (most recent)
+  const key = `${studentId}-${lessonId}`;
+  if (pendingSaves.has(key)) {
+    return pendingSaves.get(key);
+  }
+
+  try {
+    console.log(`Fetching lesson progress: ${studentId}/${lessonId}`);
+    const response = await fetch(`${API_BASE_URL}/lesson/${studentId}/${lessonId}`, {
+      method: 'GET',
+      headers: makeHeaders()
+    });
+
+    if (response.status === 404) {
+      console.log(`No lesson progress found for ${studentId}/${lessonId}`);
+      return getDefaultLessonProgress();
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: Failed to fetch lesson progress`);
+    }
+
+    const progress = await response.json();
+    console.log('Lesson progress received:', progress);
+    return progress;
+    
+  } catch (error) {
+    console.error('Error fetching lesson progress:', error);
+    return getDefaultLessonProgress();
+  }
+};
+
+// 3. Save lesson progress - THIS ENDPOINT EXISTS
+export const saveStudentLessonProgress = async (studentId, lessonId, progressData) => {
+  if (!studentId || !lessonId) {
+    throw new Error('Missing studentId or lessonId');
+  }
+
+  const key = `${studentId}-${lessonId}`;
+  
+  // Prepare payload in backend format
+  const payload = {
+    studentId: parseInt(studentId, 10),
+    lessonId: parseInt(lessonId, 10),
+    score: progressData.score || 0,
+    maxScore: progressData.maxScore || 100,
+    completed: progressData.completed || false,
+    starsEarned: progressData.starsEarned || 0
+  };
+
+  console.log('Saving progress:', payload);
+
+  // Add to pending queue
+  pendingSaves.set(key, payload);
+  persistPendingSaves();
+  startFlushTimer();
+
+  // Try to save immediately
+  try {
+    const response = await fetch(`${API_BASE_URL}/lesson`, {
+      method: 'POST',
+      headers: makeHeaders(),
+      body: JSON.stringify(payload)
+    });
+
+    if (response.ok) {
+      // Clear from pending queue if saved successfully
+      pendingSaves.delete(key);
+      persistPendingSaves();
+      
+      // Clear cache for this module to force refresh
+      progressCache.delete(`module-${studentId}-${progressData.moduleId}`);
+      
+      console.log('✅ Progress saved immediately');
+      return { success: true, message: 'Progress saved' };
+    } else {
+      console.warn('Progress save failed, will retry later');
+      return { success: false, queued: true, message: 'Progress queued for retry' };
+    }
+  } catch (error) {
+    console.warn('Network error saving progress, will retry later:', error);
+    return { success: false, queued: true, message: 'Progress queued due to network error' };
+  }
+};
+
+// 4. Get student stats - CALCULATE FROM EXISTING ENDPOINTS
 export const getStudentModuleProgressStats = async (studentId) => {
   try {
-    // Try to get all lesson progresses first (this endpoint exists)
+    // Get all lesson progresses (this endpoint exists)
+    console.log('Fetching all lesson progresses for student', studentId);
     const lessonsResponse = await fetch(`${API_BASE_URL}/student/${studentId}/lessons`, {
       method: 'GET',
       headers: makeHeaders()
     });
 
+    let completedLessons = 0;
+    let totalStars = 0;
+
     if (lessonsResponse.ok) {
       const lessonProgresses = await lessonsResponse.json();
+      console.log('Lesson progresses:', lessonProgresses);
       
-      // Calculate stats from lesson progresses
-      const completedLessons = lessonProgresses.filter(lesson => lesson.completed).length;
-      const totalStars = lessonProgresses.reduce((sum, lesson) => sum + (lesson.starsEarned || 0), 0);
-      
-      // Get module progresses to calculate completed modules
-      const modulesResponse = await fetch(`${API_BASE_URL}/student/${studentId}/modules`, {
-        method: 'GET',
-        headers: makeHeaders()
-      });
-      
-      let completedModules = 0;
-      if (modulesResponse.ok) {
-        const moduleProgresses = await modulesResponse.json();
-        completedModules = moduleProgresses.filter(module => module.completed).length;
-      }
-      
-      return {
-        completedLessons,
-        totalStars,
-        completedModules,
-        currentStreak: 0, // You might need to track this separately
-        totalProgress: completedLessons > 0 ? 
-          (completedLessons / Math.max(lessonProgresses.length, 1)) * 100 : 0
-      };
+      completedLessons = lessonProgresses.filter(lesson => lesson.completed).length;
+      totalStars = lessonProgresses.reduce((sum, lesson) => sum + (lesson.starsEarned || 0), 0);
     }
 
-    // Fallback: calculate by enumerating modules
-    const modulesResponse = await fetch('https://skillable-pdv0.onrender.com/api/modules/available', {
+    // Get all module progresses (this endpoint exists)
+    console.log('Fetching all module progresses for student', studentId);
+    const modulesResponse = await fetch(`${API_BASE_URL}/student/${studentId}/modules`, {
       method: 'GET',
       headers: makeHeaders()
     });
 
-    if (!modulesResponse.ok) {
-      throw new Error('Failed to fetch modules');
-    }
-
-    const modules = await modulesResponse.json();
-    let totalCompletedLessons = 0;
-    let totalStars = 0;
     let completedModules = 0;
+    let totalProgress = 0;
 
-    for (const module of modules) {
-      try {
-        const moduleProgress = await getStudentModuleProgress(studentId, module.id);
-        if (moduleProgress) {
-          totalCompletedLessons += moduleProgress.completedLessons || 0;
-          totalStars += moduleProgress.totalStars || 0;
-          if (moduleProgress.completed) {
-            completedModules++;
+    if (modulesResponse.ok) {
+      const moduleProgresses = await modulesResponse.json();
+      console.log('Module progresses:', moduleProgresses);
+      
+      completedModules = moduleProgresses.filter(module => module.completed).length;
+      
+      // Calculate total progress as average of module completion rates
+      if (moduleProgresses.length > 0) {
+        const totalCompletionRate = moduleProgresses.reduce((sum, module) => {
+          if (module.totalLessons > 0) {
+            return sum + ((module.completedLessons || 0) / module.totalLessons) * 100;
           }
-        }
-      } catch (error) {
-        console.warn(`Error fetching progress for module ${module.id}:`, error);
+          return sum;
+        }, 0);
+        totalProgress = totalCompletionRate / moduleProgresses.length;
       }
     }
 
     const stats = {
-      completedLessons: totalCompletedLessons,
+      completedLessons,
       totalStars,
       completedModules,
-      currentStreak: 0,
-      totalProgress: modules.length > 0 ? (completedModules / modules.length) * 100 : 0
+      currentStreak: 0, // You can implement streak tracking later
+      totalProgress
     };
 
+    console.log('Calculated stats:', stats);
     return stats;
+
   } catch (error) {
-    console.error('Error fetching student progress stats:', error);
+    console.error('Error calculating stats:', error);
     return getDefaultProgressStats();
   }
+};
+
+// 5. Get all module progress at once
+export const getAllModuleProgress = async (studentId, modules) => {
+  console.log('Getting progress for all modules');
+  const progressMap = {};
+
+  if (modules && Array.isArray(modules)) {
+    // Try to get all module progresses at once
+    try {
+      const response = await fetch(`${API_BASE_URL}/student/${studentId}/modules`, {
+        method: 'GET',
+        headers: makeHeaders()
+      });
+      
+      if (response.ok) {
+        const moduleProgresses = await response.json();
+        // Map by module ID
+        moduleProgresses.forEach(progress => {
+          const moduleId = progress.moduleId || (progress.module && progress.module.id);
+          if (moduleId) {
+            progressMap[moduleId] = progress;
+          }
+        });
+      }
+    } catch (error) {
+      console.log('Using individual module progress fetches');
+    }
+
+    // Fill in any missing modules with defaults or individual fetches
+    for (const module of modules) {
+      if (!progressMap[module.id]) {
+        try {
+          const moduleProgress = await getStudentModuleProgress(studentId, module.id);
+          progressMap[module.id] = moduleProgress;
+        } catch (error) {
+          progressMap[module.id] = getDefaultModuleProgress();
+        }
+      }
+    }
+  }
+
+  console.log('Progress map:', progressMap);
+  return progressMap;
 };
 
 // Default progress templates
@@ -263,6 +335,16 @@ const getDefaultModuleProgress = () => {
   };
 };
 
+const getDefaultLessonProgress = () => {
+  return {
+    completed: false,
+    score: 0,
+    maxScore: 100,
+    starsEarned: 0,
+    completedAt: null
+  };
+};
+
 const getDefaultProgressStats = () => {
   return {
     completedLessons: 0,
@@ -273,140 +355,43 @@ const getDefaultProgressStats = () => {
   };
 };
 
-// Save lesson progress: queue for autosave and persist locally
-// payload should contain { studentId, lessonId, score, maxScore, completed, starsEarned }
-export const saveStudentLessonProgress = async (studentId, lessonId, progressData) => {
-  if (!studentId || !lessonId) {
-    throw new Error('Missing studentId or lessonId in saveStudentLessonProgress');
-  }
-
-  const key = `${studentId}-${lessonId}`;
-  
-  // Create the payload in the format your backend expects
-  const payload = {
-    studentId: parseInt(studentId, 10),
-    lessonId: parseInt(lessonId, 10),
-    ...progressData
-  };
-
-  // Update pendingSaves (overwrite latest)
-  pendingSaves.set(key, payload);
-  persistPendingSaves();
-
-  // Ensure timer is running
-  startFlushTimer();
-
-  // Also try to save immediately (not just queue)
-  try {
-    const immediateResponse = await fetch(`${API_BASE_URL}/lesson`, {
-      method: 'POST',
-      headers: makeHeaders(),
-      body: JSON.stringify(payload)
-    });
-    
-    if (immediateResponse.ok) {
-      // If immediate save succeeds, remove from pending queue
-      pendingSaves.delete(key);
-      persistPendingSaves();
-      console.log('✅ Progress saved immediately');
-    }
-  } catch (error) {
-    // If immediate save fails, it will be retried by the flush timer
-    console.log('📝 Progress queued for later save');
-  }
-
-  return { queued: true };
+// Manual flush
+export const manualSaveProgress = async () => {
+  await flushPendingSaves();
+  return { success: true, message: 'All progress saved' };
 };
 
-// Read a lesson progress from server (or fallback)
-export const getStudentLessonProgress = async (studentId, lessonId) => {
-  if (!studentId || !lessonId) return null;
-
-  // If there's a pending local queued save, prefer that (most recent)
-  const key = `${studentId}-${lessonId}`;
-  if (pendingSaves.has(key)) {
-    return pendingSaves.get(key);
-  }
-
-  try {
-    const res = await fetch(`${API_BASE_URL}/lesson/${studentId}/${lessonId}`, {
-      method: 'GET',
-      headers: makeHeaders()
-    });
-
-    if (res.status === 404) {
-      return null;
-    }
-
-    if (!res.ok) {
-      throw new Error('Failed to fetch lesson progress');
-    }
-
-    const data = await res.json();
-    return data;
-  } catch (err) {
-    console.warn('Error getting lesson progress', err);
-    return null;
-  }
-};
-
-// FIXED: Remove updateModuleProgress or use existing endpoints
-// Module progress is calculated automatically by your backend when lesson progress is saved
-export const updateModuleProgress = async (studentId, moduleId, progressBody = {}) => {
-  console.log('Module progress is automatically updated when lesson progress is saved');
-  return true;
-};
-
-// Get all module progress without making individual API calls
-export const getAllModuleProgress = async (studentId, modules) => {
-  console.log('Getting progress for all modules');
-  const progressMap = {};
-  
-  if (modules && Array.isArray(modules)) {
-    // Try to get all module progresses at once if endpoint exists
-    try {
-      const response = await fetch(`${API_BASE_URL}/student/${studentId}/modules`, {
-        method: 'GET',
-        headers: makeHeaders()
-      });
-      
-      if (response.ok) {
-        const moduleProgresses = await response.json();
-        // Map by module ID
-        moduleProgresses.forEach(progress => {
-          progressMap[progress.moduleId || progress.module?.id] = progress;
-        });
-      }
-    } catch (error) {
-      console.log('Using fallback for module progress');
-    }
-    
-    // Fill in any missing modules with defaults
-    modules.forEach(module => {
-      if (!progressMap[module.id]) {
-        progressMap[module.id] = getDefaultModuleProgress();
-      }
-    });
-  }
-  
-  return progressMap;
-};
-
-// Expose a helper to inspect queued saves (useful for debugging)
+// Get queued saves for debugging
 export const getQueuedSaves = () => {
   const out = {};
   pendingSaves.forEach((v, k) => out[k] = v);
   return out;
 };
 
-// NEW: Manual flush function (can be called when user clicks "Save Progress")
-export const manualSaveProgress = async () => {
-  await flushPendingSaves();
-  return { success: true, message: 'Progress saved' };
-};
-
-// NEW: Clear all queued saves (for testing/logout)
+// Clear queued saves
 export const clearQueuedSaves = () => {
   pendingSaves.clear();
   localStorage.removeItem(PERSIST_KEY);
+  console.log('Cleared all queued saves');
 };
+
+// Start flush timer on load
+if (typeof window !== 'undefined' && window.addEventListener) {
+  window.addEventListener('beforeunload', () => {
+    if (pendingSaves.size > 0) {
+      console.log('Attempting to save pending progress before unload...');
+      // Try to save using sendBeacon
+      pendingSaves.forEach((payload) => {
+        try {
+          const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+          navigator.sendBeacon(`${API_BASE_URL}/lesson`, blob);
+        } catch (e) {
+          // Ignore errors
+        }
+      });
+    }
+  });
+  
+  // Start periodic flush
+  setTimeout(() => startFlushTimer(), 5000);
+}
