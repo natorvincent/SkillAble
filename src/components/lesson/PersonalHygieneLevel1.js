@@ -542,7 +542,9 @@ const saveProgress = async () => {
       throw new Error(`Missing IDs: studentId=${studentId}, lessonId=${lessonIdNum}`);
     }
 
-    const response = await fetch('http://localhost:8080/api/progress/lesson', {
+    const API_BASE_URL = 'https://skillable-pdv0.onrender.com/api';
+
+    const response = await fetch('${API_BASE_URL}/progress/lesson', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
