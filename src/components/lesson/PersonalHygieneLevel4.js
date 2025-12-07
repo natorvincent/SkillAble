@@ -28,35 +28,35 @@ import {
 
 // Images - Import all the hygiene level 4 images
 // import successGif from "../../assets/hygieneLevel1/roblox.gif"
-import backgroundImg from "../../assets/hygieneLevel4/bg.png"
-import showerBasketImg from "../../assets/hygieneLevel4/showerbasket.png"
-import towelImg from "../../assets/hygieneLevel4/towel.png"
-import soapImg from "../../assets/hygieneLevel4/soap.png"
-import shampooImg from "../../assets/hygieneLevel4/shampoo.png"
-import spoonImg from "../../assets/hygieneLevel4/spoon.png"
-import toothbrushImg from "../../assets/hygieneLevel4/toothbrush.png"
-import bookImg from "../../assets/hygieneLevel4/book.png"
-import toyImg from "../../assets/hygieneLevel4/toy.png"
-import shoeImg from "../../assets/hygieneLevel4/shoe.png"
-import glassesImg from "../../assets/hygieneLevel4/glasses.png"
+import backgroundImg from "../../assets/hygienelevel4/bg.png"
+import showerBasketImg from "../../assets/hygienelevel4/showerbasket.png"
+import towelImg from "../../assets/hygienelevel4/towel.png"
+import soapImg from "../../assets/hygienelevel4/soap.png"
+import shampooImg from "../../assets/hygienelevel4/shampoo.png"
+import spoonImg from "../../assets/hygienelevel4/spoon.png"
+import toothbrushImg from "../../assets/hygienelevel4/toothbrush.png"
+import bookImg from "../../assets/hygienelevel4/book.png"
+import toyImg from "../../assets/hygienelevel4/toy.png"
+import shoeImg from "../../assets/hygienelevel4/shoe.png"
+import glassesImg from "../../assets/hygienelevel4/glasses.png"
 
 //step2
-import boyWithClothesImg from "../../assets/hygieneLevel4/boywithclothes.png"
-import boyNakedImg from "../../assets/hygieneLevel4/boynaked.png"
-import laundryBasketImg from "../../assets/hygieneLevel4/laundrybasket.png"
+import boyWithClothesImg from "../../assets/hygienelevel4/boywithclothes.png"
+import boyNakedImg from "../../assets/hygienelevel4/boynaked.png"
+import laundryBasketImg from "../../assets/hygienelevel4/laundrybasket.png"
 import clothesOnlyImg from "../../assets/hygieneLevel4/clothes.png"
 
 //step3
-import wetshowerImg from "../../assets/hygieneLevel4/wetshower.png"
-import showerImg from "../../assets/hygieneLevel4/shower.png"
+import wetshowerImg from "../../assets/hygienelevel4/wetshower.png"
+import showerImg from "../../assets/hygienelevel4/shower.png"
 
 // Character/Cat images - DIFFERENT CATS FOR EACH STATE
-import characterCatDefault from "../../assets/hygieneLevel3/cat.png" // Default cat
-import characterCatExcited from "../../assets/hygieneLevel3/cat_excited.png" // Excited cat for success
-import characterCatCurious from "../../assets/hygieneLevel3/cat_curious.png" // Curious cat for selection
-import characterCatHelpful from "../../assets/hygieneLevel3/cat_helpful.png" // Helpful cat for instructions
-import characterCatProud from "../../assets/hygieneLevel3/cat_proud.png" // Proud cat for completion
-import characterCatOops from "../../assets/hygieneLevel4/cat_oops.png"
+import characterCatDefault from "../../assets/hygienelevel3/cat.png" // Default cat
+import characterCatExcited from "../../assets/hygienelevel3/cat_excited.png" // Excited cat for success
+import characterCatCurious from "../../assets/hygienelevel3/cat_curious.png" // Curious cat for selection
+import characterCatHelpful from "../../assets/hygienelevel3/cat_helpful.png" // Helpful cat for instructions
+import characterCatProud from "../../assets/hygienelevel3/cat_proud.png" // Proud cat for completion
+import characterCatOops from "../../assets/hygienelevel4/cat_oops.png"
 
 export default function ShowerGame() {
   const navigate = useNavigate();
