@@ -19,7 +19,8 @@ import {
   DialogActions,
   DialogContent,
   DialogContentText,
-  DialogTitle
+  DialogTitle,
+  Tooltip
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -109,22 +110,13 @@ const TeachersList = () => {
       <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1.125rem', sm: '1.25rem', md: '1.5rem' } }}>
         Current Teachers
       </Typography>
-<<<<<<< HEAD
       
-      <Typography color="text.secondary" sx={{ mb: 3 }}>
-        View all teachers in the system. These are users who have been promoted to teacher status.
-      </Typography>
-      
-      {/* Search and refresh section */}
-      <Box sx={{ display: 'flex', mb: 3, gap: 2 }}>
-=======
       <Typography color="text.secondary" sx={{ mb: { xs: 2, sm: 2.5, md: 3 }, fontSize: { xs: '0.875rem', sm: '1rem' } }}>
         View all teachers in the system. These are users who have been promoted to teacher status.
       </Typography>
 
-      {/* Search and refresh */}
+      {/* Search and refresh section */}
       <Box sx={{ display: 'flex', mb: { xs: 2, sm: 2.5, md: 3 }, gap: { xs: 1, sm: 2 }, flexWrap: { xs: 'wrap', sm: 'nowrap' } }}>
->>>>>>> 0b71f1a89e79b1953ce191e9f2c995c54e806288
         <TextField
           placeholder="Search teachers by name or email..."
           variant="outlined"
@@ -160,22 +152,8 @@ const TeachersList = () => {
           {error}
         </Alert>
       )}
-<<<<<<< HEAD
       
       {/* Teachers table */}
-      <TableContainer component={Paper} sx={{ borderRadius: "10px" }}>
-        <Table>
-          <TableHead sx={{ bgcolor: '#f5f5f5' }}>
-            <TableRow>
-              <TableCell width="60px"></TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell align="center">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-=======
-
-      {/* Table */}
       <Box sx={{ overflowX: 'auto', width: '100%' }}>
         <TableContainer component={Paper} sx={{ borderRadius: "10px", minWidth: 600 }}>
           <Table>
@@ -187,68 +165,55 @@ const TeachersList = () => {
                 <TableCell align="center" sx={{ py: { xs: 1, sm: 1.5 }, fontSize: { xs: '0.875rem', sm: '1rem' } }}>Actions</TableCell>
               </TableRow>
             </TableHead>
->>>>>>> 0b71f1a89e79b1953ce191e9f2c995c54e806288
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={4} align="center" sx={{ py: 5 }}>
-                  <CircularProgress size={30} />
-                </TableCell>
-              </TableRow>
-            ) : filteredTeachers.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
-                  <Typography color="text.secondary">
-                    {searchTerm ? 'No teachers matching your search' : 'No teachers available'}
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredTeachers.map((teacher, index) => (
-                <TableRow 
-                  key={teacher.id || index}
-                  sx={{ '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
-                >
-                  <TableCell padding="checkbox" sx={{ py: { xs: 1, sm: 1.5 } }}>
-                    <SchoolIcon style={{ color: '#4a6cf7', fontSize: 20 }} />
-                  </TableCell>
-<<<<<<< HEAD
-                  <TableCell>
-                    <Typography fontWeight="medium">
-                      {teacher.name || 'Not specified'}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>{teacher.email}</TableCell>
-                  <TableCell align="center">
-                    <IconButton 
-                      color="error" 
-                      onClick={() => handleOpenDeleteModal(teacher)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-=======
-                  <TableCell sx={{ py: { xs: 1, sm: 1.5 } }}>
-                    <Typography fontWeight="medium" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>{teacher.name || 'Not specified'}</Typography>
-                  </TableCell>
-                  <TableCell sx={{ py: { xs: 1, sm: 1.5 }, fontSize: { xs: '0.875rem', sm: '1rem' } }}>{teacher.email}</TableCell>
-                  <TableCell align="center" sx={{ py: { xs: 1, sm: 1.5 } }}>
-                    <Tooltip title="Delete">
-                      <IconButton
-                        color="error"
-                        onClick={() => handleOpenDeleteModal(teacher)}
-                        size="small"
-                      >
-                        <DeleteIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />
-                      </IconButton>
-                    </Tooltip>
->>>>>>> 0b71f1a89e79b1953ce191e9f2c995c54e806288
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={4} align="center" sx={{ py: 5 }}>
+                    <CircularProgress size={30} />
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              ) : filteredTeachers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
+                    <Typography color="text.secondary">
+                      {searchTerm ? 'No teachers matching your search' : 'No teachers available'}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredTeachers.map((teacher, index) => (
+                  <TableRow 
+                    key={teacher.id || index}
+                    sx={{ '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
+                  >
+                    <TableCell padding="checkbox" sx={{ py: { xs: 1, sm: 1.5 } }}>
+                      <SchoolIcon style={{ color: '#4a6cf7', fontSize: 20 }} />
+                    </TableCell>
+                    <TableCell sx={{ py: { xs: 1, sm: 1.5 } }}>
+                      <Typography fontWeight="medium" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
+                        {teacher.name || 'Not specified'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ py: { xs: 1, sm: 1.5 }, fontSize: { xs: '0.875rem', sm: '1rem' } }}>
+                      {teacher.email}
+                    </TableCell>
+                    <TableCell align="center" sx={{ py: { xs: 1, sm: 1.5 } }}>
+                      <Tooltip title="Delete">
+                        <IconButton
+                          color="error"
+                          onClick={() => handleOpenDeleteModal(teacher)}
+                          size="small"
+                        >
+                          <DeleteIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </Box>
 
       {/* Delete Confirmation Modal */}
