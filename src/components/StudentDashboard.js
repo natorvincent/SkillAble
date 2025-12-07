@@ -17,15 +17,8 @@ import {
   Backdrop,
   Divider,
   Card,
-  CardContent,
-  CardActions,
-  CardMedia,
-  Chip,
-  LinearProgress,
 } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import StarIcon from '@mui/icons-material/Star';
 import PersonIcon from '@mui/icons-material/Person';
 import SchoolIcon from '@mui/icons-material/School';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -40,7 +33,7 @@ import backgroundMusic from '../assets/background-music.mp3';
 import hygieneImg from '../assets/studentDashboard/hygiene.png';
 import cookingImg from '../assets/studentDashboard/cooking.png';
 import householdImg from '../assets/studentDashboard/household.png';
-import sparkleImg from '../assets/sparkle.png'; // Import sparkle image
+import sparkleImg from '../assets/sparkle.png';
 
 // Simple audio hook to prevent infinite re-renders
 const useSimpleAudio = (audioFile) => {
@@ -88,31 +81,22 @@ const Sparkle = ({ position, index, isActive }) => {
 
   // Multiple position presets for more sparkles
   const positions = {
-    // Corner sparkles
     topLeft: { top: '-25px', left: '-25px' },
     topRight: { top: '-25px', right: '-25px' },
     bottomLeft: { bottom: '-25px', left: '-25px' },
     bottomRight: { bottom: '-25px', right: '-25px' },
-    
-    // Edge center sparkles
     topCenter: { top: '-25px', left: '50%', transform: 'translateX(-50%)' },
     bottomCenter: { bottom: '-25px', left: '50%', transform: 'translateX(-50%)' },
     leftCenter: { top: '50%', left: '-25px', transform: 'translateY(-50%)' },
     rightCenter: { top: '50%', right: '-25px', transform: 'translateY(-50%)' },
-    
-    // Diagonal sparkles
     topLeftInner: { top: '20px', left: '20px' },
     topRightInner: { top: '20px', right: '20px' },
     bottomLeftInner: { bottom: '20px', left: '20px' },
     bottomRightInner: { bottom: '20px', right: '20px' },
-    
-    // Middle edges
     topMiddle: { top: '50px', left: '50%', transform: 'translateX(-50%)' },
     bottomMiddle: { bottom: '50px', left: '50%', transform: 'translateX(-50%)' },
     leftMiddle: { top: '50%', left: '50px', transform: 'translateY(-50%)' },
     rightMiddle: { top: '50%', right: '50px', transform: 'translateY(-50%)' },
-    
-    // Random positions along edges
     random1: { top: '30%', left: '-20px' },
     random2: { top: '70%', right: '-20px' },
     random3: { top: '-20px', left: '30%' },
@@ -189,7 +173,6 @@ const generateSparklePositions = () => {
     'random1', 'random2', 'random3', 'random4', 'random5', 'random6'
   ];
   
-  // Take all positions for maximum sparkles
   return allPositions;
 };
 
@@ -213,12 +196,9 @@ function StudentDashboard() {
   const [hoveredModule, setHoveredModule] = useState(null);
   const [sparklePositions] = useState(generateSparklePositions());
   
-  // Use the simple audio hook
   const { audioPlaying, toggleAudio } = useSimpleAudio(backgroundMusic);
   const navigate = useNavigate();
   
-  // Refs to track navigation state and prevent loops
-  const navigationBlockedRef = useRef(false);
   const authCheckedRef = useRef(false);
   const profileModalShownRef = useRef(false);
   const roleSelectionShownRef = useRef(false);
@@ -226,9 +206,11 @@ function StudentDashboard() {
 
   const moduleImages = [hygieneImg, cookingImg, householdImg];
   const moduleTitles = ["Hygiene", "Cooking", "Household"];
-  const moduleRoutes = [1, 2, 3]; // Routes for each module
+  const moduleRoutes = [1, 2, 3];
 
-  // FIXED: Simplified authentication check - only run once
+  // Calculate minimum width for horizontal scrolling
+  const minWidth = moduleImages.length * 280; // 280px per module
+
   useEffect(() => {
     if (authCheckedRef.current) return;
     authCheckedRef.current = true;
@@ -256,11 +238,9 @@ function StudentDashboard() {
       fetchUserProfile(userEmail);
     };
 
-    // Use setTimeout to ensure this runs after component mount
     setTimeout(checkAuthentication, 0);
   }, [navigate]);
 
-  // FIXED: Profile completion check
   useEffect(() => {
     if (userProfile && !loading) {
       console.log("User profile loaded, complete:", isProfileComplete());
@@ -312,7 +292,6 @@ function StudentDashboard() {
     }
   };
 
-  // FIXED: Module fetching
   const fetchModules = async () => {
     if (modulesFetchedRef.current && modules.length > 0) return;
     
@@ -336,7 +315,6 @@ function StudentDashboard() {
       const modulesData = await availableResponse.json();
       console.log("Modules data received:", modulesData);
       
-      // Use the simplified utility function to get all progress
       const studentId = localStorage.getItem('studentId') || userProfile?.id;
       const progressMap = await getAllModuleProgress(studentId, modulesData);
       
@@ -346,7 +324,6 @@ function StudentDashboard() {
       
     } catch (err) {
       console.error("Error fetching modules:", err);
-      // Set default progress for all modules on error
       const progressMap = {};
       if (modules && modules.length > 0) {
         modules.forEach(module => {
@@ -358,7 +335,6 @@ function StudentDashboard() {
     }
   };
 
-  // Default progress function
   const getDefaultModuleProgress = () => {
     return {
       completed: false,
@@ -398,7 +374,6 @@ function StudentDashboard() {
         throw new Error("Failed to update profile");
       }
 
-      // Update local user profile state
       setUserProfile(prev => ({
         ...prev,
         firstName,
@@ -410,7 +385,6 @@ function StudentDashboard() {
       setOpenSnackbar(true);
       setOpenProfileModal(false);
       
-      // Show role selection after profile is saved
       console.log("Profile saved, showing role selection");
       setShowRoleSelection(true);
       roleSelectionShownRef.current = true;
@@ -454,7 +428,6 @@ function StudentDashboard() {
         throw new Error("Failed to set role");
       }
 
-      // Save role locally
       localStorage.setItem("userRole", tempSelectedRole);
       setShowRoleSelection(false);
       setSavingRole(false);
@@ -466,7 +439,6 @@ function StudentDashboard() {
 
         setTimeout(() => {
           console.log("Redirecting to teacher dashboard");
-          // Redirect to teacher dashboard without clearing auth data
           window.location.href = "/teacherdashboard";
         }, 1500);
       } else {
@@ -474,7 +446,6 @@ function StudentDashboard() {
         setOpenSnackbar(true);
 
         setTimeout(() => {
-          // Reload to reset all state for student
           window.location.reload();
         }, 1500);
       }
@@ -494,7 +465,6 @@ function StudentDashboard() {
   };
 
   const handleCloseProfileModal = () => {
-    // Don't allow closing if profile is incomplete
     if (!isProfileComplete()) {
       setError("Please complete your profile before proceeding");
       setOpenSnackbar(true);
@@ -509,21 +479,11 @@ function StudentDashboard() {
     return complete;
   };
 
-  // FIXED: Navigation function - completely simplified
-  const handleStartModule = (moduleId) => {
-    console.log("Starting module:", moduleId);
-    
-    // Use a simple navigation without any complex logic
-    navigate(`/module/${moduleId}`);
-  };
-
-  // Handle module image click
   const handleModuleClick = (moduleRoute) => {
     console.log(`Navigating to module: ${moduleRoute}`);
     navigate(`/module/${moduleRoute}`);
   };
 
-  // Handle module hover
   const handleModuleHover = (index) => {
     setHoveredModule(index);
   };
@@ -553,8 +513,6 @@ function StudentDashboard() {
         overflow: "hidden",
         minHeight: "100vh",
         width: "100%",
-        height: "100vh",
-        overflowY: "hidden"
       }}
     >
       <div
@@ -572,26 +530,43 @@ function StudentDashboard() {
       <div style={{ position: "relative", zIndex: 1, minHeight: "100vh" }}>
         <Navbar />
         
-        <Container maxWidth="lg" sx={{ paddingTop: { xs: 3, sm: 4, md: 5 }, paddingBottom: { xs: 3, sm: 4, md: 5 }, px: { xs: 2, sm: 3 } }}> 
+        <Container maxWidth={false} sx={{ 
+          paddingTop: { xs: 3, sm: 4, md: 5 }, 
+          paddingBottom: { xs: 3, sm: 4, md: 5 }, 
+          px: { xs: 2, sm: 3 },
+          maxWidth: '100% !important',
+          overflowX: 'auto'
+        }}> 
         <Paper 
           sx={{ 
             padding: { xs: 1, sm: 2 }, 
             backgroundColor: "transparent",
             mb: { xs: 2, sm: 3, md: 4 },
             boxShadow: "none",
-            marginLeft: { xs: 0, sm: '-20px', md: '-40px', lg: '-200px' }
+            marginLeft: { xs: 0, sm: '-20px', md: '-40px', lg: '-200px' },
+            overflowX: 'auto',
           }}
         >
           <AudioToggleButton audioPlaying={audioPlaying} toggleAudio={toggleAudio} />
           
-          <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ 
-            justifyContent: 'center',
-          }}>
+          <Grid 
+            container 
+            spacing={{ xs: 2, sm: 3, md: 4 }} 
+            sx={{ 
+              flexWrap: 'nowrap',
+              justifyContent: { xs: 'flex-start', sm: 'center' },
+              minWidth: { xs: `${minWidth}px`, sm: 'auto' },
+              width: { xs: `${minWidth}px`, sm: '100%' },
+            }}
+          >
             {moduleImages.map((image, index) => (
-              <Grid item key={index} xs={12} sm={6} md={4} lg={3} sx={{ 
-                display: 'flex',
-                justifyContent: 'center',
-                width: '100%'
+              <Grid item key={index} sx={{ 
+                flex: '0 0 auto',
+                width: { 
+                  xs: '240px',
+                  sm: '260px',
+                  md: '280px'
+                },
               }}>
                 <Box
                   onClick={() => handleModuleClick(moduleRoutes[index])}
@@ -601,10 +576,8 @@ function StudentDashboard() {
                     position: 'relative',
                     height: { xs: '240px', sm: '260px', md: '280px' },
                     width: '100%',
-                    maxWidth: { xs: '100%', sm: '280px', md: '260px' },
                     borderRadius: { xs: '12px', sm: '15px', md: '20px' },
                     overflow: 'visible',
-                    margin: '0 auto',
                     transition: 'transform 0.3s ease, scale 0.3s ease',
                     cursor: 'pointer',
                     transform: hoveredModule === index ? 'scale(1.05)' : 'scale(1)',
