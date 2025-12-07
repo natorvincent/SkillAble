@@ -278,7 +278,7 @@ export default function CookingLevel2() {
       actionText: 'Tap to Chop',
       progressText: `${springOnionChops}/${requiredChops} chops`,
       encouragement: 'Keep chopping!',
-      intro: "🥬 This is a spring onion! We need to chop it finely to add fresh flavor to our dish. Tap repeatedly to chop!"
+      intro: "🥬 First, let's chop the spring onion! Tap it repeatedly to chop it into small pieces. Be careful with the knife!"
     },
     {
       id: 'egg', 
@@ -288,7 +288,7 @@ export default function CookingLevel2() {
       actionText: 'Tap to Crack',
       progressText: eggCracked ? 'Cracked into bowl' : 'Ready to crack',
       encouragement: 'Crack into bowl!',
-      intro: "🥚 Here's our egg! We need to crack it carefully into the bowl. Tap once to crack it open!"
+      intro: "🥚 Now, let's crack the egg! Tap once to crack it into the bowl. We need it ready for cooking!"
     },
     {
       id: 'salt',
@@ -298,7 +298,7 @@ export default function CookingLevel2() {
       actionText: 'Tap to Shake',
       progressText: `${saltShakes}/${requiredShakes} shakes`,
       encouragement: 'Season well!',
-      intro: "🧂 This is salt! It brings out all the delicious flavors. Tap to shake just the right amount!"
+      intro: "🧂 Finally, let's season with salt! Tap to shake the salt shaker. Not too much, just enough for flavor!"
     }
   ];
 
@@ -449,9 +449,10 @@ export default function CookingLevel2() {
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
-      backgroundAttachment: 'fixed',
       position: 'relative',
-      fontFamily: 'Arial, sans-serif'
+      fontFamily: 'Arial, sans-serif',
+      overflow: 'hidden', // Prevent any scrolling
+      height: '100vh' // Full viewport height
     }}>
       {/* Background Dim Overlay */}
       <div style={{
@@ -561,10 +562,16 @@ export default function CookingLevel2() {
         top: '140px',
         left: 'calc(50% + 620px)',
         zIndex: 50,
-        opacity: 1, // Always visible
-        transform: 'translateX(0)', // Always in position
+        opacity: 1,
+        transform: 'translateX(0)',
         transition: 'all 0.3s ease',
-        pointerEvents: 'auto' // Always interactive
+        pointerEvents: 'auto',
+        '@media (max-width: 1400px)': {
+          left: 'calc(50% + 500px)'
+        },
+        '@media (max-width: 1200px)': {
+          display: 'none' // Hide on smaller screens to save space
+        }
       }}>
         {/* Baconardo's Message Bubble */}
         <div style={{
@@ -579,7 +586,11 @@ export default function CookingLevel2() {
           boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
           animation: baconardoAnimation === 'idle' ? 'baconardoIdle 3s ease-in-out infinite' : 
                     baconardoAnimation === 'nod' ? 'baconardoNod 0.5s ease-out' :
-                    baconardoAnimation === 'celebrate' ? 'baconardoCelebrate 1s ease-out' : 'none'
+                    baconardoAnimation === 'celebrate' ? 'baconardoCelebrate 1s ease-out' : 'none',
+          '@media (max-width: 1400px)': {
+            width: '250px',
+            padding: '12px 16px'
+          }
         }}>
           <p style={{
             margin: 0,
@@ -624,7 +635,11 @@ export default function CookingLevel2() {
             cursor: 'pointer',
             animation: baconardoAnimation === 'idle' ? 'baconardoIdle 3s ease-in-out infinite' : 
                       baconardoAnimation === 'nod' ? 'baconardoNod 0.5s ease-out' :
-                      baconardoAnimation === 'celebrate' ? 'baconardoCelebrate 1s ease-out' : 'none'
+                      baconardoAnimation === 'celebrate' ? 'baconardoCelebrate 1s ease-out' : 'none',
+            '@media (max-width: 1400px)': {
+              width: '100px',
+              height: '100px'
+            }
           }}
           onClick={() => showBaconardoFeedback("I'm Chef Baconardo! Let me help you prepare these ingredients. Follow my guidance for perfect preparation! 🥓", 'nod')}
           title="Click me for cooking tips! - Chef Baconardo"
@@ -663,101 +678,167 @@ export default function CookingLevel2() {
         </button>
       </div>
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 1, padding: '20px', paddingTop: '100px' }}>
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-          <h1 style={{ 
-            fontSize: '48px', 
-            fontWeight: 'bold', 
-            color: '#8B4513', 
-            marginBottom: '20px',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
-          }}>
-            Level 2: Prepare Ingredients
-          </h1>
-          
+      {/* Main Game Container - Fully Responsive */}
+      <div style={{
+        position: 'absolute',
+        top: '80px', // Below navbar
+        left: '20px',
+        right: '20px',
+        bottom: '90px', // Space for control bar
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '10px',
+        overflow: 'hidden'
+      }}>
+        
+        {/* Header Section - Compact and Responsive */}
+        <div style={{
+          width: '100%',
+          maxWidth: '800px',
+          marginBottom: '10px'
+        }}>
+          {/* Level Title and Progress - Compact Row */}
           <div style={{
-            display: 'inline-block',
-            backgroundColor: '#FF8F00',
-            color: 'white',
-            fontWeight: 'bold',
-            padding: '12px 24px',
-            borderRadius: '25px',
-            fontSize: '18px',
-            marginBottom: '30px',
-            boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            borderRadius: '12px',
+            padding: '8px 16px',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+            marginBottom: '8px'
           }}>
-            Ingredient Preparation {!isMuted && <span>🔊</span>}
-          </div>
-
-          {/* Progress Bar */}
-          <div style={{ maxWidth: '400px', margin: '0 auto 30px' }}>
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center', 
-              marginBottom: '8px' 
-            }}>
-              <span style={{ color: '#8B4513', fontWeight: 'bold' }}>
-                Step {currentIngredientIndex + 1} of {totalIngredients}
-              </span>
-              <span style={{ color: '#8B4513' }}>
-                {Math.round(progressPercentage)}%
-              </span>
-            </div>
             <div style={{
-              width: '100%',
-              height: '12px',
-              backgroundColor: 'rgba(139, 69, 19, 0.3)',
-              borderRadius: '6px',
-              overflow: 'hidden'
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
             }}>
               <div style={{
-                width: `${progressPercentage}%`,
-                height: '100%',
-                backgroundColor: '#4CAF50',
-                transition: 'width 0.5s ease'
-              }} />
+                backgroundColor: '#FF8F00',
+                color: 'white',
+                width: '28px',
+                height: '28px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 'bold',
+                fontSize: '14px'
+              }}>
+                2
+              </div>
+              <h1 style={{
+                fontSize: '18px',
+                fontWeight: 'bold',
+                color: '#8B4513',
+                margin: 0
+              }}>
+                Level 2: Prepare Ingredients
+              </h1>
+            </div>
+            
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <span style={{
+                fontSize: '14px',
+                fontWeight: 'bold',
+                color: '#FF8F00'
+              }}>
+                {completedCount}/{totalIngredients}
+              </span>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <CircularProgress 
+                  variant="determinate" 
+                  value={progressPercentage}
+                  size={40}
+                  thickness={4}
+                  sx={{ 
+                    color: '#4CAF50',
+                    position: 'absolute'
+                  }}
+                />
+                <span style={{
+                  fontSize: '11px',
+                  fontWeight: 'bold',
+                  color: '#8B4513'
+                }}>
+                  {Math.round(progressPercentage)}%
+                </span>
+              </div>
             </div>
           </div>
 
-          <p style={{ 
-            color: '#8B4513', 
-            fontSize: '18px', 
-            marginBottom: '30px',
+          {/* Current Step Indicator - Very Compact */}
+          <div style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.85)',
+            borderRadius: '8px',
+            padding: '8px 12px',
+            marginBottom: '8px',
+            borderLeft: '3px solid #2196F3',
             textAlign: 'center'
           }}>
-            {getCurrentIngredientCompleted() ? 
-              'Moving to next ingredient...' : 
-              `Prepare the ${currentIngredient.name.toLowerCase()}!`}
+            <p style={{
+              margin: 0,
+              color: '#8B4513',
+              fontSize: '14px',
+              fontWeight: '500'
+            }}>
+              {currentIngredient.intro}
+            </p>
+          </div>
+
+          {/* Task Instruction */}
+          <p style={{ 
+            color: '#8B4513', 
+            fontSize: '14px', 
+            fontWeight: 'bold',
+            margin: 0,
+            textAlign: 'center'
+          }}>
+            Prepare the {currentIngredient.name.toLowerCase()}!
           </p>
         </div>
 
-        {/* Current Ingredient Display */}
+        {/* Main Ingredient Display - Centered and Responsive */}
         <div style={{
-          maxWidth: '500px',
-          margin: '0 auto 40px',
+          flex: 1,
           display: 'flex',
-          justifyContent: 'center'
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
+          maxWidth: '500px',
+          margin: '10px 0'
         }}>
           <div 
             onClick={handleIngredientAction}
             style={{
               position: 'relative',
-              backgroundColor: getCurrentIngredientCompleted() ? 'rgba(232, 245, 232, 0.8)' : 'rgba(255, 255, 255, 0.2)',
-              backdropFilter: 'blur(10px)',
-              border: `4px solid ${getCurrentIngredientCompleted() ? '#4CAF50' : '#FF8F00'}`,
-              borderRadius: '20px',
-              padding: '40px',
+              backgroundColor: getCurrentIngredientCompleted() ? 'rgba(232, 245, 232, 0.9)' : 'rgba(255, 255, 255, 0.85)',
+              backdropFilter: 'blur(5px)',
+              border: `3px solid ${getCurrentIngredientCompleted() ? '#4CAF50' : '#FF8F00'}`,
+              borderRadius: '16px',
+              padding: '20px',
               cursor: getCurrentIngredientCompleted() ? 'default' : 'pointer',
-              minHeight: '400px',
               width: '100%',
-              maxWidth: '400px',
+              maxWidth: '320px',
               display: 'flex',
               flexDirection: 'column',
-              justifyContent: 'space-between',
+              alignItems: 'center',
               textAlign: 'center',
-              boxShadow: '0 12px 24px rgba(0,0,0,0.2)',
+              boxShadow: '0 6px 16px rgba(0,0,0,0.2)',
               transform: (onionAnimation && currentIngredientIndex === 0) || 
                          (eggAnimation && currentIngredientIndex === 1) || 
                          (saltAnimation && currentIngredientIndex === 2) ? 'scale(1.05)' : 'scale(1)',
@@ -768,186 +849,174 @@ export default function CookingLevel2() {
             {getCurrentIngredientCompleted() && (
               <div style={{
                 position: 'absolute',
-                top: '20px',
-                right: '20px',
+                top: '12px',
+                right: '12px',
                 backgroundColor: '#4CAF50',
                 color: 'white',
                 borderRadius: '50%',
-                width: '40px',
-                height: '40px',
+                width: '30px',
+                height: '30px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontWeight: 'bold',
-                fontSize: '20px'
+                fontSize: '16px'
               }}>
                 ✓
               </div>
             )}
 
-            <div>
-              <h2 style={{ 
-                fontSize: '32px', 
-                fontWeight: 'bold', 
-                color: '#8B4513', 
-                marginBottom: '30px' 
-              }}>
-                {currentIngredient.name}
-              </h2>
-              
-              {/* Dynamic Image */}
-              <div style={{
-                width: '150px',
-                height: '150px',
-                margin: '0 auto 30px',
-                backgroundColor: getCurrentIngredientCompleted() ? '#F0F8F0' : '#FFF8DC',
-                borderRadius: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: `4px solid ${getCurrentIngredientCompleted() ? '#4CAF50' : '#FF8F00'}`,
-                position: 'relative',
-                overflow: 'hidden',
-                transform: (onionAnimation && currentIngredientIndex === 0) ? 'rotate(5deg)' :
-                          (eggAnimation && currentIngredientIndex === 1) ? 'rotate(2deg)' :
-                          (saltAnimation && currentIngredientIndex === 2) ? 'rotate(-10deg)' : 'rotate(0deg)',
-                transition: 'all 0.3s ease'
-              }}>
-                {/* Knife Animation for Onion */}
-                {currentIngredientIndex === 0 && !getCurrentIngredientCompleted() && (
-                  <div style={{
-                    position: 'absolute',
-                    top: knifeChop ? '60px' : '-20px',
-                    right: '10px',
-                    width: '60px',
+            {/* Ingredient Name */}
+            <h2 style={{ 
+              fontSize: '24px', 
+              fontWeight: 'bold', 
+              color: '#8B4513', 
+              marginBottom: '20px',
+              marginTop: '0'
+            }}>
+              {currentIngredient.name}
+            </h2>
+            
+            {/* Dynamic Image Container */}
+            <div style={{
+              width: '120px',
+              height: '120px',
+              margin: '0 auto 20px',
+              backgroundColor: getCurrentIngredientCompleted() ? '#F0F8F0' : '#FFF8DC',
+              borderRadius: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: `3px solid ${getCurrentIngredientCompleted() ? '#4CAF50' : '#FF8F00'}`,
+              position: 'relative',
+              overflow: 'hidden',
+              transform: (onionAnimation && currentIngredientIndex === 0) ? 'rotate(5deg)' :
+                        (eggAnimation && currentIngredientIndex === 1) ? 'rotate(2deg)' :
+                        (saltAnimation && currentIngredientIndex === 2) ? 'rotate(-10deg)' : 'rotate(0deg)',
+              transition: 'all 0.3s ease'
+            }}>
+              {/* Knife Animation for Onion */}
+              {currentIngredientIndex === 0 && !getCurrentIngredientCompleted() && (
+                <div style={{
+                  position: 'absolute',
+                  top: knifeChop ? '50px' : '-15px',
+                  right: '8px',
+                  width: '50px',
+                  height: '65px',
+                  transition: 'top 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  transform: 'rotate(-45deg)',
+                  zIndex: 10,
+                  filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))'
+                }}>
+                  <img 
+                    src={knifeImg}
+                    alt="Knife"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain'
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Onion chopping pieces animation */}
+              {currentIngredientIndex === 0 && !getCurrentIngredientCompleted() && (
+                <>
+                  {/* Main onion that gets smaller with each chop */}
+                  <img 
+                    src={springOnionImg}
+                    alt="Spring Onion"
+                    style={{
+                      width: `${80 - (springOnionChops * 12)}px`,
+                      height: `${80 - (springOnionChops * 12)}px`,
+                      objectFit: 'contain',
+                      opacity: springOnionChops >= requiredChops ? 0 : 1,
+                      transition: 'all 0.3s ease',
+                      filter: onionAnimation ? 'blur(2px)' : 'none'
+                    }}
+                  />
+                  
+                  {/* Chopped pieces that appear with each tap */}
+                  {onionPieces.map((piece) => (
+                    <div
+                      key={piece.id}
+                      style={{
+                        position: 'absolute',
+                        left: `${piece.left}%`,
+                        top: `${piece.top}%`,
+                        width: `${piece.size}px`,
+                        height: `${piece.size}px`,
+                        backgroundImage: `url(${springOnionChoppedImg})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        borderRadius: '50%',
+                        transform: `rotate(${piece.rotation}deg)`,
+                        animation: 'pieceAppear 0.3s ease-out',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                      }}
+                    />
+                  ))}
+                </>
+              )}
+
+              {/* Show completed chopped onion */}
+              {currentIngredientIndex === 0 && getCurrentIngredientCompleted() && (
+                <img 
+                  src={currentIngredient.afterImage}
+                  alt={currentIngredient.name}
+                  style={{
+                    width: '80px',
                     height: '80px',
-                    transition: 'top 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    transform: 'rotate(-45deg)',
-                    zIndex: 10,
-                    filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))'
-                  }}>
-                    <img 
-                      src={knifeImg}
-                      alt="Knife"
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'contain'
-                      }}
-                    />
-                  </div>
-                )}
+                    objectFit: 'contain'
+                  }}
+                />
+              )}
 
-                {/* Onion chopping pieces animation */}
-                {currentIngredientIndex === 0 && !getCurrentIngredientCompleted() && (
-                  <>
-                    {/* Main onion that gets smaller with each chop */}
-                    <img 
-                      src={springOnionImg}
-                      alt="Spring Onion"
-                      style={{
-                        width: `${100 - (springOnionChops * 15)}px`,
-                        height: `${100 - (springOnionChops * 15)}px`,
-                        objectFit: 'contain',
-                        opacity: springOnionChops >= requiredChops ? 0 : 1,
-                        transition: 'all 0.3s ease',
-                        filter: onionAnimation ? 'blur(2px)' : 'none'
-                      }}
-                    />
-                    
-                    {/* Chopped pieces that appear with each tap */}
-                    {onionPieces.map((piece) => (
-                      <div
-                        key={piece.id}
-                        style={{
-                          position: 'absolute',
-                          left: `${piece.left}%`,
-                          top: `${piece.top}%`,
-                          width: `${piece.size}px`,
-                          height: `${piece.size}px`,
-                          backgroundImage: `url(${springOnionChoppedImg})`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center',
-                          borderRadius: '50%',
-                          transform: `rotate(${piece.rotation}deg)`,
-                          animation: 'pieceAppear 0.3s ease-out',
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                        }}
-                      />
-                    ))}
-                  </>
-                )}
+              {/* Show other ingredients normally */}
+              {currentIngredientIndex !== 0 && (
+                <img 
+                  src={getCurrentIngredientCompleted() ? currentIngredient.afterImage : currentIngredient.beforeImage}
+                  alt={currentIngredient.name}
+                  style={{
+                    width: '80px',
+                    height: '80px',
+                    objectFit: 'contain'
+                  }}
+                />
+              )}
+            </div>
 
-                {/* Show completed chopped onion */}
-                {currentIngredientIndex === 0 && getCurrentIngredientCompleted() && (
-                  <img 
-                    src={currentIngredient.afterImage}
-                    alt={currentIngredient.name}
-                    style={{
-                      width: '100px',
-                      height: '100px',
-                      objectFit: 'contain'
-                    }}
-                  />
-                )}
-
-                {/* Show other ingredients normally */}
-                {currentIngredientIndex !== 0 && (
-                  <img 
-                    src={getCurrentIngredientCompleted() ? currentIngredient.afterImage : currentIngredient.beforeImage}
-                    alt={currentIngredient.name}
-                    style={{
-                      width: '100px',
-                      height: '100px',
-                      objectFit: 'contain'
-                    }}
-                  />
-                )}
-
-                {/* Sound effect indicator */}
-                {!getCurrentIngredientCompleted() && !isMuted && (
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '-10px',
-                    right: '-10px',
-                    backgroundColor: '#FF8F00',
-                    color: 'white',
-                    borderRadius: '50%',
-                    width: '30px',
-                    height: '30px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '14px',
-                    animation: currentIngredientIndex === 0 && onionAnimation ? 'pulse 0.3s ease' :
-                              currentIngredientIndex === 1 && eggAnimation ? 'pulse 0.5s ease' :
-                              currentIngredientIndex === 2 && saltAnimation ? 'pulse 0.4s ease' : 'none'
-                  }}>
-                    🔊
-                  </div>
-                )}
-              </div>
-
+            {/* Action Button/Text */}
+            <div style={{
+              marginBottom: '10px',
+              width: '100%'
+            }}>
               <p style={{ 
                 color: '#8B4513', 
                 fontWeight: 'bold', 
-                marginBottom: '15px',
-                fontSize: '20px'
+                fontSize: '18px',
+                marginBottom: '6px'
               }}>
                 {getCurrentIngredientCompleted() ? 'Completed!' : currentIngredient.actionText}
               </p>
               
-              <p style={{ color: '#666', fontSize: '16px', marginBottom: '15px' }}>
+              <p style={{ 
+                color: '#666', 
+                fontSize: '14px', 
+                marginBottom: '6px'
+              }}>
                 {currentIngredient.progressText}
               </p>
             </div>
 
+            {/* Encouragement Text */}
             {!getCurrentIngredientCompleted() && (
               <p style={{ 
                 color: '#FF8F00', 
                 fontStyle: 'italic', 
-                fontSize: '16px',
-                marginTop: '20px'
+                fontSize: '14px',
+                marginTop: '6px'
               }}>
                 {currentIngredient.encouragement}
               </p>
@@ -955,21 +1024,17 @@ export default function CookingLevel2() {
           </div>
         </div>
 
-        {/* Completed Ingredients Preview */}
+        {/* Completed Steps Preview - Only show when relevant */}
         {currentIngredientIndex > 0 && (
-          <div style={{ marginBottom: '30px' }}>
-            <h3 style={{ 
-              textAlign: 'center', 
-              color: '#8B4513', 
-              marginBottom: '20px',
-              fontSize: '20px'
-            }}>
-              Completed Steps:
-            </h3>
+          <div style={{
+            width: '100%',
+            maxWidth: '500px',
+            marginBottom: '10px'
+          }}>
             <div style={{
               display: 'flex',
               justifyContent: 'center',
-              gap: '15px',
+              gap: '10px',
               flexWrap: 'wrap'
             }}>
               {ingredients.slice(0, currentIngredientIndex).map((ingredient) => (
@@ -977,21 +1042,21 @@ export default function CookingLevel2() {
                   display: 'flex',
                   alignItems: 'center',
                   backgroundColor: '#E8F5E8',
-                  padding: '8px 15px',
-                  borderRadius: '20px',
+                  padding: '4px 10px',
+                  borderRadius: '16px',
                   border: '2px solid #4CAF50'
                 }}>
                   <img 
                     src={ingredient.afterImage}
                     alt={ingredient.name}
                     style={{
-                      width: '30px',
-                      height: '30px',
+                      width: '20px',
+                      height: '20px',
                       objectFit: 'contain',
-                      marginRight: '8px'
+                      marginRight: '6px'
                     }}
                   />
-                  <span style={{ color: '#2E7D32', fontWeight: 'bold' }}>
+                  <span style={{ color: '#2E7D32', fontWeight: 'bold', fontSize: '12px' }}>
                     {ingredient.name} ✓
                   </span>
                 </div>
@@ -999,243 +1064,254 @@ export default function CookingLevel2() {
             </div>
           </div>
         )}
+      </div>
 
-        {/* Floating Bottom Control Bar */}
-        <Box sx={{
-          position: 'fixed',
-          bottom: 20,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 100,
-          display: 'flex',
-          gap: 2,
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          padding: '12px 24px',
-          borderRadius: '30px',
-          backdropFilter: 'blur(10px)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-          border: '2px solid rgba(255, 255, 255, 0.5)'
-        }}>
+      {/* Fixed Bottom Control Bar - Responsive */}
+      <Box sx={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 100,
+        display: 'flex',
+        justifyContent: 'center',
+        gap: 1,
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        padding: '10px',
+        backdropFilter: 'blur(10px)',
+        boxShadow: '0 -4px 16px rgba(0,0,0,0.2)',
+        borderTop: '2px solid rgba(255, 255, 255, 0.5)'
+      }}>
+        <Button
+          onClick={() => showBaconardoFeedback(currentIngredient.intro, 'nod')}
+          variant="contained"
+          size="small"
+          sx={{
+            backgroundColor: '#2196F3',
+            borderRadius: '16px',
+            minWidth: '80px',
+            fontSize: '12px',
+            padding: '6px 12px',
+            '&:hover': { backgroundColor: '#1976D2' }
+          }}
+        >
+          💡 Help
+        </Button>
+        <Button
+          onClick={resetGame}
+          variant="contained"
+          size="small"
+          sx={{
+            backgroundColor: '#FF9800',
+            borderRadius: '16px',
+            minWidth: '80px',
+            fontSize: '12px',
+            padding: '6px 12px',
+            '&:hover': { backgroundColor: '#F57C00' }
+          }}
+        >
+          🔄 Reset
+        </Button>
+        <Button
+          onClick={goToHomepage}
+          variant="contained"
+          size="small"
+          sx={{
+            backgroundColor: '#9C27B0',
+            borderRadius: '16px',
+            minWidth: '80px',
+            fontSize: '12px',
+            padding: '6px 12px',
+            '&:hover': { backgroundColor: '#7B1FA2' }
+          }}
+        >
+          🏠 Home
+        </Button>
+        
+        {(completedTasks.onion && completedTasks.egg && completedTasks.salt) && (
           <Button
-            onClick={() => showBaconardoFeedback(currentIngredient.intro, 'nod')}
+            onClick={continueToNextLevel}
+            disabled={progressSaving}
             variant="contained"
-            size="medium"
+            size="small"
             sx={{
-              backgroundColor: '#2196F3',
-              borderRadius: '20px',
+              backgroundColor: '#4CAF50',
+              borderRadius: '16px',
               minWidth: '100px',
-              '&:hover': { backgroundColor: '#1976D2' }
+              fontSize: '12px',
+              padding: '6px 12px',
+              '&:hover': { backgroundColor: '#45a049' },
+              animation: 'pulse 2s infinite'
             }}
           >
-            💡 Help
+            {progressSaving ? 'Saving...' : '🚀 Next'}
           </Button>
-          <Button
-            onClick={resetGame}
-            variant="contained"
-            size="medium"
-            sx={{
-              backgroundColor: '#FF9800',
-              borderRadius: '20px',
-              minWidth: '100px',
-              '&:hover': { backgroundColor: '#F57C00' }
-            }}
-          >
-            🔄 Reset
-          </Button>
-          <Button
-            onClick={goToHomepage}
-            variant="contained"
-            size="medium"
-            sx={{
-              backgroundColor: '#9C27B0',
-              borderRadius: '20px',
-              minWidth: '100px',
-              '&:hover': { backgroundColor: '#7B1FA2' }
-            }}
-          >
-            🏠 Home
-          </Button>
-          
-          {(completedTasks.onion && completedTasks.egg && completedTasks.salt) && (
-            <Button
-              onClick={continueToNextLevel}
-              disabled={progressSaving}
-              variant="contained"
-              size="medium"
-              sx={{
-                backgroundColor: '#4CAF50',
-                borderRadius: '20px',
-                minWidth: '120px',
-                '&:hover': { backgroundColor: '#45a049' },
-                animation: 'pulse 2s infinite'
-              }}
-            >
-              {progressSaving ? 'Saving...' : '🚀 Next Level'}
-            </Button>
-          )}
-        </Box>
-
-        {/* Confetti Animation */}
-        {showConfetti && (
-          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 1500 }}>
-            {[...Array(50)].map((_, i) => (
-              <div
-                key={i}
-                style={{
-                  position: 'absolute',
-                  top: '-10px',
-                  left: `${Math.random() * 100}%`,
-                  width: `${Math.random() * 8 + 4}px`,
-                  height: `${Math.random() * 8 + 4}px`,
-                  backgroundColor: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FF9800', '#4CAF50'][Math.floor(Math.random() * 8)],
-                  borderRadius: Math.random() > 0.5 ? '50%' : '0%',
-                  animation: `confettiFall ${Math.random() * 2 + 2}s linear infinite`,
-                  animationDelay: `${Math.random() * 2}s`,
-                  transform: `rotate(${Math.random() * 360}deg)`,
-                  opacity: Math.random() * 0.8 + 0.2
-                }}
-              />
-            ))}
-          </div>
         )}
+      </Box>
 
-        {/* Success Modal */}
-        {showCompletion && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: '20px',
-            pointerEvents: 'auto' 
-          }}>
-            <div 
+      {/* Confetti Animation */}
+      {showConfetti && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 1500 }}>
+          {[...Array(30)].map((_, i) => (
+            <div
+              key={i}
               style={{
-                backgroundColor: 'white',
-                borderRadius: '20px',
-                padding: '40px',
-                maxWidth: '500px',
-                width: '100%',
-                textAlign: 'center',
-                border: '4px solid #4CAF50',
-                boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+                position: 'absolute',
+                top: '-10px',
+                left: `${Math.random() * 100}%`,
+                width: `${Math.random() * 6 + 3}px`,
+                height: `${Math.random() * 6 + 3}px`,
+                backgroundColor: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FF9800', '#4CAF50'][Math.floor(Math.random() * 8)],
+                borderRadius: Math.random() > 0.5 ? '50%' : '0%',
+                animation: `confettiFall ${Math.random() * 2 + 2}s linear infinite`,
+                animationDelay: `${Math.random() * 2}s`,
+                transform: `rotate(${Math.random() * 360}deg)`,
+                opacity: Math.random() * 0.8 + 0.2
               }}
-            >
-              <div style={{ fontSize: '80px', marginBottom: '20px' }}>🏆</div>
-              
-              <h2 style={{ 
-                fontSize: '36px', 
-                fontWeight: 'bold', 
-                color: '#2E7D32', 
-                marginBottom: '20px' 
-              }}>
-                Level 2 Complete!
-              </h2>
-              
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                marginBottom: '20px', 
-                fontSize: '32px' 
-              }}>
-                <span style={{ margin: '0 5px' }}>⭐</span>
-                <span style={{ margin: '0 5px' }}>⭐</span>
-                <span style={{ margin: '0 5px' }}>⭐</span>
-              </div>
-              
-              <h3 style={{ 
-                fontSize: '24px', 
-                fontWeight: 'bold', 
-                color: '#2E7D32', 
-                marginBottom: '20px' 
-              }}>
-                Ingredients are ready to cook!
-              </h3>
-              
-              <p style={{ 
-                color: '#5D4037', 
-                fontSize: '16px', 
-                marginBottom: '20px',
-                lineHeight: '1.5'
-              }}>
-                You have successfully prepared all the ingredients: chopped spring onion, cracked egg, and shaken salt.
-              </p>
-              
-              <p style={{ color: '#5D4037', fontSize: '16px', marginBottom: '30px' }}>
-                Ready for Level 3 - Let's start cooking!
-              </p>
+            />
+          ))}
+        </div>
+      )}
 
-              {progressSaving && (
-                <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(33, 150, 243, 0.9)', borderRadius: '12px', color: 'white' }}>
-                  <CircularProgress size={16} sx={{ mr: 1, color: 'white' }} />
-                  <Typography variant="body2">Saving your progress...</Typography>
-                </Box>
-              )}
-              
-              {progressSaved && (
-                <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(76, 175, 80, 0.9)', borderRadius: '12px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <CheckCircleIcon sx={{ mr: 1, fontSize: 20 }} />
-                  <Typography variant="body2">Progress saved successfully!</Typography>
-                </Box>
-              )}
-              
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '20px', flexWrap: 'wrap' }}>
-                <Button 
-                  onClick={continueToNextLevel}
-                  disabled={progressSaving}
-                  variant="contained"
-                  size="large"
-                  sx={{ 
-                    backgroundColor: '#4CAF50',
-                    borderRadius: '15px',
-                    minWidth: '120px',
-                    '&:hover': { backgroundColor: '#45a049' }
-                  }}
-                >
-                  {progressSaving ? 'Saving...' : '🚀 Next Level'}
-                </Button>
-                <Button 
-                  onClick={resetGame}
-                  variant="outlined"
-                  size="large"
-                  sx={{ 
-                    borderColor: '#FF9800', 
-                    color: '#FF9800',
-                    borderRadius: '15px',
-                    minWidth: '120px',
+      {/* Success Modal */}
+      {showCompletion && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '20px',
+          pointerEvents: 'auto' 
+        }}>
+          <div 
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '20px',
+              padding: '30px',
+              maxWidth: '400px',
+              width: '100%',
+              textAlign: 'center',
+              border: '4px solid #4CAF50',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+            }}
+          >
+            <div style={{ fontSize: '60px', marginBottom: '15px' }}>🏆</div>
+            
+            <h2 style={{ 
+              fontSize: '28px', 
+              fontWeight: 'bold', 
+              color: '#2E7D32', 
+              marginBottom: '15px' 
+            }}>
+              Level 2 Complete!
+            </h2>
+            
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              marginBottom: '15px', 
+              fontSize: '24px' 
+            }}>
+              <span style={{ margin: '0 3px' }}>⭐</span>
+              <span style={{ margin: '0 3px' }}>⭐</span>
+              <span style={{ margin: '0 3px' }}>⭐</span>
+            </div>
+            
+            <h3 style={{ 
+              fontSize: '18px', 
+              fontWeight: 'bold', 
+              color: '#2E7D32', 
+              marginBottom: '15px' 
+            }}>
+              Ingredients are ready to cook!
+            </h3>
+            
+            <p style={{ 
+              color: '#5D4037', 
+              fontSize: '14px', 
+              marginBottom: '15px',
+              lineHeight: '1.5'
+            }}>
+              You have successfully prepared all the ingredients: chopped spring onion, cracked egg, and shaken salt.
+            </p>
+            
+            <p style={{ color: '#5D4037', fontSize: '14px', marginBottom: '20px' }}>
+              Ready for Level 3 - Let's start cooking!
+            </p>
+
+            {progressSaving && (
+              <Box sx={{ mt: 1, p: 1, backgroundColor: 'rgba(33, 150, 243, 0.9)', borderRadius: '10px', color: 'white' }}>
+                <CircularProgress size={14} sx={{ mr: 1, color: 'white' }} />
+                <Typography variant="body2" sx={{ fontSize: '12px' }}>Saving your progress...</Typography>
+              </Box>
+            )}
+            
+            {progressSaved && (
+              <Box sx={{ mt: 1, p: 1, backgroundColor: 'rgba(76, 175, 80, 0.9)', borderRadius: '10px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <CheckCircleIcon sx={{ mr: 1, fontSize: 16 }} />
+                <Typography variant="body2" sx={{ fontSize: '12px' }}>Progress saved successfully!</Typography>
+              </Box>
+            )}
+            
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '15px', flexWrap: 'wrap' }}>
+              <Button 
+                onClick={continueToNextLevel}
+                disabled={progressSaving}
+                variant="contained"
+                size="medium"
+                sx={{ 
+                  backgroundColor: '#4CAF50',
+                  borderRadius: '12px',
+                  minWidth: '100px',
+                  fontSize: '14px',
+                  '&:hover': { backgroundColor: '#45a049' }
+                }}
+              >
+                {progressSaving ? 'Saving...' : '🚀 Next'}
+              </Button>
+              <Button 
+                onClick={resetGame}
+                variant="outlined"
+                size="medium"
+                sx={{ 
+                  borderColor: '#FF9800', 
+                  color: '#FF9800',
+                  borderRadius: '12px',
+                  minWidth: '100px',
+                  fontSize: '14px',
+                  borderWidth: '2px',
+                  '&:hover': {
                     borderWidth: '2px',
-                    '&:hover': {
-                      borderWidth: '2px',
-                      backgroundColor: 'rgba(255, 152, 0, 0.1)'
-                    }
-                  }}
-                >
-                  🔄 Play Again
-                </Button>
-                <Button 
-                  onClick={goToHomepage}
-                  variant="contained"
-                  size="large"
-                  sx={{ 
-                    backgroundColor: '#2196F3',
-                    borderRadius: '15px',
-                    minWidth: '120px',
-                    '&:hover': { backgroundColor: '#1976D2' }
-                  }}
-                >
-                  🏠 Home
-                </Button>
-              </div>
+                    backgroundColor: 'rgba(255, 152, 0, 0.1)'
+                  }
+                }}
+              >
+                🔄 Again
+              </Button>
+              <Button 
+                onClick={goToHomepage}
+                variant="contained"
+                size="medium"
+                sx={{ 
+                  backgroundColor: '#2196F3',
+                  borderRadius: '12px',
+                  minWidth: '100px',
+                  fontSize: '14px',
+                  '&:hover': { backgroundColor: '#1976D2' }
+                }}
+              >
+                🏠 Home
+              </Button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes confettiFall {
@@ -1250,7 +1326,7 @@ export default function CookingLevel2() {
         }
         @keyframes pulse {
           0% { transform: scale(1); }
-          50% { transform: scale(1.2); }
+          50% { transform: scale(1.1); }
           100% { transform: scale(1); }
         }
         @keyframes pieceAppear {
@@ -1284,6 +1360,34 @@ export default function CookingLevel2() {
           25% { transform: translateY(-15px) scale(1.2) rotate(-10deg); }
           50% { transform: translateY(-20px) scale(1.25) rotate(0deg); }
           75% { transform: translateY(-15px) scale(1.2) rotate(10deg); }
+        }
+        
+        /* Media Queries for responsiveness */
+        @media (max-width: 768px) {
+          .responsive-text {
+            font-size: 14px !important;
+          }
+          .responsive-heading {
+            font-size: 20px !important;
+          }
+          .responsive-button {
+            min-width: 70px !important;
+            font-size: 11px !important;
+            padding: 4px 8px !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .responsive-text {
+            font-size: 12px !important;
+          }
+          .responsive-heading {
+            font-size: 18px !important;
+          }
+          .responsive-button {
+            min-width: 60px !important;
+            font-size: 10px !important;
+          }
         }
       `}</style>
     </div>

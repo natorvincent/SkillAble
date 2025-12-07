@@ -14,12 +14,12 @@ import {
   Button,
   CircularProgress,
   Alert,
+  IconButton,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
-  IconButton,
   Tooltip
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
@@ -50,7 +50,11 @@ const TeachersList = () => {
           'Authorization': `Bearer ${getAuthToken()}`
         }
       });
-      if (!response.ok) throw new Error('Failed to fetch teachers');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch teachers');
+      }
+      
       const data = await response.json();
       setTeachers(data);
       setError(null);
@@ -71,25 +75,32 @@ const TeachersList = () => {
     setOpenDeleteModal(false);
   };
 
-  const handleDeleteTeacher = async () => {
+  const handleDeleteConfirm = async () => {
     if (!selectedTeacher) return;
+
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/teachers/${selectedTeacher.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${getAuthToken()}`
+      const response = await fetch(
+        `${API_BASE_URL}/admin/teachers/${selectedTeacher.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Authorization": `Bearer ${getAuthToken()}`
+          }
         }
-      });
-      if (!response.ok) throw new Error('Failed to delete teacher');
-      fetchTeachers();
+      );
+
+      if (response.ok) {
+        setTeachers((prev) => prev.filter((t) => t.id !== selectedTeacher.id));
+        handleCloseDeleteModal();
+      } else {
+        setError("Failed to delete teacher");
+      }
     } catch (err) {
-      setError('Error deleting teacher: ' + err.message);
-    } finally {
-      handleCloseDeleteModal();
+      setError("Error deleting teacher: " + err.message);
     }
   };
 
-  const filteredTeachers = teachers.filter(teacher =>
+  const filteredTeachers = teachers.filter(teacher => 
     teacher.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (teacher.name && teacher.name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
@@ -99,11 +110,12 @@ const TeachersList = () => {
       <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1.125rem', sm: '1.25rem', md: '1.5rem' } }}>
         Current Teachers
       </Typography>
+      
       <Typography color="text.secondary" sx={{ mb: { xs: 2, sm: 2.5, md: 3 }, fontSize: { xs: '0.875rem', sm: '1rem' } }}>
         View all teachers in the system. These are users who have been promoted to teacher status.
       </Typography>
 
-      {/* Search and refresh */}
+      {/* Search and refresh section */}
       <Box sx={{ display: 'flex', mb: { xs: 2, sm: 2.5, md: 3 }, gap: { xs: 1, sm: 2 }, flexWrap: { xs: 'wrap', sm: 'nowrap' } }}>
         <TextField
           placeholder="Search teachers by name or email..."
@@ -133,14 +145,15 @@ const TeachersList = () => {
           Refresh
         </Button>
       </Box>
-
+      
+      {/* Error message */}
       {error && (
         <Alert severity="error" sx={{ mb: { xs: 2, sm: 2.5, md: 3 } }}>
           {error}
         </Alert>
       )}
-
-      {/* Table */}
+      
+      {/* Teachers table */}
       <Box sx={{ overflowX: 'auto', width: '100%' }}>
         <TableContainer component={Paper} sx={{ borderRadius: "10px", minWidth: 600 }}>
           <Table>
@@ -152,68 +165,77 @@ const TeachersList = () => {
                 <TableCell align="center" sx={{ py: { xs: 1, sm: 1.5 }, fontSize: { xs: '0.875rem', sm: '1rem' } }}>Actions</TableCell>
               </TableRow>
             </TableHead>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={4} align="center" sx={{ py: 5 }}>
-                  <CircularProgress size={30} />
-                </TableCell>
-              </TableRow>
-            ) : filteredTeachers.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
-                  <Typography color="text.secondary">
-                    {searchTerm ? 'No teachers matching your search' : 'No teachers available'}
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredTeachers.map((teacher, index) => (
-                <TableRow
-                  key={teacher.id || index}
-                  sx={{ '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
-                >
-                  <TableCell padding="checkbox" sx={{ py: { xs: 1, sm: 1.5 } }}>
-                    <SchoolIcon style={{ color: '#4a6cf7', fontSize: 20 }} />
-                  </TableCell>
-                  <TableCell sx={{ py: { xs: 1, sm: 1.5 } }}>
-                    <Typography fontWeight="medium" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>{teacher.name || 'Not specified'}</Typography>
-                  </TableCell>
-                  <TableCell sx={{ py: { xs: 1, sm: 1.5 }, fontSize: { xs: '0.875rem', sm: '1rem' } }}>{teacher.email}</TableCell>
-                  <TableCell align="center" sx={{ py: { xs: 1, sm: 1.5 } }}>
-                    <Tooltip title="Delete">
-                      <IconButton
-                        color="error"
-                        onClick={() => handleOpenDeleteModal(teacher)}
-                        size="small"
-                      >
-                        <DeleteIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />
-                      </IconButton>
-                    </Tooltip>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={4} align="center" sx={{ py: 5 }}>
+                    <CircularProgress size={30} />
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              ) : filteredTeachers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
+                    <Typography color="text.secondary">
+                      {searchTerm ? 'No teachers matching your search' : 'No teachers available'}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredTeachers.map((teacher, index) => (
+                  <TableRow 
+                    key={teacher.id || index}
+                    sx={{ '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
+                  >
+                    <TableCell padding="checkbox" sx={{ py: { xs: 1, sm: 1.5 } }}>
+                      <SchoolIcon style={{ color: '#4a6cf7', fontSize: 20 }} />
+                    </TableCell>
+                    <TableCell sx={{ py: { xs: 1, sm: 1.5 } }}>
+                      <Typography fontWeight="medium" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
+                        {teacher.name || 'Not specified'}
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ py: { xs: 1, sm: 1.5 }, fontSize: { xs: '0.875rem', sm: '1rem' } }}>
+                      {teacher.email}
+                    </TableCell>
+                    <TableCell align="center" sx={{ py: { xs: 1, sm: 1.5 } }}>
+                      <Tooltip title="Delete">
+                        <IconButton
+                          color="error"
+                          onClick={() => handleOpenDeleteModal(teacher)}
+                          size="small"
+                        >
+                          <DeleteIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </Box>
 
-      {/* Delete modal */}
-      <Dialog open={openDeleteModal} onClose={handleCloseDeleteModal}>
+      {/* Delete Confirmation Modal */}
+      <Dialog
+        open={openDeleteModal}
+        onClose={handleCloseDeleteModal}
+      >
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
           <DialogContentText>
             Are you sure you want to remove{" "}
-            <b>{selectedTeacher?.name || "this teacher"}</b> from the system?
-            This action cannot be undone.
+            <strong>
+              {selectedTeacher?.name || "this teacher"}
+            </strong>{" "}
+            from the system? This action cannot be undone.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDeleteModal} color="primary">
+          <Button onClick={handleCloseDeleteModal} variant="outlined">
             Cancel
           </Button>
-          <Button onClick={handleDeleteTeacher} color="error" variant="contained">
+          <Button onClick={handleDeleteConfirm} color="error" variant="contained">
             Delete
           </Button>
         </DialogActions>
