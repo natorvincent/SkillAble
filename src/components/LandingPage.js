@@ -174,7 +174,7 @@ function LandingPage() {
             position: "relative",
             overflow: "hidden",
           }}
-          >
+        >
             <img src={sparkle} alt="sparkle" style={{
               position: "absolute",
               top: "20%",
@@ -321,77 +321,78 @@ function LandingPage() {
               </div>
             </div>
           </Box>
+        </Box> {/* This closes the Why Section Box */}
 
         {/* Last Section */}
-      <Box 
-        className="last" 
-        sx={{ 
-          position: "relative", 
-          padding: { xs: "40px 20px", sm: "60px 40px", md: "80px 100px", lg: "100px 150px" },
-          backgroundColor: "#1982c4", 
-          minHeight: { xs: "400px", sm: "450px", md: "500px" },
-          overflow: "hidden" 
-        }}
-      >
-        <Box sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          zIndex: 2,
-          position: "relative",
-        }}>
-          {/* Left Text Content */}
-          <Box sx={{ maxWidth: { xs: "100%", sm: "500px", md: "600px" }, width: "100%" }}>
-            <Typography
-              component="h3"
-              variant="h5"
-              sx={{
-                fontSize: { xs: "24px", sm: "30px", md: "36px", lg: "40px" },
-                fontWeight: "600",
-                marginBottom: "20px",
-                color: "#ffca3a",
-                fontFamily: "Poppins, sans-serif"
-              }}
-            >
-              Start your journey today!
-            </Typography>
-            <Typography
-              variant="subtitle1"
-              sx={{
-                fontSize: { xs: "14px", sm: "16px", md: "18px", lg: "20px" },
-                fontFamily: "Inter, sans-serif",
-                color: "white",
-                marginTop: { xs: "20px", sm: "30px", md: "40px" },
-              }}
-            >
-              Help your students build the confidence they need to take on everyday challenges and develop the life skills that foster true independence. Join us in creating a supportive, empowering environment where SPED students can thrive—at their own pace, in their own way.
-            </Typography>
-            <button 
-              className="landingbutton" 
-              style={{ marginTop: "40px" }}
-              onClick={() => navigate("/register")}
-            >
-              Sign up
-            </button>
-          </Box>
-        </Box>
-
-        {/* Kids Image - Right Side, Touching Bottom */}
-        <img
-          src={kids}
-          alt="Kids Illustration"
-          className="landing-kids-image"
-          style={{
-            position: "absolute",
-            right: "-70px",
-            bottom: "0",
-            height: "100%",
-            maxHeight: "600px",
-            zIndex: 1,
+        <Box 
+          className="last" 
+          sx={{ 
+            position: "relative", 
+            padding: { xs: "40px 20px", sm: "60px 40px", md: "80px 100px", lg: "100px 150px" },
+            backgroundColor: "#1982c4", 
+            minHeight: { xs: "400px", sm: "450px", md: "500px" },
+            overflow: "hidden" 
           }}
-        />
-      </Box>
+        >
+          <Box sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            zIndex: 2,
+            position: "relative",
+          }}>
+            {/* Left Text Content */}
+            <Box sx={{ maxWidth: { xs: "100%", sm: "500px", md: "600px" }, width: "100%" }}>
+              <Typography
+                component="h3"
+                variant="h5"
+                sx={{
+                  fontSize: { xs: "24px", sm: "30px", md: "36px", lg: "40px" },
+                  fontWeight: "600",
+                  marginBottom: "20px",
+                  color: "#ffca3a",
+                  fontFamily: "Poppins, sans-serif"
+                }}
+              >
+                Start your journey today!
+              </Typography>
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontSize: { xs: "14px", sm: "16px", md: "18px", lg: "20px" },
+                  fontFamily: "Inter, sans-serif",
+                  color: "white",
+                  marginTop: { xs: "20px", sm: "30px", md: "40px" },
+                }}
+              >
+                Help your students build the confidence they need to take on everyday challenges and develop the life skills that foster true independence. Join us in creating a supportive, empowering environment where SPED students can thrive—at their own pace, in their own way.
+              </Typography>
+              <button 
+                className="landingbutton" 
+                style={{ marginTop: "40px" }}
+                onClick={() => navigate("/register")}
+              >
+                Sign up
+              </button>
+            </Box>
+          </Box>
+
+          {/* Kids Image - Right Side, Touching Bottom */}
+          <img
+            src={kids}
+            alt="Kids Illustration"
+            className="landing-kids-image"
+            style={{
+              position: "absolute",
+              right: "-70px",
+              bottom: "0",
+              height: "100%",
+              maxHeight: "600px",
+              zIndex: 1,
+            }}
+          />
+        </Box>
       </div>
     </div>
   );
