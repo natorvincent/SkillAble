@@ -535,27 +535,23 @@ function StudentDashboard() {
       }}>
         <Navbar />
         
-        <Container maxWidth={false} sx={{ 
+        <Container maxWidth="lg" sx={{ 
           paddingTop: { xs: 3, sm: 4, md: 5 }, 
           paddingBottom: { xs: 3, sm: 4, md: 5 }, 
           px: { xs: 2, sm: 3 },
-          maxWidth: '100% !important',
           minHeight: "calc(100vh - 64px)", // Adjust based on Navbar height
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
         }}> 
           <Paper 
             sx={{ 
               padding: { xs: 2, sm: 3, md: 4 }, 
               backgroundColor: "transparent",
               width: "100%",
-              maxWidth: "1200px",
               boxShadow: "none",
               display: "flex",
               flexDirection: "column",
-              alignItems: "center",
+              flex: 1,
             }}
           >
             <Box sx={{ 
@@ -567,51 +563,41 @@ function StudentDashboard() {
               <AudioToggleButton audioPlaying={audioPlaying} toggleAudio={toggleAudio} />
             </Box>
             
-            {/* Horizontal Modules Section */}
+            {/* Grid Modules Section - 3 modules per row */}
             <Box sx={{ 
               width: "100%",
-              overflowX: "auto", // Horizontal scroll for modules if needed
-              overflowY: "hidden",
               py: 2,
-              '&::-webkit-scrollbar': {
-                height: '8px',
-              },
-              '&::-webkit-scrollbar-track': {
-                background: 'rgba(0,0,0,0.1)',
-                borderRadius: '4px',
-              },
-              '&::-webkit-scrollbar-thumb': {
-                background: '#4a6cf7',
-                borderRadius: '4px',
-              }
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
             }}>
               <Grid 
                 container 
-                spacing={{ xs: 2, sm: 3, md: 4 }} 
-                sx={{ 
-                  flexWrap: 'nowrap',
-                  justifyContent: { xs: 'flex-start', sm: 'center' },
-                  minWidth: 'fit-content',
-                  px: { xs: 1, sm: 2 },
-                }}
+                spacing={{ xs: 2, sm: 3, md: 4 }}
+                justifyContent="center"
+                alignItems="center"
               >
                 {moduleImages.map((image, index) => (
-                  <Grid item key={index} sx={{ 
-                    flex: '0 0 auto',
-                    width: { 
-                      xs: '280px',
-                      sm: '320px',
-                      md: '360px'
-                    },
-                  }}>
+                  <Grid 
+                    item 
+                    key={index} 
+                    xs={12} 
+                    sm={6} 
+                    md={4} // 3 items per row on medium screens and up
+                    sx={{ 
+                      display: 'flex',
+                      justifyContent: 'center',
+                    }}
+                  >
                     <Box
                       onClick={() => handleModuleClick(moduleRoutes[index])}
                       onMouseEnter={() => handleModuleHover(index)}
                       onMouseLeave={handleModuleLeave}
                       sx={{
                         position: 'relative',
-                        height: { xs: '280px', sm: '320px', md: '360px' },
-                        width: '100%',
+                        height: { xs: '240px', sm: '280px', md: '320px' },
+                        width: { xs: '240px', sm: '280px', md: '320px' },
                         borderRadius: { xs: '16px', sm: '20px', md: '24px' },
                         overflow: 'visible',
                         transition: 'transform 0.3s ease, scale 0.3s ease',
