@@ -208,9 +208,6 @@ function StudentDashboard() {
   const moduleTitles = ["Hygiene", "Cooking", "Household"];
   const moduleRoutes = [1, 2, 3];
 
-  // Calculate minimum width for horizontal scrolling
-  const minWidth = moduleImages.length * 280; // 280px per module
-
   useEffect(() => {
     if (authCheckedRef.current) return;
     authCheckedRef.current = true;
@@ -511,8 +508,8 @@ function StudentDashboard() {
       style={{
         position: "relative",
         overflow: "hidden",
-        minHeight: "100vh",
         width: "100%",
+        height: "100vh", // Full viewport height
       }}
     >
       <div
@@ -527,7 +524,15 @@ function StudentDashboard() {
       >
         <Background />
       </div>
-      <div style={{ position: "relative", zIndex: 1, minHeight: "100vh" }}>
+      
+      {/* Main scrollable content area */}
+      <div style={{ 
+        position: "relative", 
+        zIndex: 1, 
+        height: "100vh", // Full viewport height
+        overflowY: "auto", // Vertical scrollbar on the right
+        overflowX: "hidden", // Prevent horizontal scrolling
+      }}>
         <Navbar />
         
         <Container maxWidth={false} sx={{ 
@@ -535,93 +540,125 @@ function StudentDashboard() {
           paddingBottom: { xs: 3, sm: 4, md: 5 }, 
           px: { xs: 2, sm: 3 },
           maxWidth: '100% !important',
-          overflowX: 'auto'
+          minHeight: "calc(100vh - 64px)", // Adjust based on Navbar height
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
         }}> 
-        <Paper 
-          sx={{ 
-            padding: { xs: 1, sm: 2 }, 
-            backgroundColor: "transparent",
-            mb: { xs: 2, sm: 3, md: 4 },
-            boxShadow: "none",
-            marginLeft: { xs: 0, sm: '-20px', md: '-40px', lg: '-200px' },
-            overflowX: 'auto',
-          }}
-        >
-          <AudioToggleButton audioPlaying={audioPlaying} toggleAudio={toggleAudio} />
-          
-          <Grid 
-            container 
-            spacing={{ xs: 2, sm: 3, md: 4 }} 
+          <Paper 
             sx={{ 
-              flexWrap: 'nowrap',
-              justifyContent: { xs: 'flex-start', sm: 'center' },
-              minWidth: { xs: `${minWidth}px`, sm: 'auto' },
-              width: { xs: `${minWidth}px`, sm: '100%' },
+              padding: { xs: 2, sm: 3, md: 4 }, 
+              backgroundColor: "transparent",
+              width: "100%",
+              maxWidth: "1200px",
+              boxShadow: "none",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
             }}
           >
-            {moduleImages.map((image, index) => (
-              <Grid item key={index} sx={{ 
-                flex: '0 0 auto',
-                width: { 
-                  xs: '240px',
-                  sm: '260px',
-                  md: '280px'
-                },
-              }}>
-                <Box
-                  onClick={() => handleModuleClick(moduleRoutes[index])}
-                  onMouseEnter={() => handleModuleHover(index)}
-                  onMouseLeave={handleModuleLeave}
-                  sx={{
-                    position: 'relative',
-                    height: { xs: '240px', sm: '260px', md: '280px' },
-                    width: '100%',
-                    borderRadius: { xs: '12px', sm: '15px', md: '20px' },
-                    overflow: 'visible',
-                    transition: 'transform 0.3s ease, scale 0.3s ease',
-                    cursor: 'pointer',
-                    transform: hoveredModule === index ? 'scale(1.05)' : 'scale(1)',
-                    transformOrigin: 'center center',
-                    zIndex: hoveredModule === index ? 2 : 1,
-                    '&:hover': {
-                      transform: { xs: 'scale(1.02)', sm: 'scale(1.05)' },
-                      zIndex: 2,
-                    }
-                  }}
-                >
-                  {/* Continuous sparkle effects while hovering */}
-                  {sparklePositions.map((position, sparkleIndex) => (
-                    <Sparkle 
-                      key={sparkleIndex} 
-                      position={position} 
-                      index={sparkleIndex}
-                      isActive={hoveredModule === index}
-                    />
-                  ))}
-                  
-                  <Box
-                    component="img"
-                    src={image}
-                    alt={moduleTitles[index]}
-                    sx={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'contain',
-                      display: 'block',
-                      backgroundColor: 'transparent',
-                      borderRadius: { xs: '12px', sm: '15px', md: '20px' },
-                      position: 'relative',
-                      zIndex: 1,
-                      transition: 'transform 0.3s ease',
-                      transform: hoveredModule === index ? 'scale(1.02)' : 'scale(1)',
-                      transformOrigin: 'center center',
-                    }}
-                  />
-                </Box>
+            <Box sx={{ 
+              width: "100%", 
+              display: "flex", 
+              justifyContent: "flex-end",
+              mb: 3 
+            }}>
+              <AudioToggleButton audioPlaying={audioPlaying} toggleAudio={toggleAudio} />
+            </Box>
+            
+            {/* Horizontal Modules Section */}
+            <Box sx={{ 
+              width: "100%",
+              overflowX: "auto", // Horizontal scroll for modules if needed
+              overflowY: "hidden",
+              py: 2,
+              '&::-webkit-scrollbar': {
+                height: '8px',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: 'rgba(0,0,0,0.1)',
+                borderRadius: '4px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: '#4a6cf7',
+                borderRadius: '4px',
+              }
+            }}>
+              <Grid 
+                container 
+                spacing={{ xs: 2, sm: 3, md: 4 }} 
+                sx={{ 
+                  flexWrap: 'nowrap',
+                  justifyContent: { xs: 'flex-start', sm: 'center' },
+                  minWidth: 'fit-content',
+                  px: { xs: 1, sm: 2 },
+                }}
+              >
+                {moduleImages.map((image, index) => (
+                  <Grid item key={index} sx={{ 
+                    flex: '0 0 auto',
+                    width: { 
+                      xs: '280px',
+                      sm: '320px',
+                      md: '360px'
+                    },
+                  }}>
+                    <Box
+                      onClick={() => handleModuleClick(moduleRoutes[index])}
+                      onMouseEnter={() => handleModuleHover(index)}
+                      onMouseLeave={handleModuleLeave}
+                      sx={{
+                        position: 'relative',
+                        height: { xs: '280px', sm: '320px', md: '360px' },
+                        width: '100%',
+                        borderRadius: { xs: '16px', sm: '20px', md: '24px' },
+                        overflow: 'visible',
+                        transition: 'transform 0.3s ease, scale 0.3s ease',
+                        cursor: 'pointer',
+                        transform: hoveredModule === index ? 'scale(1.05)' : 'scale(1)',
+                        transformOrigin: 'center center',
+                        zIndex: hoveredModule === index ? 2 : 1,
+                        '&:hover': {
+                          transform: { xs: 'scale(1.02)', sm: 'scale(1.05)' },
+                          zIndex: 2,
+                        }
+                      }}
+                    >
+                      {/* Continuous sparkle effects while hovering */}
+                      {sparklePositions.map((position, sparkleIndex) => (
+                        <Sparkle 
+                          key={sparkleIndex} 
+                          position={position} 
+                          index={sparkleIndex}
+                          isActive={hoveredModule === index}
+                        />
+                      ))}
+                      
+                      <Box
+                        component="img"
+                        src={image}
+                        alt={moduleTitles[index]}
+                        sx={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'contain',
+                          display: 'block',
+                          backgroundColor: 'transparent',
+                          borderRadius: { xs: '16px', sm: '20px', md: '24px' },
+                          position: 'relative',
+                          zIndex: 1,
+                          transition: 'transform 0.3s ease',
+                          transform: hoveredModule === index ? 'scale(1.02)' : 'scale(1)',
+                          transformOrigin: 'center center',
+                        }}
+                      />
+                    </Box>
+                  </Grid>
+                ))}
               </Grid>
-            ))}
-          </Grid>
-        </Paper>
+            </Box>
+          </Paper>
         </Container>
       </div>
 
