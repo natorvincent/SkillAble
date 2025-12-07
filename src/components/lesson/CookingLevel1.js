@@ -267,7 +267,7 @@ export default function FriedEggLevel1() {
   // Match Level 3 navigation functions
   const goToHomepage = () => {
     if (navigate) {
-      navigate('/homepage');
+      navigate('/studentdashboard');
     } else {
       window.location.href = '/homepage';
     }

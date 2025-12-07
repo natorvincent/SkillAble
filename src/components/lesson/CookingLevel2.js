@@ -134,7 +134,7 @@ export default function CookingLevel2() {
   };
 
   const goToHomepage = () => {
-    navigate('/homepage');
+    navigate('/studentdashboard');
   };
 
   const continueToNextLevel = async () => {
