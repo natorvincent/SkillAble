@@ -14,13 +14,12 @@ import {
   Button,
   CircularProgress,
   Alert,
+  IconButton,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
-  DialogTitle,
-  IconButton,
-  Tooltip
+  DialogTitle
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -50,7 +49,11 @@ const TeachersList = () => {
           'Authorization': `Bearer ${getAuthToken()}`
         }
       });
-      if (!response.ok) throw new Error('Failed to fetch teachers');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch teachers');
+      }
+      
       const data = await response.json();
       setTeachers(data);
       setError(null);
@@ -71,25 +74,32 @@ const TeachersList = () => {
     setOpenDeleteModal(false);
   };
 
-  const handleDeleteTeacher = async () => {
+  const handleDeleteConfirm = async () => {
     if (!selectedTeacher) return;
+
     try {
-      const response = await fetch(`${API_BASE_URL}/admin/teachers/${selectedTeacher.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${getAuthToken()}`
+      const response = await fetch(
+        `${API_BASE_URL}/admin/teachers/${selectedTeacher.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Authorization": `Bearer ${getAuthToken()}`
+          }
         }
-      });
-      if (!response.ok) throw new Error('Failed to delete teacher');
-      fetchTeachers();
+      );
+
+      if (response.ok) {
+        setTeachers((prev) => prev.filter((t) => t.id !== selectedTeacher.id));
+        handleCloseDeleteModal();
+      } else {
+        setError("Failed to delete teacher");
+      }
     } catch (err) {
-      setError('Error deleting teacher: ' + err.message);
-    } finally {
-      handleCloseDeleteModal();
+      setError("Error deleting teacher: " + err.message);
     }
   };
 
-  const filteredTeachers = teachers.filter(teacher =>
+  const filteredTeachers = teachers.filter(teacher => 
     teacher.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (teacher.name && teacher.name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
@@ -99,11 +109,12 @@ const TeachersList = () => {
       <Typography variant="h6" gutterBottom>
         Current Teachers
       </Typography>
+      
       <Typography color="text.secondary" sx={{ mb: 3 }}>
         View all teachers in the system. These are users who have been promoted to teacher status.
       </Typography>
-
-      {/* Search and refresh */}
+      
+      {/* Search and refresh section */}
       <Box sx={{ display: 'flex', mb: 3, gap: 2 }}>
         <TextField
           placeholder="Search teachers by name or email..."
@@ -129,14 +140,15 @@ const TeachersList = () => {
           Refresh
         </Button>
       </Box>
-
+      
+      {/* Error message */}
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
           {error}
         </Alert>
       )}
-
-      {/* Table */}
+      
+      {/* Teachers table */}
       <TableContainer component={Paper} sx={{ borderRadius: "10px" }}>
         <Table>
           <TableHead sx={{ bgcolor: '#f5f5f5' }}>
@@ -164,7 +176,7 @@ const TeachersList = () => {
               </TableRow>
             ) : (
               filteredTeachers.map((teacher, index) => (
-                <TableRow
+                <TableRow 
                   key={teacher.id || index}
                   sx={{ '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
                 >
@@ -172,18 +184,18 @@ const TeachersList = () => {
                     <SchoolIcon style={{ color: '#4a6cf7', fontSize: 20 }} />
                   </TableCell>
                   <TableCell>
-                    <Typography fontWeight="medium">{teacher.name || 'Not specified'}</Typography>
+                    <Typography fontWeight="medium">
+                      {teacher.name || 'Not specified'}
+                    </Typography>
                   </TableCell>
                   <TableCell>{teacher.email}</TableCell>
                   <TableCell align="center">
-                    <Tooltip title="Delete">
-                      <IconButton
-                        color="error"
-                        onClick={() => handleOpenDeleteModal(teacher)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Tooltip>
+                    <IconButton 
+                      color="error" 
+                      onClick={() => handleOpenDeleteModal(teacher)}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
               ))
@@ -192,21 +204,26 @@ const TeachersList = () => {
         </Table>
       </TableContainer>
 
-      {/* Delete modal */}
-      <Dialog open={openDeleteModal} onClose={handleCloseDeleteModal}>
+      {/* Delete Confirmation Modal */}
+      <Dialog
+        open={openDeleteModal}
+        onClose={handleCloseDeleteModal}
+      >
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
           <DialogContentText>
             Are you sure you want to remove{" "}
-            <b>{selectedTeacher?.name || "this teacher"}</b> from the system?
-            This action cannot be undone.
+            <strong>
+              {selectedTeacher?.name || "this teacher"}
+            </strong>{" "}
+            from the system? This action cannot be undone.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDeleteModal} color="primary">
+          <Button onClick={handleCloseDeleteModal} variant="outlined">
             Cancel
           </Button>
-          <Button onClick={handleDeleteTeacher} color="error" variant="contained">
+          <Button onClick={handleDeleteConfirm} color="error" variant="contained">
             Delete
           </Button>
         </DialogActions>

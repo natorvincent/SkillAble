@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
+import Confetti from 'react-confetti';
+import confetti from 'canvas-confetti';
 import Navbar from '../Navbar';
 
 // Import kitchen background
@@ -55,7 +57,10 @@ const CookingLevel3 = () => {
     setupPhase: true,
     showBaconardoIntro: true,
     baconardoTalking: true,
-    showHeatLevelButtons: false
+    showHeatLevelButtons: false,
+    showConfetti: false,
+    confettiStep: null,
+    completedStepAnimation: null
   });
 
   const [progressSaving, setProgressSaving] = useState(false);
@@ -66,7 +71,7 @@ const CookingLevel3 = () => {
   const panRef = useRef(null);
   const panHeatTimerRef = useRef(null);
 
-  // Reset component state when route changes (ensures proper navigation)
+  // Reset component state when route changes
   useEffect(() => {
     setGameState({
       currentStep: 0,
@@ -90,7 +95,10 @@ const CookingLevel3 = () => {
       setupPhase: true,
       showBaconardoIntro: true,
       baconardoTalking: true,
-      showHeatLevelButtons: false
+      showHeatLevelButtons: false,
+      showConfetti: false,
+      confettiStep: null,
+      completedStepAnimation: null
     });
     setProgressSaved(false);
     setProgressSaving(false);
@@ -142,6 +150,33 @@ const CookingLevel3 = () => {
     setGameState(prev => ({ ...prev, feedbackMessage: message, showFeedback: true }));
     setTimeout(() => {
       setGameState(prev => ({ ...prev, showFeedback: false }));
+    }, 1500);
+  };
+
+  const triggerConfetti = (stepIndex) => {
+    setGameState(prev => ({ 
+      ...prev, 
+      showConfetti: true,
+      confettiStep: stepIndex,
+      completedStepAnimation: stepIndex 
+    }));
+    
+    // Small burst for each step
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#4CAF50', '#FF9800', '#2196F3', '#E91E63']
+    });
+    
+    // Hide animation after 1 second
+    setTimeout(() => {
+      setGameState(prev => ({ ...prev, completedStepAnimation: null }));
+    }, 1000);
+    
+    // Hide confetti after 2 seconds
+    setTimeout(() => {
+      setGameState(prev => ({ ...prev, showConfetti: false }));
     }, 2000);
   };
 
@@ -157,6 +192,9 @@ const CookingLevel3 = () => {
       setupPhase: stepIndex + 1 <= 3,
       baconardoTalking: true
     }));
+
+    // Trigger confetti for completed step
+    triggerConfetti(stepIndex);
 
     if (newStepsCompleted.every(step => step)) {
       setTimeout(() => {
@@ -184,43 +222,30 @@ const CookingLevel3 = () => {
 
     if (dragItem === 'plug' && target === 'outlet' && gameState.currentStep === 0) {
       completeStep(0, { stovePluggedIn: true });
-      showFeedback("Great! The stove is now connected to power!");
     } else if (dragItem === 'pan' && target === 'stove' && gameState.currentStep === 3) {
       completeStep(3, { panOnStove: true });
-      showFeedback("Nice! Your pan is properly positioned. It will heat up in 5 seconds...");
       
-      // Start pan heating delay - FIXED: This now properly advances the game state
+      // Start pan heating delay
       panHeatTimerRef.current = setTimeout(() => {
         setGameState(prev => ({ 
           ...prev, 
           panHeated: true,
-          currentStep: 5, // IMPORTANT: Advance to step 5 (add oil)
-          stepsCompleted: [...prev.stepsCompleted.slice(0, 4), true, ...prev.stepsCompleted.slice(5)],
-          feedbackMessage: "Perfect! The pan is now heated and ready for cooking oil!",
-          showFeedback: true
+          currentStep: 5, // Advance to step 5 (add oil)
+          stepsCompleted: [...prev.stepsCompleted.slice(0, 4), true, ...prev.stepsCompleted.slice(5)]
         }));
-        setTimeout(() => {
-          setGameState(prev => ({ ...prev, showFeedback: false }));
-        }, 2000);
       }, 5000);
     } else if (dragItem === 'oil' && target === 'pan' && gameState.currentStep === 5 && gameState.panOnStove && gameState.panHeated) {
       completeStep(5, { showOil: true });
-      showFeedback("Perfect! Oil added to the heated pan!");
     } else if (dragItem === 'butter' && target === 'pan' && gameState.currentStep === 6 && gameState.panOnStove && gameState.panHeated) {
       completeStep(6, { showButter: true });
-      showFeedback("Great! Butter is melting in the pan!");
     } else if (dragItem === 'egg' && target === 'pan' && gameState.currentStep === 7 && gameState.panOnStove && gameState.panHeated) {
       completeStep(7, { eggInPan: true });
-      showFeedback("Excellent! Egg cracked into the pan!");
     } else if (dragItem === 'salt' && target === 'pan' && gameState.currentStep === 8 && gameState.panOnStove && gameState.panHeated) {
       completeStep(8, { saltAdded: true });
-      showFeedback("Nice! Salt added for flavor!");
     } else if (dragItem === 'spatula' && target === 'pan' && gameState.currentStep === 9 && gameState.panOnStove && gameState.panHeated) {
       completeStep(9, { eggCooked: true });
-      showFeedback("Amazing! Your scrambled egg is perfectly cooked!");
     } else if (dragItem === 'springOnion' && target === 'pan' && gameState.currentStep === 10 && gameState.panOnStove && gameState.panHeated) {
       completeStep(10, { springOnionAdded: true });
-      showFeedback("Beautiful! Spring onion garnish added!");
     } else if ((dragItem === 'oil' || dragItem === 'butter' || dragItem === 'egg' || dragItem === 'salt' || dragItem === 'spatula' || dragItem === 'springOnion') && target === 'pan' && !gameState.panHeated) {
       showFeedback("Wait for the pan to heat up first! It will glow when ready.");
     } else if (dragItem === 'oil' && target === 'pan' && gameState.currentStep !== 5) {
@@ -236,7 +261,6 @@ const CookingLevel3 = () => {
         powerOn: true,
         showHeatLevelButtons: true
       });
-      showFeedback("Excellent! The stove power is ON! Choose your heat level.");
     }
   };
 
@@ -245,9 +269,8 @@ const CookingLevel3 = () => {
       if (level === 'MEDIUM') {
         completeStep(2, { 
           heatLevel: 'MEDIUM',
-          showHeatLevelButtons: false // Hide buttons after selection
+          showHeatLevelButtons: false
         });
-        showFeedback("Perfect! Medium heat is ideal for scrambled eggs! The stove is now heating.");
       } else {
         showFeedback("Try MEDIUM heat - it works best for scrambled eggs!");
       }
@@ -289,7 +312,10 @@ const CookingLevel3 = () => {
       setupPhase: true,
       showBaconardoIntro: false,
       baconardoTalking: true,
-      showHeatLevelButtons: false
+      showHeatLevelButtons: false,
+      showConfetti: false,
+      confettiStep: null,
+      completedStepAnimation: null
     });
     setProgressSaved(false);
   };
@@ -479,8 +505,53 @@ const CookingLevel3 = () => {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.02); }
           }
+          @keyframes scaleInOut {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+          }
+          @keyframes fadeOut {
+            0% { opacity: 1; }
+            70% { opacity: 1; }
+            100% { opacity: 0; }
+          }
+          @keyframes stepCompleteGlow {
+            0%, 100% { box-shadow: 0 0 10px rgba(76, 175, 80, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(76, 175, 80, 0.8), 0 0 30px rgba(76, 175, 80, 0.4); }
+          }
         `}
         </style>
+
+        {/* Confetti Component */}
+        {gameState.showConfetti && (
+          <Confetti
+            width={window.innerWidth}
+            height={window.innerHeight}
+            recycle={false}
+            numberOfPieces={200}
+            gravity={0.1}
+            colors={['#4CAF50', '#FF9800', '#2196F3', '#E91E63']}
+            style={{ position: 'fixed', zIndex: 2000 }}
+          />
+        )}
+
+        {/* Step Complete Animation - Checkmark */}
+        {gameState.completedStepAnimation !== null && (
+          <div style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            fontSize: '80px',
+            color: '#4CAF50',
+            zIndex: 2001,
+            animation: 'scaleInOut 1s ease-in-out',
+            pointerEvents: 'none',
+            textShadow: '0 0 20px rgba(76, 175, 80, 0.8)'
+          }}>
+            ✓
+          </div>
+        )}
 
         {/* Baconardo Introduction Modal */}
         {gameState.showBaconardoIntro && (
@@ -670,7 +741,8 @@ const CookingLevel3 = () => {
             padding: '18px',
             marginBottom: '25px',
             width: '100%',
-            maxWidth: '900px'
+            maxWidth: '900px',
+            animation: gameState.completedStepAnimation !== null ? 'stepCompleteGlow 1s ease-in-out' : 'none'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
               <span style={{ fontWeight: 'bold', color: '#E65100' }}>Progress:</span>
@@ -1309,21 +1381,24 @@ const CookingLevel3 = () => {
             )}
           </Box>
 
-          {/* Feedback Message */}
+          {/* Feedback Message (only for incorrect actions) */}
           {gameState.showFeedback && (
             <div style={{
               position: 'fixed',
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              background: 'linear-gradient(45deg, #4CAF50, #66BB6A)',
+              background: 'rgba(0,0,0,0.8)',
               color: 'white',
-              padding: '20px 30px',
-              borderRadius: '15px',
-              fontSize: '18px',
+              padding: '15px 25px',
+              borderRadius: '10px',
+              fontSize: '14px',
               fontWeight: 'bold',
               zIndex: 1000,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
+              animation: 'fadeOut 1.5s forwards',
+              textAlign: 'center',
+              maxWidth: '300px',
+              border: '2px solid #FF9800'
             }}>
               {gameState.feedbackMessage}
             </div>
@@ -1343,13 +1418,24 @@ const CookingLevel3 = () => {
               justifyContent: 'center',
               zIndex: 2000
             }}>
+              <Confetti
+                width={window.innerWidth}
+                height={window.innerHeight}
+                recycle={false}
+                numberOfPieces={500}
+                gravity={0.05}
+                colors={['#4CAF50', '#FF9800', '#2196F3', '#E91E63', '#FFEB3B']}
+                style={{ position: 'fixed', zIndex: 2001 }}
+              />
               <div style={{
                 background: 'linear-gradient(135deg, #FFF8E1, #FFECB3)',
                 padding: '40px',
                 borderRadius: '20px',
                 textAlign: 'center',
                 border: '4px solid #FF9800',
-                maxWidth: '450px'
+                maxWidth: '450px',
+                zIndex: 2002,
+                position: 'relative'
               }}>
                 <div style={{ fontSize: '80px', marginBottom: '20px' }}>🏆</div>
                 <h2 style={{ color: '#E65100', marginBottom: '15px', fontSize: '32px' }}>

@@ -114,8 +114,6 @@ export default function FriedEggLevel1() {
     return parsedId;
   };
 
-  
-
   // Save progress to backend
   const saveProgress = async () => {
     if (progressSaving || progressSaved) return;
@@ -242,7 +240,7 @@ export default function FriedEggLevel1() {
       playSound('correct');
       
       // Baconardo feedback for correct ingredient
-      showBaconardoFeedback(`✅ Excellent! ${draggedItem.name} is perfect for fried eggs!`, 'nod');
+      showBaconardoFeedback(`✅ Excellent! ${draggedItem.name} is a great choice for fried eggs!`, 'nod');
       
       if (collectedIngredients.length + 1 === correctIngredients.length) {
         setTimeout(() => {
@@ -547,7 +545,7 @@ export default function FriedEggLevel1() {
                   gap: '2px'
                 }}>
                   <div>
-                    {allCollected ? '🎉' : progressPercentage > 75 ? '🍳' : progressPercentage > 50 ? '🥚' : progressPercentage > 25 ? '🫒' : '👨‍🍳'}
+                    {allCollected ? '🎉' : progressPercentage > 75 ? '' : progressPercentage > 50 ? '🥚' : progressPercentage > 25 ? '🫒' : '👨‍🍳'}
                   </div>
                   <div style={{
                     fontSize: '9px',
@@ -738,7 +736,7 @@ export default function FriedEggLevel1() {
                     filter: 'drop-shadow(3px 3px 8px rgba(0,0,0,0.6))',
                     zIndex: 21
                   }}>
-                    🍳
+                  
                   </div>
                   <div style={{ 
                     color: 'white', 
@@ -747,7 +745,7 @@ export default function FriedEggLevel1() {
                     textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
                     zIndex: 21
                   }}>
-                    Drag here
+                  Drop here
                   </div>
                 </>
               )}
@@ -1108,33 +1106,6 @@ export default function FriedEggLevel1() {
               }} 
             />
           ))}
-          <div style={{ 
-            position: 'fixed', 
-            top: '50%', 
-            left: '50%', 
-            transform: 'translate(-50%, -50%)', 
-            zIndex: 10000, 
-            animation: 'correctPop 2s ease-out forwards' 
-          }}>
-            <div style={{ 
-              backgroundColor: 'rgba(76, 175, 80, 0.95)', 
-              color: 'white', 
-              padding: '30px 50px', 
-              borderRadius: '25px', 
-              boxShadow: '0 15px 40px rgba(0,0,0,0.4)', 
-              textAlign: 'center', 
-              border: '4px solid rgba(255, 255, 255, 0.5)' 
-            }}>
-              <h2 style={{ 
-                fontSize: '48px', 
-                fontWeight: 'bold', 
-                margin: 0, 
-                textShadow: '2px 2px 4px rgba(0,0,0,0.3)' 
-              }}>
-                Perfect! ⭐
-              </h2>
-            </div>
-          </div>
         </>
       )}
 
