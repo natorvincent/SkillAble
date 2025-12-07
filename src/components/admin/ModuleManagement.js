@@ -231,16 +231,16 @@ function ModuleManagement() {
   };
   
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
       {/* Header Section */}
-      <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-        <CardContent sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Box>
-              <Typography variant="h4" fontWeight="600" color="#1a237e" gutterBottom>
+      <Card sx={{ mb: { xs: 2, sm: 2.5, md: 3 }, borderRadius: { xs: 1.5, sm: 2 }, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, flexWrap: { xs: 'wrap', sm: 'nowrap' }, gap: 2 }}>
+            <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: 0 } }}>
+              <Typography variant="h4" fontWeight="600" color="#1a237e" gutterBottom sx={{ fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' } }}>
                 Module Management
               </Typography>
-              <Typography variant="body1" color="#546e7a">
+              <Typography variant="body1" color="#546e7a" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                 Manage learning modules and organize your educational content
               </Typography>
             </Box>
@@ -250,13 +250,14 @@ function ModuleManagement() {
               onClick={() => handleOpenDialog('create')}
               sx={{
                 backgroundColor: '#1976d2',
-                borderRadius: 2,
-                px: 3,
-                py: 1.5,
+                borderRadius: { xs: 1.5, sm: 2 },
+                px: { xs: 2, sm: 2.5, md: 3 },
+                py: { xs: 1, sm: 1.25, md: 1.5 },
                 fontWeight: '600',
                 textTransform: 'none',
-                fontSize: '16px',
+                fontSize: { xs: '14px', sm: '15px', md: '16px' },
                 boxShadow: '0 2px 8px rgba(25, 118, 210, 0.2)',
+                whiteSpace: 'nowrap',
                 '&:hover': {
                   backgroundColor: '#1565c0',
                   boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)'
@@ -271,22 +272,23 @@ function ModuleManagement() {
       
       {/* Modules Table */}
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 8 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', my: { xs: 4, sm: 6, md: 8 } }}>
           <CircularProgress size={60} />
         </Box>
       ) : (
-        <Card sx={{ borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow sx={{ backgroundColor: '#f5f7ff' }}>
-                  <TableCell sx={{ fontWeight: '600', color: '#37474f', py: 3, fontSize: '15px' }}>Module Name</TableCell>
-                  <TableCell sx={{ fontWeight: '600', color: '#37474f', py: 3, fontSize: '15px' }}>Description</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: '600', color: '#37474f', py: 3, fontSize: '15px' }}>Order</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: '600', color: '#37474f', py: 3, fontSize: '15px' }}>Status</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: '600', color: '#37474f', py: 3, fontSize: '15px' }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
+        <Card sx={{ borderRadius: { xs: 1.5, sm: 2 }, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+          <Box sx={{ overflowX: 'auto', width: '100%' }}>
+            <TableContainer sx={{ minWidth: 600 }}>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: '#f5f7ff' }}>
+                    <TableCell sx={{ fontWeight: '600', color: '#37474f', py: { xs: 1.5, sm: 2, md: 3 }, fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '15px' } }}>Module Name</TableCell>
+                    <TableCell sx={{ fontWeight: '600', color: '#37474f', py: { xs: 1.5, sm: 2, md: 3 }, fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '15px' } }}>Description</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: '600', color: '#37474f', py: { xs: 1.5, sm: 2, md: 3 }, fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '15px' } }}>Order</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: '600', color: '#37474f', py: { xs: 1.5, sm: 2, md: 3 }, fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '15px' } }}>Status</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: '600', color: '#37474f', py: { xs: 1.5, sm: 2, md: 3 }, fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '15px' } }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
               <TableBody>
                 {modules.length === 0 ? (
                   <TableRow>
@@ -328,21 +330,22 @@ function ModuleManagement() {
                         }
                       }}
                     >
-                      <TableCell sx={{ py: 3 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                          <FolderIcon sx={{ color: module.active ? '#1976d2' : '#9e9e9e' }} />
-                          <Typography fontWeight="600" color="#2e3a47">
+                      <TableCell sx={{ py: { xs: 1.5, sm: 2, md: 3 } }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5, md: 2 } }}>
+                          <FolderIcon sx={{ color: module.active ? '#1976d2' : '#9e9e9e', fontSize: { xs: 18, sm: 20, md: 24 } }} />
+                          <Typography fontWeight="600" color="#2e3a47" sx={{ fontSize: { xs: '0.875rem', sm: '0.9375rem', md: '1rem' } }}>
                             {module.name}
                           </Typography>
                         </Box>
                       </TableCell>
-                      <TableCell sx={{ py: 3 }}>
+                      <TableCell sx={{ py: { xs: 1.5, sm: 2, md: 3 } }}>
                         <Typography variant="body2" color="#546e7a" sx={{ 
                           display: '-webkit-box',
                           WebkitLineClamp: 2,
                           WebkitBoxOrient: 'vertical',
                           overflow: 'hidden',
-                          lineHeight: 1.5
+                          lineHeight: 1.5,
+                          fontSize: { xs: '0.8125rem', sm: '0.875rem', md: '0.9375rem' }
                         }}>
                           {module.description}
                         </Typography>
@@ -426,7 +429,8 @@ function ModuleManagement() {
               </TableBody>
             </Table>
           </TableContainer>
-        </Card>
+        </Box> {/* This closing Box tag was missing */}
+      </Card>
       )}
       
       {/* Create/Edit Module Dialog - Professional Table Style */}

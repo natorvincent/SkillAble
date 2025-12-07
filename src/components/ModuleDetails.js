@@ -311,9 +311,9 @@ function ModuleDetails() {
       <div style={{ position: "relative", zIndex: 1, minHeight: "100vh" }}>
         <Navbar />
         
-        <Container maxWidth="lg" sx={{ py: 5 }}>
+        <Container maxWidth="lg" sx={{ py: { xs: 3, sm: 4, md: 5 }, px: { xs: 2, sm: 3 } }}>
           
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: { xs: 2, sm: 3 }, flexWrap: 'wrap', gap: 2 }}>
           <Button
             onClick={() => navigate('/studentdashboard')}
             sx={{ 
@@ -321,7 +321,7 @@ function ModuleDetails() {
               minWidth: 'auto',
               backgroundColor: 'transparent',
               boxShadow: 'none',
-              marginLeft: '-120px',
+              marginLeft: { xs: 0, sm: '-60px', md: '-120px' },
               '&:hover': {
                 backgroundColor: 'transparent',
                 boxShadow: 'none',
@@ -334,8 +334,10 @@ function ModuleDetails() {
               src={exitbtn} 
               alt="Exit" 
               style={{ 
-                width: 85, 
-                height: 85
+                width: '100%',
+                maxWidth: '85px',
+                height: 'auto',
+                maxHeight: '85px'
               }} 
             />
           </Button>
@@ -354,13 +356,13 @@ function ModuleDetails() {
                 This module doesn't have any lessons yet.
               </Alert>
             ) : (
-              <Box sx={{ overflowX: 'auto' }}>
+              <Box sx={{ overflowX: 'auto', width: '100%', pb: 2 }}>
                 <Stack 
-                  direction="row" 
-                  spacing={3} 
+                  direction={{ xs: 'column', sm: 'row' }}
+                  spacing={{ xs: 2, sm: 3 }}
                   sx={{ 
-                    pb: 2, 
-                    minWidth: lessons.length * 250
+                    pb: 2,
+                    alignItems: { xs: 'center', sm: 'flex-start' }
                   }}
                 >
                   {lessons.map((lesson, index) => {
@@ -380,8 +382,10 @@ function ModuleDetails() {
                       <Card
                         key={lesson.id || index}
                         sx={{
-                          width: 280,
-                          height: 350,
+                          width: { xs: '100%', sm: 280 },
+                          maxWidth: { xs: '400px', sm: 280 },
+                          height: { xs: 'auto', sm: 350 },
+                          minHeight: { xs: 300, sm: 350 },
                           borderRadius: '20px 20px 50px 20px',
                           border: '1px solid',
                           borderColor: completed ? '#4caf50' : '#e0e0e0',
@@ -443,12 +447,12 @@ function ModuleDetails() {
                             alignItems: 'center',
                             bgcolor: completed ? '#4caf50' : '#4a6cf7', 
                             color: 'white',
-                            height: 100,
+                            height: { xs: 80, sm: 100 },
                             position: 'relative'
                           }}
                         >
                           {completed ? (
-                            <CheckCircle sx={{ fontSize: 48 }} />
+                            <CheckCircle sx={{ fontSize: { xs: 36, sm: 42, md: 48 } }} />
                           ) : (
                             getLessonIcon(activityType) 
                           )}
@@ -459,14 +463,24 @@ function ModuleDetails() {
                               top: 8,
                               left: 10,
                               fontWeight: 'bold',
-                              color: 'rgba(255,255,255,0.7)'
+                              color: 'rgba(255,255,255,0.7)',
+                              fontSize: { xs: '1.25rem', sm: '1.5rem', md: '2rem' }
                             }}
                           >
                             {index + 1}
                           </Typography>
                         </Box>
-                        <CardContent sx={{ pt: 2 }}>
-                          <Typography variant="h5" component="div" gutterBottom noWrap title={lessonTitle}>
+                        <CardContent sx={{ pt: { xs: 1.5, sm: 2 } }}>
+                          <Typography variant="h5" component="div" gutterBottom title={lessonTitle}
+                            sx={{ 
+                              fontSize: { xs: '1rem', sm: '1.25rem', md: '1.5rem' },
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical'
+                            }}
+                          >
                             {lessonTitle}
                           </Typography>
   
@@ -503,8 +517,10 @@ function ModuleDetails() {
                               src="/assets/playbtn.png" 
                               alt="Start Lesson" 
                               style={{ 
-                                width: 85, 
-                                height: 85
+                                width: '100%',
+                                maxWidth: '85px',
+                                height: 'auto',
+                                maxHeight: '85px'
                               }} 
                             />
                           </Button>

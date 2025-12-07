@@ -1,6 +1,7 @@
 import Background from "./Background";
 import Navbar from "./Navbar";
 import "./login-register/Login.css";
+import { Box } from "@mui/material";
 import Typography from "@mui/material/Typography";
 import bg from "../assets/bg 1.png";
 import boy from '../assets/boy.png';
@@ -52,10 +53,12 @@ function LandingPage() {
           top: "17%",
           left: "50%",
           transform: "translate(-50%, -50%)",
-          width: "1300px",
+          width: "100%",
+          maxWidth: "1300px",
           height: "auto",
           zIndex: 1,
           pointerEvents: "none",
+          padding: "0 20px",
         }}
       />
 
@@ -73,11 +76,15 @@ function LandingPage() {
           <img
             src={girl}
             alt="Girl Illustration"
+            className="landing-girl-image"
             style={{
               position: "absolute",
               bottom: "-250px",
               left: 0,
               height: "840px",
+              maxHeight: "60vh",
+              width: "auto",
+              maxWidth: "40%",
               objectFit: "contain",
               zIndex: 0,
             }}
@@ -87,11 +94,15 @@ function LandingPage() {
           <img
             src={boy}
             alt="Boy Illustration"
+            className="landing-boy-image"
             style={{
               position: "absolute",
               bottom: "-290px",
               right: 0,
               height: "860px",
+              maxHeight: "60vh",
+              width: "auto",
+              maxWidth: "40%",
               objectFit: "contain",
               zIndex: 0,
             }}
@@ -116,11 +127,12 @@ function LandingPage() {
               component="h1"
               variant="h3"
               sx={{
-                fontSize: "60px",
+                fontSize: { xs: "28px", sm: "40px", md: "50px", lg: "60px" },
                 fontFamily: "Poppins, sans-serif",
                 fontWeight: "700",
                 color: "#FF595E",
                 lineHeight: 1.2,
+                px: { xs: 2, sm: 0 },
               }}
             >
               Empowering Independence
@@ -131,14 +143,15 @@ function LandingPage() {
             <Typography
               variant="subtitle1"
               sx={{
-                fontSize: "18px",
+                fontSize: { xs: "14px", sm: "16px", md: "18px" },
                 fontFamily: "Inter, sans-serif",
                 color: "#5A5A5A",
-                maxWidth: "500px",
+                maxWidth: { xs: "90%", sm: "500px" },
                 marginTop: "10px",
+                px: { xs: 2, sm: 0 },
               }}
             >
-              Learning everyday tasks can be a challenge — we’re here to make it easier and more fun.
+              Learning everyday tasks can be a challenge — we're here to make it easier and more fun.
             </Typography>
 
             <button 
@@ -152,16 +165,16 @@ function LandingPage() {
         </section>
 
         {/* Why Section */}
-        <section 
+        <Box
           className="why" 
-          style={{ 
-            padding: "50px 20px", 
+          sx={{ 
+            padding: { xs: "30px 15px", sm: "40px 20px", md: "50px 20px" },
             backgroundColor: "#90be6d", 
             textAlign: "center",
-            position: "relative", // <--- important!
+            position: "relative",
             overflow: "hidden",
-            }} 
-          >
+          }}
+        >
             <img src={sparkle} alt="sparkle" style={{
               position: "absolute",
               top: "20%",
@@ -253,7 +266,7 @@ function LandingPage() {
               component="h3"
               variant="h5"
               sx={{
-                fontSize: "30px",
+                fontSize: { xs: "20px", sm: "24px", md: "30px" },
                 fontWeight: "600",
                 fontFamily: "Poppins, sans-serif",
                 color: "white",
@@ -266,22 +279,29 @@ function LandingPage() {
           <Typography
               variant="subtitle1"
               sx={{
-                fontSize: "20px",
+                fontSize: { xs: "14px", sm: "16px", md: "20px" },
                 fontFamily: "Inter, sans-serif",
                 color: "#280b60",
-                maxWidth: "800px",
+                maxWidth: { xs: "100%", sm: "700px", md: "800px" },
                 marginTop: "0px",
                 marginLeft: "auto",
                 marginRight: "auto",
                 textAlign: "center",
                 marginBottom: "30px",
+                px: { xs: 2, sm: 0 },
               }}
             >
               Students with ASD and Down Syndrome often face challenges with traditional learning methods. SkillAble bridges this gap by offering a safe, supportive, and enjoyable environment that encourages hands-on practice of real-world skills — all from the comfort of a tablet or computer.
             </Typography>
 
           {/* Container to align cards horizontally */}
-          <div style={{ display: "flex", justifyContent: "center", gap: "50px" }}>
+          <Box sx={{ 
+            display: "flex", 
+            justifyContent: "center", 
+            gap: { xs: "20px", sm: "30px", md: "50px" },
+            flexWrap: "wrap",
+            padding: { xs: "0 10px", sm: "0 20px" }
+          }}>
             <div className="card">
               <div className="card-details">
                 <p className="text-title">Personalized Learning Paths</p>
@@ -300,69 +320,79 @@ function LandingPage() {
                 <p className="text-body">Engaging activities with rewards.</p>
               </div>
             </div>
-          </div>
-        </section>
+          </Box>
+        </Box> {/* This closes the Why Section Box */}
 
         {/* Last Section */}
-      <section className="last" style={{ position: "relative", padding: "100px 150px", backgroundColor: "#1982c4", minHeight: "500px", overflow: "hidden" }}>
-        <div style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          zIndex: 2,
-          position: "relative",
-        }}>
-          {/* Left Text Content */}
-          <div style={{ maxWidth: "600px" }}>
-            <Typography
-              component="h3"
-              variant="h5"
-              sx={{
-                fontSize: "40px",
-                fontWeight: "600",
-                marginBottom: "20px",
-                color: "#ffca3a",
-                fontFamily: "Poppins, sans-serif"
-              }}
-            >
-              Start your journey today!
-            </Typography>
-            <Typography
-              variant="subtitle1"
-              sx={{
-                fontSize: "20px",
-                fontFamily: "Inter, sans-serif",
-                color: "white",
-                marginTop: "40px",
-              }}
-            >
-              Help your students build the confidence they need to take on everyday challenges and develop the life skills that foster true independence. Join us in creating a supportive, empowering environment where SPED students can thrive—at their own pace, in their own way.
-            </Typography>
-            <button 
-              className="landingbutton" 
-              style={{ marginTop: "40px" }}
-              onClick={() => navigate("/register")}
-            >
-              Sign up
-            </button>
-          </div>
-        </div>
-
-        {/* Kids Image - Right Side, Touching Bottom */}
-        <img
-          src={kids}
-          alt="Kids Illustration"
-          style={{
-            position: "absolute",
-            right: "-70px",
-            bottom: "0",
-            height: "100%",
-            maxHeight: "600px",
-            zIndex: 1,
+        <Box 
+          className="last" 
+          sx={{ 
+            position: "relative", 
+            padding: { xs: "40px 20px", sm: "60px 40px", md: "80px 100px", lg: "100px 150px" },
+            backgroundColor: "#1982c4", 
+            minHeight: { xs: "400px", sm: "450px", md: "500px" },
+            overflow: "hidden" 
           }}
-        />
-      </section>
+        >
+          <Box sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            zIndex: 2,
+            position: "relative",
+          }}>
+            {/* Left Text Content */}
+            <Box sx={{ maxWidth: { xs: "100%", sm: "500px", md: "600px" }, width: "100%" }}>
+              <Typography
+                component="h3"
+                variant="h5"
+                sx={{
+                  fontSize: { xs: "24px", sm: "30px", md: "36px", lg: "40px" },
+                  fontWeight: "600",
+                  marginBottom: "20px",
+                  color: "#ffca3a",
+                  fontFamily: "Poppins, sans-serif"
+                }}
+              >
+                Start your journey today!
+              </Typography>
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  fontSize: { xs: "14px", sm: "16px", md: "18px", lg: "20px" },
+                  fontFamily: "Inter, sans-serif",
+                  color: "white",
+                  marginTop: { xs: "20px", sm: "30px", md: "40px" },
+                }}
+              >
+                Help your students build the confidence they need to take on everyday challenges and develop the life skills that foster true independence. Join us in creating a supportive, empowering environment where SPED students can thrive—at their own pace, in their own way.
+              </Typography>
+              <button 
+                className="landingbutton" 
+                style={{ marginTop: "40px" }}
+                onClick={() => navigate("/register")}
+              >
+                Sign up
+              </button>
+            </Box>
+          </Box>
+
+          {/* Kids Image - Right Side, Touching Bottom */}
+          <img
+            src={kids}
+            alt="Kids Illustration"
+            className="landing-kids-image"
+            style={{
+              position: "absolute",
+              right: "-70px",
+              bottom: "0",
+              height: "100%",
+              maxHeight: "600px",
+              zIndex: 1,
+            }}
+          />
+        </Box>
       </div>
     </div>
   );

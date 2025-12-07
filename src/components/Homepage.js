@@ -428,103 +428,103 @@ function Homepage() {
       <div style={{ position: "relative", zIndex: 1, minHeight: "100vh" }}>
         <Navbar />
         
-        <Container maxWidth="lg" sx={{ paddingTop: 5, paddingBottom: 5 }}> 
+        <Container maxWidth="lg" sx={{ paddingTop: { xs: 3, sm: 4, md: 5 }, paddingBottom: { xs: 3, sm: 4, md: 5 }, px: { xs: 2, sm: 3 } }}> 
           {userProfile?.userType === "TEACHER" && (
             <Paper
               sx={{ 
-                padding: 4, 
+                padding: { xs: 2, sm: 3, md: 4 }, 
                 backgroundColor: "rgba(255, 255, 255, 0.95)",
-                borderRadius: "20px",
-                mb: 4,
+                borderRadius: { xs: "15px", sm: "20px" },
+                mb: { xs: 2, sm: 3, md: 4 },
                 boxShadow: "none",
                 border: '1px solid #e0e0e0'
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-                <SchoolIcon sx={{ color: '#4a6cf7', mr: 2, fontSize: 36 }} />
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: { xs: 2, sm: 3, md: 4 }, flexWrap: 'wrap' }}>
+                <SchoolIcon sx={{ color: '#4a6cf7', mr: { xs: 1, sm: 2 }, fontSize: { xs: 28, sm: 32, md: 36 } }} />
                 <Box>
-                  <Typography variant="h4" color="#2d3748" fontWeight={700}>
+                  <Typography variant="h4" color="#2d3748" fontWeight={700} sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' } }}>
                     Teacher Dashboard
                   </Typography>
-                  <Typography variant="body1" color="#4a5568" sx={{ mt: 0.5 }}>
+                  <Typography variant="body1" color="#4a5568" sx={{ mt: 0.5, fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                     Welcome back, Teacher {userProfile.name || 'Teacher'}! Manage your modules and track student progress.
                   </Typography>
                 </Box>
               </Box>
 
-              <Grid container spacing={3} sx={{ mb: 4 }}>
+              <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ mb: { xs: 2, sm: 3, md: 4 } }}>
                 <Grid item xs={12} sm={6} md={3}>
                   <Card sx={{ 
-                    p: 3, 
+                    p: { xs: 2, sm: 2.5, md: 3 }, 
                     textAlign: 'center', 
                     backgroundColor: '#f8f9ff',
                     border: '1px solid #e3e8ff',
                     boxShadow: "none"
                   }}>
-                    <PlaylistAddCheckIcon sx={{ fontSize: 40, color: '#4a6cf7', mb: 1 }} />
-                    <Typography variant="h5" fontWeight={600} color="#2d3748">
+                    <PlaylistAddCheckIcon sx={{ fontSize: { xs: 32, sm: 36, md: 40 }, color: '#4a6cf7', mb: 1 }} />
+                    <Typography variant="h5" fontWeight={600} color="#2d3748" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' } }}>
                       {modules.length}
                     </Typography>
-                    <Typography variant="body2" color="#4a5568">
+                    <Typography variant="body2" color="#4a5568" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                       Total Modules
                     </Typography>
                   </Card>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
                   <Card sx={{ 
-                    p: 3, 
+                    p: { xs: 2, sm: 2.5, md: 3 }, 
                     textAlign: 'center', 
                     backgroundColor: '#f0fdf4',
                     border: '1px solid #bbf7d0',
                     boxShadow: "none"
                   }}>
-                    <CheckCircle sx={{ fontSize: 40, color: '#22c55e', mb: 1 }} />
-                    <Typography variant="h5" fontWeight={600} color="#2d3748">
+                    <CheckCircle sx={{ fontSize: { xs: 32, sm: 36, md: 40 }, color: '#22c55e', mb: 1 }} />
+                    <Typography variant="h5" fontWeight={600} color="#2d3748" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' } }}>
                       {modules.filter(m => m.active).length}
                     </Typography>
-                    <Typography variant="body2" color="#4a5568">
+                    <Typography variant="body2" color="#4a5568" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                       Active Modules
                     </Typography>
                   </Card>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
                   <Card sx={{ 
-                    p: 3, 
+                    p: { xs: 2, sm: 2.5, md: 3 }, 
                     textAlign: 'center', 
                     backgroundColor: '#fefce8',
                     border: '1px solid #fef08a',
                     boxShadow: "none"
                   }}>
-                    <GroupIcon sx={{ fontSize: 40, color: '#eab308', mb: 1 }} />
-                    <Typography variant="h5" fontWeight={600} color="#2d3748">
+                    <GroupIcon sx={{ fontSize: { xs: 32, sm: 36, md: 40 }, color: '#eab308', mb: 1 }} />
+                    <Typography variant="h5" fontWeight={600} color="#2d3748" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' } }}>
                       {loadingStudents ? (
                         <CircularProgress size={20} sx={{ color: '#eab308' }} />
                       ) : (
                         enrolledStudentsCount
                       )}
                     </Typography>
-                    <Typography variant="body2" color="#4a5568">
+                    <Typography variant="body2" color="#4a5568" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                       Students Enrolled
                     </Typography>
                   </Card>
                 </Grid>
                 <Grid item xs={12} sm={6} md={3}>
                   <Card sx={{ 
-                    p: 3, 
+                    p: { xs: 2, sm: 2.5, md: 3 }, 
                     textAlign: 'center', 
                     backgroundColor: '#fdf2f8',
                     border: '1px solid #fce7f3',
                     boxShadow: "none"
                   }}>
-                    <AssessmentIcon sx={{ fontSize: 40, color: '#ec4899', mb: 1 }} />
-                    <Typography variant="h5" fontWeight={600} color="#2d3748">
+                    <AssessmentIcon sx={{ fontSize: { xs: 32, sm: 36, md: 40 }, color: '#ec4899', mb: 1 }} />
+                    <Typography variant="h5" fontWeight={600} color="#2d3748" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' } }}>
                       {loadingCompletionRate ? (
                         <CircularProgress size={20} sx={{ color: '#ec4899' }} />
                       ) : (
                         `${completionRate}%`
                       )}
                     </Typography>
-                    <Typography variant="body2" color="#4a5568">
+                    <Typography variant="body2" color="#4a5568" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                       Avg. Completion Rate
                     </Typography>
                   </Card>

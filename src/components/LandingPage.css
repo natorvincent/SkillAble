@@ -38,5 +38,60 @@
     background-color: rgba(255, 255, 255, 0.95); /* Optional: lightens card */
    
   }
+
+/* Responsive Design - Keep all designs the same, just scale */
+@media (max-width: 768px) {
+  .card {
+    width: 160px;
+    height: 220px;
+    padding: 1.2rem;
+  }
+  
+  .text-title {
+    font-size: 1.2em;
+  }
+  
+  .text-body {
+    font-size: 0.9em;
+  }
+  
+  .landing-girl-image,
+  .landing-boy-image {
+    display: none; /* Hide decorative images on mobile */
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    width: 140px;
+    height: 200px;
+    padding: 1rem;
+  }
+  
+  .text-title {
+    font-size: 1em;
+  }
+  
+  .text-body {
+    font-size: 0.8em;
+  }
+}
+
+@media (max-width: 1024px) {
+  .landing-kids-image {
+    display: none; /* Hide on tablets and below */
+  }
+}
+
+@media (max-width: 768px) {
+  .landing-kids-image {
+    display: none;
+  }
+  
+  .landing-girl-image,
+  .landing-boy-image {
+    display: none;
+  }
+}
   
    

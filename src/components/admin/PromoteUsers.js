@@ -123,16 +123,16 @@ const PromoteUsers = () => {
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
+      <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1.125rem', sm: '1.25rem', md: '1.5rem' } }}>
         Promote Students to Teachers
       </Typography>
       
-      <Typography color="text.secondary" sx={{ mb: 3 }}>
+      <Typography color="text.secondary" sx={{ mb: { xs: 2, sm: 2.5, md: 3 }, fontSize: { xs: '0.875rem', sm: '1rem' } }}>
         Select any student to promote them to teacher status.
       </Typography>
       
       {/* Search and refresh section */}
-      <Box sx={{ display: 'flex', mb: 3, gap: 2 }}>
+      <Box sx={{ display: 'flex', mb: { xs: 2, sm: 2.5, md: 3 }, gap: { xs: 1, sm: 2 }, flexWrap: { xs: 'wrap', sm: 'nowrap' } }}>
         <TextField
           placeholder="Search students by name or email..."
           variant="outlined"
@@ -147,12 +147,13 @@ const PromoteUsers = () => {
               </InputAdornment>
             ),
           }}
-          sx={{ borderRadius: "10px" }}
+          sx={{ borderRadius: "10px", minWidth: { xs: '100%', sm: '200px' } }}
         />
         <Button
           variant="outlined"
           startIcon={<RefreshIcon fontSize="small" />}
           onClick={fetchStudents}
+          sx={{ whiteSpace: 'nowrap', minWidth: { xs: '100%', sm: 'auto' } }}
         >
           Refresh
         </Button>
@@ -160,28 +161,29 @@ const PromoteUsers = () => {
       
       {/* Error and success messages */}
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert severity="error" sx={{ mb: { xs: 2, sm: 2.5, md: 3 } }}>
           {error}
         </Alert>
       )}
       
       {successMessage && (
-        <Alert severity="success" sx={{ mb: 3 }}>
+        <Alert severity="success" sx={{ mb: { xs: 2, sm: 2.5, md: 3 } }}>
           {successMessage}
         </Alert>
       )}
       
       {/* Students table */}
-      <TableContainer component={Paper} sx={{ mb: 4, borderRadius: "10px" }}>
-        <Table>
-          <TableHead sx={{ bgcolor: '#f5f5f5' }}>
-            <TableRow>
-              <TableCell width="60px"></TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell width="100px">Action</TableCell>
-            </TableRow>
-          </TableHead>
+      <Box sx={{ overflowX: 'auto', width: '100%', mb: { xs: 2, sm: 3, md: 4 } }}>
+        <TableContainer component={Paper} sx={{ borderRadius: "10px", minWidth: 600 }}>
+          <Table>
+            <TableHead sx={{ bgcolor: '#f5f5f5' }}>
+              <TableRow>
+                <TableCell width="60px" sx={{ py: { xs: 1, sm: 1.5 } }}></TableCell>
+                <TableCell sx={{ py: { xs: 1, sm: 1.5 }, fontSize: { xs: '0.875rem', sm: '1rem' } }}>Name</TableCell>
+                <TableCell sx={{ py: { xs: 1, sm: 1.5 }, fontSize: { xs: '0.875rem', sm: '1rem' } }}>Email</TableCell>
+                <TableCell width="100px" sx={{ py: { xs: 1, sm: 1.5 }, fontSize: { xs: '0.875rem', sm: '1rem' } }}>Action</TableCell>
+              </TableRow>
+            </TableHead>
           <TableBody>
             {loading ? (
               <TableRow>
@@ -211,19 +213,21 @@ const PromoteUsers = () => {
                     }
                   }}
                 >
-                  <TableCell padding="checkbox">
+                  <TableCell padding="checkbox" sx={{ py: { xs: 1, sm: 1.5 } }}>
                     <Radio
                       checked={selectedStudent && selectedStudent.id === student.id}
                       onChange={() => handleStudentSelect(student)}
+                      size="small"
                     />
                   </TableCell>
-                  <TableCell>{student.firstName} {student.lastName}</TableCell>
-                  <TableCell>{student.email}</TableCell>
-                  <TableCell>
+                  <TableCell sx={{ py: { xs: 1, sm: 1.5 }, fontSize: { xs: '0.875rem', sm: '1rem' } }}>{student.firstName} {student.lastName}</TableCell>
+                  <TableCell sx={{ py: { xs: 1, sm: 1.5 }, fontSize: { xs: '0.875rem', sm: '1rem' } }}>{student.email}</TableCell>
+                  <TableCell sx={{ py: { xs: 1, sm: 1.5 } }}>
                     <Button
                       size="small"
                       color="primary"
                       onClick={() => handleStudentSelect(student)}
+                      sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
                     >
                       Select
                     </Button>
@@ -234,6 +238,7 @@ const PromoteUsers = () => {
           </TableBody>
         </Table>
       </TableContainer>
+      </Box>
       
       {/* Promotion form */}
       {selectedStudent && (

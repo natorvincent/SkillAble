@@ -281,18 +281,26 @@ const StudentsList = () => {
       )}
       
       {/* Students table */}
-      <TableContainer 
+      <Box sx={{ overflowX: 'auto', width: '100%', mb: 2 }}>
+        <TableContainer 
         component={Paper} 
         sx={{ 
           borderRadius: 2,
           overflow: 'hidden'
         }}
       >
-        <Table>
+        <Table sx={{ minWidth: { xs: 600, sm: 'auto' } }}>
           <TableHead>
             <TableRow sx={{ bgcolor: 'grey.50' }}>
               <TableCell 
-                sx={{ fontWeight: 600, borderBottom: '2px solid', borderBottomColor: 'divider', cursor: 'pointer' }}
+                sx={{ 
+                  fontWeight: 600, 
+                  borderBottom: '2px solid', 
+                  borderBottomColor: 'divider', 
+                  cursor: 'pointer',
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                  padding: { xs: '8px 4px', sm: '16px' }
+                }}
                 onClick={() => handleSort('name')}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -301,7 +309,14 @@ const StudentsList = () => {
                 </Box>
               </TableCell>
               <TableCell 
-                sx={{ fontWeight: 600, borderBottom: '2px solid', borderBottomColor: 'divider', cursor: 'pointer' }}
+                sx={{ 
+                  fontWeight: 600, 
+                  borderBottom: '2px solid', 
+                  borderBottomColor: 'divider', 
+                  cursor: 'pointer',
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                  padding: { xs: '8px 4px', sm: '16px' }
+                }}
                 onClick={() => handleSort('email')}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -354,28 +369,28 @@ const StudentsList = () => {
                       transition: 'background-color 0.2s ease'
                     }}
                   >
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <TableCell sx={{ padding: { xs: '8px 4px', sm: '16px' } }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 } }}>
                         <Avatar 
                           sx={{ 
                             bgcolor: stringToColor(student.firstName + student.lastName),
-                            width: 40,
-                            height: 40,
-                            fontSize: '0.9rem',
+                            width: { xs: 32, sm: 40 },
+                            height: { xs: 32, sm: 40 },
+                            fontSize: { xs: '0.75rem', sm: '0.9rem' },
                             fontWeight: 600
                           }}
                         >
                           {getInitials(student.firstName, student.lastName)}
                         </Avatar>
                         <Box>
-                          <Typography fontWeight={600} color="text.primary">
+                          <Typography fontWeight={600} color="text.primary" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                             {formatName(student.firstName, student.lastName)}
                           </Typography>
                         </Box>
                       </Box>
                     </TableCell>
-                    <TableCell>
-                      <Typography color="text.secondary" fontSize="0.9rem">
+                    <TableCell sx={{ padding: { xs: '8px 4px', sm: '16px' } }}>
+                      <Typography color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.9rem' } }}>
                         {student.email}
                       </Typography>
                     </TableCell>
@@ -410,6 +425,7 @@ const StudentsList = () => {
           </TableBody>
         </Table>
       </TableContainer>
+      </Box>
 
       {/* Pagination */}
       {!loading && processedStudents.length > 0 && (

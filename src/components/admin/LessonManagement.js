@@ -465,16 +465,16 @@ const LessonManagement = () => {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
       {/* Header Section */}
-      <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-        <CardContent sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Box>
-              <Typography variant="h4" fontWeight="600" color="#1a237e" gutterBottom>
+      <Card sx={{ mb: { xs: 2, sm: 2.5, md: 3 }, borderRadius: { xs: 1.5, sm: 2 }, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, flexWrap: { xs: 'wrap', sm: 'nowrap' }, gap: 2 }}>
+            <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: 0 } }}>
+              <Typography variant="h4" fontWeight="600" color="#1a237e" gutterBottom sx={{ fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' } }}>
                 Lesson Management
               </Typography>
-              <Typography variant="body1" color="#546e7a">
+              <Typography variant="body1" color="#546e7a" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                 Manage learning lessons and educational activities
               </Typography>
             </Box>
@@ -484,13 +484,14 @@ const LessonManagement = () => {
               onClick={() => handleOpenDialog()}
               sx={{
                 backgroundColor: '#1976d2',
-                borderRadius: 2,
-                px: 3,
-                py: 1.5,
+                borderRadius: { xs: 1.5, sm: 2 },
+                px: { xs: 2, sm: 2.5, md: 3 },
+                py: { xs: 1, sm: 1.25, md: 1.5 },
                 fontWeight: '600',
                 textTransform: 'none',
-                fontSize: '16px',
+                fontSize: { xs: '14px', sm: '15px', md: '16px' },
                 boxShadow: '0 2px 8px rgba(25, 118, 210, 0.2)',
+                whiteSpace: 'nowrap',
                 '&:hover': {
                   backgroundColor: '#1565c0',
                   boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)'
@@ -504,21 +505,22 @@ const LessonManagement = () => {
       </Card>
 
       {/* Lessons Table */}
-      <Card sx={{ borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ backgroundColor: '#f5f7ff' }}>
-                <TableCell sx={{ fontWeight: '600', color: '#37474f', py: 3, fontSize: '15px' }}>Title</TableCell>
-                <TableCell sx={{ fontWeight: '600', color: '#37474f', py: 3, fontSize: '15px' }}>Module</TableCell>
-                <TableCell sx={{ fontWeight: '600', color: '#37474f', py: 3, fontSize: '15px' }}>Type</TableCell>
-                <TableCell sx={{ fontWeight: '600', color: '#37474f', py: 3, fontSize: '15px' }}>Activity</TableCell>
-                <TableCell align="center" sx={{ fontWeight: '600', color: '#37474f', py: 3, fontSize: '15px' }}>Level</TableCell>
-                <TableCell align="center" sx={{ fontWeight: '600', color: '#37474f', py: 3, fontSize: '15px' }}>Order</TableCell>
-                <TableCell align="center" sx={{ fontWeight: '600', color: '#37474f', py: 3, fontSize: '15px' }}>Status</TableCell>
-                <TableCell align="center" sx={{ fontWeight: '600', color: '#37474f', py: 3, fontSize: '15px' }}>Actions</TableCell>
-              </TableRow>
-            </TableHead>
+      <Card sx={{ borderRadius: { xs: 1.5, sm: 2 }, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <Box sx={{ overflowX: 'auto', width: '100%' }}>
+          <TableContainer sx={{ minWidth: 800 }}>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ backgroundColor: '#f5f7ff' }}>
+                  <TableCell sx={{ fontWeight: '600', color: '#37474f', py: { xs: 1.5, sm: 2, md: 3 }, fontSize: { xs: '0.8125rem', sm: '0.875rem', md: '15px' } }}>Title</TableCell>
+                  <TableCell sx={{ fontWeight: '600', color: '#37474f', py: { xs: 1.5, sm: 2, md: 3 }, fontSize: { xs: '0.8125rem', sm: '0.875rem', md: '15px' } }}>Module</TableCell>
+                  <TableCell sx={{ fontWeight: '600', color: '#37474f', py: { xs: 1.5, sm: 2, md: 3 }, fontSize: { xs: '0.8125rem', sm: '0.875rem', md: '15px' } }}>Type</TableCell>
+                  <TableCell sx={{ fontWeight: '600', color: '#37474f', py: { xs: 1.5, sm: 2, md: 3 }, fontSize: { xs: '0.8125rem', sm: '0.875rem', md: '15px' } }}>Activity</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: '600', color: '#37474f', py: { xs: 1.5, sm: 2, md: 3 }, fontSize: { xs: '0.8125rem', sm: '0.875rem', md: '15px' } }}>Level</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: '600', color: '#37474f', py: { xs: 1.5, sm: 2, md: 3 }, fontSize: { xs: '0.8125rem', sm: '0.875rem', md: '15px' } }}>Order</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: '600', color: '#37474f', py: { xs: 1.5, sm: 2, md: 3 }, fontSize: { xs: '0.8125rem', sm: '0.875rem', md: '15px' } }}>Status</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: '600', color: '#37474f', py: { xs: 1.5, sm: 2, md: 3 }, fontSize: { xs: '0.8125rem', sm: '0.875rem', md: '15px' } }}>Actions</TableCell>
+                </TableRow>
+              </TableHead>
             <TableBody>
               {lessons.length === 0 ? (
                 <TableRow>
@@ -687,6 +689,7 @@ const LessonManagement = () => {
             </TableBody>
           </Table>
         </TableContainer>
+        </Box>
       </Card>
 
       {/* Create/Edit Lesson Dialog - Professional Table Style */}
