@@ -349,7 +349,18 @@ export const updateModuleProgress = async (studentId, moduleId, progressBody = {
     return false;
   }
 };
-
+// Get all module progress without making individual API calls
+// Returns a map of module IDs to default progress objects
+export const getAllModuleProgress = async (studentId, modules) => {
+  console.log('Getting progress for all modules');
+  const progressMap = {};
+  if (modules && Array.isArray(modules)) {
+    modules.forEach(module => {
+      progressMap[module.id] = getDefaultModuleProgress();
+    });
+  }
+  return progressMap;
+};
 // Expose a helper to inspect queued saves (useful for debugging)
 export const getQueuedSaves = () => {
   const out = {};
