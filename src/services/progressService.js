@@ -182,56 +182,101 @@ export const getStudentLessonProgress = async (studentId, lessonId) => {
   }
 };
 
-// 3. Save lesson progress - THIS ENDPOINT EXISTS
-export const saveStudentLessonProgress = async (studentId, lessonId, progressData) => {
-  if (!studentId || !lessonId) {
-    throw new Error('Missing studentId or lessonId');
+// Save lesson progress — tolerant/flexible signature
+// Accepts:
+//  - (studentId, lessonId, progressData)
+//  - (moduleSlug, lessonSlug, score)  // older/demo calls
+// progressData may be an object or a number (score)
+export const saveStudentLessonProgress = async (studentIdParam, lessonIdParam, progressDataParam) => {
+  // Resolve studentId (prefer explicit numeric, else localStorage)
+  let studentId = null;
+  let moduleSlugFromArgs = null;
+
+  if (typeof studentIdParam === 'number' || (/^\d+$/.test(String(studentIdParam)))) {
+    studentId = parseInt(studentIdParam, 10);
+  } else if (typeof studentIdParam === 'string' && studentIdParam.trim() !== '') {
+    // Could be a module slug in older code paths; store for payload
+    moduleSlugFromArgs = studentIdParam;
+    // Try to get actual studentId from localStorage
+    const sid = localStorage.getItem('studentId');
+    if (sid && /^\d+$/.test(sid)) studentId = parseInt(sid, 10);
+  } else {
+    const sid = localStorage.getItem('studentId');
+    if (sid && /^\d+$/.test(sid)) studentId = parseInt(sid, 10);
   }
 
-  const key = `${studentId}-${lessonId}`;
-  
-  // Prepare payload in backend format
+  // Resolve lessonId or lessonSlug
+  let lessonId = null;
+  let lessonSlug = null;
+  if (typeof lessonIdParam === 'number' || (/^\d+$/.test(String(lessonIdParam)))) {
+    lessonId = parseInt(lessonIdParam, 10);
+  } else if (typeof lessonIdParam === 'string' && lessonIdParam.trim() !== '') {
+    lessonSlug = lessonIdParam;
+  }
+
+  // Normalize progressData (allow number shorthand)
+  let progressData = {};
+  if (typeof progressDataParam === 'number') {
+    progressData = { score: progressDataParam };
+  } else if (typeof progressDataParam === 'object' && progressDataParam !== null) {
+    progressData = progressDataParam;
+  }
+
+  // Build payload with both numeric ids and fallback slugs
   const payload = {
-    studentId: parseInt(studentId, 10),
-    lessonId: parseInt(lessonId, 10),
-    score: progressData.score || 0,
-    maxScore: progressData.maxScore || 100,
-    completed: progressData.completed || false,
-    starsEarned: progressData.starsEarned || 0
+    // include numeric studentId if available (backend will use it)
+    ...(studentId ? { studentId } : {}),
+    ...(lessonId ? { lessonId } : {}),
+    ...(lessonSlug ? { lessonSlug } : {}),
+    ...(moduleSlugFromArgs ? { moduleSlug: moduleSlugFromArgs } : {}),
+    score: progressData.score ?? progressData.points ?? 0,
+    maxScore: progressData.maxScore ?? progressData.max ?? 100,
+    completed: !!progressData.completed,
+    starsEarned: progressData.starsEarned ?? progressData.stars ?? 0,
+    lastUpdatedAt: new Date().toISOString(),
+    // include any other extra fields passed explicitly
+    ...progressData.extra
   };
 
-  console.log('Saving progress:', payload);
+  // Create a stable queue key
+  const keyParts = [
+    studentId ? String(studentId) : (moduleSlugFromArgs || 'anon'),
+    lessonId ? String(lessonId) : (lessonSlug || String(Date.now()))
+  ];
+  const queueKey = keyParts.join('-');
 
-  // Add to pending queue
-  pendingSaves.set(key, payload);
+  // Queue and persist
+  pendingSaves.set(queueKey, payload);
   persistPendingSaves();
   startFlushTimer();
 
-  // Try to save immediately
+  // Attempt to save immediately (best-effort)
   try {
-    const response = await fetch(`${API_BASE_URL}/lesson`, {
+    const res = await fetch(`${API_BASE_URL}/lesson`, {
       method: 'POST',
       headers: makeHeaders(),
       body: JSON.stringify(payload)
     });
 
-    if (response.ok) {
-      // Clear from pending queue if saved successfully
-      pendingSaves.delete(key);
+    if (res.ok) {
+      // remove from queue and persist removal
+      pendingSaves.delete(queueKey);
       persistPendingSaves();
-      
-      // Clear cache for this module to force refresh
-      progressCache.delete(`module-${studentId}-${progressData.moduleId}`);
-      
-      console.log('✅ Progress saved immediately');
-      return { success: true, message: 'Progress saved' };
+
+      // invalidate cache for module if we have numeric studentId and module info
+      if (studentId && progressData.moduleId) {
+        progressCache.delete(`module-${studentId}-${progressData.moduleId}`);
+      }
+
+      console.log(`✅ Progress saved immediately (${queueKey})`);
+      return { success: true, queued: false, message: 'Progress saved' };
     } else {
-      console.warn('Progress save failed, will retry later');
-      return { success: false, queued: true, message: 'Progress queued for retry' };
+      console.warn(`Progress save returned ${res.status} — queued for retry (${queueKey})`);
+      return { success: false, queued: true, status: res.status, message: 'Queued for retry' };
     }
-  } catch (error) {
-    console.warn('Network error saving progress, will retry later:', error);
-    return { success: false, queued: true, message: 'Progress queued due to network error' };
+  } catch (err) {
+    console.warn('Network error while saving progress — queued for retry', err);
+    return { success: false, queued: true, message: 'Queued due to network error' };
   }
 };
 
