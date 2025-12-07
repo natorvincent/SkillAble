@@ -689,6 +689,7 @@ const LessonManagement = () => {
             </TableBody>
           </Table>
         </TableContainer>
+        </Box>
       </Card>
 
       {/* Create/Edit Lesson Dialog - Professional Table Style */}
