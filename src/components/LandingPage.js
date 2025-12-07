@@ -73,40 +73,40 @@ function LandingPage() {
 
         {/* Main Section */}
         <section className="main-section" style={{ minHeight: "70vh", position: "relative" }}>
-          <img
-            src={girl}
-            alt="Girl Illustration"
-            className="landing-girl-image"
-            style={{
-              position: "absolute",
-              bottom: "-250px",
-              left: 0,
-              height: "840px",
-              maxHeight: "60vh",
-              width: "auto",
-              maxWidth: "40%",
-              objectFit: "contain",
-              zIndex: 0,
-            }}
-          />
-
+                <img
+          src={girl}
+          alt="Girl Illustration"
+          className="landing-girl-image"
+          style={{
+            position: "absolute",
+            bottom: "0", // Changed from -250px
+            left: 0,
+            height: "auto", // Changed from 840px
+            maxHeight: "70vh", // Slightly increased
+            width: "auto",
+            maxWidth: "40%",
+            objectFit: "contain",
+            zIndex: 0,
+          }}
+        />  
           {/* Boy Image - Lower Right */}
-          <img
-            src={boy}
-            alt="Boy Illustration"
-            className="landing-boy-image"
-            style={{
-              position: "absolute",
-              bottom: "-290px",
-              right: 0,
-              height: "860px",
-              maxHeight: "60vh",
-              width: "auto",
-              maxWidth: "40%",
-              objectFit: "contain",
-              zIndex: 0,
-            }}
-          />
+         
+            <img
+              src={boy}
+              alt="Boy Illustration"
+              className="landing-boy-image"
+              style={{
+                position: "absolute",
+                bottom: "0", // Changed from -290px
+                right: 0,
+                height: "auto", // Changed from 860px
+                maxHeight: "70vh", // Slightly increased
+                width: "auto",
+                maxWidth: "40%",
+                objectFit: "contain",
+                zIndex: 0,
+              }}
+            />  
 
           {/* Center Content */}
           <div
