@@ -134,15 +134,19 @@ export default function CookingLevel2() {
   };
 
   const goToHomepage = () => {
-    navigate('/homepage');
+    navigate('/studentdashboard');
   };
 
   const continueToNextLevel = async () => {
     if (!progressSaved && !progressSaving) {
       await saveProgress();
+      // Wait a moment for progress to save before navigating
+      setTimeout(() => {
+        navigate('/lesson/cooking/level-3');
+      }, 500);
+    } else {
+      navigate('/lesson/cooking/level-3');
     }
-    
-    navigate('/lesson/cooking/level-3');
   };
 
   // Initialize audio elements

@@ -1367,7 +1367,7 @@ const CookingLevel3 = () => {
 
             {gameState.stepsCompleted.every(step => step) && (
               <Button
-                onClick={() => navigate('/lesson/cooking/level-4')}
+                onClick={() => navigate('/studentdashboard')}
                 variant="contained"
                 sx={{
                   backgroundColor: '#4CAF50',
@@ -1471,7 +1471,7 @@ const CookingLevel3 = () => {
                 
                 <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginTop: '20px' }}>
                   <Button 
-                    onClick={() => navigate('/lesson/cooking/level-4')}
+                    onClick={() => navigate('/studentdashboard')}
                     variant="contained"
                     sx={{ 
                       backgroundColor: '#4CAF50',

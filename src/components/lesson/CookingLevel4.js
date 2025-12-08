@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Box, Button, CircularProgress, Typography, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
@@ -644,7 +643,7 @@ export default function RiceCookerSimulator() {
                 </Button>
 
                 <Button 
-                  onClick={() => navigate('/homepage')}
+                  onClick={() => navigate('/studentdashboard')}
                   variant="contained"
                   startIcon={<span>🏠</span>}
                   sx={{ 
@@ -1933,117 +1932,116 @@ export default function RiceCookerSimulator() {
                 </div>
               </div>
             </div>
-          </div>
-        </Box>
+          </Box>
 
-        {/* Control Bar - Realistic Style */}
-        <Box sx={{
-          position: 'fixed',
-          bottom: 12,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          display: 'flex',
-          gap: 1,
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          padding: '8px 16px',
-          borderRadius: '20px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-          zIndex: 1000,
-          border: '1px solid #D2B48C'
-        }}>
-          <Button
-            onClick={resetGame}
-            variant="contained"
-            startIcon={<span>🔄</span>}
-            sx={{
-              backgroundColor: '#8B4513',
-              borderRadius: '15px',
-              padding: '8px 16px',
-              fontSize: '13px',
-              fontWeight: '600',
-              textTransform: 'none',
-              boxShadow: '0 2px 8px rgba(139, 69, 19, 0.3)',
-              '&:hover': { 
-                backgroundColor: '#654321',
-              },
-              transition: 'all 0.3s ease',
-              fontFamily: 'Arial, sans-serif'
-            }}
-          >
-            Reset
-          </Button>
-          
-          <Button
-            onClick={() => navigate('/homepage')}
-            variant="contained"
-            startIcon={<span>🏠</span>}
-            sx={{
-              backgroundColor: '#8B4513',
-              borderRadius: '15px',
-              padding: '8px 16px',
-              fontSize: '13px',
-              fontWeight: '600',
-              textTransform: 'none',
-              boxShadow: '0 2px 8px rgba(139, 69, 19, 0.3)',
-              '&:hover': { 
-                backgroundColor: '#654321',
-              },
-              transition: 'all 0.3s ease',
-              fontFamily: 'Arial, sans-serif'
-            }}
-          >
-            Home
-          </Button>
-
-          {gameComplete && (
+          {/* Control Bar - Realistic Style */}
+          <Box sx={{
+            position: 'fixed',
+            bottom: 12,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            gap: 1,
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            padding: '8px 16px',
+            borderRadius: '20px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            zIndex: 1000,
+            border: '1px solid #D2B48C'
+          }}>
             <Button
-              onClick={() => navigate('/lesson/cooking/level-5')}
+              onClick={resetGame}
               variant="contained"
-              startIcon={<span>🚀</span>}
+              startIcon={<span>🔄</span>}
               sx={{
-                backgroundColor: '#228B22',
+                backgroundColor: '#8B4513',
                 borderRadius: '15px',
                 padding: '8px 16px',
                 fontSize: '13px',
                 fontWeight: '600',
                 textTransform: 'none',
-                boxShadow: '0 2px 8px rgba(34, 139, 34, 0.3)',
+                boxShadow: '0 2px 8px rgba(139, 69, 19, 0.3)',
                 '&:hover': { 
-                  backgroundColor: '#1F7A1F',
+                  backgroundColor: '#654321',
                 },
-                animation: 'pulse 2s infinite',
                 transition: 'all 0.3s ease',
                 fontFamily: 'Arial, sans-serif'
               }}
             >
-              Next Recipe
+              Reset
             </Button>
-          )}
-        </Box>
+            
+            <Button
+              onClick={() => navigate('/studentdashboard')}
+              variant="contained"
+              startIcon={<span>🏠</span>}
+              sx={{
+                backgroundColor: '#8B4513',
+                borderRadius: '15px',
+                padding: '8px 16px',
+                fontSize: '13px',
+                fontWeight: '600',
+                textTransform: 'none',
+                boxShadow: '0 2px 8px rgba(139, 69, 19, 0.3)',
+                '&:hover': { 
+                  backgroundColor: '#654321',
+                },
+                transition: 'all 0.3s ease',
+                fontFamily: 'Arial, sans-serif'
+              }}
+            >
+              Home
+            </Button>
 
-        {/* Feedback Message - Realistic */}
-        {showFeedback && (
-          <div style={{
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            background: 'linear-gradient(135deg, #8B4513, #A0522D)',
-            color: 'white',
-            padding: '16px 24px',
-            borderRadius: '12px',
-            fontSize: '15px',
-            fontWeight: '600',
-            zIndex: 2000,
-            boxShadow: '0 8px 25px rgba(139, 69, 19, 0.5)',
-            animation: 'bounceIn 0.4s ease-out',
-            border: '2px solid rgba(255, 255, 255, 0.3)',
-            fontFamily: 'Arial, sans-serif',
-            textAlign: 'center'
-          }}>
-            {feedbackMessage}
-          </div>
-        )}
+            {gameComplete && (
+              <Button
+                onClick={() => navigate('/lesson/cooking/level-5')}
+                variant="contained"
+                startIcon={<span>🚀</span>}
+                sx={{
+                  backgroundColor: '#228B22',
+                  borderRadius: '15px',
+                  padding: '8px 16px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  textTransform: 'none',
+                  boxShadow: '0 2px 8px rgba(34, 139, 34, 0.3)',
+                  '&:hover': { 
+                    backgroundColor: '#1F7A1F',
+                  },
+                  animation: 'pulse 2s infinite',
+                  transition: 'all 0.3s ease',
+                  fontFamily: 'Arial, sans-serif'
+                }}
+              >
+                Next Recipe
+              </Button>
+            )}
+          </Box>
+
+          {/* Feedback Message - Realistic */}
+          {showFeedback && (
+            <div style={{
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              background: 'linear-gradient(135deg, #8B4513, #A0522D)',
+              color: 'white',
+              padding: '16px 24px',
+              borderRadius: '12px',
+              fontSize: '15px',
+              fontWeight: '600',
+              zIndex: 2000,
+              boxShadow: '0 8px 25px rgba(139, 69, 19, 0.5)',
+              animation: 'bounceIn 0.4s ease-out',
+              border: '2px solid rgba(255, 255, 255, 0.3)',
+              fontFamily: 'Arial, sans-serif',
+              textAlign: 'center'
+            }}>
+              {feedbackMessage}
+            </div>
+          )}
       </Box>
     </div>
   );
