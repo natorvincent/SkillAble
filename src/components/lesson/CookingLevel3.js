@@ -519,6 +519,10 @@ const CookingLevel3 = () => {
             0%, 100% { box-shadow: 0 0 10px rgba(76, 175, 80, 0.5); }
             50% { box-shadow: 0 0 20px rgba(76, 175, 80, 0.8), 0 0 30px rgba(76, 175, 80, 0.4); }
           }
+          @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+          }
         `}
         </style>
 
@@ -1437,49 +1441,94 @@ const CookingLevel3 = () => {
                 zIndex: 2002,
                 position: 'relative'
               }}>
-                <div style={{ fontSize: '80px', marginBottom: '20px' }}>🏆</div>
-                <h2 style={{ color: '#E65100', marginBottom: '15px', fontSize: '32px' }}>
-                  Level 3 Complete!
+                <div style={{ fontSize: '80px', marginBottom: '20px', animation: 'bounce 2s infinite' }}>🍳</div>
+                
+                <h2 style={{ 
+                  color: '#E65100', 
+                  marginBottom: '15px', 
+                  fontSize: '32px',
+                  background: 'linear-gradient(45deg, #FF9800, #F57C00)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}>
+                  Master Chef Level 3!
                 </h2>
                 
                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', fontSize: '32px' }}>
-                  <span>⭐</span>
-                  <span>⭐</span>
-                  <span>⭐</span>
+                  <span style={{ animation: 'pulse 2s infinite', animationDelay: '0s' }}>⭐</span>
+                  <span style={{ animation: 'pulse 2s infinite', animationDelay: '0.2s' }}>⭐</span>
+                  <span style={{ animation: 'pulse 2s infinite', animationDelay: '0.4s' }}>⭐</span>
                 </div>
                 
-                <h3 style={{ fontSize: '24px', color: '#E65100', marginBottom: '20px' }}>
-                  Perfectly cooked scrambled egg!
+                <h3 style={{ fontSize: '24px', color: '#8B4513', marginBottom: '20px' }}>
+                  Perfect Scrambled Egg! 🥓
                 </h3>
                 
-                <p style={{ color: '#5D4037', marginBottom: '30px', fontSize: '16px', lineHeight: '1.5' }}>
-                  Amazing work! You've mastered the complete cooking process from setup to finish. This is restaurant-quality cooking!
+                <p style={{ color: '#5D4037', marginBottom: '15px', fontSize: '14px', lineHeight: '1.5' }}>
+                  Incredible work! You've completed the entire cooking process from setup to serving. Your scrambled egg is perfectly cooked with ideal heat management and ingredient timing!
                 </p>
 
+                <div style={{
+                  backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                  padding: '15px',
+                  borderRadius: '12px',
+                  marginBottom: '15px',
+                  border: '2px solid #FF9800'
+                }}>
+                  <div style={{
+                    fontSize: '16px',
+                    fontWeight: '700',
+                    color: '#8B4513',
+                    marginBottom: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}>
+                    <span>✓ Cooking Mastered:</span>
+                  </div>
+                  <div style={{
+                    fontSize: '14px',
+                    color: '#654321',
+                    lineHeight: '1.8'
+                  }}>
+                    ⚡ Power & Heat Control • 🫒 Oil & Butter • 🥚 Egg Cooking • 🧂 Seasoning • 🥄 Stirring • 🌿 Garnishing
+                  </div>
+                </div>
+
                 {progressSaving && (
-                  <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(33, 150, 243, 0.9)', borderRadius: '12px', color: 'white' }}>
-                    <CircularProgress size={16} sx={{ mr: 1, color: 'white' }} />
-                    <Typography variant="body2">Saving progress...</Typography>
+                  <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(255, 152, 0, 0.9)', borderRadius: '12px', color: 'white', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                    <CircularProgress size={16} sx={{ color: 'white' }} />
+                    <Typography variant="body2">Saving your cooking achievement...</Typography>
                   </Box>
                 )}
                 
                 {progressSaved && (
-                  <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(76, 175, 80, 0.9)', borderRadius: '12px', color: 'white' }}>
-                    ✅ Progress saved!
+                  <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(76, 175, 80, 0.9)', borderRadius: '12px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>
+                    ✅ Achievement unlocked! Progress saved!
                   </Box>
                 )}
                 
-                <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginTop: '20px' }}>
+                <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginTop: '20px', flexWrap: 'wrap' }}>
                   <Button 
-                    onClick={() => navigate('/studentdashboard')}
+                    onClick={() => navigate('/lesson/cooking/level-4')}
                     variant="contained"
                     sx={{ 
-                      backgroundColor: '#4CAF50',
+                      backgroundColor: '#FF9800',
                       borderRadius: '15px',
-                      '&:hover': { backgroundColor: '#45a049' }
+                      minWidth: '140px',
+                      fontWeight: '700',
+                      textTransform: 'none',
+                      fontSize: '14px',
+                      boxShadow: '0 4px 12px rgba(255, 152, 0, 0.4)',
+                      '&:hover': { 
+                        backgroundColor: '#F57C00',
+                        boxShadow: '0 6px 16px rgba(255, 152, 0, 0.5)'
+                      }
                     }}
                   >
-                    🚀 Next Level
+                    🍚 Level 4: Rice Cooker
                   </Button>
                   
                   <Button
@@ -1489,6 +1538,10 @@ const CookingLevel3 = () => {
                       borderColor: '#FF9800', 
                       color: '#FF9800',
                       borderRadius: '15px',
+                      minWidth: '120px',
+                      fontWeight: '600',
+                      textTransform: 'none',
+                      fontSize: '14px',
                       borderWidth: '2px',
                       '&:hover': {
                         borderWidth: '2px',
@@ -1497,6 +1550,22 @@ const CookingLevel3 = () => {
                     }}
                   >
                     🔄 Play Again
+                  </Button>
+
+                  <Button 
+                    onClick={() => navigate('/studentdashboard')}
+                    variant="contained"
+                    sx={{ 
+                      backgroundColor: '#8B4513',
+                      borderRadius: '15px',
+                      minWidth: '120px',
+                      fontWeight: '600',
+                      textTransform: 'none',
+                      fontSize: '14px',
+                      '&:hover': { backgroundColor: '#654321' }
+                    }}
+                  >
+                    🏠 Home
                   </Button>
                 </div>
               </div>

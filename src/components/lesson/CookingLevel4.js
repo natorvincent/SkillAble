@@ -539,6 +539,10 @@ export default function RiceCookerSimulator() {
                 color: '#8B4513',
                 marginBottom: '16px',
                 fontWeight: '700',
+                background: 'linear-gradient(45deg, #8B4513, #A0522D)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
                 fontFamily: 'Georgia, serif'
               }}>
                 {riceQuality}
@@ -606,15 +610,15 @@ export default function RiceCookerSimulator() {
               )}
 
               {progressSaving && (
-                <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(139, 69, 19, 0.9)', borderRadius: '10px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(139, 69, 19, 0.9)', borderRadius: '10px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, fontWeight: '600' }}>
                   <CircularProgress size={16} sx={{ color: 'white' }} />
-                  <Typography variant="body2">Saving progress...</Typography>
+                  <Typography variant="body2">Saving your rice cooking achievement...</Typography>
                 </Box>
               )}
               
               {progressSaved && (
-                <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(34, 139, 34, 0.9)', borderRadius: '10px', color: 'white' }}>
-                  ✅ Progress saved successfully!
+                <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(34, 139, 34, 0.9)', borderRadius: '10px', color: 'white', fontWeight: '600' }}>
+                  ✅ Achievement unlocked! Progress saved!
                 </Box>
               )}
 
