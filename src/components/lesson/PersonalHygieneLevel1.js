@@ -541,7 +541,7 @@ const saveProgress = async () => {
     if (!studentId || !lessonIdNum) {
       throw new Error(`Missing IDs: studentId=${studentId}, lessonId=${lessonIdNum}`);
     }
-
+    
     const response = await fetch('http://localhost:8080/api/progress/lesson', {
       method: 'POST',
       headers: {

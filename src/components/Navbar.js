@@ -4,6 +4,7 @@ import './Navbar.css';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Box, Typography, Avatar } from '@mui/material';
 import avatarImage from '../assets/profile.png';
+import logoImg from '../assets/logo/logo.png';
 
 function Navbar() {
   const location = useLocation();
@@ -224,9 +225,14 @@ function Navbar() {
   return (
     <nav className="nav-bar">
       <RouterLink to={homeTarget} style={{ textDecoration: 'none' }}>
-        <div className="navbar-title">SkillAble</div>
+        <div className="navbar-logo">
+          <img 
+            src={logoImg} 
+            alt="SkillAble Logo" 
+            className="navbar-logo-img"
+          />
+        </div>
       </RouterLink>
-
       <ul className="navbar-links">
         <li>
           <a href="/" onClick={handleHomeClick}>Home</a>
