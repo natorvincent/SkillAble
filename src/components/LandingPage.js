@@ -156,7 +156,7 @@ function LandingPage() {
             <button 
               className="landingbutton" 
               style={{ marginTop: "20px" }}
-              onClick={() => navigate("/register")}
+              onClick={() => navigate("/login")}
             >
                 Start learning today
             </button>
