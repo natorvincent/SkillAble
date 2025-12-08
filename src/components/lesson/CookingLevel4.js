@@ -1936,7 +1936,7 @@ export default function RiceCookerSimulator() {
                 </div>
               </div>
             </div>
-          </Box>
+          </div>
 
           {/* Control Bar - Realistic Style */}
           <Box sx={{
@@ -2046,6 +2046,7 @@ export default function RiceCookerSimulator() {
               {feedbackMessage}
             </div>
           )}
+        </Box>
       </Box>
     </div>
   );
