@@ -870,6 +870,36 @@ const CookingLevel5 = () => {
                 <RotateCcw size={16} />
                 Reset
               </button>
+
+              <button
+                onClick={() => navigate('/studentdashboard')}
+                style={{
+                  background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                  color: 'white',
+                  padding: '12px 20px',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  fontWeight: '700',
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(249, 115, 22, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.1)';
+                }}
+              >
+                🏠 Home
+              </button>
             </div>
           </div>
         </div>
@@ -916,6 +946,158 @@ const CookingLevel5 = () => {
         </div>
       )}
 
+      {/* Success Modal */}
+      {showSuccess && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 3000,
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '20px',
+            padding: '40px',
+            maxWidth: '450px',
+            width: '100%',
+            textAlign: 'center',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
+            border: '3px solid #10b981',
+            background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+            animation: 'bounceIn 0.6s ease-out'
+          }}>
+            <div style={{ fontSize: '80px', marginBottom: '20px', animation: 'float 3s ease-in-out infinite' }}>🎨</div>
+            
+            <h2 style={{
+              fontSize: '28px',
+              color: '#10b981',
+              marginBottom: '15px',
+              fontWeight: '700',
+              background: 'linear-gradient(45deg, #10b981, #059669)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}>
+              Perfect Plating!
+            </h2>
+            
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', fontSize: '32px' }}>
+              <span style={{ animation: 'pulse 2s infinite', animationDelay: '0s' }}>⭐</span>
+              <span style={{ animation: 'pulse 2s infinite', animationDelay: '0.2s' }}>⭐</span>
+              <span style={{ animation: 'pulse 2s infinite', animationDelay: '0.4s' }}>⭐</span>
+            </div>
+            
+            <h3 style={{ 
+              fontSize: '24px', 
+              color: '#059669', 
+              marginBottom: '20px',
+              fontWeight: '700'
+            }}>
+              Presentation Master! 👨‍🍳
+            </h3>
+            
+            <p style={{ 
+              color: '#047857', 
+              fontSize: '14px', 
+              marginBottom: '20px',
+              lineHeight: '1.5'
+            }}>
+              Outstanding work! You've arranged the dish beautifully with proper plating techniques. Your presentation is restaurant-quality!
+            </p>
+
+            <div style={{
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              padding: '15px',
+              borderRadius: '12px',
+              marginBottom: '15px',
+              border: '2px solid #10b981'
+            }}>
+              <div style={{
+                fontSize: '16px',
+                fontWeight: '700',
+                color: '#065f46',
+                marginBottom: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
+              }}>
+                <span>✓ Plating Elements:</span>
+              </div>
+              <div style={{
+                fontSize: '14px',
+                color: '#047857',
+                lineHeight: '1.8'
+              }}>
+                🍚 Rice Base • 🍳 Fried Egg • 🌿 Garnish • 🥄 Utensils
+              </div>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button
+                onClick={handleReset}
+                style={{
+                  background: 'white',
+                  color: '#10b981',
+                  padding: '12px 24px',
+                  borderRadius: '15px',
+                  fontSize: '14px',
+                  fontWeight: '700',
+                  border: '2px solid #10b981',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.2)',
+                  transition: 'all 0.3s ease',
+                  textTransform: 'none'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.2)';
+                }}
+              >
+                🔄 Play Again
+              </button>
+
+              <button 
+                onClick={() => navigate('/studentdashboard')}
+                style={{
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  color: 'white',
+                  padding: '12px 24px',
+                  borderRadius: '15px',
+                  fontSize: '14px',
+                  fontWeight: '700',
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(16, 185, 129, 0.5)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.4)';
+                }}
+              >
+                🏠 Home
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
         @keyframes bounceIn {
           0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
@@ -940,6 +1122,10 @@ const CookingLevel5 = () => {
         @keyframes confettiFall {
           0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
           100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
         }
       `}</style>
     </div>

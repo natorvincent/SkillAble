@@ -269,7 +269,7 @@ export default function FriedEggLevel1() {
     if (navigate) {
       navigate('/studentdashboard');
     } else {
-      window.location.href = '/homepage';
+      window.location.href = '/studentdashboard';
     }
   };
 
@@ -1128,36 +1128,93 @@ export default function FriedEggLevel1() {
             maxWidth: '500px', 
             width: '100%', 
             textAlign: 'center', 
-            border: '4px solid #4CAF50', 
-            boxShadow: '0 20px 40px rgba(0,0,0,0.3)' 
+            border: '4px solid #FF9800', 
+            boxShadow: '0 20px 40px rgba(255, 152, 0, 0.4)',
+            background: 'linear-gradient(135deg, #FFF8E1 0%, #FFECB3 100%)'
           }}>
-            <div style={{ fontSize: '80px', marginBottom: '20px' }}>🏆</div>
-            <h2 style={{ fontSize: '36px', fontWeight: 'bold', color: '#2E7D32', marginBottom: '20px' }}>Good Job!</h2>
+            <div style={{ fontSize: '80px', marginBottom: '20px', animation: 'bounce 2s infinite' }}>🍳</div>
+            
+            <h2 style={{ 
+              fontSize: '36px', 
+              fontWeight: 'bold', 
+              background: 'linear-gradient(45deg, #FF9800, #F57C00)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              marginBottom: '20px' 
+            }}>
+              Perfect Fried Egg!
+            </h2>
+            
             <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '20px' }}>
-              {[...Array(3)].map((_, i) => (<span key={i} style={{ fontSize: '48px' }}>⭐</span>))}
+              {[...Array(3)].map((_, i) => (<span key={i} style={{ fontSize: '48px', animation: 'pulse 2s infinite', animationDelay: `${i * 0.2}s` }}>⭐</span>))}
             </div>
-            <h3 style={{ fontSize: '30px', fontWeight: 'bold', color: '#FF9800', marginBottom: '20px' }}>Perfect! 🍳</h3>
-            <p style={{ fontSize: '20px', color: '#2E7D32', lineHeight: 1.8, marginBottom: '15px' }}>
-              You collected all the correct ingredients! You avoided the wrong ones and picked only what you need for a delicious fried egg!
+            
+            <h3 style={{ 
+              fontSize: '24px', 
+              fontWeight: 'bold', 
+              color: '#8B4513', 
+              marginBottom: '20px' 
+            }}>
+              Chef Baconardo Approves! 🥓
+            </h3>
+            
+            <p style={{ 
+              fontSize: '18px', 
+              color: '#5D4037', 
+              lineHeight: 1.8, 
+              marginBottom: '20px',
+              backgroundColor: 'rgba(255, 152, 0, 0.1)',
+              padding: '15px',
+              borderRadius: '12px',
+              border: '2px solid #FF9800'
+            }}>
+              You selected all the perfect ingredients for a delicious fried egg! You understood which items are essential for cooking and avoided the unnecessary ones. That's excellent kitchen knowledge!
             </p>
-            <p style={{ fontSize: '18px', color: '#666', fontStyle: 'italic', marginBottom: '30px' }}>
-              Great job! Remember to always ask an adult to help when cooking.
-            </p>
+
+            <div style={{
+              backgroundColor: '#E8F5E8',
+              padding: '15px',
+              borderRadius: '12px',
+              marginBottom: '20px',
+              border: '2px solid #4CAF50'
+            }}>
+              <div style={{
+                fontSize: '16px',
+                fontWeight: '700',
+                color: '#2E7D32',
+                marginBottom: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
+              }}>
+                <span>✓ Ingredients Collected:</span>
+              </div>
+              <div style={{
+                fontSize: '14px',
+                color: '#1B5E20',
+                lineHeight: '1.8'
+              }}>
+                🥚 Egg • 🫒 Oil • 🧂 Salt • 🧈 Butter
+              </div>
+            </div>
 
             {progressSaving && (
               <Box sx={{ 
                 mt: 2, 
                 p: 2, 
-                backgroundColor: 'rgba(33, 150, 243, 0.9)', 
+                backgroundColor: 'rgba(255, 152, 0, 0.9)', 
                 borderRadius: '12px', 
                 color: 'white',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 1
+                gap: 1,
+                fontWeight: '600'
               }}>
                 <CircularProgress size={16} sx={{ color: 'white' }} />
-                <Typography variant="body2">Saving your progress...</Typography>
+                <Typography variant="body2">Saving your cooking progress...</Typography>
               </Box>
             )}
             
@@ -1167,9 +1224,10 @@ export default function FriedEggLevel1() {
                 p: 2, 
                 backgroundColor: 'rgba(76, 175, 80, 0.9)', 
                 borderRadius: '12px', 
-                color: 'white' 
+                color: 'white',
+                fontWeight: '600'
               }}>
-                ✅ Progress saved successfully!
+                ✅ Achievement unlocked! Progress saved!
               </Box>
             )}
 
@@ -1184,6 +1242,8 @@ export default function FriedEggLevel1() {
                   borderRadius: '15px',
                   minWidth: '120px',
                   borderWidth: '2px',
+                  fontWeight: '700',
+                  textTransform: 'none',
                   '&:hover': {
                     borderWidth: '2px',
                     backgroundColor: 'rgba(255, 152, 0, 0.1)'
@@ -1199,13 +1259,19 @@ export default function FriedEggLevel1() {
                 variant="contained"
                 size="large"
                 sx={{
-                  backgroundColor: '#2196F3',
+                  backgroundColor: '#FF9800',
                   borderRadius: '15px',
-                  minWidth: '120px',
-                  '&:hover': { backgroundColor: '#1976D2' }
+                  minWidth: '140px',
+                  fontWeight: '700',
+                  textTransform: 'none',
+                  boxShadow: '0 4px 12px rgba(255, 152, 0, 0.4)',
+                  '&:hover': { 
+                    backgroundColor: '#F57C00',
+                    boxShadow: '0 6px 16px rgba(255, 152, 0, 0.5)'
+                  }
                 }}
               >
-                {progressSaving ? 'Saving...' : '➡️ Next Level'}
+                {progressSaving ? 'Saving...' : '🚀 Level 2'}
               </Button>
 
               <Button 
@@ -1213,10 +1279,12 @@ export default function FriedEggLevel1() {
                 variant="contained"
                 size="large"
                 sx={{
-                  backgroundColor: '#4CAF50',
+                  backgroundColor: '#8B4513',
                   borderRadius: '15px',
                   minWidth: '120px',
-                  '&:hover': { backgroundColor: '#45a049' }
+                  fontWeight: '700',
+                  textTransform: 'none',
+                  '&:hover': { backgroundColor: '#654321' }
                 }}
               >
                 🏠 Go Home
@@ -1316,6 +1384,10 @@ export default function FriedEggLevel1() {
             transform: scale(1) rotate(var(--rotation, 0deg));
             opacity: 1;
           }
+        }
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-20px); }
         }
       `}</style>
     </div>

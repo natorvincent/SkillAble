@@ -140,9 +140,13 @@ export default function CookingLevel2() {
   const continueToNextLevel = async () => {
     if (!progressSaved && !progressSaving) {
       await saveProgress();
+      // Wait a moment for progress to save before navigating
+      setTimeout(() => {
+        navigate('/lesson/cooking/level-3');
+      }, 500);
+    } else {
+      navigate('/lesson/cooking/level-3');
     }
-    
-    navigate('/lesson/cooking/level-3');
   };
 
   // Initialize audio elements
@@ -1197,19 +1201,23 @@ export default function CookingLevel2() {
               maxWidth: '400px',
               width: '100%',
               textAlign: 'center',
-              border: '4px solid #4CAF50',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+              border: '4px solid #FF9800',
+              boxShadow: '0 20px 40px rgba(255, 152, 0, 0.4)',
+              background: 'linear-gradient(135deg, #FFF8E1 0%, #FFECB3 100%)'
             }}
           >
-            <div style={{ fontSize: '60px', marginBottom: '15px' }}>🏆</div>
+            <div style={{ fontSize: '60px', marginBottom: '15px', animation: 'bounce 2s infinite' }}>🔪</div>
             
             <h2 style={{ 
               fontSize: '28px', 
-              fontWeight: 'bold', 
-              color: '#2E7D32', 
+              fontWeight: 'bold',
+              background: 'linear-gradient(45deg, #FF9800, #F57C00)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
               marginBottom: '15px' 
             }}>
-              Level 2 Complete!
+              Ingredients Prepared!
             </h2>
             
             <div style={{ 
@@ -1218,18 +1226,18 @@ export default function CookingLevel2() {
               marginBottom: '15px', 
               fontSize: '24px' 
             }}>
-              <span style={{ margin: '0 3px' }}>⭐</span>
-              <span style={{ margin: '0 3px' }}>⭐</span>
-              <span style={{ margin: '0 3px' }}>⭐</span>
+              <span style={{ margin: '0 3px', animation: 'pulse 2s infinite', animationDelay: '0s' }}>⭐</span>
+              <span style={{ margin: '0 3px', animation: 'pulse 2s infinite', animationDelay: '0.2s' }}>⭐</span>
+              <span style={{ margin: '0 3px', animation: 'pulse 2s infinite', animationDelay: '0.4s' }}>⭐</span>
             </div>
             
             <h3 style={{ 
-              fontSize: '18px', 
+              fontSize: '22px', 
               fontWeight: 'bold', 
-              color: '#2E7D32', 
+              color: '#8B4513', 
               marginBottom: '15px' 
             }}>
-              Ingredients are ready to cook!
+              Perfect Prep Work! 🥓
             </h3>
             
             <p style={{ 
@@ -1238,24 +1246,48 @@ export default function CookingLevel2() {
               marginBottom: '15px',
               lineHeight: '1.5'
             }}>
-              You have successfully prepared all the ingredients: chopped spring onion, cracked egg, and shaken salt.
-            </p>
-            
-            <p style={{ color: '#5D4037', fontSize: '14px', marginBottom: '20px' }}>
-              Ready for Level 3 - Let's start cooking!
+              You've mastered ingredient preparation! All items are chopped, cracked, and seasoned to perfection.
             </p>
 
+            <div style={{
+              backgroundColor: 'rgba(255, 152, 0, 0.1)',
+              padding: '15px',
+              borderRadius: '12px',
+              marginBottom: '15px',
+              border: '2px solid #FF9800'
+            }}>
+              <div style={{
+                fontSize: '16px',
+                fontWeight: '700',
+                color: '#8B4513',
+                marginBottom: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
+              }}>
+                <span>✓ Prepared Items:</span>
+              </div>
+              <div style={{
+                fontSize: '14px',
+                color: '#654321',
+                lineHeight: '1.8'
+              }}>
+                🥬 Spring Onion Chopped • 🥚 Egg Cracked • 🧂 Salt Shaken
+              </div>
+            </div>
+
             {progressSaving && (
-              <Box sx={{ mt: 1, p: 1, backgroundColor: 'rgba(33, 150, 243, 0.9)', borderRadius: '10px', color: 'white' }}>
-                <CircularProgress size={14} sx={{ mr: 1, color: 'white' }} />
-                <Typography variant="body2" sx={{ fontSize: '12px' }}>Saving your progress...</Typography>
+              <Box sx={{ mt: 1, p: 1, backgroundColor: 'rgba(255, 152, 0, 0.9)', borderRadius: '10px', color: 'white', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                <CircularProgress size={14} sx={{ color: 'white' }} />
+                <Typography variant="body2" sx={{ fontSize: '12px' }}>Saving your preparation progress...</Typography>
               </Box>
             )}
             
             {progressSaved && (
-              <Box sx={{ mt: 1, p: 1, backgroundColor: 'rgba(76, 175, 80, 0.9)', borderRadius: '10px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Box sx={{ mt: 1, p: 1, backgroundColor: 'rgba(76, 175, 80, 0.9)', borderRadius: '10px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>
                 <CheckCircleIcon sx={{ mr: 1, fontSize: 16 }} />
-                <Typography variant="body2" sx={{ fontSize: '12px' }}>Progress saved successfully!</Typography>
+                <Typography variant="body2" sx={{ fontSize: '12px' }}>Achievement unlocked! Progress saved!</Typography>
               </Box>
             )}
             
@@ -1266,14 +1298,20 @@ export default function CookingLevel2() {
                 variant="contained"
                 size="medium"
                 sx={{ 
-                  backgroundColor: '#4CAF50',
+                  backgroundColor: '#FF9800',
                   borderRadius: '12px',
-                  minWidth: '100px',
+                  minWidth: '120px',
                   fontSize: '14px',
-                  '&:hover': { backgroundColor: '#45a049' }
+                  fontWeight: '700',
+                  textTransform: 'none',
+                  boxShadow: '0 4px 12px rgba(255, 152, 0, 0.4)',
+                  '&:hover': { 
+                    backgroundColor: '#F57C00',
+                    boxShadow: '0 6px 16px rgba(255, 152, 0, 0.5)'
+                  }
                 }}
               >
-                {progressSaving ? 'Saving...' : '🚀 Next'}
+                {progressSaving ? 'Saving...' : '🔥 Level 3: Cooking'}
               </Button>
               <Button 
                 onClick={resetGame}
@@ -1286,6 +1324,8 @@ export default function CookingLevel2() {
                   minWidth: '100px',
                   fontSize: '14px',
                   borderWidth: '2px',
+                  fontWeight: '600',
+                  textTransform: 'none',
                   '&:hover': {
                     borderWidth: '2px',
                     backgroundColor: 'rgba(255, 152, 0, 0.1)'
@@ -1299,11 +1339,13 @@ export default function CookingLevel2() {
                 variant="contained"
                 size="medium"
                 sx={{ 
-                  backgroundColor: '#2196F3',
+                  backgroundColor: '#8B4513',
                   borderRadius: '12px',
                   minWidth: '100px',
                   fontSize: '14px',
-                  '&:hover': { backgroundColor: '#1976D2' }
+                  fontWeight: '600',
+                  textTransform: 'none',
+                  '&:hover': { backgroundColor: '#654321' }
                 }}
               >
                 🏠 Home
@@ -1360,6 +1402,10 @@ export default function CookingLevel2() {
           25% { transform: translateY(-15px) scale(1.2) rotate(-10deg); }
           50% { transform: translateY(-20px) scale(1.25) rotate(0deg); }
           75% { transform: translateY(-15px) scale(1.2) rotate(10deg); }
+        }
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-20px); }
         }
         
         /* Media Queries for responsiveness */
