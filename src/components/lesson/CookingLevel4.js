@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Box, Button, CircularProgress, Typography, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
-import { Droplet, Sparkles, ChefHat, Clock, Thermometer } from 'lucide-react';
+import { Droplet, Sparkles, ChefHat, Clock, Thermometer, ArrowRight, RotateCcw, Target, CheckCircle } from 'lucide-react';
 import Navbar from '../Navbar';
 
 // Import realistic kitchen background
@@ -367,6 +367,10 @@ export default function RiceCookerSimulator() {
     setCookerTimer(0);
   };
 
+  const handleStartGame = () => {
+    setShowIntro(false);
+  };
+
   const DraggableItem = ({ type, isActive, isCompleted, children, style = {} }) => (
     <div
       draggable={isActive}
@@ -494,6 +498,182 @@ export default function RiceCookerSimulator() {
     </div>
   );
 
+  // Start screen
+  if (showIntro) {
+    return (
+      <div style={{
+        minHeight: "100vh",
+        width: "100%",
+        background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
+        display: "flex",
+        flexDirection: "column"
+      }}>
+        <Navbar />
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'linear-gradient(135deg, rgba(139, 69, 19, 0.9) 0%, rgba(160, 82, 45, 0.9) 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          zIndex: 1,
+          padding: 3
+        }}>
+          <h1 style={{ 
+            color: 'white', 
+            fontWeight: 'bold', 
+            marginBottom: '24px',
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: '4rem',
+            textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
+            textAlign: 'center',
+            lineHeight: 1.2
+          }}>
+            Perfect Rice Cooking
+          </h1>
+          
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'row',
+            alignItems: 'center', 
+            justifyContent: 'center',
+            marginBottom: '40px',
+            animation: 'float 3s ease-in-out infinite',
+            maxWidth: '800px',
+            textAlign: 'center'
+          }}>
+            <div
+              style={{
+                width: 180,
+                height: 180,
+                filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+                outline: '4px solid white',
+                borderRadius: '50%',
+                marginRight: '24px',
+                overflow: 'hidden',
+                background: 'white'
+              }}
+            >
+              <img 
+                src={baconardoImg}
+                alt="Baconardo"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
+            </div>
+            <h2 style={{ 
+              color: 'rgba(255, 255, 255, 0.95)', 
+              fontFamily: 'Inter, sans-serif',
+              lineHeight: 1.5,
+              fontSize: '1.8rem',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+              maxWidth: '600px',
+              textAlign: 'left',
+              marginLeft: '24px'
+            }}>
+              Hello! I'm Chef Baconardo! Let's master the art of cooking perfect, fluffy rice! Follow my instructions to create restaurant-quality rice.
+            </h2>
+          </div>
+          
+          <div style={{ 
+            display: 'flex', 
+            gap: '20px',
+            marginBottom: '40px'
+          }}>
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              padding: '20px',
+              borderRadius: '15px',
+              textAlign: 'center',
+              minWidth: '200px',
+              backdropFilter: 'blur(10px)',
+              border: '2px solid rgba(255, 255, 255, 0.2)'
+            }}>
+              <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🍚</div>
+              <h3 style={{ color: 'white', marginBottom: '10px' }}>Step-by-Step</h3>
+              <p style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '0.9rem' }}>
+                Follow 8 easy steps to cook perfect rice
+              </p>
+            </div>
+            
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              padding: '20px',
+              borderRadius: '15px',
+              textAlign: 'center',
+              minWidth: '200px',
+              backdropFilter: 'blur(10px)',
+              border: '2px solid rgba(255, 255, 255, 0.2)'
+            }}>
+              <div style={{ fontSize: '3rem', marginBottom: '10px' }}>👨‍🍳</div>
+              <h3 style={{ color: 'white', marginBottom: '10px' }}>Chef's Tips</h3>
+              <p style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '0.9rem' }}>
+                Learn professional rice cooking techniques
+              </p>
+            </div>
+            
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              padding: '20px',
+              borderRadius: '15px',
+              textAlign: 'center',
+              minWidth: '200px',
+              backdropFilter: 'blur(10px)',
+              border: '2px solid rgba(255, 255, 255, 0.2)'
+            }}>
+              <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🎯</div>
+              <h3 style={{ color: 'white', marginBottom: '10px' }}>Interactive</h3>
+              <p style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '0.9rem' }}>
+                Drag & drop to complete each cooking step
+              </p>
+            </div>
+          </div>
+          
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button 
+              onClick={handleStartGame}
+              style={{ 
+                background: 'linear-gradient(135deg, #FFCA3A 0%, #FFA500 100%)',
+                color: '#8B4513',
+                padding: '16px 32px',
+                borderRadius: '25px',
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: '700',
+                fontSize: '1.5rem',
+                textTransform: 'none',
+                boxShadow: '0 10px 25px rgba(255, 202, 58, 0.5)',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, #FFD700 0%, #FFCA3A 100%)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, #FFCA3A 0%, #FFA500 100%)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              <ChefHat size={24} />
+              Start Cooking!
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{
       position: "fixed",
@@ -527,96 +707,6 @@ export default function RiceCookerSimulator() {
         {/* Realistic Chef Baconardo Character */}
         <BaconardoGuide />
 
-        {/* Introduction Dialog */}
-        <Dialog 
-          open={showIntro} 
-          maxWidth="md"
-          fullWidth
-          PaperProps={{
-            style: {
-              borderRadius: '15px',
-              background: 'linear-gradient(135deg, #FAF0E6, #FFEBCD)',
-              border: '3px solid #8B4513'
-            }
-          }}
-        >
-          <DialogTitle style={{ 
-            textAlign: 'center', 
-            background: 'linear-gradient(45deg, #8B4513, #A0522D)',
-            color: 'white',
-            borderRadius: '12px 12px 0 0',
-            padding: '20px',
-            fontFamily: 'Georgia, serif'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-              <ChefHat size={32} />
-              <h2 style={{ margin: 0, fontSize: '24px' }}>Welcome to Cooking Level 4</h2>
-              <span style={{ fontSize: '32px' }}>🍚</span>
-            </div>
-          </DialogTitle>
-          
-          <DialogContent style={{ padding: '25px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '20px' }}>
-              <div style={{
-                width: '100px',
-                height: '100px',
-                borderRadius: '50%',
-                overflow: 'hidden',
-                border: '2px solid #8B4513'
-              }}>
-                <img 
-                  src={baconardoImg} 
-                  alt="Chef Baconardo" 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-              </div>
-              <div>
-                <h3 style={{ color: '#8B4513', marginBottom: '8px', fontSize: '20px', fontFamily: 'Georgia, serif' }}>
-                  Meet Chef Baconardo! 👨‍🍳
-                </h3>
-                <p style={{ fontSize: '15px', lineHeight: '1.5', color: '#654321', fontFamily: 'Arial, sans-serif' }}>
-                  "Welcome to my kitchen! Today we're mastering the art of perfect rice cooking. 
-                  I'll guide you through each step to create fluffy, delicious rice that would make any chef proud!"
-                </p>
-              </div>
-            </div>
-
-            <div style={{ 
-              background: 'rgba(139, 69, 19, 0.1)', 
-              padding: '15px', 
-              borderRadius: '10px',
-              border: '2px solid rgba(139, 69, 19, 0.3)',
-              textAlign: 'center',
-              marginTop: '15px'
-            }}>
-              <p style={{ margin: 0, color: '#8B4513', fontWeight: 'bold', fontSize: '14px', fontFamily: 'Arial, sans-serif' }}>
-                👉 I'll be here to guide you through each cooking step. Follow the instructions carefully!
-              </p>
-            </div>
-          </DialogContent>
-          
-          <DialogActions style={{ justifyContent: 'center', padding: '20px' }}>
-            <Button
-              onClick={() => setShowIntro(false)}
-              variant="contained"
-              size="large"
-              sx={{
-                backgroundColor: '#8B4513',
-                borderRadius: '20px',
-                padding: '12px 35px',
-                fontSize: '15px',
-                fontWeight: 'bold',
-                fontFamily: 'Arial, sans-serif',
-                '&:hover': {
-                  backgroundColor: '#654321',
-                }
-              }}
-            >
-              🍳 Start Cooking
-            </Button>
-          </DialogActions>
-        </Dialog>
-        
         <style>
         {`
           @keyframes pulse {
@@ -1770,7 +1860,7 @@ export default function RiceCookerSimulator() {
             <Button
               onClick={resetGame}
               variant="contained"
-              startIcon={<span>🔄</span>}
+              startIcon={<RotateCcw size={16} />}
               sx={{
                 backgroundColor: '#8B4513',
                 borderRadius: '15px',
@@ -1815,7 +1905,7 @@ export default function RiceCookerSimulator() {
               <Button
                 onClick={() => navigate('/lesson/cooking/level-5')}
                 variant="contained"
-                startIcon={<span>🚀</span>}
+                startIcon={<ArrowRight size={16} />}
                 sx={{
                   backgroundColor: '#228B22',
                   borderRadius: '15px',
@@ -1837,18 +1927,19 @@ export default function RiceCookerSimulator() {
             )}
           </Box>
 
-          {/* Completion Dialog - with Confetti Celebration */}
+          {/* Completion Dialog - Enhanced with Perfect Rice Cooking theme */}
           <Dialog
             open={gameComplete}
             onClose={() => {}}
             fullScreen
             PaperProps={{
               sx: {
-                background: 'linear-gradient(135deg, rgba(255, 202, 58, 0.95) 0%, rgba(230, 184, 0, 0.95) 100%)',
+                background: 'linear-gradient(135deg, rgba(139, 69, 19, 0.95) 0%, rgba(160, 82, 45, 0.95) 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                padding: 4
               }
             }}
           >
@@ -1872,7 +1963,7 @@ export default function RiceCookerSimulator() {
                     top: `${Math.random() * -20}%`,
                     width: `${Math.random() * 10 + 5}px`,
                     height: `${Math.random() * 10 + 5}px`,
-                    backgroundColor: ['#FF595E', '#FFCA3A', '#8AC926', '#1982C4', '#6A4C93'][Math.floor(Math.random() * 5)],
+                    backgroundColor: ['#8B4513', '#A0522D', '#D2691E', '#DEB887', '#F5DEB3'][Math.floor(Math.random() * 5)],
                     transform: `rotate(${Math.random() * 360}deg)`,
                     boxShadow: '0 0 10px currentColor',
                     animation: `confettiFall 4s linear infinite`,
@@ -1904,12 +1995,14 @@ export default function RiceCookerSimulator() {
               textAlign: 'center',
               color: 'white',
               zIndex: 1001,
-              padding: 4
+              padding: 4,
+              width: '100%',
+              maxWidth: '800px'
             }}>
-              {/* Trophy Icon */}
+              {/* Trophy or Rice Bowl Icon */}
               <div style={{
                 fontSize: '150px',
-                marginBottom: '40px',
+                marginBottom: '30px',
                 animation: 'bounceIn 0.8s ease-out'
               }}>
                 {riceQuality.includes('Perfect') ? '🏆' : riceQuality.includes('Good') ? '⭐' : '🍚'}
@@ -1920,11 +2013,25 @@ export default function RiceCookerSimulator() {
                 fontWeight: 'bold',
                 color: 'white',
                 fontFamily: 'Poppins, sans-serif',
-                fontSize: { xs: '2rem', md: '3rem' },
+                fontSize: { xs: '2.5rem', md: '3.5rem' },
                 textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
                 mb: 2
               }}>
                 {riceQuality || 'Cooking Complete!'}
+              </Typography>
+              
+              {/* Subtitle */}
+              <Typography variant="h5" sx={{
+                color: 'rgba(255, 255, 255, 0.9)',
+                fontFamily: 'Inter, sans-serif',
+                mb: 4,
+                textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+              }}>
+                {riceQuality.includes('Perfect') 
+                  ? 'You cooked perfect restaurant-quality rice! 🎉' 
+                  : riceQuality.includes('Good')
+                  ? 'Good job! Your rice turned out well!'
+                  : 'Practice makes perfect! Try again for better results!'}
               </Typography>
               
               {/* Star Rating */}
@@ -1934,57 +2041,133 @@ export default function RiceCookerSimulator() {
                 mb: 4,
                 animation: 'slideIn 0.6s ease-out'
               }}>
-                {[...Array(3)].map((_, i) => {
-                  const starRating = mistakes.length === 0 ? 3 : mistakes.length === 1 ? 2 : 1;
+                {[...Array(5)].map((_, i) => {
+                  let starRating;
+                  if (mistakes.length === 0 && waterAmount === 'perfect') starRating = 5;
+                  else if (mistakes.length === 0) starRating = 4;
+                  else if (mistakes.length === 1) starRating = 3;
+                  else if (mistakes.length === 2) starRating = 2;
+                  else starRating = 1;
+                  
                   const isActive = i < starRating;
                   
                   return (
                     <span
                       key={i}
                       style={{
-                        fontSize: '80px',
-                        margin: '0 16px',
-                        color: isActive ? 'white' : 'rgba(255,255,255,0.3)',
-                        textShadow: isActive ? '2px 2px 4px rgba(0,0,0,0.3)' : 'none',
-                        transform: isActive ? 'scale(1.3)' : 'scale(1)',
+                        fontSize: '60px',
+                        margin: '0 8px',
+                        color: isActive ? '#FFD700' : 'rgba(255, 255, 255, 0.2)',
+                        textShadow: isActive ? '0 0 20px rgba(255, 215, 0, 0.7)' : 'none',
+                        transform: isActive ? 'scale(1.2)' : 'scale(1)',
                         transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
                         animation: isActive ? 'starPop 0.6s ease-out' : 'none',
                       }}
                     >
-                      {isActive ? '⭐' : '☆'}
+                      {isActive ? '★' : '☆'}
                     </span>
                   );
                 })}
               </Box>
               
               {/* Feedback Message */}
-              <Typography variant="h6" sx={{
-                color: 'white',
-                fontFamily: 'Inter, sans-serif',
-                lineHeight: 1.6,
+              <Box sx={{
+                backgroundColor: 'rgba(0,0,0,0.3)',
+                padding: '25px',
+                borderRadius: '20px',
                 mb: 6,
-                maxWidth: '800px',
-                textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-                backgroundColor: 'rgba(0,0,0,0.2)',
-                padding: '20px',
-                borderRadius: '15px'
+                border: '2px solid rgba(255, 255, 255, 0.2)',
+                backdropFilter: 'blur(10px)'
               }}>
                 {mistakes.length > 0 ? (
                   <div>
-                    <div style={{ fontWeight: 700, marginBottom: '12px', fontSize: '1.2rem' }}>Cooking Notes:</div>
-                    {mistakes.map((m, i) => (
-                      <div key={i} style={{ marginBottom: '8px', fontSize: '1rem' }}>• {m}</div>
-                    ))}
-                    <div style={{ marginTop: '16px', padding: '12px', backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: '8px' }}>
-                      💡 <strong>Pro Tip:</strong> Rinse rice 2-3 times and use the "Perfect Water" measurement for fluffy rice!
-                    </div>
+                    <Typography variant="h6" sx={{
+                      color: 'white',
+                      fontFamily: 'Inter, sans-serif',
+                      mb: 3,
+                      fontWeight: '700',
+                      fontSize: '1.4rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '10px'
+                    }}>
+                      <Target size={24} />
+                      Cooking Notes
+                      <Target size={24} />
+                    </Typography>
+                    <Box sx={{ textAlign: 'left' }}>
+                      {mistakes.map((m, i) => (
+                        <Box key={i} sx={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '12px',
+                          mb: 2,
+                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                          padding: '12px',
+                          borderRadius: '10px'
+                        }}>
+                          <span style={{ color: '#FF6B6B', fontSize: '1.2rem' }}>⚠️</span>
+                          <Typography sx={{ 
+                            color: 'white', 
+                            fontFamily: 'Inter, sans-serif',
+                            fontSize: '1rem',
+                            flex: 1
+                          }}>
+                            {m}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                    <Box sx={{
+                      mt: 3,
+                      p: 2,
+                      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(255, 255, 255, 0.3)'
+                    }}>
+                      <Typography sx={{
+                        color: 'white',
+                        fontFamily: 'Inter, sans-serif',
+                        fontSize: '1rem',
+                        fontWeight: '600',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px'
+                      }}>
+                        <ChefHat size={20} />
+                        <span>💡 <strong>Pro Tip:</strong> Rinse rice 2-3 times and use the "Perfect Water" measurement for fluffy rice!</span>
+                      </Typography>
+                    </Box>
                   </div>
                 ) : (
-                  <div style={{ fontSize: '1.2rem' }}>
-                    🎉 Masterful cooking! You followed all the steps perfectly and created delicious fluffy rice!
+                  <div>
+                    <Typography variant="h6" sx={{
+                      color: 'white',
+                      fontFamily: 'Inter, sans-serif',
+                      mb: 2,
+                      fontWeight: '700',
+                      fontSize: '1.5rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '10px'
+                    }}>
+                      <CheckCircle size={28} />
+                      Masterful Cooking Achievement!
+                      <CheckCircle size={28} />
+                    </Typography>
+                    <Typography sx={{
+                      color: 'white',
+                      fontFamily: 'Inter, sans-serif',
+                      fontSize: '1.2rem',
+                      lineHeight: 1.6
+                    }}>
+                      🎉 Excellent work! You followed all professional cooking techniques perfectly and created delicious, fluffy restaurant-quality rice!
+                    </Typography>
                   </div>
                 )}
-              </Typography>
+              </Box>
               
               {/* Progress Saving Status */}
               {progressSaving && (
@@ -2016,7 +2199,7 @@ export default function RiceCookerSimulator() {
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
-                  <span style={{ fontSize: '30px', marginRight: '12px' }}>✅</span>
+                  <CheckCircle size={30} style={{ marginRight: '12px' }} />
                   <Typography variant="h6" sx={{ fontFamily: 'Poppins, sans-serif' }}>
                     Progress saved successfully!
                   </Typography>
@@ -2037,6 +2220,7 @@ export default function RiceCookerSimulator() {
                     resetGame();
                   }}
                   variant="outlined"
+                  startIcon={<RotateCcw size={20} />}
                   sx={{
                     borderColor: 'white',
                     color: 'white',
@@ -2055,12 +2239,13 @@ export default function RiceCookerSimulator() {
                     }
                   }}
                 >
-                  🍳 Cook Again
+                  Cook Again
                 </Button>
                 
                 <Button
                   onClick={() => navigate('/studentdashboard')}
                   variant="contained"
+                  startIcon={<span>🏠</span>}
                   sx={{
                     background: 'linear-gradient(135deg, #8B4513 0%, #654321 100%)',
                     color: 'white',
@@ -2074,20 +2259,22 @@ export default function RiceCookerSimulator() {
                     boxShadow: '0 10px 25px rgba(139, 69, 19, 0.5)',
                     '&:hover': {
                       background: 'linear-gradient(135deg, #A0522D 0%, #8B4513 100%)',
-                      transform: 'translateY(-2px)'
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 15px 30px rgba(139, 69, 19, 0.7)'
                     }
                   }}
                 >
-                  🏠 Back to Home
+                  Back to Home
                 </Button>
                 
                 <Button
                   onClick={() => navigate('/lesson/cooking/level-5')}
                   variant="contained"
                   disabled={progressSaving}
+                  startIcon={<ArrowRight size={20} />}
                   sx={{
-                    background: 'linear-gradient(135deg, #228B22 0%, #1F7A1F 100%)',
-                    color: 'white',
+                    background: 'linear-gradient(135deg, #FFCA3A 0%, #FFA500 100%)',
+                    color: '#8B4513',
                     px: 6,
                     py: 2,
                     borderRadius: '25px',
@@ -2095,14 +2282,19 @@ export default function RiceCookerSimulator() {
                     fontWeight: '700',
                     fontSize: '1.2rem',
                     textTransform: 'none',
-                    boxShadow: '0 10px 25px rgba(34, 139, 34, 0.5)',
+                    boxShadow: '0 10px 25px rgba(255, 202, 58, 0.5)',
                     '&:hover': {
-                      background: 'linear-gradient(135deg, #32CD32 0%, #228B22 100%)',
-                      transform: 'translateY(-2px)'
+                      background: 'linear-gradient(135deg, #FFD700 0%, #FFCA3A 100%)',
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 15px 30px rgba(255, 202, 58, 0.7)'
+                    },
+                    '&.Mui-disabled': {
+                      background: 'linear-gradient(135deg, #cccccc 0%, #999999 100%)',
+                      color: '#666666'
                     }
                   }}
                 >
-                  {progressSaving ? 'Saving...' : '🚀 Next Recipe'}
+                  {progressSaving ? 'Saving...' : 'Next Recipe'}
                 </Button>
               </Box>
             </Box>
@@ -2126,8 +2318,13 @@ export default function RiceCookerSimulator() {
               animation: 'bounceIn 0.4s ease-out',
               border: '2px solid rgba(255, 255, 255, 0.3)',
               fontFamily: 'Arial, sans-serif',
-              textAlign: 'center'
+              textAlign: 'center',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              maxWidth: '90%'
             }}>
+              <ChefHat size={20} />
               {feedbackMessage}
             </div>
           )}

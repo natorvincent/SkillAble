@@ -1,6 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, RotateCcw, CheckCircle, ArrowRight, ChefHat, Target, Clock, Lightbulb, X, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { 
+  Dialog, 
+  Box, 
+  Button, 
+  Typography, 
+  CircularProgress,
+  Card
+} from '@mui/material';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import StarIcon from '@mui/icons-material/Star';
+import Navbar from '../Navbar';
 
 // Import images for Level 5 cooking game
 import forkImg from "../../assets/cookingLevel5/fork.png";
@@ -8,12 +20,16 @@ import friedEggWithGarnishImg from "../../assets/cookingLevel5/egg with garnish.
 import spoonImg from "../../assets/cookingLevel5/spoon.png";
 import riceImg from "../../assets/cookingLevel5/rice.png";
 
-// add MUI Dialog imports
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography } from '@mui/material';
+// Import Baconardo asset
+import baconardoImg from "../../assets/cookingLevel3/Baconardo.png";
 
 const CookingLevel5 = () => {
   const navigate = useNavigate();
   const audioRef = useRef(null);
+  
+  // Add start screen state
+  const [showStartScreen, setShowStartScreen] = useState(true);
+  
   const [placedItems, setPlacedItems] = useState({});
   const [draggedItem, setDraggedItem] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -28,6 +44,162 @@ const CookingLevel5 = () => {
   const [selectedUtensil, setSelectedUtensil] = useState(null);
   const [showUtensilTip, setShowUtensilTip] = useState(false);
   const [completedSteps, setCompletedSteps] = useState([]);
+  const [confettiPieces, setConfettiPieces] = useState([]);
+
+  // Handle start game
+  const handleStartGame = () => {
+    setShowStartScreen(false);
+  };
+
+  // ===== ALL HOOKS MUST BE HERE (BEFORE CONDITIONAL RETURN) =====
+
+  // Update current step based on placed items
+  useEffect(() => {
+    if (placedItems.rice && !placedItems.egg) setCurrentStep(1);
+    else if (placedItems.rice && placedItems.egg) setCurrentStep(2);
+    else setCurrentStep(0);
+  }, [placedItems]);
+
+  // Update completed steps
+  useEffect(() => {
+    const newCompletedSteps = [];
+    if (placedItems.rice) newCompletedSteps.push(0);
+    if (placedItems.egg) newCompletedSteps.push(1);
+    if (placedItems.spoon && placedItems.fork) newCompletedSteps.push(2);
+    setCompletedSteps(newCompletedSteps);
+  }, [placedItems]);
+
+  // Track dragging position for glow trail
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (draggedItem) {
+        setDraggingItemPos({ x: e.clientX, y: e.clientY });
+      }
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [draggedItem]);
+
+  // ===== END OF HOOKS SECTION =====
+
+  // Start screen
+  if (showStartScreen) {
+    return (
+      <div style={{
+        minHeight: "100vh",
+        width: "100%",
+        background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
+        display: "flex",
+        flexDirection: "column"
+      }}>
+        <Navbar />
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'linear-gradient(135deg, rgba(255, 202, 58, 0.8) 0%, rgba(255, 152, 0, 0.8) 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          zIndex: 1,
+          padding: 3
+        }}>
+          <h1 style={{ 
+            color: 'white', 
+            fontWeight: 'bold', 
+            marginBottom: '24px',
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: '4rem',
+            textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
+            textAlign: 'center',
+            lineHeight: 1.2
+          }}>
+            Master the Art of Plating
+          </h1>
+          
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'row',
+            alignItems: 'center', 
+            justifyContent: 'center',
+            marginBottom: '40px',
+            animation: 'float 3s ease-in-out infinite',
+            maxWidth: '800px',
+            textAlign: 'center'
+          }}>
+            <div
+              style={{
+                width: 120,
+                height: 120,
+                filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+                outline: '4px solid white',
+                borderRadius: '50%',
+                marginRight: '24px',
+                overflow: 'hidden',
+                background: 'white'
+              }}
+            >
+              <img 
+                src={baconardoImg}
+                alt="Baconardo"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
+            </div>
+            <h2 style={{ 
+              color: 'rgba(255, 255, 255, 0.95)', 
+              fontFamily: 'Inter, sans-serif',
+              lineHeight: 1.5,
+              fontSize: '1.5rem',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+              maxWidth: '600px',
+              textAlign: 'left',
+              marginLeft: '24px'
+            }}>
+              Hi! I'm Baconardo! Let's learn professional plating techniques to make your dish look restaurant-quality!
+            </h2>
+          </div>
+          
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button 
+              onClick={handleStartGame}
+              style={{ 
+                background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+                color: 'white',
+                padding: '16px 32px',
+                borderRadius: '25px',
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: '700',
+                fontSize: '1.5rem',
+                textTransform: 'none',
+                boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              Start Plating!
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Color Scheme
   const colors = {
@@ -212,34 +384,6 @@ const CookingLevel5 = () => {
     };
   };
 
-  // Update current step based on placed items
-  useEffect(() => {
-    if (placedItems.rice && !placedItems.egg) setCurrentStep(1);
-    else if (placedItems.rice && placedItems.egg) setCurrentStep(2);
-    else setCurrentStep(0);
-  }, [placedItems]);
-
-  // Update completed steps
-  useEffect(() => {
-    const newCompletedSteps = [];
-    if (placedItems.rice) newCompletedSteps.push(0);
-    if (placedItems.egg) newCompletedSteps.push(1);
-    if (placedItems.spoon && placedItems.fork) newCompletedSteps.push(2);
-    setCompletedSteps(newCompletedSteps);
-  }, [placedItems]);
-
-  // Track dragging position for glow trail
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (draggedItem) {
-        setDraggingItemPos({ x: e.clientX, y: e.clientY });
-      }
-    };
-    
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [draggedItem]);
-
   const handleDragStart = (e, item) => {
     if (placedItems[item.id]) return;
     
@@ -373,14 +517,22 @@ const CookingLevel5 = () => {
     for (let i = 0; i < 80; i++) {
       newConfetti.push({
         id: i,
-        left: Math.random() * 100,
-        delay: Math.random() * 0.5,
-        duration: 1 + Math.random() * 2,
+        x: Math.random() * 100,
+        y: -10,
         rotation: Math.random() * 360,
-        emoji: ['✨', '🎉', '⭐', '🎊', '🥳'][Math.floor(Math.random() * 5)]
+        color: [
+          '#FF0080', '#00FFFF', '#FF4500', '#9400D3', '#32CD32', '#FFD700', 
+          '#FF1493', '#00FF7F', '#1E90FF', '#FF6347', '#ADFF2F', '#FF69B4', 
+          '#00CED1', '#FFA500', '#DA70D6'
+        ][Math.floor(Math.random() * 15)],
+        size: Math.random() * 12 + 6,
+        speed: Math.random() * 4 + 2,
+        drift: (Math.random() - 0.5) * 3,
+        width: Math.random() * 8 + 4,
+        height: Math.random() * 12 + 6,
       });
     }
-    setConfetti(newConfetti);
+    setConfettiPieces(newConfetti);
   };
 
   const isTipCompleted = (tip) => {
@@ -411,6 +563,7 @@ const CookingLevel5 = () => {
       overflow: 'hidden',
       height: '100vh'
     }}>
+      <Navbar />
       
       {/* Header - Fixed at top */}
       <div style={{
@@ -463,8 +616,7 @@ const CookingLevel5 = () => {
           textAlign: 'center',
           boxShadow: `0 6px 24px ${colors.accent}40, 0 0 0 2px ${colors.accent}20`,
           position: 'relative',
-          overflow: 'hidden',
-          animation: 'slowPulse 3s infinite ease-in-out'
+          overflow: 'hidden'
         }}>
           <div style={{
             position: 'absolute',
@@ -472,8 +624,7 @@ const CookingLevel5 = () => {
             left: '-50%',
             right: '-50%',
             bottom: '-50%',
-            background: 'radial-gradient(circle at center, rgba(255,255,255,0.3) 0%, transparent 70%)',
-            animation: 'glow 4s infinite alternate'
+            background: 'radial-gradient(circle at center, rgba(255,255,255,0.3) 0%, transparent 70%)'
           }} />
           
           <div style={{ 
@@ -488,11 +639,11 @@ const CookingLevel5 = () => {
             textShadow: '0 2px 8px rgba(0,0,0,0.2)',
             flexWrap: 'wrap'
           }}>
-            <span style={{ fontSize: '24px', animation: 'wiggle 3s infinite' }}>👉</span>
+            <span style={{ fontSize: '24px' }}>👉</span>
             {currentStep === 0 && "Start by placing the rice on the plate"}
             {currentStep === 1 && "Now add the garnished fried egg on top 👆"}
             {currentStep === 2 && "Add utensils to complete the plating 🍽️"}
-            <span style={{ fontSize: '24px', animation: 'wiggle 3s infinite 0.5s' }}>👈</span>
+            <span style={{ fontSize: '24px' }}>👈</span>
           </div>
         </div>
       </div>
@@ -603,8 +754,7 @@ const CookingLevel5 = () => {
                       <div style={{
                         position: 'absolute',
                         top: '8px',
-                        right: '8px',
-                        animation: 'slideIn 0.5s ease-out'
+                        right: '8px'
                       }}>
                         <div style={{
                           width: '28px',
@@ -891,8 +1041,7 @@ const CookingLevel5 = () => {
             flexWrap: 'wrap'
           }}>
             <div style={{ 
-              fontSize: '24px',
-              animation: 'float 4s infinite ease-in-out'
+              fontSize: '24px'
             }}>🍽️</div>
             <h3 style={{
               fontSize: '20px',
@@ -904,8 +1053,7 @@ const CookingLevel5 = () => {
               YOUR PLATE
             </h3>
             <div style={{ 
-              fontSize: '24px',
-              animation: 'float 4s infinite ease-in-out 0.5s'
+              fontSize: '24px'
             }}>🍽️</div>
           </div>
           
@@ -981,7 +1129,6 @@ const CookingLevel5 = () => {
                 border: '4px dashed rgba(245, 158, 11, 0.4)',
                 borderRadius: '50%',
                 pointerEvents: 'none',
-                animation: 'pulse 2s infinite',
                 boxShadow: '0 0 0 8px rgba(245, 158, 11, 0.1)'
               }} />
             )}
@@ -1018,7 +1165,6 @@ const CookingLevel5 = () => {
                   transform: `translate(-50%, -50%) scale(${placed.item.scale})`,
                   transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
                   zIndex: placed.item.zIndex,
-                  animation: justPlaced === placed.item.id ? 'popIn 0.8s ease-out' : 'none',
                   filter: 'drop-shadow(0 12px 24px rgba(0,0,0,0.4))',
                   pointerEvents: 'none'
                 }}
@@ -1077,7 +1223,6 @@ const CookingLevel5 = () => {
                 border: '4px dashed rgba(16, 185, 129, 0.5)',
                 borderRadius: '50%',
                 pointerEvents: 'none',
-                animation: 'pulse 3s infinite',
                 boxShadow: '0 0 0 12px rgba(16, 185, 129, 0.15)'
               }} />
             )}
@@ -1096,7 +1241,6 @@ const CookingLevel5 = () => {
                   : `radial-gradient(circle, ${colors.primary}15 0%, transparent 70%)`,
                 borderRadius: '50%',
                 pointerEvents: 'none',
-                animation: 'pulse 2s infinite',
                 border: `3px dashed ${draggedItem.color}60`
               }} />
             )}
@@ -1110,7 +1254,6 @@ const CookingLevel5 = () => {
                   left: `${sparkle.x}%`,
                   top: `${sparkle.y}%`,
                   fontSize: `${sparkle.size}px`,
-                  animation: `sparkleAnimation 1.5s ease-out ${sparkle.delay}s forwards`,
                   pointerEvents: 'none',
                   zIndex: 10,
                   filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.9))'
@@ -1130,8 +1273,7 @@ const CookingLevel5 = () => {
               borderRadius: '14px',
               textAlign: 'center',
               border: `3px solid ${colors.primary}`,
-              boxShadow: `0 6px 24px ${colors.primary}30`,
-              animation: 'bounce 3s infinite'
+              boxShadow: `0 6px 24px ${colors.primary}30`
             }}>
               <div style={{
                 fontSize: '16px',
@@ -1250,8 +1392,7 @@ const CookingLevel5 = () => {
                       color: 'white',
                       fontSize: '12px',
                       fontWeight: '800',
-                      boxShadow: `0 4px 12px ${isCompleted ? colors.primary + '40' : (isCurrent ? colors.accent + '40' : colors.neutral + '20')}`,
-                      animation: isCurrent ? 'pulse 2s infinite' : 'none'
+                      boxShadow: `0 4px 12px ${isCompleted ? colors.primary + '40' : (isCurrent ? colors.accent + '40' : colors.neutral + '20')}`
                     }}>
                       {tip.icon}
                     </div>
@@ -1285,8 +1426,7 @@ const CookingLevel5 = () => {
                             display: 'flex',
                             alignItems: 'center',
                             gap: '6px',
-                            marginTop: '8px',
-                            animation: 'slideIn 0.5s ease-out'
+                            marginTop: '8px'
                           }}>
                             <CheckCircle size={14} color={colors.primary} />
                             <span style={{
@@ -1383,7 +1523,6 @@ const CookingLevel5 = () => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '10px',
-                    animation: 'pulse 3s infinite',
                     width: '100%'
                   }}
                   onMouseEnter={(e) => {
@@ -1490,8 +1629,7 @@ const CookingLevel5 = () => {
           pointerEvents: 'none',
           zIndex: 10000,
           opacity: 0.6,
-          filter: 'blur(12px)',
-          animation: 'glowTrail 0.3s ease-out'
+          filter: 'blur(12px)'
         }} />
       )}
 
@@ -1509,7 +1647,6 @@ const CookingLevel5 = () => {
           fontWeight: '600',
           zIndex: 2000,
           boxShadow: `0 8px 32px ${colors.accent}40`,
-          animation: 'slideIn 0.3s ease-out',
           border: `2px solid rgba(255,255,255,0.3)`,
           textAlign: 'center',
           display: 'flex',
@@ -1536,7 +1673,6 @@ const CookingLevel5 = () => {
             top: '-20px',
             left: `${conf.left}%`,
             fontSize: '24px',
-            animation: `confettiFall ${conf.duration}s ease-out ${conf.delay}s forwards`,
             zIndex: 1000,
             pointerEvents: 'none',
             filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
@@ -1562,7 +1698,6 @@ const CookingLevel5 = () => {
           fontWeight: '800',
           zIndex: 2000,
           boxShadow: `0 16px 48px ${colors.error}50`,
-          animation: 'bounceIn 0.6s ease-out',
           border: '3px solid rgba(255, 255, 255, 0.3)',
           textAlign: 'center',
           display: 'flex',
@@ -1581,10 +1716,9 @@ const CookingLevel5 = () => {
         </div>
       )}
 
-      {/* Completion Dialog - with Confetti Celebration */}
+      {/* Success Modal */}
       <Dialog
         open={showSuccess}
-        onClose={() => {}}
         fullScreen
         PaperProps={{
           sx: {
@@ -1596,7 +1730,6 @@ const CookingLevel5 = () => {
           }
         }}
       >
-        {/* Confetti Animation */}
         <Box sx={{
           position: 'fixed',
           top: 0,
@@ -1607,175 +1740,70 @@ const CookingLevel5 = () => {
           zIndex: 1000,
           overflow: 'hidden'
         }}>
-          {Array.from({ length: 50 }).map((_, i) => (
+          {confettiPieces.map(piece => (
             <Box
-              key={i}
+              key={piece.id}
               sx={{
                 position: 'absolute',
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * -20}%`,
-                width: `${Math.random() * 10 + 5}px`,
-                height: `${Math.random() * 10 + 5}px`,
-                backgroundColor: ['#FF595E', '#FFCA3A', '#8AC926', '#1982C4', '#6A4C93'][Math.floor(Math.random() * 5)],
-                transform: `rotate(${Math.random() * 360}deg)`,
-                boxShadow: '0 0 10px currentColor',
-                animation: `confettiFall 4s linear infinite`,
-                animationDelay: `${Math.random() * 3}s`,
-                '@keyframes confettiFall': {
-                  '0%': {
-                    transform: `translateY(-100vh) rotate(${Math.random() * 360}deg) scale(0.8)`,
-                    opacity: 1
-                  },
-                  '10%': {
-                    opacity: 1,
-                    transform: `translateY(-90vh) rotate(${Math.random() * 360 + 36}deg) scale(1)`
-                  },
-                  '90%': {
-                    opacity: 0.8,
-                    transform: `translateY(90vh) translateX(${Math.random() * 60}px) rotate(${Math.random() * 360 + 324}deg) scale(0.6)`
-                  },
-                  '100%': {
-                    transform: `translateY(100vh) translateX(${Math.random() * 70}px) rotate(${Math.random() * 360 + 360}deg) scale(0)`,
-                    opacity: 0
-                  }
-                }
+                left: `${piece.x}%`,
+                top: `${piece.y}%`,
+                width: `${piece.width}px`,
+                height: `${piece.height}px`,
+                backgroundColor: piece.color,
+                transform: `rotate(${piece.rotation}deg)`,
+                boxShadow: `0 0 10px ${piece.color}`
               }}
             />
           ))}
         </Box>
-
         <Box sx={{
           textAlign: 'center',
-          color: 'white',
-          zIndex: 1001,
-          padding: 4
+          color: 'white'
         }}>
-          {/* Trophy Icon */}
-          <div style={{
-            fontSize: '150px',
-            marginBottom: '40px',
-            animation: 'bounceIn 0.8s ease-out'
-          }}>
-            🎨
-          </div>
-          
-          {/* Title */}
+          <EmojiEventsIcon sx={{
+            fontSize: 150,
+            color: 'white',
+            mb: 4,
+            filter: 'drop-shadow(3px 3px 6px rgba(0,0,0,0.5))'
+          }} />
           <Typography variant="h1" sx={{
             fontWeight: 'bold',
             color: 'white',
             fontFamily: 'Poppins, sans-serif',
-            fontSize: { xs: '2rem', md: '3rem' },
+            fontSize: '3rem',
             textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
             mb: 2
           }}>
-            Perfect Plating! 🏆
+            Perfect Plating!
           </Typography>
-          
-          {/* Star Rating */}
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            mb: 4,
-            animation: 'slideIn 0.6s ease-out'
-          }}>
+         
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
             {[...Array(3)].map((_, i) => {
-              const starRating = 3; // Perfect score for completing all items
-              const isActive = i < starRating;
-              
               return (
-                <span
+                <StarIcon
                   key={i}
-                  style={{
-                    fontSize: '80px',
-                    margin: '0 16px',
-                    color: isActive ? 'white' : 'rgba(255,255,255,0.3)',
-                    textShadow: isActive ? '2px 2px 4px rgba(0,0,0,0.3)' : 'none',
-                    transform: isActive ? 'scale(1.3)' : 'scale(1)',
-                    transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                    animation: isActive ? 'starPop 0.6s ease-out' : 'none',
+                  sx={{
+                    color: 'white',
+                    fontSize: 80,
+                    mx: 1,
+                    textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
                   }}
-                >
-                  {isActive ? '⭐' : '☆'}
-                </span>
+                />
               );
             })}
           </Box>
-          
-          {/* Feedback Message */}
           <Typography variant="h6" sx={{
             color: 'white',
             fontFamily: 'Inter, sans-serif',
             lineHeight: 1.6,
             mb: 6,
             maxWidth: '800px',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-            backgroundColor: 'rgba(0,0,0,0.2)',
-            padding: '20px',
-            borderRadius: '15px'
+            textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
           }}>
-            <div style={{ fontSize: '1.2rem', fontWeight: '600' }}>
-              🎉 Masterful plating! You've arranged the dish beautifully with proper plating techniques. Your presentation is restaurant-quality!
-            </div>
-            
-            <Box sx={{ 
-              mt: 3, 
-              p: 2, 
-              backgroundColor: 'rgba(255,255,255,0.2)', 
-              borderRadius: '8px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 2
-            }}>
-              <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>✅ All Plating Elements Completed:</div>
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                gap: '12px', 
-                flexWrap: 'wrap' 
-              }}>
-                <span style={{ 
-                  background: 'rgba(255,255,255,0.9)', 
-                  padding: '8px 16px', 
-                  borderRadius: '20px',
-                  color: '#065f46',
-                  fontWeight: '600',
-                  fontSize: '0.9rem'
-                }}>
-                  🍚 Rice Base
-                </span>
-                <span style={{ 
-                  background: 'rgba(255,255,255,0.9)', 
-                  padding: '8px 16px', 
-                  borderRadius: '20px',
-                  color: '#065f46',
-                  fontWeight: '600',
-                  fontSize: '0.9rem'
-                }}>
-                  🍳 Garnished Egg
-                </span>
-                <span style={{ 
-                  background: 'rgba(255,255,255,0.9)', 
-                  padding: '8px 16px', 
-                  borderRadius: '20px',
-                  color: '#065f46',
-                  fontWeight: '600',
-                  fontSize: '0.9rem'
-                }}>
-                  🍽️ Utensils Set
-                </span>
-              </div>
-            </Box>
+            Outstanding work! You've arranged the dish beautifully with proper plating techniques. Your presentation is restaurant-quality!
           </Typography>
-          
-          {/* Action Buttons */}
-          <Box sx={{ 
-            display: 'flex', 
-            gap: 3, 
-            justifyContent: 'center', 
-            flexWrap: 'wrap',
-            animation: 'slideIn 0.8s ease-out'
-          }}>
+         
+          <Box sx={{ display: 'flex', gap: 3, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Button
               onClick={() => {
                 setShowSuccess(false);
@@ -1800,37 +1828,13 @@ const CookingLevel5 = () => {
                 }
               }}
             >
-              🎨 Plate Again
+              Plate Again
             </Button>
-            
             <Button
+              variant="contained"
               onClick={() => navigate('/studentdashboard')}
-              variant="contained"
               sx={{
-                background: 'linear-gradient(135deg, #10b981, #0da271)',
-                color: 'white',
-                px: 4,
-                py: 2,
-                borderRadius: '25px',
-                fontFamily: 'Poppins, sans-serif',
-                fontWeight: '600',
-                fontSize: '1.2rem',
-                textTransform: 'none',
-                boxShadow: '0 10px 25px rgba(16, 185, 129, 0.5)',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #34d399, #10b981)',
-                  transform: 'translateY(-2px)'
-                }
-              }}
-            >
-              🏠 Back to Home
-            </Button>
-            
-            <Button
-              onClick={() => navigate('/lesson/cooking/level-6')}
-              variant="contained"
-              sx={{
-                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
                 color: 'white',
                 px: 6,
                 py: 2,
@@ -1839,106 +1843,18 @@ const CookingLevel5 = () => {
                 fontWeight: '700',
                 fontSize: '1.2rem',
                 textTransform: 'none',
-                boxShadow: '0 10px 25px rgba(245, 158, 11, 0.5)',
+                boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
                 '&:hover': {
-                  background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+                  background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
                   transform: 'translateY(-2px)'
                 }
               }}
             >
-              🚀 Next Level
+              Back to Home
             </Button>
           </Box>
         </Box>
       </Dialog>
-
-      <style>{`
-        @keyframes bounceIn {
-          0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
-          50% { transform: translate(-50%, -50%) scale(1.05); }
-          70% { transform: translate(-50%, -50%) scale(0.9); }
-          100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-        }
-        @keyframes pulse {
-          0%, 100% { opacity: 0.6; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.1); }
-        }
-        @keyframes slowPulse {
-          0%, 100% { transform: scale(1); box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3), 0 0 0 2px rgba(255, 255, 255, 0.3); }
-          50% { transform: scale(1.02); box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4), 0 0 0 3px rgba(255, 255, 255, 0.4); }
-        }
-        @keyframes glow {
-          0% { opacity: 0.3; transform: scale(0.8); }
-          100% { opacity: 0.6; transform: scale(1.2); }
-        }
-        @keyframes wiggle {
-          0%, 100% { transform: rotate(0deg); }
-          25% { transform: rotate(-12deg); }
-          75% { transform: rotate(12deg); }
-        }
-        @keyframes popIn {
-          0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-          50% { transform: translate(-50%, -50%) scale(1.4); opacity: 1; }
-          70% { transform: translate(-50%, -50%) scale(0.9); }
-          100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-        }
-        @keyframes sparkleAnimation {
-          0% { transform: scale(0) rotate(0deg); opacity: 0; }
-          50% { transform: scale(1.4) rotate(180deg); opacity: 1; }
-          100% { transform: scale(0) rotate(360deg); opacity: 0; }
-        }
-        @keyframes confettiFall {
-          0% {
-            transform: translateY(-100vh) rotate(0deg) scale(0.8);
-            opacity: 1;
-          }
-          10% {
-            opacity: 1;
-            transform: translateY(-90vh) rotate(36deg) scale(1);
-          }
-          90% {
-            opacity: 0.8;
-            transform: translateY(90vh) translateX(60px) rotate(324deg) scale(0.6);
-          }
-          100% {
-            transform: translateY(100vh) translateX(70px) rotate(360deg) scale(0);
-            opacity: 0;
-          }
-        }
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-12px); }
-        }
-        @keyframes bounce {
-          0%, 100% { transform: translateY(0); }
-          30% { transform: translateY(-8px); }
-          50% { transform: translateY(0); }
-          70% { transform: translateY(-4px); }
-        }
-        @keyframes glowTrail {
-          0% { opacity: 0; transform: scale(0.5); }
-          50% { opacity: 0.8; transform: scale(1); }
-          100% { opacity: 0; transform: scale(1.3); }
-        }
-        @keyframes slideIn {
-          0% { transform: translateX(100%); opacity: 0; }
-          100% { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes starPop {
-          0% {
-            transform: scale(0);
-            opacity: 0;
-          }
-          50% {
-            transform: scale(1.5);
-            opacity: 1;
-          }
-          100% {
-            transform: scale(1);
-            opacity: 1;
-          }
-        }
-      `}</style>
     </div>
   );
 };
