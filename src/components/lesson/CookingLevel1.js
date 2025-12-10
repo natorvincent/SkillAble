@@ -61,6 +61,7 @@ export default function FriedEggLevel1() {
   const [baconardoMessage, setBaconardoMessage] = useState('Welcome to Fried Egg Basics! I\'m Chef Baconardo! 🥓');
   const [baconardoAnimation, setBaconardoAnimation] = useState('idle');
   const [showIntro, setShowIntro] = useState(true);
+  const [starAnimationStage, setStarAnimationStage] = useState(0);
 
   const correctIngredients = [
     { id: 1, name: "EGG", image: eggImg, description: "Fresh egg for frying", isCorrect: true },
@@ -78,6 +79,34 @@ export default function FriedEggLevel1() {
   const allIngredients = [...correctIngredients, ...wrongIngredients];
   const progressPercentage = (collectedIngredients.length / correctIngredients.length) * 100;
   const allCollected = collectedIngredients.length === correctIngredients.length;
+
+  // Get star rating based on performance
+  const getStarRating = () => {
+    // Always return 3 stars for perfect completion
+    return 3;
+  };
+
+  // Handle continue to next level
+  const handleContinue = () => {
+    if (progressSaving) return;
+    continueToNextLevel();
+  };
+
+  // Animate stars when celebration shows
+  useEffect(() => {
+    if (showCelebration) {
+      let currentStage = 0;
+      const interval = setInterval(() => {
+        currentStage++;
+        setStarAnimationStage(currentStage);
+        if (currentStage >= 3) {
+          clearInterval(interval);
+        }
+      }, 300);
+      
+      return () => clearInterval(interval);
+    }
+  }, [showCelebration]);
 
   // Positions for ingredients inside the pan
   const getPanIngredientPosition = (index, total) => {
@@ -261,15 +290,16 @@ export default function FriedEggLevel1() {
     setWrongIngredientAlert(false);
     setProgressSaved(false);
     setProgressSaving(false);
+    setStarAnimationStage(0);
     showBaconardoFeedback('Let\'s try again! Find egg, oil, salt, and butter for the perfect fried egg! 🍳', 'idle');
   };
 
   // Match Level 3 navigation functions
   const goToHomepage = () => {
     if (navigate) {
-      navigate('/studentdashboard');
+      navigate('/homepage');
     } else {
-      window.location.href = '/studentdashboard';
+      window.location.href = '/homepage';
     }
   };
 
@@ -1109,189 +1139,262 @@ export default function FriedEggLevel1() {
         </>
       )}
 
-      {/* Success Modal */}
+      {/* Success Modal - Updated to match Level 3 style */}
       {showCelebration && (
-        <div style={{ 
-          position: 'fixed', 
-          inset: 0, 
-          backgroundColor: 'rgba(0, 0, 0, 0.5)', 
-          zIndex: 9998, 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          padding: '20px' 
-        }}>
-          <div style={{ 
-            backgroundColor: 'white', 
-            borderRadius: '20px', 
-            padding: '40px', 
-            maxWidth: '500px', 
-            width: '100%', 
-            textAlign: 'center', 
-            border: '4px solid #FF9800', 
-            boxShadow: '0 20px 40px rgba(255, 152, 0, 0.4)',
-            background: 'linear-gradient(135deg, #FFF8E1 0%, #FFECB3 100%)'
+        <Dialog
+          open={showCelebration}
+          fullScreen
+          PaperProps={{
+            sx: {
+              background: 'linear-gradient(135deg, rgba(255, 202, 58, 0.95) 0%, rgba(230, 184, 0, 0.95) 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'column'
+            }
+          }}
+        >
+          {/* Confetti Animation */}
+          <Box sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            zIndex: 1000,
+            overflow: 'hidden'
           }}>
-            <div style={{ fontSize: '80px', marginBottom: '20px', animation: 'bounce 2s infinite' }}>🍳</div>
+            {Array.from({ length: 50 }).map((_, i) => {
+              const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FF9800', '#4CAF50'];
+              const randomColor = colors[Math.floor(Math.random() * colors.length)];
+              const randomWidth = Math.random() * 12 + 6;
+              const randomHeight = Math.random() * 12 + 6;
+              const randomRotation = Math.random() * 360;
+              const randomDrift = (Math.random() - 0.5) * 2;
+              
+              return (
+                <Box
+                  key={i}
+                  sx={{
+                    position: 'absolute',
+                    left: `${Math.random() * 100}%`,
+                    top: `${-10}%`,
+                    width: `${randomWidth}px`,
+                    height: `${randomHeight}px`,
+                    backgroundColor: randomColor,
+                    transform: `rotate(${randomRotation}deg)`,
+                    boxShadow: `0 0 10px ${randomColor}`,
+                    animation: `confettiFall 4s linear infinite`,
+                    animationDelay: `${Math.random() * 3}s`,
+                    '@keyframes confettiFall': {
+                      '0%': {
+                        transform: `translateY(-100vh) rotate(${randomRotation}deg) scale(0.8)`,
+                        opacity: 1
+                      },
+                      '10%': {
+                        opacity: 1,
+                        transform: `translateY(-90vh) rotate(${randomRotation + 36}deg) scale(1)`
+                      },
+                      '90%': {
+                        opacity: 0.8,
+                        transform: `translateY(90vh) translateX(${randomDrift * 60}px) rotate(${randomRotation + 324}deg) scale(0.6)`
+                      },
+                      '100%': {
+                        transform: `translateY(100vh) translateX(${randomDrift * 70}px) rotate(${randomRotation + 360}deg) scale(0)`,
+                        opacity: 0
+                      }
+                    }
+                  }}
+                />
+              );
+            })}
+          </Box>
+          
+          <Box sx={{
+            textAlign: 'center',
+            color: 'white',
+            position: 'relative',
+            zIndex: 1001,
+            padding: '20px'
+          }}>
+            {/* Trophy Icon */}
+            <EmojiEventsIcon sx={{
+              fontSize: 150,
+              color: 'white',
+              mb: 4,
+              filter: 'drop-shadow(3px 3px 6px rgba(0,0,0,0.5))'
+            }} />
             
-            <h2 style={{ 
-              fontSize: '36px', 
-              fontWeight: 'bold', 
-              background: 'linear-gradient(45deg, #FF9800, #F57C00)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              marginBottom: '20px' 
+            {/* Main Title */}
+            <Typography variant="h1" sx={{
+              fontWeight: 'bold',
+              color: 'white',
+              fontFamily: 'Poppins, sans-serif',
+              fontSize: { xs: '2rem', md: '3rem' },
+              textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
+              mb: 2
             }}>
               Perfect Fried Egg!
-            </h2>
+            </Typography>
+           
+            {/* Star Rating */}
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+              {[...Array(3)].map((_, i) => {
+                const isActive = i < getStarRating();
+                const shouldAnimate = i < starAnimationStage;
+               
+                return (
+                  <StarIcon
+                    key={i}
+                    sx={{
+                      color: isActive ? 'white' : 'rgba(255,255,255,0.3)',
+                      fontSize: 80,
+                      mx: 1,
+                      textShadow: isActive ? '2px 2px 4px rgba(0,0,0,0.3)' : 'none',
+                      transform: shouldAnimate ? 'scale(1.3)' : 'scale(1)',
+                      transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                      animation: shouldAnimate ? 'starPop 0.6s ease-out' : 'none',
+                      '@keyframes starPop': {
+                        '0%': {
+                          transform: 'scale(0)',
+                          opacity: 0
+                        },
+                        '50%': {
+                          transform: 'scale(1.5)',
+                          opacity: 1
+                        },
+                        '100%': {
+                          transform: 'scale(1)',
+                          opacity: 1
+                        }
+                      }
+                    }}
+                  />
+                );
+              })}
+            </Box>
             
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '20px' }}>
-              {[...Array(3)].map((_, i) => (<span key={i} style={{ fontSize: '48px', animation: 'pulse 2s infinite', animationDelay: `${i * 0.2}s` }}>⭐</span>))}
-            </div>
-            
-            <h3 style={{ 
-              fontSize: '24px', 
-              fontWeight: 'bold', 
-              color: '#8B4513', 
-              marginBottom: '20px' 
+            {/* Description */}
+            <Typography variant="h6" sx={{
+              color: 'white',
+              fontFamily: 'Inter, sans-serif',
+              lineHeight: 1.6,
+              mb: 6,
+              maxWidth: '800px',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
             }}>
-              Chef Baconardo Approves! 🥓
-            </h3>
-            
-            <p style={{ 
-              fontSize: '18px', 
-              color: '#5D4037', 
-              lineHeight: 1.8, 
-              marginBottom: '20px',
-              backgroundColor: 'rgba(255, 152, 0, 0.1)',
-              padding: '15px',
-              borderRadius: '12px',
-              border: '2px solid #FF9800'
-            }}>
-              You selected all the perfect ingredients for a delicious fried egg! You understood which items are essential for cooking and avoided the unnecessary ones. That's excellent kitchen knowledge!
-            </p>
-
-            <div style={{
-              backgroundColor: '#E8F5E8',
-              padding: '15px',
-              borderRadius: '12px',
-              marginBottom: '20px',
-              border: '2px solid #4CAF50'
-            }}>
-              <div style={{
-                fontSize: '16px',
-                fontWeight: '700',
-                color: '#2E7D32',
-                marginBottom: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}>
-                <span>✓ Ingredients Collected:</span>
-              </div>
-              <div style={{
-                fontSize: '14px',
-                color: '#1B5E20',
-                lineHeight: '1.8'
-              }}>
-                🥚 Egg • 🫒 Oil • 🧂 Salt • 🧈 Butter
-              </div>
-            </div>
-
+              You collected all the right ingredients! Your fried egg will be delicious and perfectly cooked!
+            </Typography>
+           
+            {/* Progress Saving Indicator */}
             {progressSaving && (
-              <Box sx={{ 
-                mt: 2, 
-                p: 2, 
-                backgroundColor: 'rgba(255, 152, 0, 0.9)', 
-                borderRadius: '12px', 
-                color: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 1,
-                fontWeight: '600'
+              <Box sx={{
+                mb: 4,
+                p: 3,
+                backgroundColor: 'rgba(25, 130, 196, 0.8)',
+                borderRadius: '15px',
+                color: 'white'
               }}>
-                <CircularProgress size={16} sx={{ color: 'white' }} />
-                <Typography variant="body2">Saving your cooking progress...</Typography>
+                <CircularProgress size={30} sx={{ mr: 2, color: 'white' }} />
+                <Typography variant="h5" sx={{ fontFamily: 'Poppins, sans-serif', display: 'inline' }}>
+                  Saving your progress...
+                </Typography>
               </Box>
             )}
-            
+           
+            {/* Progress Saved Indicator */}
             {progressSaved && (
-              <Box sx={{ 
-                mt: 2, 
-                p: 2, 
-                backgroundColor: 'rgba(76, 175, 80, 0.9)', 
-                borderRadius: '12px', 
-                color: 'white',
-                fontWeight: '600'
+              <Box sx={{
+                mb: 4,
+                p: 3,
+                backgroundColor: 'rgba(144, 190, 109, 0.8)',
+                borderRadius: '15px',
+                color: 'white'
               }}>
-                ✅ Achievement unlocked! Progress saved!
+                <CheckCircleIcon sx={{ mr: 2, fontSize: 30, verticalAlign: 'middle' }} />
+                <Typography variant="h6" sx={{ fontFamily: 'Poppins, sans-serif', display: 'inline' }}>
+                  Progress saved successfully!
+                </Typography>
               </Box>
             )}
-
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', flexWrap: 'wrap', marginTop: '20px' }}>
-              <Button 
-                onClick={resetGame} 
+           
+            {/* Action Buttons */}
+            <Box sx={{ display: 'flex', gap: 3, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Button
+                onClick={() => {
+                  setShowCelebration(false);
+                  resetGame();
+                }}
                 variant="outlined"
-                size="large"
                 sx={{
-                  borderColor: '#FF9800',
-                  color: '#FF9800',
-                  borderRadius: '15px',
-                  minWidth: '120px',
+                  borderColor: 'white',
+                  color: 'white',
+                  px: 4,
+                  py: 2,
+                  borderRadius: '25px',
+                  fontFamily: 'Poppins, sans-serif',
+                  fontWeight: '600',
+                  fontSize: '1.2rem',
                   borderWidth: '2px',
-                  fontWeight: '700',
                   textTransform: 'none',
                   '&:hover': {
-                    borderWidth: '2px',
-                    backgroundColor: 'rgba(255, 152, 0, 0.1)'
+                    borderColor: 'white',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: '2px'
                   }
                 }}
               >
-                🔄 Play Again
+                Cook Again
               </Button>
-              
-              <Button 
-                onClick={continueToNextLevel}
+              <Button
+                variant="contained"
+                onClick={handleContinue}
                 disabled={progressSaving}
-                variant="contained"
-                size="large"
                 sx={{
-                  backgroundColor: '#FF9800',
-                  borderRadius: '15px',
-                  minWidth: '140px',
+                  background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+                  color: 'white',
+                  px: 6,
+                  py: 2,
+                  borderRadius: '25px',
+                  fontFamily: 'Poppins, sans-serif',
                   fontWeight: '700',
+                  fontSize: '1.2rem',
                   textTransform: 'none',
-                  boxShadow: '0 4px 12px rgba(255, 152, 0, 0.4)',
-                  '&:hover': { 
-                    backgroundColor: '#F57C00',
-                    boxShadow: '0 6px 16px rgba(255, 152, 0, 0.5)'
+                  boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
+                    transform: 'translateY(-2px)'
                   }
                 }}
               >
-                {progressSaving ? 'Saving...' : '🚀 Level 2'}
+                {progressSaving ? 'Saving...' : 'Next Level'}
               </Button>
-
-              <Button 
-                onClick={goToHomepage}
+              <Button
                 variant="contained"
-                size="large"
+                onClick={goToHomepage}
                 sx={{
-                  backgroundColor: '#8B4513',
-                  borderRadius: '15px',
-                  minWidth: '120px',
-                  fontWeight: '700',
+                  background: 'linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%)',
+                  color: 'white',
+                  px: 4,
+                  py: 2,
+                  borderRadius: '25px',
+                  fontFamily: 'Poppins, sans-serif',
+                  fontWeight: '600',
+                  fontSize: '1.2rem',
                   textTransform: 'none',
-                  '&:hover': { backgroundColor: '#654321' }
+                  boxShadow: '0 10px 25px rgba(76, 175, 80, 0.5)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%)',
+                    transform: 'translateY(-2px)'
+                  }
                 }}
               >
-                🏠 Go Home
+                Back to Home
               </Button>
-            </div>
-          </div>
-        </div>
+            </Box>
+          </Box>
+        </Dialog>
       )}
 
       <style>{`
@@ -1385,9 +1488,10 @@ export default function FriedEggLevel1() {
             opacity: 1;
           }
         }
-        @keyframes bounce {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-20px); }
+        @keyframes starPop {
+          0% { transform: scale(0); opacity: 0; }
+          50% { transform: scale(1.5); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
         }
       `}</style>
     </div>

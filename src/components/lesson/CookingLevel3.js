@@ -1,9 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import { Box, Button, CircularProgress, Typography } from '@mui/material';
+import { 
+  Box, 
+  Button, 
+  CircularProgress, 
+  Typography,
+  Dialog
+} from '@mui/material';
 import Confetti from 'react-confetti';
 import confetti from 'canvas-confetti';
 import Navbar from '../Navbar';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import StarIcon from '@mui/icons-material/Star';
 
 // Import kitchen background
 import kitchenBg from "../../assets/cookingLevel3/bgkitchen.jpg";
@@ -22,13 +31,6 @@ import outletImg from "../../assets/cookingLevel3/outlet.png";
 
 // Import Baconardo asset
 import baconardoImg from "../../assets/cookingLevel3/Baconardo.png";
-
-// Progress service imports
-import { 
-  getStudentLessonProgress, 
-  saveStudentLessonProgress,
-  updateModuleProgress
-} from '../../services/progressService';
 
 const CookingLevel3 = () => {
   const navigate = useNavigate();
@@ -60,7 +62,8 @@ const CookingLevel3 = () => {
     showHeatLevelButtons: false,
     showConfetti: false,
     confettiStep: null,
-    completedStepAnimation: null
+    completedStepAnimation: null,
+    starAnimationStage: 0
   });
 
   const [progressSaving, setProgressSaving] = useState(false);
@@ -70,6 +73,28 @@ const CookingLevel3 = () => {
   const [dragItem, setDragItem] = useState(null);
   const panRef = useRef(null);
   const panHeatTimerRef = useRef(null);
+
+  // Animate stars when success shows
+  useEffect(() => {
+    if (gameState.showSuccess) {
+      let currentStage = 0;
+      const interval = setInterval(() => {
+        currentStage++;
+        setGameState(prev => ({ ...prev, starAnimationStage: currentStage }));
+        if (currentStage >= 3) {
+          clearInterval(interval);
+        }
+      }, 300);
+      
+      return () => clearInterval(interval);
+    }
+  }, [gameState.showSuccess]);
+
+  // Get star rating based on performance
+  const getStarRating = () => {
+    // Always return 3 stars for perfect completion
+    return 3;
+  };
 
   // Reset component state when route changes
   useEffect(() => {
@@ -98,7 +123,8 @@ const CookingLevel3 = () => {
       showHeatLevelButtons: false,
       showConfetti: false,
       confettiStep: null,
-      completedStepAnimation: null
+      completedStepAnimation: null,
+      starAnimationStage: 0
     });
     setProgressSaved(false);
     setProgressSaving(false);
@@ -315,9 +341,18 @@ const CookingLevel3 = () => {
       showHeatLevelButtons: false,
       showConfetti: false,
       confettiStep: null,
-      completedStepAnimation: null
+      completedStepAnimation: null,
+      starAnimationStage: 0
     });
     setProgressSaved(false);
+  };
+
+  const goToHomepage = () => {
+    navigate('/homepage');
+  };
+
+  const continueToNextLevel = () => {
+    navigate('/lesson/cooking/level-4');
   };
 
   const DraggableItem = ({ type, isActive, isCompleted, children, style = {} }) => (
@@ -519,9 +554,10 @@ const CookingLevel3 = () => {
             0%, 100% { box-shadow: 0 0 10px rgba(76, 175, 80, 0.5); }
             50% { box-shadow: 0 0 20px rgba(76, 175, 80, 0.8), 0 0 30px rgba(76, 175, 80, 0.4); }
           }
-          @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
+          @keyframes starPop {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.5); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
           }
         `}
         </style>
@@ -1371,7 +1407,7 @@ const CookingLevel3 = () => {
 
             {gameState.stepsCompleted.every(step => step) && (
               <Button
-                onClick={() => navigate('/studentdashboard')}
+                onClick={continueToNextLevel}
                 variant="contained"
                 sx={{
                   backgroundColor: '#4CAF50',
@@ -1408,168 +1444,262 @@ const CookingLevel3 = () => {
             </div>
           )}
 
-          {/* Success Modal */}
+          {/* Success Modal - Updated to match Level 1 and Level 2 style */}
           {gameState.showSuccess && (
-            <div style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              background: 'rgba(0,0,0,0.7)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 2000
-            }}>
-              <Confetti
-                width={window.innerWidth}
-                height={window.innerHeight}
-                recycle={false}
-                numberOfPieces={500}
-                gravity={0.05}
-                colors={['#4CAF50', '#FF9800', '#2196F3', '#E91E63', '#FFEB3B']}
-                style={{ position: 'fixed', zIndex: 2001 }}
-              />
-              <div style={{
-                background: 'linear-gradient(135deg, #FFF8E1, #FFECB3)',
-                padding: '40px',
-                borderRadius: '20px',
-                textAlign: 'center',
-                border: '4px solid #FF9800',
-                maxWidth: '450px',
-                zIndex: 2002,
-                position: 'relative'
+            <Dialog
+              open={gameState.showSuccess}
+              fullScreen
+              PaperProps={{
+                sx: {
+                  background: 'linear-gradient(135deg, rgba(255, 202, 58, 0.95) 0%, rgba(230, 184, 0, 0.95) 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'column'
+                }
+              }}
+            >
+              {/* Confetti Animation */}
+              <Box sx={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                pointerEvents: 'none',
+                zIndex: 1000,
+                overflow: 'hidden'
               }}>
-                <div style={{ fontSize: '80px', marginBottom: '20px', animation: 'bounce 2s infinite' }}>🍳</div>
-                
-                <h2 style={{ 
-                  color: '#E65100', 
-                  marginBottom: '15px', 
-                  fontSize: '32px',
-                  background: 'linear-gradient(45deg, #FF9800, #F57C00)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text'
-                }}>
-                  Master Chef Level 3!
-                </h2>
-                
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', fontSize: '32px' }}>
-                  <span style={{ animation: 'pulse 2s infinite', animationDelay: '0s' }}>⭐</span>
-                  <span style={{ animation: 'pulse 2s infinite', animationDelay: '0.2s' }}>⭐</span>
-                  <span style={{ animation: 'pulse 2s infinite', animationDelay: '0.4s' }}>⭐</span>
-                </div>
-                
-                <h3 style={{ fontSize: '24px', color: '#8B4513', marginBottom: '20px' }}>
-                  Perfect Scrambled Egg! 🥓
-                </h3>
-                
-                <p style={{ color: '#5D4037', marginBottom: '15px', fontSize: '14px', lineHeight: '1.5' }}>
-                  Incredible work! You've completed the entire cooking process from setup to serving. Your scrambled egg is perfectly cooked with ideal heat management and ingredient timing!
-                </p>
-
-                <div style={{
-                  backgroundColor: 'rgba(255, 152, 0, 0.1)',
-                  padding: '15px',
-                  borderRadius: '12px',
-                  marginBottom: '15px',
-                  border: '2px solid #FF9800'
-                }}>
-                  <div style={{
-                    fontSize: '16px',
-                    fontWeight: '700',
-                    color: '#8B4513',
-                    marginBottom: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px'
-                  }}>
-                    <span>✓ Cooking Mastered:</span>
-                  </div>
-                  <div style={{
-                    fontSize: '14px',
-                    color: '#654321',
-                    lineHeight: '1.8'
-                  }}>
-                    ⚡ Power & Heat Control • 🫒 Oil & Butter • 🥚 Egg Cooking • 🧂 Seasoning • 🥄 Stirring • 🌿 Garnishing
-                  </div>
-                </div>
-
-                {progressSaving && (
-                  <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(255, 152, 0, 0.9)', borderRadius: '12px', color: 'white', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                    <CircularProgress size={16} sx={{ color: 'white' }} />
-                    <Typography variant="body2">Saving your cooking achievement...</Typography>
-                  </Box>
-                )}
-                
-                {progressSaved && (
-                  <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(76, 175, 80, 0.9)', borderRadius: '12px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600' }}>
-                    ✅ Achievement unlocked! Progress saved!
-                  </Box>
-                )}
-                
-                <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginTop: '20px', flexWrap: 'wrap' }}>
-                  <Button 
-                    onClick={() => navigate('/lesson/cooking/level-4')}
-                    variant="contained"
-                    sx={{ 
-                      backgroundColor: '#FF9800',
-                      borderRadius: '15px',
-                      minWidth: '140px',
-                      fontWeight: '700',
-                      textTransform: 'none',
-                      fontSize: '14px',
-                      boxShadow: '0 4px 12px rgba(255, 152, 0, 0.4)',
-                      '&:hover': { 
-                        backgroundColor: '#F57C00',
-                        boxShadow: '0 6px 16px rgba(255, 152, 0, 0.5)'
-                      }
-                    }}
-                  >
-                    🍚 Level 4: Rice Cooker
-                  </Button>
+                {Array.from({ length: 50 }).map((_, i) => {
+                  const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FF9800', '#4CAF50'];
+                  const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                  const randomWidth = Math.random() * 12 + 6;
+                  const randomHeight = Math.random() * 12 + 6;
+                  const randomRotation = Math.random() * 360;
+                  const randomDrift = (Math.random() - 0.5) * 2;
                   
+                  return (
+                    <Box
+                      key={i}
+                      sx={{
+                        position: 'absolute',
+                        left: `${Math.random() * 100}%`,
+                        top: `${-10}%`,
+                        width: `${randomWidth}px`,
+                        height: `${randomHeight}px`,
+                        backgroundColor: randomColor,
+                        transform: `rotate(${randomRotation}deg)`,
+                        boxShadow: `0 0 10px ${randomColor}`,
+                        animation: `confettiFall 4s linear infinite`,
+                        animationDelay: `${Math.random() * 3}s`,
+                        '@keyframes confettiFall': {
+                          '0%': {
+                            transform: `translateY(-100vh) rotate(${randomRotation}deg) scale(0.8)`,
+                            opacity: 1
+                          },
+                          '10%': {
+                            opacity: 1,
+                            transform: `translateY(-90vh) rotate(${randomRotation + 36}deg) scale(1)`
+                          },
+                          '90%': {
+                            opacity: 0.8,
+                            transform: `translateY(90vh) translateX(${randomDrift * 60}px) rotate(${randomRotation + 324}deg) scale(0.6)`
+                          },
+                          '100%': {
+                            transform: `translateY(100vh) translateX(${randomDrift * 70}px) rotate(${randomRotation + 360}deg) scale(0)`,
+                            opacity: 0
+                          }
+                        }
+                      }}
+                    />
+                  );
+                })}
+              </Box>
+              
+              <Box sx={{
+                textAlign: 'center',
+                color: 'white',
+                position: 'relative',
+                zIndex: 1001,
+                padding: '20px'
+              }}>
+                {/* Trophy Icon */}
+                <EmojiEventsIcon sx={{
+                  fontSize: 150,
+                  color: 'white',
+                  mb: 4,
+                  filter: 'drop-shadow(3px 3px 6px rgba(0,0,0,0.5))'
+                }} />
+                
+                {/* Main Title */}
+                <Typography variant="h1" sx={{
+                  fontWeight: 'bold',
+                  color: 'white',
+                  fontFamily: 'Poppins, sans-serif',
+                  fontSize: { xs: '2rem', md: '3rem' },
+                  textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
+                  mb: 2
+                }}>
+                  Master Chef Achievement!
+                </Typography>
+               
+                {/* Star Rating */}
+                <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+                  {[...Array(3)].map((_, i) => {
+                    const isActive = i < getStarRating();
+                    const shouldAnimate = i < gameState.starAnimationStage;
+                   
+                    return (
+                      <StarIcon
+                        key={i}
+                        sx={{
+                          color: isActive ? 'white' : 'rgba(255,255,255,0.3)',
+                          fontSize: 80,
+                          mx: 1,
+                          textShadow: isActive ? '2px 2px 4px rgba(0,0,0,0.3)' : 'none',
+                          transform: shouldAnimate ? 'scale(1.3)' : 'scale(1)',
+                          transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                          animation: shouldAnimate ? 'starPop 0.6s ease-out' : 'none',
+                          '@keyframes starPop': {
+                            '0%': {
+                              transform: 'scale(0)',
+                              opacity: 0
+                            },
+                            '50%': {
+                              transform: 'scale(1.5)',
+                              opacity: 1
+                            },
+                            '100%': {
+                              transform: 'scale(1)',
+                              opacity: 1
+                            }
+                          }
+                        }}
+                      />
+                    );
+                  })}
+                </Box>
+                
+                {/* Description */}
+                <Typography variant="h6" sx={{
+                  color: 'white',
+                  fontFamily: 'Inter, sans-serif',
+                  lineHeight: 1.6,
+                  mb: 6,
+                  maxWidth: '800px',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+                }}>
+                  You've mastered the complete cooking process! From setup to cooking, you've shown expert skills in making perfect scrambled eggs!
+                </Typography>
+               
+                {/* Progress Saving Indicator */}
+                {progressSaving && (
+                  <Box sx={{
+                    mb: 4,
+                    p: 3,
+                    backgroundColor: 'rgba(25, 130, 196, 0.8)',
+                    borderRadius: '15px',
+                    color: 'white'
+                  }}>
+                    <CircularProgress size={30} sx={{ mr: 2, color: 'white' }} />
+                    <Typography variant="h5" sx={{ fontFamily: 'Poppins, sans-serif', display: 'inline' }}>
+                      Saving your progress...
+                    </Typography>
+                  </Box>
+                )}
+               
+                {/* Progress Saved Indicator */}
+                {progressSaved && (
+                  <Box sx={{
+                    mb: 4,
+                    p: 3,
+                    backgroundColor: 'rgba(144, 190, 109, 0.8)',
+                    borderRadius: '15px',
+                    color: 'white'
+                  }}>
+                    <CheckCircleIcon sx={{ mr: 2, fontSize: 30, verticalAlign: 'middle' }} />
+                    <Typography variant="h6" sx={{ fontFamily: 'Poppins, sans-serif', display: 'inline' }}>
+                      Progress saved successfully!
+                    </Typography>
+                  </Box>
+                )}
+               
+                {/* Action Buttons */}
+                <Box sx={{ display: 'flex', gap: 3, justifyContent: 'center', flexWrap: 'wrap' }}>
                   <Button
-                    onClick={resetGame}
+                    onClick={() => {
+                      setGameState(prev => ({ ...prev, showSuccess: false }));
+                      resetGame();
+                    }}
                     variant="outlined"
-                    sx={{ 
-                      borderColor: '#FF9800', 
-                      color: '#FF9800',
-                      borderRadius: '15px',
-                      minWidth: '120px',
+                    sx={{
+                      borderColor: 'white',
+                      color: 'white',
+                      px: 4,
+                      py: 2,
+                      borderRadius: '25px',
+                      fontFamily: 'Poppins, sans-serif',
                       fontWeight: '600',
-                      textTransform: 'none',
-                      fontSize: '14px',
+                      fontSize: '1.2rem',
                       borderWidth: '2px',
+                      textTransform: 'none',
                       '&:hover': {
-                        borderWidth: '2px',
-                        backgroundColor: 'rgba(255, 152, 0, 0.1)'
+                        borderColor: 'white',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: '2px'
                       }
                     }}
                   >
-                    🔄 Play Again
+                    Cook Again
                   </Button>
-
-                  <Button 
-                    onClick={() => navigate('/studentdashboard')}
+                  <Button
                     variant="contained"
-                    sx={{ 
-                      backgroundColor: '#8B4513',
-                      borderRadius: '15px',
-                      minWidth: '120px',
-                      fontWeight: '600',
+                    onClick={continueToNextLevel}
+                    disabled={progressSaving}
+                    sx={{
+                      background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+                      color: 'white',
+                      px: 6,
+                      py: 2,
+                      borderRadius: '25px',
+                      fontFamily: 'Poppins, sans-serif',
+                      fontWeight: '700',
+                      fontSize: '1.2rem',
                       textTransform: 'none',
-                      fontSize: '14px',
-                      '&:hover': { backgroundColor: '#654321' }
+                      boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
+                        transform: 'translateY(-2px)'
+                      }
                     }}
                   >
-                    🏠 Home
+                    {progressSaving ? 'Saving...' : 'Next Level'}
                   </Button>
-                </div>
-              </div>
-            </div>
+                  <Button
+                    variant="contained"
+                    onClick={goToHomepage}
+                    sx={{
+                      background: 'linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%)',
+                      color: 'white',
+                      px: 4,
+                      py: 2,
+                      borderRadius: '25px',
+                      fontFamily: 'Poppins, sans-serif',
+                      fontWeight: '600',
+                      fontSize: '1.2rem',
+                      textTransform: 'none',
+                      boxShadow: '0 10px 25px rgba(76, 175, 80, 0.5)',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%)',
+                        transform: 'translateY(-2px)'
+                      }
+                    }}
+                  >
+                    Back to Home
+                  </Button>
+                </Box>
+              </Box>
+            </Dialog>
           )}
         </Box>
       </Box>
