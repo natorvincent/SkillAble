@@ -8,6 +8,9 @@ import friedEggWithGarnishImg from "../../assets/cookingLevel5/egg with garnish.
 import spoonImg from "../../assets/cookingLevel5/spoon.png";
 import riceImg from "../../assets/cookingLevel5/rice.png";
 
+// add MUI Dialog imports
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, CircularProgress } from '@mui/material';
+
 const CookingLevel5 = () => {
   const navigate = useNavigate();
   const audioRef = useRef(null);
@@ -1579,224 +1582,56 @@ const CookingLevel5 = () => {
       )}
 
       {/* Success Modal */}
-      {showSuccess && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 3000,
-          padding: '20px',
-          backdropFilter: 'blur(8px)'
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '24px',
-            padding: '32px 24px',
-            maxWidth: '500px',
-            width: '100%',
-            textAlign: 'center',
-            boxShadow: '0 32px 80px rgba(0,0,0,0.5)',
-            border: `4px solid ${colors.primary}`,
-            background: `linear-gradient(135deg, ${colors.primary}10, white, ${colors.primary}10)`,
-            animation: 'bounceIn 1s ease-out',
-            maxHeight: '90vh',
-            overflow: 'auto'
-          }}>
-            <div style={{ 
-              fontSize: '80px', 
-              marginBottom: '24px', 
-              animation: 'float 4s infinite ease-in-out',
-              filter: 'drop-shadow(0 12px 24px rgba(0,0,0,0.3))'
-            }}>
-              🎨
-            </div>
-            
-            <h2 style={{
-              fontSize: '32px',
-              marginBottom: '16px',
-              fontWeight: '900',
-              background: `linear-gradient(45deg, ${colors.primary}, ${colors.success})`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              letterSpacing: '-1px'
-            }}>
-              Perfect Plating!
-            </h2>
-            
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'center', 
-              marginBottom: '24px', 
-              fontSize: '36px' 
-            }}>
-              <span style={{ animation: 'pulse 3s infinite', animationDelay: '0s' }}>⭐</span>
-              <span style={{ animation: 'pulse 3s infinite', animationDelay: '0.2s' }}>⭐</span>
-              <span style={{ animation: 'pulse 3s infinite', animationDelay: '0.4s' }}>⭐</span>
-            </div>
-            
-            <h3 style={{ 
-              fontSize: '24px', 
-              color: colors.success, 
-              marginBottom: '24px',
-              fontWeight: '800'
-            }}>
-              Presentation Master! 👨‍🍳
-            </h3>
-            
-            <p style={{ 
-              color: '#047857', 
-              fontSize: '14px', 
-              marginBottom: '24px',
-              lineHeight: '1.6',
-              background: 'rgba(255,255,255,0.9)',
-              padding: '16px',
-              borderRadius: '12px',
-              border: `2px solid ${colors.primary}20`
-            }}>
+      <Dialog
+        open={showSuccess}
+        onClose={() => {}}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          style: {
+            borderRadius: 20,
+            padding: 0,
+            overflow: 'hidden',
+            border: `3px solid ${colors.primary}`
+          }
+        }}
+      >
+        <DialogTitle sx={{ textAlign: 'center', background: `linear-gradient(45deg, ${colors.primary}, ${colors.success})`, color: 'white', fontWeight: 800 }}>
+          🎨 Perfect Plating!
+        </DialogTitle>
+        <DialogContent>
+          {/* content simplified but kept same information */}
+          <Box sx={{ textAlign: 'center', py: 3 }}>
+            <div style={{ fontSize: 56, marginBottom: 12 }}>🎨</div>
+            <h3 style={{ margin: 0, color: '#065f46', fontWeight: 900 }}>Presentation Master! 👨‍🍳</h3>
+            <p style={{ color: '#047857', marginTop: 12 }}>
               Outstanding work! You've arranged the dish beautifully with proper plating techniques. Your presentation is restaurant-quality!
             </p>
 
-            <div style={{
-              backgroundColor: `${colors.primary}15`,
-              padding: '20px',
-              borderRadius: '16px',
-              marginBottom: '24px',
-              border: `3px solid ${colors.primary}`
-            }}>
-              <div style={{
-                fontSize: '16px',
-                fontWeight: '800',
-                color: '#065f46',
-                marginBottom: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '10px'
-              }}>
-                <CheckCircle size={20} />
-                <span>All Plating Elements Completed:</span>
+            <Box sx={{ mt: 2, p: 2, borderRadius: 2, border: `1px solid ${colors.primary}20`, background: `${colors.primary}08` }}>
+              <div style={{ fontWeight: 800, color: '#065f46', marginBottom: 8, display: 'flex', justifyContent: 'center', gap: 8 }}>
+                <CheckCircle size={18} /> All Plating Elements Completed:
               </div>
-              <div style={{
-                fontSize: '14px',
-                color: '#047857',
-                lineHeight: '1.8',
-                display: 'flex',
-                flexWrap: 'wrap',
-                justifyContent: 'center',
-                gap: '12px'
-              }}>
-                <span style={{ 
-                  background: 'white', 
-                  padding: '8px 12px', 
-                  borderRadius: '20px', 
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}>
-                  🍚 Rice Base
-                </span>
-                <span style={{ 
-                  background: 'white', 
-                  padding: '8px 12px', 
-                  borderRadius: '20px', 
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}>
-                  🍳 Garnished Egg
-                </span>
-                <span style={{ 
-                  background: 'white', 
-                  padding: '8px 12px', 
-                  borderRadius: '20px', 
-                  boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}>
-                  🥄 Utensils Set
-                </span>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+                <span style={{ background: 'white', padding: '6px 10px', borderRadius: 20 }}>🍚 Rice Base</span>
+                <span style={{ background: 'white', padding: '6px 10px', borderRadius: 20 }}>🍳 Garnished Egg</span>
+                <span style={{ background: 'white', padding: '6px 10px', borderRadius: 20 }}>🥄 Utensils Set</span>
               </div>
-            </div>
-            
-            <div style={{ 
-              display: 'flex', 
-              gap: '12px', 
-              justifyContent: 'center', 
-              flexWrap: 'wrap' 
-            }}>
-              <button
-                onClick={handleReset}
-                style={{
-                  background: 'white',
-                  color: colors.primary,
-                  padding: '14px 20px',
-                  borderRadius: '16px',
-                  fontSize: '14px',
-                  fontWeight: '800',
-                  border: `3px solid ${colors.primary}`,
-                  cursor: 'pointer',
-                  boxShadow: `0 6px 24px ${colors.primary}30`,
-                  transition: 'all 0.3s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  minWidth: '140px'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-4px)';
-                  e.currentTarget.style.boxShadow = `0 12px 32px ${colors.primary}40`;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = `0 6px 24px ${colors.primary}30`;
-                }}
-              >
-                🔄 Play Again
-              </button>
-
-              <button 
-                onClick={() => navigate('/studentdashboard')}
-                style={{
-                  background: `linear-gradient(135deg, ${colors.primary}, ${colors.success})`,
-                  color: 'white',
-                  padding: '14px 20px',
-                  borderRadius: '16px',
-                  fontSize: '14px',
-                  fontWeight: '800',
-                  border: 'none',
-                  cursor: 'pointer',
-                  boxShadow: `0 8px 32px ${colors.primary}40`,
-                  transition: 'all 0.3s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  minWidth: '140px'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-4px)';
-                  e.currentTarget.style.boxShadow = `0 16px 40px ${colors.primary}50`;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = `0 8px 32px ${colors.primary}40`;
-                }}
-              >
-                🏠 Return Home
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'center', gap: 2, p: 3 }}>
+          <Button variant="outlined" onClick={handleReset} sx={{ borderRadius: 2, minWidth: 140 }}>
+            🔄 Play Again
+          </Button>
+          <Button variant="contained" onClick={() => navigate('/studentdashboard')} sx={{ borderRadius: 2, background: `linear-gradient(135deg, ${colors.primary}, ${colors.success})` }}>
+            🏠 Return Home
+          </Button>
+          <Button variant="contained" onClick={() => navigate('/lesson/cooking/level-6')} sx={{ borderRadius: 2, background: `linear-gradient(135deg, ${colors.accent}, ${colors.warning})` }}>
+            Next Level <ArrowRight size={16} style={{ marginLeft: 8 }} />
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <style>{`
         @keyframes bounceIn {

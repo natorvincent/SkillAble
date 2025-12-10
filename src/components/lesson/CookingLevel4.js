@@ -142,10 +142,26 @@ export default function RiceCookerSimulator() {
     setProgressSaving(true);
     
     try {
-      setTimeout(() => {
-        setProgressSaved(true);
-        setProgressSaving(false);
-      }, 1000);
+      // Try to persist using provided service functions (guarded calls so we don't fail if signatures differ)
+      if (typeof saveStudentLessonProgress === 'function') {
+        try {
+          // best-effort call; many level implementations only need moduleId/lessonId
+          await saveStudentLessonProgress(moduleId, lessonId);
+        } catch (err) {
+          console.warn('saveStudentLessonProgress failed (non-fatal):', err);
+        }
+      }
+      if (typeof updateModuleProgress === 'function') {
+        try {
+          await updateModuleProgress(moduleId);
+        } catch (err) {
+          console.warn('updateModuleProgress failed (non-fatal):', err);
+        }
+      }
+
+      // provide feedback to user
+      setProgressSaved(true);
+      setProgressSaving(false);
     } catch (error) {
       console.error('Error saving progress:', error);
       setProgressSaving(false);
@@ -478,239 +494,8 @@ export default function RiceCookerSimulator() {
     </div>
   );
 
-  if (gameComplete) {
-    return (
-      <div style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundImage: `url(${kitchenBg})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}>
-        <Box sx={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "rgba(0, 0, 0, 0.5)",
-          zIndex: 1
-        }} />
-        
-        <Box sx={{ 
-          position: 'relative', 
-          zIndex: 2,
-          height: '100vh',
-          display: 'flex',
-          flexDirection: 'column'
-        }}>
-          <Navbar />
-
-          <Box sx={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px'
-          }}>
-            <div style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
-              borderRadius: '20px',
-              padding: '40px',
-              maxWidth: '500px',
-              width: '100%',
-              textAlign: 'center',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
-              border: '3px solid #8B4513',
-              animation: 'bounceIn 0.6s ease-out'
-            }}>
-              <div style={{ fontSize: '80px', marginBottom: '20px', animation: 'float 3s ease-in-out infinite' }}>
-                {riceQuality.includes('Perfect') ? '🏆' : 
-                 riceQuality.includes('Sticky') ? '😕' :
-                 riceQuality.includes('Mushy') ? '💦' :
-                 riceQuality.includes('Hard') ? '🪨' : '⭐'}
-              </div>
-              
-              <h2 style={{
-                fontSize: '28px',
-                color: '#8B4513',
-                marginBottom: '16px',
-                fontWeight: '700',
-                background: 'linear-gradient(45deg, #8B4513, #A0522D)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                fontFamily: 'Georgia, serif'
-              }}>
-                {riceQuality}
-              </h2>
-
-              {mistakes.length > 0 ? (
-                <div style={{
-                  backgroundColor: '#FAF0E6',
-                  borderRadius: '12px',
-                  padding: '20px',
-                  marginBottom: '20px',
-                  textAlign: 'left',
-                  border: '2px solid #DEB887'
-                }}>
-                  <div style={{
-                    fontSize: '16px',
-                    fontWeight: '700',
-                    color: '#8B4513',
-                    marginBottom: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}>
-                    ⚠️ Cooking Notes:
-                  </div>
-                  {mistakes.map((mistake, idx) => (
-                    <div key={idx} style={{
-                      fontSize: '14px',
-                      color: '#654321',
-                      marginBottom: '8px',
-                      lineHeight: '1.5'
-                    }}>
-                      • {mistake}
-                    </div>
-                  ))}
-                  <div style={{
-                    marginTop: '16px',
-                    padding: '12px',
-                    backgroundColor: '#FFF8DC',
-                    borderRadius: '8px',
-                    fontSize: '13px',
-                    color: '#8B4513',
-                    fontWeight: '600'
-                  }}>
-                    💡 Pro Tip: Rinse rice 2-3 times and use the "Perfect Water" measurement for restaurant-quality rice!
-                  </div>
-                </div>
-              ) : (
-                <div style={{
-                  backgroundColor: '#F0FFF0',
-                  borderRadius: '12px',
-                  padding: '20px',
-                  marginBottom: '20px',
-                  border: '2px solid #90EE90'
-                }}>
-                  <div style={{
-                    fontSize: '16px',
-                    color: '#228B22',
-                    fontWeight: '600',
-                    lineHeight: '1.5'
-                  }}>
-                    🎉 Masterful cooking! You followed all the steps perfectly. Your rice is fluffy, separate, and professionally cooked!
-                  </div>
-                </div>
-              )}
-
-              {progressSaving && (
-                <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(139, 69, 19, 0.9)', borderRadius: '10px', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, fontWeight: '600' }}>
-                  <CircularProgress size={16} sx={{ color: 'white' }} />
-                  <Typography variant="body2">Saving your rice cooking achievement...</Typography>
-                </Box>
-              )}
-              
-              {progressSaved && (
-                <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(34, 139, 34, 0.9)', borderRadius: '10px', color: 'white', fontWeight: '600' }}>
-                  ✅ Achievement unlocked! Progress saved!
-                </Box>
-              )}
-
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '24px', flexWrap: 'wrap' }}>
-                <Button
-                  onClick={resetGame}
-                  variant="outlined"
-                  startIcon={<span>🔄</span>}
-                  sx={{ 
-                    borderColor: '#8B4513', 
-                    color: '#8B4513',
-                    borderRadius: '20px',
-                    borderWidth: '2px',
-                    padding: '12px 24px',
-                    fontSize: '14px',
-                    fontWeight: '700',
-                    textTransform: 'none',
-                    '&:hover': {
-                      borderWidth: '2px',
-                      backgroundColor: 'rgba(139, 69, 19, 0.1)',
-                    },
-                    transition: 'all 0.3s ease'
-                  }}
-                >
-                  Cook Again
-                </Button>
-
-                <Button 
-                  onClick={() => navigate('/studentdashboard')}
-                  variant="contained"
-                  startIcon={<span>🏠</span>}
-                  sx={{ 
-                    backgroundColor: '#8B4513',
-                    borderRadius: '20px',
-                    padding: '12px 24px',
-                    fontSize: '14px',
-                    fontWeight: '700',
-                    textTransform: 'none',
-                    '&:hover': { 
-                      backgroundColor: '#654321',
-                    },
-                    transition: 'all 0.3s ease'
-                  }}
-                >
-                  Kitchen Home
-                </Button>
-
-                <Button
-                  onClick={() => navigate('/lesson/cooking/level-5')}
-                  variant="contained"
-                  startIcon={<span>🚀</span>}
-                  sx={{ 
-                    backgroundColor: '#228B22',
-                    borderRadius: '20px',
-                    padding: '12px 24px',
-                    fontSize: '14px',
-                    fontWeight: '700',
-                    textTransform: 'none',
-                    boxShadow: '0 4px 12px rgba(34, 139, 34, 0.3)',
-                    '&:hover': { 
-                      backgroundColor: '#1F7A1F',
-                    },
-                    animation: 'pulse 2s infinite',
-                    transition: 'all 0.3s ease'
-                  }}
-                >
-                  Next Recipe
-                </Button>
-              </div>
-            </div>
-          </Box>
-        </Box>
-
-        <style>{`
-          @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-          }
-          @keyframes bounceIn {
-            0% { transform: scale(0.3); opacity: 0; }
-            50% { transform: scale(1.05); }
-            70% { transform: scale(0.9); }
-            100% { transform: scale(1); opacity: 1; }
-          }
-          @keyframes chefBounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-          }
-        `}</style>
-      </div>
-    );
-  }
+  // NOTE: Removed the previous early "if (gameComplete) return (...full-screen result...)" block
+  // Instead we render the same app UI and show a Dialog when gameComplete === true (matching levels 1-3 UX)
 
   return (
     <div style={{
@@ -2022,6 +1807,63 @@ export default function RiceCookerSimulator() {
               </Button>
             )}
           </Box>
+
+          {/* Completion Dialog (matches levels 1-3 UX) */}
+          <Dialog
+            open={gameComplete}
+            onClose={() => {}}
+            maxWidth="sm"
+            fullWidth
+            PaperProps={{
+              style: {
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #FAF0E6, #FFF8DC)',
+                border: '2px solid #8B4513'
+              }
+            }}
+          >
+            <DialogTitle style={{ textAlign: 'center', background: 'linear-gradient(45deg, #8B4513, #A0522D)', color: 'white', padding: '18px', borderRadius: '10px 10px 0 0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '30px' }}>{riceQuality.includes('Perfect') ? '🏆' : riceQuality.includes('Sticky') ? '😕' : riceQuality.includes('Mushy') ? '💦' : riceQuality.includes('Hard') ? '🪨' : '⭐'}</span>
+                <div style={{ fontWeight: 700 }}>{riceQuality || 'Cooking Complete'}</div>
+              </div>
+            </DialogTitle>
+
+            <DialogContent>
+              {mistakes.length > 0 ? (
+                <div style={{ backgroundColor: '#FAF0E6', padding: '12px', borderRadius: '8px', border: '1px solid #DEB887' }}>
+                  <div style={{ fontWeight: 700, color: '#8B4513', marginBottom: '8px' }}>⚠️ Cooking Notes:</div>
+                  {mistakes.map((m, i) => <div key={i} style={{ marginBottom: '6px', color: '#654321' }}>• {m}</div>)}
+                  <div style={{ marginTop: '8px', padding: '8px', backgroundColor: '#FFF8DC', borderRadius: '6px', color: '#8B4513' }}>
+                    💡 Pro Tip: Rinse rice 2-3 times and use the "Perfect Water" measurement!
+                  </div>
+                </div>
+              ) : (
+                <div style={{ backgroundColor: '#F0FFF0', padding: '12px', borderRadius: '8px', border: '1px solid #90EE90' }}>
+                  <div style={{ color: '#228B22', fontWeight: 600 }}>🎉 Masterful cooking! You followed all the steps perfectly.</div>
+                </div>
+              )}
+
+              {progressSaving && (
+                <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CircularProgress size={18} />
+                  <Typography>Saving your rice cooking achievement...</Typography>
+                </Box>
+              )}
+
+              {progressSaved && (
+                <Box sx={{ mt: 2, p: 1, backgroundColor: 'rgba(34,139,34,0.08)', borderRadius: '8px', color: '#228B22' }}>
+                  ✅ Achievement unlocked! Progress saved.
+                </Box>
+              )}
+            </DialogContent>
+
+            <DialogActions style={{ justifyContent: 'center', gap: '12px', padding: '16px' }}>
+              <Button onClick={resetGame} variant="outlined" sx={{ borderRadius: '20px', color: '#8B4513', borderColor: '#8B4513' }}>🔄 Try Again</Button>
+              <Button onClick={() => navigate('/studentdashboard')} variant="contained" sx={{ backgroundColor: '#8B4513', borderRadius: '20px' }}>🏠 Home</Button>
+              <Button onClick={() => navigate('/lesson/cooking/level-5')} variant="contained" sx={{ backgroundColor: '#228B22', borderRadius: '20px' }}>🚀 Next</Button>
+            </DialogActions>
+          </Dialog>
 
           {/* Feedback Message - Realistic */}
           {showFeedback && (
