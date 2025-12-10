@@ -80,7 +80,6 @@ function AccountPage() {
   const [newPasswordError, setNewPasswordError] = useState("");
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
   
-  // FIXED: Realistic date data
   const [accountInfo, setAccountInfo] = useState({
     joinedDate: "2024-01-15",
     lastLogin: new Date().toISOString(),
@@ -453,7 +452,14 @@ function AccountPage() {
   };
 
   const handleBack = () => {
-    navigate("/studentdashboard");
+    // Redirect to appropriate dashboard based on user type
+    if (userType === "TEACHER") {
+      navigate("/teacherdashboard");
+    } else if (userType === "ADMIN") {
+      navigate("/admindashboard");
+    } else {
+      navigate("/studentdashboard");
+    }
   };
 
   const formatDateForDisplay = (dateString) => {
@@ -487,7 +493,6 @@ function AccountPage() {
     return email[0].toUpperCase();
   };
 
-  // FIXED: Proper name capitalization
   const capitalizeName = (name) => {
     if (!name) return '';
     return name.split(' ').map(word => 
@@ -508,7 +513,28 @@ function AccountPage() {
     return 'User';
   };
 
-  // FIXED: Enhanced Security Item with better UX
+  // Read-only Info Field Component
+  const InfoFieldReadOnly = ({ label, value, isDate = false }) => (
+    <Box sx={{ mb: 2 }}>
+      <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5, fontWeight: '500' }}>
+        {label}
+      </Typography>
+      <Typography variant="body1" sx={{ 
+        p: 1.5, 
+        backgroundColor: 'grey.50', 
+        borderRadius: 1.5,
+        border: '1px solid',
+        borderColor: 'grey.200',
+        color: 'text.primary',
+        fontWeight: '500',
+        fontSize: '0.95rem'
+      }}>
+        {isDate ? formatDateForDisplay(value) : value}
+      </Typography>
+    </Box>
+  );
+
+  // Enhanced Security Item Component
   const SecurityItem = ({ icon, label, value, action, status, isDestructive = false }) => (
     <ListItem 
       sx={{ 
@@ -529,7 +555,7 @@ function AccountPage() {
       {/* Left side: Icon + Text */}
       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, flex: 1, minWidth: 0 }}>
         <Box sx={{ 
-          color: isDestructive ? 'error.main' : '#2E7D32', // Teal green color
+          color: isDestructive ? 'error.main' : '#2E7D32',
           mt: 0.5,
           flexShrink: 0
         }}>
@@ -560,7 +586,6 @@ function AccountPage() {
         flexShrink: 0,
         ml: 2
       }}>
-        {/* FIXED: Better status display without chip */}
         {status && (
           <Typography 
             variant="body2" 
@@ -610,7 +635,7 @@ function AccountPage() {
               <CircularProgress 
                 size={60} 
                 sx={{ 
-                  color: '#2E7D32', // Teal green
+                  color: '#2E7D32',
                   mb: 2 
                 }} 
               />
@@ -651,7 +676,6 @@ function AccountPage() {
         <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 2.5, md: 3 }, px: { xs: 2, sm: 3 } }}>
           {/* Header Section */}
           <Box sx={{ mb: { xs: 2, sm: 2.5, md: 3 } }}>
-            {/* FIXED: Better back button visibility */}
             <Button
               startIcon={<ArrowBackIcon />}
               onClick={handleBack}
@@ -674,7 +698,7 @@ function AccountPage() {
                 border: '1px solid rgba(255, 255, 255, 0.2)',
               }}
             >
-              Back to Dashboard
+              Back to {userType === "TEACHER" ? "Teacher" : userType === "ADMIN" ? "Admin" : "Student"} Dashboard
             </Button>
             
             <Paper
@@ -708,7 +732,6 @@ function AccountPage() {
                   {getUserInitials()}
                 </Avatar>
                 <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: 0 } }}>
-                  {/* FIXED: Proper name capitalization */}
                   <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ 
                     textShadow: '0 2px 8px rgba(0,0,0,0.4)',
                     fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' }
@@ -717,15 +740,14 @@ function AccountPage() {
                   </Typography>
                   
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, flexWrap: 'wrap', mb: 2 }}>
-                    {/* FIXED: Better badge contrast with semi-transparent white */}
                     <Chip
                       icon={userType === "ADMIN" ? <AdminPanelSettingsIcon /> : userType === "TEACHER" ? <SchoolIcon /> : <PersonIcon />}
                       label={userType.toLowerCase()}
                       size="medium"
                       variant="outlined"
                       sx={{
-                        backgroundColor: 'rgba(255, 255, 255, 0.9)', // Semi-transparent white
-                        color: 'rgba(0, 0, 0, 0.9)', // Dark text for readability
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        color: 'rgba(0, 0, 0, 0.9)',
                         fontWeight: '600',
                         backdropFilter: 'blur(10px)',
                         border: '1px solid rgba(255, 255, 255, 0.6)',
@@ -735,14 +757,13 @@ function AccountPage() {
                         }
                       }}
                     />
-                    {/* FIXED: Clear email display */}
                     <Chip
                       icon={<EmailIcon sx={{ color: 'white !important' }} />}
-                      label={email} // Full email address
+                      label={email}
                       size="medium"
                       variant="outlined"
                       sx={{
-                        backgroundColor: 'rgba(46, 125, 50, 0.8)', // Teal green
+                        backgroundColor: 'rgba(46, 125, 50, 0.8)',
                         color: 'white',
                         fontWeight: '500',
                         backdropFilter: 'blur(10px)',
@@ -755,7 +776,6 @@ function AccountPage() {
                     />
                   </Box>
 
-                  {/* FIXED: Better alignment and spacing */}
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, pl: 0.5 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <EventIcon fontSize="small" sx={{ opacity: 0.9 }} />
@@ -810,7 +830,6 @@ function AccountPage() {
                         startIcon={<EditIcon />}
                         onClick={() => setEditing(true)}
                         variant="contained"
-                        // FIXED: Teal green color instead of default blue
                         sx={{
                           borderRadius: 2,
                           textTransform: 'none',
@@ -835,7 +854,6 @@ function AccountPage() {
                     <Box>
                       {userType === "STUDENT" && (
                         <>
-                          {/* FIXED: Proper name capitalization in display */}
                           <InfoFieldReadOnly 
                             label="First Name"
                             value={capitalizeName(userProfile.firstName) || "Not set"}
@@ -967,7 +985,6 @@ function AccountPage() {
                         <Button
                           type="submit"
                           variant="contained"
-                          // FIXED: Consistent teal green color
                           sx={{ 
                             borderRadius: 2, 
                             textTransform: 'none', 
@@ -1022,7 +1039,6 @@ function AccountPage() {
                       action={
                         <Button
                           variant="contained"
-                          // FIXED: Consistent teal green color
                           sx={{
                             borderRadius: 2,
                             textTransform: 'none',
@@ -1037,44 +1053,378 @@ function AccountPage() {
                             }
                           }}
                           onClick={handleOpenPasswordDialog}
-                          startIcon={<LockIcon />} // Added icon for consistency
+                          startIcon={<LockIcon />}
                         >
                           Update
                         </Button>
                       }
                     />
                     
-                    <Divider sx={{ my: 2 }} />
-                    
-                    {/* Danger Zone Separator */}
-                     {userType !== "ADMIN" && (
-                       <>
-                         <Divider sx={{ my: 2 }} />
-                         
-                         {/* Delete Account Row */}
-                         <SecurityItem
-                           icon={<DeleteIcon />}
-                           label="Delete Account"
-                           value="Permanently remove your account and data"
-                           action={
-                             <Button
-                               variant="contained"
-                               color="error"
-                               size="small"
-                               onClick={handleOpenDeleteDialog}
-                               sx={{
-                                 borderRadius: 2,
-                                 textTransform: 'none',
-                                 fontWeight: '600',
-                                 minWidth: 100,
-                                 backgroundColor: 'error.main',
-                                 color: 'white',
-                                 transition: 'all 0.2s ease-in-out',
-                                 '&:hover': {
-                                   backgroundColor: 'error.dark',
-                                   transform: 'translateY(-1px)',
-                                   boxShadow: '0 4px 12px rgba(244, 67, 54, 0.3)',
-                                 }
-                               }}
-                               startIcon={<DeleteIcon />}
-                           
+                    {/* Only show delete account for non-admin users */}
+                    {userType !== "ADMIN" && (
+                      <>
+                        <Divider sx={{ my: 2 }} />
+                        
+                        {/* Delete Account Row */}
+                        <SecurityItem
+                          icon={<DeleteIcon />}
+                          label="Delete Account"
+                          value="Permanently remove your account and data"
+                          action={
+                            <Button
+                              variant="contained"
+                              color="error"
+                              size="small"
+                              onClick={handleOpenDeleteDialog}
+                              sx={{
+                                borderRadius: 2,
+                                textTransform: 'none',
+                                fontWeight: '600',
+                                minWidth: 100,
+                                backgroundColor: 'error.main',
+                                color: 'white',
+                                transition: 'all 0.2s ease-in-out',
+                                '&:hover': {
+                                  backgroundColor: 'error.dark',
+                                  transform: 'translateY(-1px)',
+                                  boxShadow: '0 4px 12px rgba(244, 67, 54, 0.3)',
+                                }
+                              }}
+                              startIcon={<DeleteIcon />}
+                            >
+                              Delete
+                            </Button>
+                          }
+                          isDestructive={true}
+                        />
+                      </>
+                    )}
+                  </List>
+                </Box>
+              </Paper>
+            </Grid>
+          </Grid>
+        </Container>
+      </div>
+
+      {/* Verification Dialog */}
+      <Dialog open={verificationDialogOpen} onClose={handleCloseVerificationDialog} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ 
+          backgroundColor: 'primary.main', 
+          color: 'white',
+          py: 2,
+          borderBottom: '1px solid rgba(0,0,0,0.1)'
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <SecurityIcon />
+            <Typography variant="h6" fontWeight="600">
+              Verify Your Identity
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ py: 3 }}>
+          <DialogContentText sx={{ mb: 3, color: 'text.primary', fontWeight: '500' }}>
+            For security purposes, please enter your current password to confirm these changes.
+          </DialogContentText>
+          
+          <TextField
+            autoFocus
+            fullWidth
+            type="password"
+            label="Current Password"
+            value={verificationText}
+            onChange={(e) => setVerificationText(e.target.value)}
+            error={!!verificationError}
+            helperText={verificationError}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+              },
+            }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+          <Button
+            onClick={handleCloseVerificationDialog}
+            sx={{ 
+              borderRadius: 2, 
+              textTransform: 'none',
+              fontWeight: '500',
+              px: 3
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleVerificationSubmit}
+            variant="contained"
+            sx={{ 
+              borderRadius: 2, 
+              textTransform: 'none',
+              fontWeight: '600',
+              px: 3,
+              backgroundColor: '#2E7D32',
+              '&:hover': {
+                backgroundColor: '#1B5E20',
+              }
+            }}
+            startIcon={<LockIcon />}
+          >
+            Verify & Update
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Password Change Dialog */}
+      <Dialog open={passwordDialogOpen} onClose={handleClosePasswordDialog} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ 
+          backgroundColor: '#2E7D32', 
+          color: 'white',
+          py: 2,
+          borderBottom: '1px solid rgba(0,0,0,0.1)'
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <LockIcon />
+            <Typography variant="h6" fontWeight="600">
+              Change Password
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ py: 3 }}>
+          <DialogContentText sx={{ mb: 3, color: 'text.primary', fontWeight: '500' }}>
+            Please enter your current password and set a new password.
+          </DialogContentText>
+
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+            {/* Current Password */}
+            <TextField
+              fullWidth
+              type={showCurrentPassword ? "text" : "password"}
+              label="Current Password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              error={!!currentPasswordError}
+              helperText={currentPasswordError}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      edge="end"
+                      size="small"
+                    >
+                      {showCurrentPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                },
+              }}
+            />
+
+            {/* New Password */}
+            <TextField
+              fullWidth
+              type={showNewPassword ? "text" : "password"}
+              label="New Password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              error={!!newPasswordError}
+              helperText={newPasswordError}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      edge="end"
+                      size="small"
+                    >
+                      {showNewPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                },
+              }}
+            />
+
+            {/* Confirm New Password */}
+            <TextField
+              fullWidth
+              type={showConfirmPassword ? "text" : "password"}
+              label="Confirm New Password"
+              value={confirmNewPassword}
+              onChange={(e) => setConfirmNewPassword(e.target.value)}
+              error={!!confirmPasswordError}
+              helperText={confirmPasswordError}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      edge="end"
+                      size="small"
+                    >
+                      {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                },
+              }}
+            />
+
+            {passwordError && (
+              <Alert severity="error" sx={{ borderRadius: 2 }}>
+                {passwordError}
+              </Alert>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+          <Button
+            onClick={handleClosePasswordDialog}
+            sx={{ 
+              borderRadius: 2, 
+              textTransform: 'none',
+              fontWeight: '500',
+              px: 3
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handlePasswordChange}
+            variant="contained"
+            sx={{ 
+              borderRadius: 2, 
+              textTransform: 'none',
+              fontWeight: '600',
+              px: 3,
+              backgroundColor: '#2E7D32',
+              '&:hover': {
+                backgroundColor: '#1B5E20',
+              }
+            }}
+            startIcon={<SaveIcon />}
+          >
+            Update Password
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Account Dialog */}
+      <Dialog open={deleteDialogOpen} onClose={handleCloseDeleteDialog} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ 
+          backgroundColor: 'error.main', 
+          color: 'white',
+          py: 2,
+          borderBottom: '1px solid rgba(0,0,0,0.1)'
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <DeleteIcon />
+            <Typography variant="h6" fontWeight="600">
+              Delete Account
+            </Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ py: 3 }}>
+          <Alert severity="error" sx={{ mb: 3, borderRadius: 2, border: '1px solid rgba(244, 67, 54, 0.3)' }}>
+            <Typography fontWeight="600" gutterBottom>
+              This action cannot be undone
+            </Typography>
+            <Typography variant="body2">
+              All your data, including progress, courses, and personal information will be permanently deleted.
+            </Typography>
+          </Alert>
+
+          <DialogContentText sx={{ mb: 2, color: 'text.primary' }}>
+            To confirm deletion, please type your email address:
+          </DialogContentText>
+
+          <Typography variant="body2" fontWeight="600" color="text.secondary" sx={{ mb: 1 }}>
+            {email}
+          </Typography>
+
+          <TextField
+            autoFocus
+            fullWidth
+            label="Confirm Email"
+            value={confirmEmail}
+            onChange={(e) => setConfirmEmail(e.target.value)}
+            error={!!deleteError}
+            helperText={deleteError}
+            sx={{
+              mt: 1,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+              },
+            }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+          <Button
+            onClick={handleCloseDeleteDialog}
+            sx={{ 
+              borderRadius: 2, 
+              textTransform: 'none',
+              fontWeight: '500',
+              px: 3
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteAccount}
+            variant="contained"
+            color="error"
+            sx={{ 
+              borderRadius: 2, 
+              textTransform: 'none',
+              fontWeight: '600',
+              px: 3,
+              '&:hover': {
+                backgroundColor: 'error.dark',
+              }
+            }}
+            startIcon={<DeleteIcon />}
+          >
+            Delete Account Permanently
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={error ? "error" : "success"}
+          sx={{
+            width: '100%',
+            borderRadius: 2,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            alignItems: 'center'
+          }}
+        >
+          {error || success}
+        </Alert>
+      </Snackbar>
+    </div>
+  );
+}
+
+export default AccountPage;
