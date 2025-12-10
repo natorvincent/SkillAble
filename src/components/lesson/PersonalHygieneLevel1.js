@@ -2281,7 +2281,7 @@ const saveProgress = async () => {
             </Typography>
             <Button 
               variant="contained" 
-              onClick={() => navigate('/homepage')}
+              onClick={() => navigate('/studentdashboard')}
               sx={{ 
                 backgroundColor: '#FF595E',
                 fontSize: '1.2rem',
@@ -2290,7 +2290,7 @@ const saveProgress = async () => {
                 borderRadius: '20px',
                 fontFamily: 'Poppins, sans-serif',
                 fontWeight: '600',
-                '&:hover': { backgroundColor: '#E04549' }
+                '&:hover': { backgroundColor: '#412223ff' }
               }}
             >
               Go Home

@@ -403,7 +403,7 @@ const HouseholdLevel1 = () => {
   };
 
   const handleGoHome = () => {
-    navigate('/homepage');
+    navigate('/studentdashboard');
   };
 
   const avatarImages = {
@@ -1201,15 +1201,15 @@ const HouseholdLevel1 = () => {
                 animate={{ scale: avatar === 'happy' ? [1, 1.1, 1] : 1 }}
                 transition={{ duration: 3 }}
                 style={{
-                  width: isTablet ? "500px" : "900px",
-                  height: isTablet ? "500px" : "900px",
+                  width: isTablet ? "700px" : "900px",
+                  height: isTablet ? "700px" : "900px",
                   objectFit: "contain",
                   filter: "drop-shadow(0 12px 24px rgba(0,0,0,0.5))",
                   position: "absolute",
-                  left: isTablet ? "-80px" : "-160px",
+                  left: isTablet ? "-120px" : "-200px",
                   transform: isTablet
-                  ? "scale(0.85) translateY(-15px)"   // was -40px
-                  : "scale(1) translateY(-25px)",     // was -60px
+                  ? "scale(0.9) translateY(-15px)"   // was -40px
+                  : "scale(1.1) translateY(-25px)",     // was -60px
                   zIndex: 150,
                   pointerEvents: "none"
                 }}
@@ -1217,113 +1217,120 @@ const HouseholdLevel1 = () => {
             </div>
           )}
 
-          {/* RIGHT SIDE - Two Washing Machines */}
-          {!gameWon && (
-            <div style={{
-              display: "flex",
-              gap: isTablet ? "0rem" : "0rem",
-              alignItems: "center",
-              margin: isTablet ? "0 -5px" : "0 -10px",
-              marginTop: isTablet ? "-80px" : "-150px",
-              width: isTablet ? "55%" : "auto"
-            }}>
-              {/* WHITE Machine */}
+        {/* RIGHT SIDE - Two Washing Machines */}
+            {!gameWon && (
               <div
-                onDragOver={(e) => handleDragOver(e, 'whites')}
-                onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, 'whites')}
                 style={{
-                  textAlign: "center",
                   display: "flex",
-                  flexDirection: "column",
+                  justifyContent: "center",
                   alignItems: "center",
-                  transition: "all 0.3s ease",
-                 transform: dragOverMachine === 'whites'
-                  ? 'scale(1.08) translateY(70px) translateX(-30px)'
-                  : 'scale(1) translateY(70px) translateX(-30px)',
-                  filter: dragOverMachine === 'whites' 
-                    ? 'drop-shadow(0 0 30px rgba(255, 255, 255, 0.9))' 
-                    : 'drop-shadow(0 6px 15px rgba(0,0,0,0.25))',
-                  margin: isTablet ? "0 -3px" : "0 -5px",
-                  zIndex: 200
+                  gap: isTablet ? "1rem" : "2rem",
+                  marginTop: isTablet ? "-30px" : "-60px",
+                  width: "100%",
                 }}
               >
-                <img 
-                  src={washingMachine2Img} 
-                  alt="White Washing Machine"
+                {/* WHITE MACHINE */}
+                <div
+                  onDragOver={(e) => handleDragOver(e, "whites")}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, "whites")}
                   style={{
-                    width: isTablet ? "300px" : "500px",
-                    height: isTablet ? "300px" : "500px",
-                    objectFit: "contain",
-                    marginBottom: isTablet ? "-5px" : "-10px",
-                  }}
-                />
-                <h2 style={{
-                  fontSize: isTablet ? "1.8rem" : "2.8rem",
-                  fontWeight: "bold",
-                  margin: "0",
-                  color: "#fbfbfbff",
-                  fontFamily: 'Poppins, sans-serif',
-                  textShadow: "3px 3px 6px rgba(0,0,0,0.2)",
-                  letterSpacing: "2px",
-                  marginTop: isTablet ? "-40px" : "-70px"
-                }}>
-                  WHITES
-                </h2>
-              </div>
-
-              {/* COLOUR Machine */}
-              <div
-                onDragOver={(e) => handleDragOver(e, 'colors')}
-                onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, 'colors')}
-                style={{
-                  textAlign: "center",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  transition: "all 0.3s ease",
-                  transform: dragOverMachine === 'colors'
-                  ? `scale(1.08) translateX(${isTablet ? '-60px' : '-120px'}) translateY(70px) translateX(-30px)`
-                  : `translateX(${isTablet ? '-60px' : '-120px'}) translateY(70px) translateX(-30px)`,
-
-                  filter: dragOverMachine === 'colors'
-                    ? 'drop-shadow(0 0 30px rgba(156, 39, 176, 0.9))'
-                    : 'drop-shadow(0 6px 15px rgba(0,0,0,0.25))',
-                  margin: isTablet ? "0 -25px" : "0 -50px",
-                  zIndex: 200,
-                }}
-              >
-                <img
-                  src={washingMachine1Img}
-                  alt="Colour Washing Machine"
-                  style={{
-                    width: isTablet ? "300px" : "500px",
-                    height: isTablet ? "300px" : "500px",
-                    objectFit: "contain",
-                    marginBottom: isTablet ? "-5px" : "-10px",
-                  }}
-                />
-                <h2
-                  style={{
-                    fontSize: isTablet ? "1.8rem" : "2.8rem",
-                    fontWeight: "bold",
-                    margin: "0",
-                    fontFamily: "Poppins, sans-serif",
-                    textShadow: "3px 3px 6px rgba(0,0,0,0.2)",
-                    letterSpacing: "2px",
-                    background: "linear-gradient(90deg, #E74C3C, #F39C12, #27AE60, #3498DB, #9B59B6)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    backgroundClip: "text",
-                    marginTop: isTablet ? "-40px" : "-70px",
+                    textAlign: "center",
+                    transition: "all 0.3s ease",
+                    transform:
+                      dragOverMachine === "whites"
+                        ? "scale(1.08) translateY(10px)"
+                        : "translateY(20px)",
+                    filter:
+                      dragOverMachine === "whites"
+                        ? "drop-shadow(0 0 30px rgba(255,255,255,1))"
+                        : "drop-shadow(0 6px 15px rgba(0,0,0,0.25))",
+                    marginRight: isTablet ? "-0.5rem" : "-5rem",  // PULL RIGHT MACHINE CLOSER
                   }}
                 >
-                  COLOURS
-                </h2>
+                  <img
+                    src={washingMachine2Img}
+                    alt="White Washing Machine"
+                    style={{
+                      width: isTablet ? "320px" : "500px",   // EVEN BIGGER
+                      height: isTablet ? "320px" : "500px",  // EVEN BIGGER
+                      objectFit: "contain",
+                      marginBottom: "-10px",
+                      // CRUCIAL: Override the global CSS rule
+                      maxWidth: "none !important",     // Removes max-width: 100%
+                      minWidth: isTablet ? "300px" : "500px", // Prevents shrinking
+                    }}
+                  />
+                  <h2
+                    style={{
+                      fontSize: isTablet ? "2.2rem" : "3.2rem",  // Bigger text
+                      fontWeight: "bold",
+                      margin: "0",
+                      color: "#fff",
+                      fontFamily: "Poppins, sans-serif",
+                      textShadow: "3px 3px 8px rgba(0,0,0,0.4)", // Better shadow
+                      letterSpacing: "3px",  // More spacing
+                      marginTop: "-20px",
+                    }}
+                  >
+                    WHITES
+                  </h2>
+                </div>
+
+                {/* COLOR MACHINE */}
+                <div
+                  onDragOver={(e) => handleDragOver(e, "colors")}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, "colors")}
+                  style={{
+                    textAlign: "center",
+                    transition: "all 0.3s ease",
+                    transform:
+                      dragOverMachine === "colors"
+                        ? "scale(1.08) translateY(10px)"
+                        : "translateY(20px)",
+                    filter:
+                      dragOverMachine === "colors"
+                        ? "drop-shadow(0 0 30px rgba(156, 39, 176, 1))"
+                        : "drop-shadow(0 6px 15px rgba(0,0,0,0.25))",
+                     marginLeft: isTablet ? "-0.5rem" : "-5rem",  // PULL LEFT MACHINE CLOSER
+                  }}
+                >
+                  <img
+                    src={washingMachine1Img}
+                    alt="Colour Washing Machine"
+                    style={{
+                      width: isTablet ? "320px" : "500px",   // EVEN BIGGER
+                      height: isTablet ? "320px" : "500px",  // EVEN BIGGER
+                      objectFit: "contain",
+                      marginBottom: "-10px",
+                      // CRUCIAL: Override the global CSS rule
+                      maxWidth: "none !important",     // Removes max-width: 100%
+                      minWidth: isTablet ? "300px" : "500px", // Prevents shrinking
+                    }}
+                  />
+                  <h2
+                    style={{
+                      fontSize: isTablet ? "2.2rem" : "3.2rem",  // Bigger text
+                      fontWeight: "bold",
+                      margin: "0",
+                      fontFamily: "Poppins, sans-serif",
+                      textShadow: "3px 3px 8px rgba(0,0,0,0.4)", // Better shadow
+                      letterSpacing: "3px",  // More spacing
+                      background:
+                        "linear-gradient(90deg, #E74C3C, #F39C12, #27AE60, #3498DB, #9B59B6)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      backgroundClip: "text",
+                      marginTop: "-20px",
+                    }}
+                  >
+                    COLOURS
+                  </h2>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+
           {/* Bottom Buttons */}
           {!gameWon && (
             <div style={{
