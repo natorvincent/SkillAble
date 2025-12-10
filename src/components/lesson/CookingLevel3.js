@@ -5,7 +5,8 @@ import {
   Button, 
   CircularProgress, 
   Typography,
-  Dialog
+  Dialog,
+  Stack
 } from '@mui/material';
 import Confetti from 'react-confetti';
 import confetti from 'canvas-confetti';
@@ -37,6 +38,9 @@ const CookingLevel3 = () => {
   const { lessonId } = useParams();
   const location = useLocation();
 
+  // Add start screen state
+  const [showStartScreen, setShowStartScreen] = useState(true);
+
   const [gameState, setGameState] = useState({
     currentStep: 0,
     stepsCompleted: [false, false, false, false, false, false, false, false, false, false],
@@ -57,7 +61,6 @@ const CookingLevel3 = () => {
     showFeedback: false,
     showCookedEggPrompt: false,
     setupPhase: true,
-    showBaconardoIntro: true,
     baconardoTalking: true,
     showHeatLevelButtons: false,
     showConfetti: false,
@@ -73,6 +76,11 @@ const CookingLevel3 = () => {
   const [dragItem, setDragItem] = useState(null);
   const panRef = useRef(null);
   const panHeatTimerRef = useRef(null);
+
+  // Handle start game
+  const handleStartGame = () => {
+    setShowStartScreen(false);
+  };
 
   // Animate stars when success shows
   useEffect(() => {
@@ -118,7 +126,6 @@ const CookingLevel3 = () => {
       showFeedback: false,
       showCookedEggPrompt: false,
       setupPhase: true,
-      showBaconardoIntro: true,
       baconardoTalking: true,
       showHeatLevelButtons: false,
       showConfetti: false,
@@ -142,6 +149,117 @@ const CookingLevel3 = () => {
       }
     };
   }, []);
+
+  // Start screen
+  if (showStartScreen) {
+    return (
+      <div style={{
+        minHeight: "100vh",
+        width: "100%",
+        backgroundImage: `url(${kitchenBg})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        display: "flex",
+        flexDirection: "column"
+      }}>
+        <Navbar />
+        <Box sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'linear-gradient(135deg, rgba(255, 202, 58, 0.8) 0%, rgba(255, 152, 0, 0.8) 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          zIndex: 1,
+          padding: 3
+        }}>
+          <Typography variant="h1" sx={{ 
+            color: 'white', 
+            fontWeight: 'bold', 
+            mb: 4,
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: { xs: '2.5rem', md: '4rem' },
+            textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
+            textAlign: 'center',
+            lineHeight: 1.2
+          }}>
+           Cook the Fried Egg
+          </Typography>
+          
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: { xs: 'column', md: 'row' },
+            alignItems: 'center', 
+            justifyContent: 'center',
+            mb: 6,
+            animation: 'float 3s ease-in-out infinite',
+            '@keyframes float': {
+              '0%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-10px)' },
+              '100%': { transform: 'translateY(0px)' }
+            },
+            maxWidth: '800px',
+            textAlign: 'center'
+          }}>
+            <Box
+              component="img"
+              src={baconardoImg}
+              alt="Baconardo"
+              sx={{
+                width: 120,
+                height: 'auto',
+                filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+                outline: '4px solid white',
+                borderRadius: '50%',
+                mr: { xs: 0, md: 4 },
+                mb: { xs: 3, md: 0 }
+              }}
+            />
+            <Typography variant="h4" sx={{ 
+              color: 'rgba(255, 255, 255, 0.95)', 
+              fontFamily: 'Inter, sans-serif',
+              lineHeight: 1.5,
+              textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+              maxWidth: '600px',
+              textAlign: { xs: 'center', md: 'left' }
+            }}>
+              Hi! I'm Baconardo! Let’s finish this yummy fried egg!
+            </Typography>
+          </Box>
+          
+          <Stack direction="row" spacing={3}>
+            <Button 
+              variant="contained"
+              onClick={handleStartGame}
+              sx={{ 
+                background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+                color: 'white',
+                px: 8,
+                py: 2,
+                borderRadius: '25px',
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: '700',
+                fontSize: '1.5rem',
+                textTransform: 'none',
+                boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
+                  transform: 'translateY(-2px)'
+                }
+              }}
+            >
+              Start Cooking!
+            </Button>
+          </Stack>
+        </Box>
+      </div>
+    );
+  }
 
   // Baconardo's guidance messages for each step
   const baconardoMessages = [
@@ -307,10 +425,6 @@ const CookingLevel3 = () => {
     setGameState(prev => ({ ...prev, baconardoTalking: !prev.baconardoTalking }));
   };
 
-  const closeBaconardoIntro = () => {
-    setGameState(prev => ({ ...prev, showBaconardoIntro: false, baconardoTalking: true }));
-  };
-
   const resetGame = () => {
     if (panHeatTimerRef.current) {
       clearTimeout(panHeatTimerRef.current);
@@ -336,7 +450,6 @@ const CookingLevel3 = () => {
       showFeedback: false,
       showCookedEggPrompt: false,
       setupPhase: true,
-      showBaconardoIntro: false,
       baconardoTalking: true,
       showHeatLevelButtons: false,
       showConfetti: false,
@@ -590,75 +703,6 @@ const CookingLevel3 = () => {
             textShadow: '0 0 20px rgba(76, 175, 80, 0.8)'
           }}>
             ✓
-          </div>
-        )}
-
-        {/* Baconardo Introduction Modal */}
-        {gameState.showBaconardoIntro && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            background: 'rgba(0,0,0,0.8)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 3000
-          }}>
-            <div style={{
-              background: 'linear-gradient(135deg, #FFF8E1, #FFECB3)',
-              padding: '40px',
-              borderRadius: '20px',
-              textAlign: 'center',
-              border: '4px solid #FF9800',
-              maxWidth: '500px',
-              position: 'relative'
-            }}>
-              <div style={{
-                width: '120px',
-                height: '120px',
-                margin: '0 auto 20px',
-                borderRadius: '50%',
-                overflow: 'hidden',
-                border: '4px solid #FF9800',
-                animation: 'pulse 2s infinite'
-              }}>
-                <img 
-                  src={baconardoImg} 
-                  alt="Baconardo" 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-              </div>
-              
-              <h2 style={{ color: '#E65100', marginBottom: '15px', fontSize: '32px' }}>
-                Meet Baconardo! 🥓
-              </h2>
-              
-              <p style={{ color: '#5D4037', marginBottom: '25px', fontSize: '18px', lineHeight: '1.6' }}>
-                "Hi there! I'm <strong>Baconardo</strong>, your personal cooking coach! I'll guide you through making the most delicious scrambled eggs you've ever tasted! Ready to become a master chef?"
-              </p>
-              
-              <p style={{ color: '#795548', marginBottom: '30px', fontSize: '16px', fontStyle: 'italic' }}>
-                I'll be here in the top right corner to help you every step of the way. Click on me anytime for tips!
-              </p>
-
-              <Button
-                onClick={closeBaconardoIntro}
-                variant="contained"
-                sx={{
-                  backgroundColor: '#4CAF50',
-                  borderRadius: '20px',
-                  padding: '12px 30px',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  '&:hover': { backgroundColor: '#45a049' }
-                }}
-              >
-                Let's Start Cooking! 🍳
-              </Button>
-            </div>
           </div>
         )}
 

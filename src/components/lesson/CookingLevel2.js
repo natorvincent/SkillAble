@@ -6,13 +6,15 @@ import {
   Button, 
   CircularProgress,
   Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions
+  Stack,
+  LinearProgress,
+  Paper
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import StarIcon from '@mui/icons-material/Star';
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import Navbar from '../Navbar';
 
 // Import kitchen background and ingredient images
@@ -38,6 +40,7 @@ export default function CookingLevel2() {
 
   // Sound management
   const [isMuted, setIsMuted] = useState(false);
+  const [showStartScreen, setShowStartScreen] = useState(true);
 
   // Sequential ingredient flow
   const [currentIngredientIndex, setCurrentIngredientIndex] = useState(0);
@@ -47,6 +50,7 @@ export default function CookingLevel2() {
   const [showCompletion, setShowCompletion] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [starAnimationStage, setStarAnimationStage] = useState(0);
+  const [confettiPieces, setConfettiPieces] = useState([]);
   
   // Progress tracking states
   const [progressSaving, setProgressSaving] = useState(false);
@@ -59,9 +63,8 @@ export default function CookingLevel2() {
   const [knifeChop, setKnifeChop] = useState(false);
   const [onionPieces, setOnionPieces] = useState([]);
   
-  // Baconardo states - ALWAYS VISIBLE
+  // Baconardo states
   const [showBaconardo, setShowBaconardo] = useState(true);
-  const [showIntro, setShowIntro] = useState(true);
   const [baconardoMessage, setBaconardoMessage] = useState('Welcome to Ingredient Preparation! I\'m Chef Baconardo! 🥓');
   const [baconardoAnimation, setBaconardoAnimation] = useState('idle');
   
@@ -75,9 +78,7 @@ export default function CookingLevel2() {
   const requiredChops = 5;
   const requiredShakes = 3;
 
-  // Get star rating based on performance
   const getStarRating = () => {
-    // Always return 3 stars for perfect completion
     return 3;
   };
 
@@ -97,7 +98,37 @@ export default function CookingLevel2() {
     }
   }, [showCompletion]);
 
-  // Get student ID from localStorage
+  // Create confetti when completion shows
+  useEffect(() => {
+    if (showCompletion) {
+      const createConfetti = () => {
+        const pieces = [];
+        for (let i = 0; i < 150; i++) {
+          pieces.push({
+            id: i,
+            x: Math.random() * 100,
+            y: -10,
+            rotation: Math.random() * 360,
+            color: [
+              '#FF0080', '#00FFFF', '#FF4500', '#9400D3', '#32CD32', '#FFD700', 
+              '#FF1493', '#00FF7F', '#1E90FF', '#FF6347', '#ADFF2F', '#FF69B4', 
+              '#00CED1', '#FFA500', '#DA70D6'
+            ][Math.floor(Math.random() * 15)],
+            size: Math.random() * 12 + 6,
+            speed: Math.random() * 4 + 2,
+            drift: (Math.random() - 0.5) * 3,
+            width: Math.random() * 8 + 4,
+            height: Math.random() * 12 + 6
+          });
+        }
+        setConfettiPieces(pieces);
+      };
+      
+      const timer = setTimeout(createConfetti, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [showCompletion]);
+
   const getStudentId = () => {
     const studentId = localStorage.getItem('studentId');
     const userRole = localStorage.getItem('userRole');
@@ -145,9 +176,6 @@ export default function CookingLevel2() {
         starsEarned: 3
       };
       
-      // NOTE: Call your actual service here:
-      // await saveStudentLessonProgress(progressData); 
-      
       console.log('Progress simulatedly saved:', progressData);
       setProgressSaved(true);
       
@@ -158,7 +186,7 @@ export default function CookingLevel2() {
     }
   };
 
-  const goToHomepage = () => {
+  const handleGoHome = () => {
     navigate('/homepage');
   };
 
@@ -197,11 +225,9 @@ export default function CookingLevel2() {
     };
   }, []);
 
-  // REMOVED SCROLL EFFECT - Baconardo will always be visible
-
   // Baconardo introduction for each ingredient
   useEffect(() => {
-    if (!showIntro) {
+    if (!showStartScreen) {
       const messages = [
         "🥬 First, let's chop the spring onion! Tap it repeatedly to chop it into small pieces. Be careful with the knife!",
         "🥚 Now, let's crack the egg! Tap once to crack it into the bowl. We need it ready for cooking!",
@@ -217,7 +243,7 @@ export default function CookingLevel2() {
         }, 4000);
       }
     }
-  }, [currentIngredientIndex, showIntro]);
+  }, [currentIngredientIndex, showStartScreen]);
 
   // Play sound effect helper function
   const playSound = (audioRef) => {
@@ -465,747 +491,720 @@ export default function CookingLevel2() {
     showBaconardoFeedback("Let's start fresh! Remember: chop the onion, crack the egg, and shake the salt! 🍳", 'idle');
   };
 
+  const handleStartGame = () => {
+    setShowStartScreen(false);
+  };
+
   const completedCount = Object.values(completedTasks).filter(Boolean).length;
   const progressPercentage = ((currentIngredientIndex + (getCurrentIngredientCompleted() ? 1 : 0)) / totalIngredients) * 100;
 
-  return (
-    <div style={{
-      minHeight: '100vh',
-      backgroundImage: kitchenBg ? `url(${kitchenBg})` : 'linear-gradient(135deg, #FFE0B2, #FFCC02, #FF8F00)',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat',
-      position: 'relative',
-      fontFamily: 'Arial, sans-serif',
-      overflow: 'hidden',
-      height: '100vh'
-    }}>
-      {/* Background Dim Overlay */}
+  // Start screen
+  if (showStartScreen) {
+    return (
       <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0, 0, 0, 0.3)',
-        pointerEvents: 'none'
-      }} />
-      
-      {/* Navbar */}
-      <Navbar />
-      
-      {/* Introduction Dialog with Chef Baconardo */}
-      <Dialog 
-        open={showIntro} 
-        maxWidth="md"
-        fullWidth
-        PaperProps={{
-          style: {
-            borderRadius: '20px',
-            background: 'linear-gradient(135deg, #FFF8E1, #FFECB3)',
-            border: '4px solid #FF9800'
-          }
-        }}
-      >
-        <DialogTitle style={{ 
-          textAlign: 'center', 
-          background: 'linear-gradient(45deg, #FF9800, #F57C00)',
-          color: 'white',
-          borderRadius: '15px 15px 0 0',
-          padding: '20px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px' }}>
-            <div style={{ fontSize: '40px' }}>👨‍🍳</div>
-            <h2 style={{ margin: 0, fontSize: '28px' }}>Welcome to Cooking Level 2!</h2>
-            <div style={{ fontSize: '40px' }}>🔪</div>
-          </div>
-        </DialogTitle>
-        
-        <DialogContent style={{ padding: '30px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '20px' }}>
-            <img 
-              src={baconardoImg} 
-              alt="Chef Baconardo" 
-              style={{ 
-                width: '120px', 
-                height: '120px', 
-                objectFit: 'contain',
-                borderRadius: '50%',
-                border: '3px solid #FF9800'
-              }} 
-            />
-            <div>
-              <h3 style={{ color: '#E65100', marginBottom: '10px', fontSize: '24px' }}>
-                Time to Prep! 🥓
-              </h3>
-              <p style={{ fontSize: '16px', lineHeight: '1.6', color: '#5D4037' }}>
-                "Hello again! I'm Chef Baconardo! Now that we have our ingredients, let's prepare them for cooking! 
-                We'll chop the spring onion, crack the egg, and season with salt. I'll guide you through each step!"
-              </p>
-            </div>
-          </div>
-
-          <div style={{ 
-            background: 'rgba(76, 175, 80, 0.1)', 
-            padding: '15px', 
-            borderRadius: '12px',
-            border: '2px solid rgba(76, 175, 80, 0.3)',
-            textAlign: 'center',
-            marginTop: '20px'
-          }}>
-            <p style={{ margin: 0, color: '#2E7D32', fontWeight: 'bold', fontSize: '16px' }}>
-              👉 I'll guide you through each preparation step from the top-right corner!
-            </p>
-          </div>
-        </DialogContent>
-        
-        <DialogActions style={{ justifyContent: 'center', padding: '20px' }}>
-          <Button
-            onClick={() => setShowIntro(false)}
-            variant="contained"
-            size="large"
-            sx={{
-              backgroundColor: '#4CAF50',
-              borderRadius: '25px',
-              padding: '12px 40px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              '&:hover': {
-                backgroundColor: '#45a049',
-                transform: 'scale(1.05)'
-              },
-              transition: 'all 0.3s ease'
-            }}
-          >
-            🚀 Start Preparing!
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Chef Baconardo Character - Fixed beside container - ALWAYS VISIBLE */}
-      <div style={{
-        position: 'fixed',
-        top: '140px',
-        left: 'calc(50% + 620px)',
-        zIndex: 50,
-        opacity: 1,
-        transform: 'translateX(0)',
-        transition: 'all 0.3s ease',
-        pointerEvents: 'auto',
-        '@media (max-width: 1400px)': {
-          left: 'calc(50% + 500px)'
-        },
-        '@media (max-width: 1200px)': {
-          display: 'none'
-        }
+        minHeight: "100vh",
+        width: "100%",
+        backgroundImage: `url(${kitchenBg})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        display: "flex",
+        flexDirection: "column"
       }}>
-        {/* Baconardo's Message Bubble */}
-        <div style={{
+        <Navbar />
+        <Box sx={{
           position: 'absolute',
-          top: '0',
-          right: '130px',
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          padding: '15px 20px',
-          borderRadius: '20px',
-          border: '3px solid #FF8F00',
-          width: '280px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-          animation: baconardoAnimation === 'idle' ? 'baconardoIdle 3s ease-in-out infinite' : 
-                    baconardoAnimation === 'nod' ? 'baconardoNod 0.5s ease-out' :
-                    baconardoAnimation === 'celebrate' ? 'baconardoCelebrate 1s ease-out' : 'none',
-          '@media (max-width: 1400px)': {
-            width: '250px',
-            padding: '12px 16px'
-          }
-        }}>
-          <p style={{
-            margin: 0,
-            color: '#8B4513',
-            fontSize: '13px',
-            fontWeight: '500',
-            lineHeight: '1.5'
-          }}>
-            {baconardoMessage}
-          </p>
-          {/* Speech bubble pointer */}
-          <div style={{
-            position: 'absolute',
-            right: '-12px',
-            top: '20px',
-            width: 0,
-            height: 0,
-            borderTop: '10px solid transparent',
-            borderBottom: '10px solid transparent',
-            borderLeft: '12px solid #FF8F00'
-          }} />
-          <div style={{
-            position: 'absolute',
-            right: '-8px',
-            top: '22px',
-            width: 0,
-            height: 0,
-            borderTop: '8px solid transparent',
-            borderBottom: '8px solid transparent',
-            borderLeft: '10px solid rgba(255, 255, 255, 0.95)'
-          }} />
-        </div>
-
-        <img 
-          src={baconardoImg}
-          alt="Chef Baconardo"
-          style={{
-            width: '120px',
-            height: '120px',
-            objectFit: 'contain',
-            filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))',
-            cursor: 'pointer',
-            animation: baconardoAnimation === 'idle' ? 'baconardoIdle 3s ease-in-out infinite' : 
-                      baconardoAnimation === 'nod' ? 'baconardoNod 0.5s ease-out' :
-                      baconardoAnimation === 'celebrate' ? 'baconardoCelebrate 1s ease-out' : 'none',
-            '@media (max-width: 1400px)': {
-              width: '100px',
-              height: '100px'
-            }
-          }}
-          onClick={() => showBaconardoFeedback("I'm Chef Baconardo! Let me help you prepare these ingredients. Follow my guidance for perfect preparation! 🥓", 'nod')}
-          title="Click me for cooking tips! - Chef Baconardo"
-        />
-      </div>
-
-      {/* Sound Toggle Button - Fixed position */}
-      <div style={{ 
-        position: 'fixed', 
-        top: '80px',
-        right: '20px', 
-        zIndex: 100 
-      }}>
-        <button
-          onClick={toggleMute}
-          style={{
-            backgroundColor: isMuted ? '#FF5722' : '#4CAF50',
-            color: 'white',
-            border: 'none',
-            borderRadius: '50%',
-            width: '50px',
-            height: '50px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-            fontSize: '20px',
-            transition: 'all 0.2s ease'
-          }}
-          onMouseOver={(e) => e.target.style.transform = 'scale(1.1)'}
-          onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
-          title={isMuted ? 'Unmute sounds' : 'Mute sounds'}
-        >
-          <span>{isMuted ? '🔇' : '🔊'}</span>
-        </button>
-      </div>
-
-      {/* Main Game Container - Fully Responsive */}
-      <div style={{
-        position: 'absolute',
-        top: '80px',
-        left: '20px',
-        right: '20px',
-        bottom: '90px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '10px',
-        overflow: 'hidden'
-      }}>
-        
-        {/* Header Section - Compact and Responsive */}
-        <div style={{
-          width: '100%',
-          maxWidth: '800px',
-          marginBottom: '10px'
-        }}>
-          {/* Level Title and Progress - Compact Row */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            borderRadius: '12px',
-            padding: '8px 16px',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
-            marginBottom: '8px'
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              <div style={{
-                backgroundColor: '#FF8F00',
-                color: 'white',
-                width: '28px',
-                height: '28px',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 'bold',
-                fontSize: '14px'
-              }}>
-                2
-              </div>
-              <h1 style={{
-                fontSize: '18px',
-                fontWeight: 'bold',
-                color: '#8B4513',
-                margin: 0
-              }}>
-                Level 2: Prepare Ingredients
-              </h1>
-            </div>
-            
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}>
-              <span style={{
-                fontSize: '14px',
-                fontWeight: 'bold',
-                color: '#FF8F00'
-              }}>
-                {completedCount}/{totalIngredients}
-              </span>
-              <div style={{
-                width: '40px',
-                height: '40px',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <CircularProgress 
-                  variant="determinate" 
-                  value={progressPercentage}
-                  size={40}
-                  thickness={4}
-                  sx={{ 
-                    color: '#4CAF50',
-                    position: 'absolute'
-                  }}
-                />
-                <span style={{
-                  fontSize: '11px',
-                  fontWeight: 'bold',
-                  color: '#8B4513'
-                }}>
-                  {Math.round(progressPercentage)}%
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Current Step Indicator - Very Compact */}
-          <div style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.85)',
-            borderRadius: '8px',
-            padding: '8px 12px',
-            marginBottom: '8px',
-            borderLeft: '3px solid #2196F3',
-            textAlign: 'center'
-          }}>
-            <p style={{
-              margin: 0,
-              color: '#8B4513',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}>
-              {currentIngredient.intro}
-            </p>
-          </div>
-
-          {/* Task Instruction */}
-          <p style={{ 
-            color: '#8B4513', 
-            fontSize: '14px', 
-            fontWeight: 'bold',
-            margin: 0,
-            textAlign: 'center'
-          }}>
-            Prepare the {currentIngredient.name.toLowerCase()}!
-          </p>
-        </div>
-
-        {/* Main Ingredient Display - Centered and Responsive */}
-        <div style={{
-          flex: 1,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'linear-gradient(135deg, rgba(255, 202, 58, 0.8) 0%, rgba(255, 152, 0, 0.8) 100%)',
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          width: '100%',
-          maxWidth: '500px',
-          margin: '10px 0'
+          flexDirection: 'column',
+          zIndex: 1,
+          padding: 3
         }}>
-          <div 
-            onClick={handleIngredientAction}
-            style={{
-              position: 'relative',
-              backgroundColor: getCurrentIngredientCompleted() ? 'rgba(232, 245, 232, 0.9)' : 'rgba(255, 255, 255, 0.85)',
-              backdropFilter: 'blur(5px)',
-              border: `3px solid ${getCurrentIngredientCompleted() ? '#4CAF50' : '#FF8F00'}`,
-              borderRadius: '16px',
-              padding: '20px',
-              cursor: getCurrentIngredientCompleted() ? 'default' : 'pointer',
-              width: '100%',
-              maxWidth: '320px',
+          <Typography variant="h1" sx={{ 
+            color: 'white', 
+            fontWeight: 'bold', 
+            mb: 4,
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: { xs: '2.5rem', md: '4rem' },
+            textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
+            textAlign: 'center',
+            lineHeight: 1.2
+          }}>
+            Do the Cooking Steps
+          </Typography>
+          
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: { xs: 'column', md: 'row' },
+            alignItems: 'center', 
+            justifyContent: 'center',
+            mb: 6,
+            animation: 'float 3s ease-in-out infinite',
+            '@keyframes float': {
+              '0%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-10px)' },
+              '100%': { transform: 'translateY(0px)' }
+            },
+            maxWidth: '800px',
+            textAlign: 'center'
+          }}>
+            <Box
+              component="img"
+              src={baconardoImg}
+              alt="Baconardo"
+              sx={{
+                width: 120,
+                height: 'auto',
+                filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+                outline: '4px solid white',
+                borderRadius: '50%',
+                mr: { xs: 0, md: 4 },
+                mb: { xs: 3, md: 0 }
+              }}
+            />
+            <Typography variant="h4" sx={{ 
+              color: 'rgba(255, 255, 255, 0.95)', 
+              fontFamily: 'Inter, sans-serif',
+              lineHeight: 1.5,
+              textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+              maxWidth: '600px',
+              textAlign: { xs: 'center', md: 'left' }
+            }}>
+              Hi! I'm Baconardo! Let's cook the perfect fried egg with the right actions!
+            </Typography>
+          </Box>
+          
+          <Stack direction="row" spacing={3}>
+            <Button 
+              variant="contained"
+              onClick={handleStartGame}
+              sx={{ 
+                background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+                color: 'white',
+                px: 8,
+                py: 2,
+                borderRadius: '25px',
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: '700',
+                fontSize: '1.5rem',
+                textTransform: 'none',
+                boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
+                  transform: 'translateY(-2px)'
+                }
+              }}
+            >
+              Start Cooking!
+            </Button>
+          </Stack>
+        </Box>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundImage: `url(${kitchenBg})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundAttachment: 'fixed',
+      overflow: 'hidden'
+    }}>
+      {/* Animation Styles */}
+      <style>
+        {`
+          @keyframes confettiFall {
+            0% {
+              transform: translateY(-100vh) rotate(0deg) scale(0.8);
+              opacity: 1;
+            }
+            10% {
+              opacity: 1;
+              transform: translateY(-90vh) rotate(36deg) scale(1);
+            }
+            90% {
+              opacity: 0.8;
+              transform: translateY(90vh) translateX(var(--drift)) rotate(324deg) scale(0.6);
+            }
+            100% {
+              transform: translateY(100vh) translateX(var(--drift2)) rotate(360deg) scale(0);
+              opacity: 0;
+            }
+          }
+        `}
+      </style>
+      
+      <Box sx={{ 
+        py: 1,
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative'
+      }}>
+        {/* Enhanced Progress Bar */}
+        <Box sx={{ 
+          maxWidth: '800px', 
+          mx: 'auto',
+          position: 'relative',
+          mb: 2,
+          zIndex: 1010,
+          mt: 2
+        }}>
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 1 
+          }}>
+            {[...Array(3)].map((_, index) => {
+              const isFilled = index < completedCount;
+              return (
+                <Box
+                  key={index}
+                  sx={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '50%',
+                    backgroundColor: isFilled ? '#4CAF50' : '#e0e0e0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.2rem',
+                    fontWeight: 'bold',
+                    color: isFilled ? 'white' : '#666',
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                    transition: 'all 0.3s ease',
+                    border: '2px solid white',
+                    animation: isFilled ? 'popIn 0.5s ease-out' : 'none',
+                    '@keyframes popIn': {
+                      '0%': { transform: 'scale(0)' },
+                      '50%': { transform: 'scale(1.2)' },
+                      '100%': { transform: 'scale(1)' }
+                    }
+                  }}
+                >
+                  {isFilled ? '✓' : index + 1}
+                </Box>
+              );
+            })}
+          </Box>
+          
+          <LinearProgress 
+            variant="determinate" 
+            value={progressPercentage} 
+            sx={{ 
+              height: 16,
+              borderRadius: '10px',
+              backgroundColor: 'rgba(255, 255, 255, 0.3)',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+              '& .MuiLinearProgress-bar': {
+                borderRadius: '10px',
+                background: 'linear-gradient(90deg, #FFC107 0%, #FF9800 50%, #4CAF50 100%)',
+                transition: 'width 0.5s ease-in-out'
+              }
+            }} 
+          />
+          
+          <Typography variant="body1" sx={{ 
+            color: 'white', 
+            fontWeight: 'bold',
+            fontFamily: 'Poppins, sans-serif',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            px: 2,
+            py: 1,
+            borderRadius: '10px',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+            textAlign: 'center',
+            mt: 1,
+            fontSize: '0.9rem'
+          }}>
+            Prepared Ingredients: {completedCount}/3
+          </Typography>
+        </Box>
+
+        {/* Chef Baconardo Character */}
+        <Box
+          sx={{
+            position: 'fixed',
+            left: 20,
+            bottom: 20,
+            zIndex: 100,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+          }}
+        >
+          <Box
+            component="img"
+            src={baconardoImg}
+            alt="Baconardo the Cooking Cat"
+            sx={{
+              width: 120,
+              height: 'auto',
+              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+              outline: '4px solid white',
+              borderRadius: '50%',
+              animation: baconardoAnimation === 'idle' ? 'float 3s ease-in-out infinite, subtleBlink 4s ease-in-out infinite' :
+                       baconardoAnimation === 'nod' ? 'nod 0.5s ease-out' :
+                       baconardoAnimation === 'celebrate' ? 'celebrate 2s ease-in-out infinite' : 'float 3s ease-in-out infinite',
+              '@keyframes float': {
+                '0%': { transform: 'translateY(0px)' },
+                '50%': { transform: 'translateY(-10px)' },
+                '100%': { transform: 'translateY(0px)' }
+              },
+              '@keyframes nod': {
+                '0%, 100%': { transform: 'translateY(0px)' },
+                '50%': { transform: 'translateY(-5px)' }
+              },
+              '@keyframes celebrate': {
+                '0%': { transform: 'translateY(0px) rotate(0deg)' },
+                '25%': { transform: 'translateY(-15px) rotate(10deg)' },
+                '50%': { transform: 'translateY(-20px) rotate(0deg)' },
+                '75%': { transform: 'translateY(-15px) rotate(-10deg)' },
+                '100%': { transform: 'translateY(0px) rotate(0deg)' }
+              },
+              '@keyframes subtleBlink': {
+                '0%, 90%, 100%': { opacity: 1 },
+                '95%': { opacity: 0.7 }
+              }
+            }}
+          />
+          <Paper
+            sx={{
+              position: 'absolute',
+              top: -80,
+              left: 140,
+              backgroundColor: 'white',
+              color: '#280B60',
+              padding: '12px 16px',
+              borderRadius: '20px',
+              fontSize: '1.1rem',
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '700',
+              maxWidth: '180px',
+              boxShadow: '0 6px 16px rgba(0,0,0,0.3)',
+              border: '3px solid #FF9800',
+              animation: 'pulse 2s infinite',
+              '@keyframes pulse': {
+                '0%': { transform: 'scale(1)' },
+                '50%': { transform: 'scale(1.05)' },
+                '100%': { transform: 'scale(1)' }
+              },
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                top: '50%',
+                left: '-12px',
+                marginTop: '-8px',
+                borderWidth: '8px',
+                borderStyle: 'solid',
+                borderColor: 'transparent #FF9800 transparent transparent'
+              }
+            }}
+          >
+            {baconardoMessage}
+          </Paper>
+        </Box>
+
+        {/* Less Distracting Navigation Buttons */}
+        <Box sx={{
+          position: 'fixed',
+          top: 18,
+          left: 18,
+          zIndex: 1020,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+          opacity: 0.8,
+          '&:hover': {
+            opacity: 1
+          }
+        }}>
+          <Button 
+            variant="contained"
+            onClick={resetGame}
+            sx={{ 
+              background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+              color: 'white',
+              width: 48,
+              height: 48,
+              minWidth: 48,
+              borderRadius: '10px',
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '700',
+              fontSize: '1rem',
+              textTransform: 'none',
+              boxShadow: '0 6px 12px rgba(255, 89, 94, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
+                transform: 'translateY(-2px)'
+              }
+            }}
+            aria-label="Reset"
+          >
+            🔄
+          </Button>
+          
+          <Button 
+            variant="contained"
+            onClick={handleGoHome}
+            sx={{ 
+              background: 'linear-gradient(135deg, #1982C4 0%, #1568A0 100%)',
+              color: 'white',
+              width: 48,
+              height: 48,
+              minWidth: 48,
+              borderRadius: '10px',
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '700',
+              fontSize: '1rem',
+              textTransform: 'none',
+              boxShadow: '0 6px 12px rgba(25, 130, 196, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #42A5F5 0%, #1982C4 100%)',
+                transform: 'translateY(-2px)'
+              }
+            }}
+            aria-label="Home"
+          >
+            🏠
+          </Button>
+
+          {/* Sound Toggle Button */}
+          <Button 
+            variant="contained"
+            onClick={toggleMute}
+            sx={{ 
+              background: 'linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%)',
+              color: 'white',
+              width: 48,
+              height: 48,
+              minWidth: 48,
+              borderRadius: '10px',
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '700',
+              fontSize: '1rem',
+              textTransform: 'none',
+              boxShadow: '0 6px 12px rgba(76, 175, 80, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%)',
+                transform: 'translateY(-2px)'
+              }
+            }}
+            aria-label={isMuted ? 'Unmute sounds' : 'Mute sounds'}
+          >
+            {isMuted ? <VolumeOffIcon /> : <VolumeUpIcon />}
+          </Button>
+        </Box>
+
+        {/* Main Game Area */}
+        {!showCompletion && (
+          <Box 
+            sx={{ 
+              flex: 1,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              textAlign: 'center',
-              boxShadow: '0 6px 16px rgba(0,0,0,0.2)',
-              transform: (onionAnimation && currentIngredientIndex === 0) || 
-                         (eggAnimation && currentIngredientIndex === 1) || 
-                         (saltAnimation && currentIngredientIndex === 2) ? 'scale(1.05)' : 'scale(1)',
-              transition: 'all 0.3s ease'
+              justifyContent: 'center',
+              width: '100%',
+              position: 'relative',
+              height: 'calc(100vh - 150px)',
+              overflow: 'hidden',
+              padding: 2
             }}
           >
-            {/* Completion Check */}
-            {getCurrentIngredientCompleted() && (
-              <div style={{
-                position: 'absolute',
-                top: '12px',
-                right: '12px',
-                backgroundColor: '#4CAF50',
+            {/* Current Step Instruction */}
+              <Typography variant="h7" sx={{ 
                 color: 'white',
-                borderRadius: '50%',
-                width: '30px',
-                height: '30px',
+                fontWeight: 'bold',
+                fontFamily: 'Poppins, sans-serif',
+                // REMOVED: backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                px: 3,
+                py: 2,
+                borderRadius: '10px',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+                mb: 3,
+                textAlign: 'center',
+                maxWidth: '600px'
+              }}>
+                {currentIngredient.intro}
+              </Typography>
+            {/* Ingredient Display Area */}
+            <Box 
+              onClick={handleIngredientAction}
+              sx={{
+                position: 'relative',
+                backgroundColor: getCurrentIngredientCompleted() ? 'rgba(232, 245, 232, 0.9)' : 'rgba(255, 255, 255, 0.85)',
+                backdropFilter: 'blur(5px)',
+                border: `3px solid ${getCurrentIngredientCompleted() ? '#4CAF50' : '#FF8F00'}`,
+                borderRadius: '20px',
+                padding: '30px',
+                cursor: getCurrentIngredientCompleted() ? 'default' : 'pointer',
+                width: '100%',
+                maxWidth: '400px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                textAlign: 'center',
+                boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
+                transform: (onionAnimation && currentIngredientIndex === 0) || 
+                           (eggAnimation && currentIngredientIndex === 1) || 
+                           (saltAnimation && currentIngredientIndex === 2) ? 'scale(1.05)' : 'scale(1)',
+                transition: 'all 0.3s ease',
+                mb: 4
+              }}
+            >
+              {/* Completion Check */}
+              {getCurrentIngredientCompleted() && (
+                <Box sx={{
+                  position: 'absolute',
+                  top: '15px',
+                  right: '15px',
+                  backgroundColor: '#4CAF50',
+                  color: 'white',
+                  borderRadius: '50%',
+                  width: '40px',
+                  height: '40px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 'bold',
+                  fontSize: '20px',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                }}>
+                  ✓
+                </Box>
+              )}
+
+              {/* Ingredient Name */}
+              <Typography variant="h4" sx={{ 
+                fontWeight: 'bold', 
+                color: '#8B4513', 
+                mb: 3,
+                fontFamily: 'Poppins, sans-serif'
+              }}>
+                {currentIngredient.name}
+              </Typography>
+              
+              {/* Dynamic Image Container */}
+              <Box sx={{
+                width: '150px',
+                height: '150px',
+                margin: '0 auto 25px',
+                backgroundColor: getCurrentIngredientCompleted() ? '#F0F8F0' : '#FFF8DC',
+                borderRadius: '20px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontWeight: 'bold',
-                fontSize: '16px'
+                position: 'relative',
+                overflow: 'hidden',
+                transform: (onionAnimation && currentIngredientIndex === 0) ? 'rotate(5deg)' :
+                          (eggAnimation && currentIngredientIndex === 1) ? 'rotate(2deg)' :
+                          (saltAnimation && currentIngredientIndex === 2) ? 'rotate(-10deg)' : 'rotate(0deg)',
+                transition: 'all 0.3s ease'
               }}>
-                ✓
-              </div>
-            )}
+                {/* Knife Animation for Onion */}
+                {currentIngredientIndex === 0 && !getCurrentIngredientCompleted() && (
+                  <Box sx={{
+                    position: 'absolute',
+                    top: knifeChop ? '50px' : '-15px',
+                    right: '8px',
+                    width: '60px',
+                    height: '80px',
+                    transition: 'top 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transform: 'rotate(-45deg)',
+                    zIndex: 10,
+                    filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))'
+                  }}>
+                    <img 
+                      src={knifeImg}
+                      alt="Knife"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain'
+                      }}
+                    />
+                  </Box>
+                )}
 
-            {/* Ingredient Name */}
-            <h2 style={{ 
-              fontSize: '24px', 
-              fontWeight: 'bold', 
-              color: '#8B4513', 
-              marginBottom: '20px',
-              marginTop: '0'
-            }}>
-              {currentIngredient.name}
-            </h2>
-            
-            {/* Dynamic Image Container */}
-            <div style={{
-              width: '120px',
-              height: '120px',
-              margin: '0 auto 20px',
-              backgroundColor: getCurrentIngredientCompleted() ? '#F0F8F0' : '#FFF8DC',
-              borderRadius: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: `3px solid ${getCurrentIngredientCompleted() ? '#4CAF50' : '#FF8F00'}`,
-              position: 'relative',
-              overflow: 'hidden',
-              transform: (onionAnimation && currentIngredientIndex === 0) ? 'rotate(5deg)' :
-                        (eggAnimation && currentIngredientIndex === 1) ? 'rotate(2deg)' :
-                        (saltAnimation && currentIngredientIndex === 2) ? 'rotate(-10deg)' : 'rotate(0deg)',
-              transition: 'all 0.3s ease'
-            }}>
-              {/* Knife Animation for Onion */}
-              {currentIngredientIndex === 0 && !getCurrentIngredientCompleted() && (
-                <div style={{
-                  position: 'absolute',
-                  top: knifeChop ? '50px' : '-15px',
-                  right: '8px',
-                  width: '50px',
-                  height: '65px',
-                  transition: 'top 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  transform: 'rotate(-45deg)',
-                  zIndex: 10,
-                  filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))'
-                }}>
+                {/* Onion chopping pieces animation */}
+                {currentIngredientIndex === 0 && !getCurrentIngredientCompleted() && (
+                  <>
+                    {/* Main onion that gets smaller with each chop */}
+                    <img 
+                      src={springOnionImg}
+                      alt="Spring Onion"
+                      style={{
+                        width: `${100 - (springOnionChops * 15)}px`,
+                        height: `${100 - (springOnionChops * 15)}px`,
+                        objectFit: 'contain',
+                        opacity: springOnionChops >= requiredChops ? 0 : 1,
+                        transition: 'all 0.3s ease',
+                        filter: onionAnimation ? 'blur(2px)' : 'none'
+                      }}
+                    />
+                    
+                    {/* Chopped pieces that appear with each tap */}
+                    {onionPieces.map((piece) => (
+                      <Box
+                        key={piece.id}
+                        sx={{
+                          position: 'absolute',
+                          left: `${piece.left}%`,
+                          top: `${piece.top}%`,
+                          width: `${piece.size}px`,
+                          height: `${piece.size}px`,
+                          backgroundImage: `url(${springOnionChoppedImg})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          borderRadius: '50%',
+                          transform: `rotate(${piece.rotation}deg)`,
+                          animation: 'pieceAppear 0.3s ease-out',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                        }}
+                      />
+                    ))}
+                  </>
+                )}
+
+                {/* Show completed chopped onion */}
+                {currentIngredientIndex === 0 && getCurrentIngredientCompleted() && (
                   <img 
-                    src={knifeImg}
-                    alt="Knife"
+                    src={currentIngredient.afterImage}
+                    alt={currentIngredient.name}
                     style={{
-                      width: '100%',
-                      height: '100%',
+                      width: '100px',
+                      height: '100px',
                       objectFit: 'contain'
                     }}
                   />
-                </div>
-              )}
+                )}
 
-              {/* Onion chopping pieces animation */}
-              {currentIngredientIndex === 0 && !getCurrentIngredientCompleted() && (
-                <>
-                  {/* Main onion that gets smaller with each chop */}
+                {/* Show other ingredients normally */}
+                {currentIngredientIndex !== 0 && (
                   <img 
-                    src={springOnionImg}
-                    alt="Spring Onion"
+                    src={getCurrentIngredientCompleted() ? currentIngredient.afterImage : currentIngredient.beforeImage}
+                    alt={currentIngredient.name}
                     style={{
-                      width: `${80 - (springOnionChops * 12)}px`,
-                      height: `${80 - (springOnionChops * 12)}px`,
-                      objectFit: 'contain',
-                      opacity: springOnionChops >= requiredChops ? 0 : 1,
-                      transition: 'all 0.3s ease',
-                      filter: onionAnimation ? 'blur(2px)' : 'none'
+                      width: '100px',
+                      height: '100px',
+                      objectFit: 'contain'
                     }}
                   />
-                  
-                  {/* Chopped pieces that appear with each tap */}
-                  {onionPieces.map((piece) => (
-                    <div
-                      key={piece.id}
-                      style={{
-                        position: 'absolute',
-                        left: `${piece.left}%`,
-                        top: `${piece.top}%`,
-                        width: `${piece.size}px`,
-                        height: `${piece.size}px`,
-                        backgroundImage: `url(${springOnionChoppedImg})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        borderRadius: '50%',
-                        transform: `rotate(${piece.rotation}deg)`,
-                        animation: 'pieceAppear 0.3s ease-out',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                      }}
-                    />
-                  ))}
-                </>
-              )}
+                )}
+              </Box>
 
-              {/* Show completed chopped onion */}
-              {currentIngredientIndex === 0 && getCurrentIngredientCompleted() && (
-                <img 
-                  src={currentIngredient.afterImage}
-                  alt={currentIngredient.name}
-                  style={{
-                    width: '80px',
-                    height: '80px',
-                    objectFit: 'contain'
-                  }}
-                />
-              )}
-
-              {/* Show other ingredients normally */}
-              {currentIngredientIndex !== 0 && (
-                <img 
-                  src={getCurrentIngredientCompleted() ? currentIngredient.afterImage : currentIngredient.beforeImage}
-                  alt={currentIngredient.name}
-                  style={{
-                    width: '80px',
-                    height: '80px',
-                    objectFit: 'contain'
-                  }}
-                />
-              )}
-            </div>
-
-            {/* Action Button/Text */}
-            <div style={{
-              marginBottom: '10px',
-              width: '100%'
-            }}>
-              <p style={{ 
-                color: '#8B4513', 
-                fontWeight: 'bold', 
-                fontSize: '18px',
-                marginBottom: '6px'
+              {/* Action Button/Text */}
+              <Box sx={{
+                marginBottom: '15px',
+                width: '100%'
               }}>
-                {getCurrentIngredientCompleted() ? 'Completed!' : currentIngredient.actionText}
-              </p>
-              
-              <p style={{ 
-                color: '#666', 
-                fontSize: '14px', 
-                marginBottom: '6px'
-              }}>
-                {currentIngredient.progressText}
-              </p>
-            </div>
-
-            {/* Encouragement Text */}
-            {!getCurrentIngredientCompleted() && (
-              <p style={{ 
-                color: '#FF8F00', 
-                fontStyle: 'italic', 
-                fontSize: '14px',
-                marginTop: '6px'
-              }}>
-                {currentIngredient.encouragement}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Completed Steps Preview - Only show when relevant */}
-        {currentIngredientIndex > 0 && (
-          <div style={{
-            width: '100%',
-            maxWidth: '500px',
-            marginBottom: '10px'
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'center',
-              gap: '10px',
-              flexWrap: 'wrap'
-            }}>
-              {ingredients.slice(0, currentIngredientIndex).map((ingredient) => (
-                <div key={ingredient.id} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  backgroundColor: '#E8F5E8',
-                  padding: '4px 10px',
-                  borderRadius: '16px',
-                  border: '2px solid #4CAF50'
+                <Typography variant="h6" sx={{ 
+                  color: '#8B4513', 
+                  fontWeight: 'bold', 
+                  mb: 1,
+                  fontFamily: 'Poppins, sans-serif'
                 }}>
-                  <img 
-                    src={ingredient.afterImage}
-                    alt={ingredient.name}
-                    style={{
-                      width: '20px',
-                      height: '20px',
-                      objectFit: 'contain',
-                      marginRight: '6px'
-                    }}
-                  />
-                  <span style={{ color: '#2E7D32', fontWeight: 'bold', fontSize: '12px' }}>
-                    {ingredient.name} ✓
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+                  {getCurrentIngredientCompleted() ? 'Completed!' : currentIngredient.actionText}
+                </Typography>
+                
+                <Typography variant="body1" sx={{ 
+                  color: '#666', 
+                  mb: 1,
+                  fontFamily: 'Inter, sans-serif'
+                }}>
+                  {currentIngredient.progressText}
+                </Typography>
+              </Box>
+
+              {/* Encouragement Text */}
+              {!getCurrentIngredientCompleted() && (
+                <Typography variant="body1" sx={{ 
+                  color: '#FF8F00', 
+                  fontStyle: 'italic', 
+                  fontFamily: 'Inter, sans-serif'
+                }}>
+                  {currentIngredient.encouragement}
+                </Typography>
+              )}
+            </Box>
+
+            {/* Progress Indicator */}
+            <Typography variant="body1" sx={{ 
+              color: 'white', 
+              fontWeight: 'bold',
+              fontFamily: 'Poppins, sans-serif',
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              px: 3,
+              py: 1,
+              borderRadius: '10px',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
+            }}>
+              Step {currentIngredientIndex + 1} of 3: {currentIngredient.name}
+            </Typography>
+          </Box>
         )}
-      </div>
 
-      {/* Fixed Bottom Control Bar - Responsive */}
-      <Box sx={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        zIndex: 100,
-        display: 'flex',
-        justifyContent: 'center',
-        gap: 1,
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        padding: '10px',
-        backdropFilter: 'blur(10px)',
-        boxShadow: '0 -4px 16px rgba(0,0,0,0.2)',
-        borderTop: '2px solid rgba(255, 255, 255, 0.5)'
-      }}>
-        <Button
-          onClick={() => showBaconardoFeedback(currentIngredient.intro, 'nod')}
-          variant="contained"
-          size="small"
-          sx={{
-            backgroundColor: '#2196F3',
-            borderRadius: '16px',
-            minWidth: '80px',
-            fontSize: '12px',
-            padding: '6px 12px',
-            '&:hover': { backgroundColor: '#1976D2' }
-          }}
-        >
-          💡 Help
-        </Button>
-        <Button
-          onClick={resetGame}
-          variant="contained"
-          size="small"
-          sx={{
-            backgroundColor: '#FF9800',
-            borderRadius: '16px',
-            minWidth: '80px',
-            fontSize: '12px',
-            padding: '6px 12px',
-            '&:hover': { backgroundColor: '#F57C00' }
-          }}
-        >
-          🔄 Reset
-        </Button>
-        <Button
-          onClick={goToHomepage}
-          variant="contained"
-          size="small"
-          sx={{
-            backgroundColor: '#9C27B0',
-            borderRadius: '16px',
-            minWidth: '80px',
-            fontSize: '12px',
-            padding: '6px 12px',
-            '&:hover': { backgroundColor: '#7B1FA2' }
-          }}
-        >
-          🏠 Home
-        </Button>
-        
-        {(completedTasks.onion && completedTasks.egg && completedTasks.salt) && (
-          <Button
-            onClick={continueToNextLevel}
-            disabled={progressSaving}
-            variant="contained"
-            size="small"
-            sx={{
-              backgroundColor: '#4CAF50',
-              borderRadius: '16px',
-              minWidth: '100px',
-              fontSize: '12px',
-              padding: '6px 12px',
-              '&:hover': { backgroundColor: '#45a049' },
-              animation: 'pulse 2s infinite'
-            }}
-          >
-            {progressSaving ? 'Saving...' : '🚀 Next'}
-          </Button>
+        {/* Simple Confetti Animation */}
+        {showConfetti && (
+          <Box sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            zIndex: 1500
+          }}>
+            {[...Array(30)].map((_, i) => (
+              <Box
+                key={i}
+                sx={{
+                  position: 'absolute',
+                  top: '-10px',
+                  left: `${Math.random() * 100}%`,
+                  width: `${Math.random() * 6 + 3}px`,
+                  height: `${Math.random() * 6 + 3}px`,
+                  backgroundColor: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FF9800', '#4CAF50'][Math.floor(Math.random() * 8)],
+                  borderRadius: Math.random() > 0.5 ? '50%' : '0%',
+                  animation: `simpleConfettiFall ${Math.random() * 2 + 2}s linear infinite`,
+                  animationDelay: `${Math.random() * 2}s`,
+                  transform: `rotate(${Math.random() * 360}deg)`,
+                  opacity: Math.random() * 0.8 + 0.2
+                }}
+              />
+            ))}
+          </Box>
         )}
-      </Box>
 
-      {/* Confetti Animation */}
-      {showConfetti && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 1500 }}>
-          {[...Array(30)].map((_, i) => (
-            <div
-              key={i}
-              style={{
-                position: 'absolute',
-                top: '-10px',
-                left: `${Math.random() * 100}%`,
-                width: `${Math.random() * 6 + 3}px`,
-                height: `${Math.random() * 6 + 3}px`,
-                backgroundColor: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FF9800', '#4CAF50'][Math.floor(Math.random() * 8)],
-                borderRadius: Math.random() > 0.5 ? '50%' : '0%',
-                animation: `confettiFall ${Math.random() * 2 + 2}s linear infinite`,
-                animationDelay: `${Math.random() * 2}s`,
-                transform: `rotate(${Math.random() * 360}deg)`,
-                opacity: Math.random() * 0.8 + 0.2
-              }}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Success Modal - Updated to match Level 1 and Level 3 style */}
-      {showCompletion && (
+        {/* Success Dialog - Updated to match Level 1 style */}
         <Dialog
           open={showCompletion}
           fullScreen
           PaperProps={{
-            sx: {
+            sx: { 
               background: 'linear-gradient(135deg, rgba(255, 202, 58, 0.95) 0%, rgba(230, 184, 0, 0.95) 100%)',
               display: 'flex',
               alignItems: 'center',
@@ -1225,66 +1224,46 @@ export default function CookingLevel2() {
             zIndex: 1000,
             overflow: 'hidden'
           }}>
-            {Array.from({ length: 50 }).map((_, i) => {
-              const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FF9800', '#4CAF50'];
-              const randomColor = colors[Math.floor(Math.random() * colors.length)];
-              const randomWidth = Math.random() * 12 + 6;
-              const randomHeight = Math.random() * 12 + 6;
-              const randomRotation = Math.random() * 360;
-              const randomDrift = (Math.random() - 0.5) * 2;
-              
-              return (
-                <Box
-                  key={i}
-                  sx={{
-                    position: 'absolute',
-                    left: `${Math.random() * 100}%`,
-                    top: `${-10}%`,
-                    width: `${randomWidth}px`,
-                    height: `${randomHeight}px`,
-                    backgroundColor: randomColor,
-                    transform: `rotate(${randomRotation}deg)`,
-                    boxShadow: `0 0 10px ${randomColor}`,
-                    animation: `confettiFall 4s linear infinite`,
-                    animationDelay: `${Math.random() * 3}s`,
-                    '@keyframes confettiFall': {
-                      '0%': {
-                        transform: `translateY(-100vh) rotate(${randomRotation}deg) scale(0.8)`,
-                        opacity: 1
-                      },
-                      '10%': {
-                        opacity: 1,
-                        transform: `translateY(-90vh) rotate(${randomRotation + 36}deg) scale(1)`
-                      },
-                      '90%': {
-                        opacity: 0.8,
-                        transform: `translateY(90vh) translateX(${randomDrift * 60}px) rotate(${randomRotation + 324}deg) scale(0.6)`
-                      },
-                      '100%': {
-                        transform: `translateY(100vh) translateX(${randomDrift * 70}px) rotate(${randomRotation + 360}deg) scale(0)`,
-                        opacity: 0
-                      }
-                    }
-                  }}
-                />
-              );
-            })}
+            {confettiPieces.map(piece => (
+              <Box
+                key={piece.id}
+                sx={{
+                  position: 'absolute',
+                  left: `${piece.x}%`,
+                  top: `${piece.y}%`,
+                  width: `${piece.width}px`,
+                  height: `${piece.height}px`,
+                  backgroundColor: piece.color,
+                  transform: `rotate(${piece.rotation}deg)`,
+                  boxShadow: `0 0 10px ${piece.color}`,
+                  animation: `confettiFall 4s linear infinite`,
+                  animationDelay: `${Math.random() * 3}s`,
+                  '--drift': `${piece.drift * 60}px`,
+                  '--drift2': `${piece.drift * 70}px`,
+                }}
+              />
+            ))}
           </Box>
           
           <Box sx={{
             textAlign: 'center',
             color: 'white',
-            position: 'relative',
             zIndex: 1001,
-            padding: '20px'
+            px: 3
           }}>
-            {/* Trophy Icon */}
-            <EmojiEventsIcon sx={{
-              fontSize: 150,
-              color: 'white',
-              mb: 4,
-              filter: 'drop-shadow(3px 3px 6px rgba(0,0,0,0.5))'
-            }} />
+            {/* Trophy Icon with Baconardo */}
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              mb: 4 
+            }}>
+              <EmojiEventsIcon sx={{ 
+                fontSize: 150,
+                color: 'white',
+                mr: 3
+              }} />
+            </Box>
             
             {/* Main Title */}
             <Typography variant="h1" sx={{
@@ -1297,17 +1276,17 @@ export default function CookingLevel2() {
             }}>
               Masterful Preparation!
             </Typography>
-           
+            
             {/* Star Rating */}
             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
               {[...Array(3)].map((_, i) => {
                 const isActive = i < getStarRating();
                 const shouldAnimate = i < starAnimationStage;
-               
+                
                 return (
-                  <StarIcon
-                    key={i}
-                    sx={{
+                  <StarIcon 
+                    key={i} 
+                    sx={{ 
                       color: isActive ? 'white' : 'rgba(255,255,255,0.3)',
                       fontSize: 80,
                       mx: 1,
@@ -1329,7 +1308,7 @@ export default function CookingLevel2() {
                           opacity: 1
                         }
                       }
-                    }}
+                    }} 
                   />
                 );
               })}
@@ -1342,11 +1321,12 @@ export default function CookingLevel2() {
               lineHeight: 1.6,
               mb: 6,
               maxWidth: '800px',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+              textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+              fontSize: { xs: '1rem', md: '1.2rem' }
             }}>
               Perfect chopping, cracking, and seasoning! All ingredients are expertly prepared and ready for cooking!
             </Typography>
-           
+            
             {/* Progress Saving Indicator */}
             {progressSaving && (
               <Box sx={{
@@ -1362,7 +1342,7 @@ export default function CookingLevel2() {
                 </Typography>
               </Box>
             )}
-           
+            
             {/* Progress Saved Indicator */}
             {progressSaved && (
               <Box sx={{
@@ -1378,16 +1358,24 @@ export default function CookingLevel2() {
                 </Typography>
               </Box>
             )}
-           
-            {/* Action Buttons */}
-            <Box sx={{ display: 'flex', gap: 3, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Button
+            
+            {/* Action Buttons - All in one row */}
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 3,
+              flexWrap: 'wrap',
+              width: '100%'
+            }}>
+              <Button 
                 onClick={() => {
                   setShowCompletion(false);
                   resetGame();
-                }}
+                }} 
                 variant="outlined"
-                sx={{
+                sx={{ 
                   borderColor: 'white',
                   color: 'white',
                   px: 4,
@@ -1398,6 +1386,7 @@ export default function CookingLevel2() {
                   fontSize: '1.2rem',
                   borderWidth: '2px',
                   textTransform: 'none',
+                  minWidth: '200px',
                   '&:hover': {
                     borderColor: 'white',
                     backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -1407,33 +1396,11 @@ export default function CookingLevel2() {
               >
                 Prepare Again
               </Button>
-              <Button
+              
+              <Button 
                 variant="contained"
-                onClick={continueToNextLevel}
-                disabled={progressSaving}
-                sx={{
-                  background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
-                  color: 'white',
-                  px: 6,
-                  py: 2,
-                  borderRadius: '25px',
-                  fontFamily: 'Poppins, sans-serif',
-                  fontWeight: '700',
-                  fontSize: '1.2rem',
-                  textTransform: 'none',
-                  boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
-                    transform: 'translateY(-2px)'
-                  }
-                }}
-              >
-                {progressSaving ? 'Saving...' : 'Next Level'}
-              </Button>
-              <Button
-                variant="contained"
-                onClick={goToHomepage}
-                sx={{
+                onClick={handleGoHome}
+                sx={{ 
                   background: 'linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%)',
                   color: 'white',
                   px: 4,
@@ -1444,6 +1411,7 @@ export default function CookingLevel2() {
                   fontSize: '1.2rem',
                   textTransform: 'none',
                   boxShadow: '0 10px 25px rgba(76, 175, 80, 0.5)',
+                  minWidth: '200px',
                   '&:hover': {
                     background: 'linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%)',
                     transform: 'translateY(-2px)'
@@ -1452,13 +1420,38 @@ export default function CookingLevel2() {
               >
                 Back to Home
               </Button>
+              
+              <Button 
+                variant="contained"
+                onClick={continueToNextLevel}
+                disabled={progressSaving}
+                sx={{ 
+                  background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+                  color: 'white',
+                  px: 4,
+                  py: 2,
+                  borderRadius: '25px',
+                  fontFamily: 'Poppins, sans-serif',
+                  fontWeight: '700',
+                  fontSize: '1.2rem',
+                  textTransform: 'none',
+                  boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
+                  minWidth: '200px',
+                  '&:hover': { 
+                    background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
+                    transform: 'translateY(-2px)'
+                  }
+                }}
+              >
+                {progressSaving ? 'Saving...' : 'Continue'}
+              </Button>
             </Box>
           </Box>
         </Dialog>
-      )}
+      </Box>
 
       <style>{`
-        @keyframes confettiFall {
+        @keyframes simpleConfettiFall {
           0% {
             transform: translateY(-10px) rotate(0deg);
             opacity: 1;
@@ -1467,11 +1460,6 @@ export default function CookingLevel2() {
             transform: translateY(100vh) rotate(720deg);
             opacity: 0;
           }
-        }
-        @keyframes pulse {
-          0% { transform: scale(1); }
-          50% { transform: scale(1.1); }
-          100% { transform: scale(1); }
         }
         @keyframes pieceAppear {
           0% {
@@ -1487,56 +1475,10 @@ export default function CookingLevel2() {
             opacity: 1;
           }
         }
-        @keyframes baconardoIdle {
-          0%, 100% { transform: translateY(0) scale(1); }
-          25% { transform: translateY(-4px) scale(1.02); }
-          50% { transform: translateY(-2px) scale(1.01); }
-          75% { transform: translateY(-3px) scale(1.015); }
-        }
-        @keyframes baconardoNod {
-          0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
-          25% { transform: translateY(5px) rotate(2deg) scale(1.05); }
-          50% { transform: translateY(8px) rotate(4deg) scale(1.08); }
-          75% { transform: translateY(5px) rotate(2deg) scale(1.05); }
-        }
-        @keyframes baconardoCelebrate {
-          0%, 100% { transform: translateY(0) scale(1) rotate(0deg); }
-          25% { transform: translateY(-15px) scale(1.2) rotate(-10deg); }
-          50% { transform: translateY(-20px) scale(1.25) rotate(0deg); }
-          75% { transform: translateY(-15px) scale(1.2) rotate(10deg); }
-        }
         @keyframes starPop {
           0% { transform: scale(0); opacity: 0; }
           50% { transform: scale(1.5); opacity: 1; }
           100% { transform: scale(1); opacity: 1; }
-        }
-        
-        /* Media Queries for responsiveness */
-        @media (max-width: 768px) {
-          .responsive-text {
-            font-size: 14px !important;
-          }
-          .responsive-heading {
-            font-size: 20px !important;
-          }
-          .responsive-button {
-            min-width: 70px !important;
-            font-size: 11px !important;
-            padding: 4px 8px !important;
-          }
-        }
-        
-        @media (max-width: 480px) {
-          .responsive-text {
-            font-size: 12px !important;
-          }
-          .responsive-heading {
-            font-size: 18px !important;
-          }
-          .responsive-button {
-            min-width: 60px !important;
-            font-size: 10px !important;
-          }
         }
       `}</style>
     </div>

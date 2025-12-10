@@ -5,16 +5,12 @@ import {
   Typography, 
   Container, 
   Button, 
-  Card,
   Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Stack,
+  LinearProgress,
   CircularProgress,
-  Chip,
-  Switch,
-  FormControlLabel
+  IconButton,
+  Paper
 } from '@mui/material';
 import Navbar from '../Navbar';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -23,12 +19,12 @@ import StarIcon from '@mui/icons-material/Star';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 
-// Import kitchen background
+// Import images
 import kitchenBg from "../../assets/sortingLevel1/kitchen.jpg";
-// Import Baconardo
-import baconardoImg from "../../assets/cookingLevel3/Baconardo.png";
+// Import Baconardo images
+import baconardoImg from "../../assets/cookingLevel1/Baconardo.png"; 
 
-// Import ingredient images
+// Import cooking ingredient images
 import eggImg from "../../assets/cookingLevel1/egg.png";
 import oilImg from "../../assets/cookingLevel1/oil.png";
 import saltImg from "../../assets/cookingLevel1/salt.png";
@@ -37,144 +33,163 @@ import milkImg from "../../assets/cookingLevel1/milk.png";
 import breadImg from "../../assets/cookingLevel1/bread.png";
 import cheeseImg from "../../assets/cookingLevel1/cheese.png";
 
-// Import services for progress tracking
-import { 
-  getStudentLessonProgress, 
-  saveStudentLessonProgress,
-  updateModuleProgress
-} from '../../services/progressService';
+// Import basket image
+import basketImg from "../../assets/hygienelevel4/showerbasket.png";
+
+// Import services
+import { saveStudentLessonProgress } from '../../services/progressService';
 
 export default function FriedEggLevel1() {
   const navigate = useNavigate();
   const { lessonId } = useParams();
 
   const [collectedIngredients, setCollectedIngredients] = useState([]);
-  const [showCelebration, setShowCelebration] = useState(false);
-  const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
-  const [showCorrectAnimation, setShowCorrectAnimation] = useState(false);
-  const [confettiPieces, setConfettiPieces] = useState([]);
-  const [draggedItem, setDraggedItem] = useState(null);
-  const [wrongIngredientAlert, setWrongIngredientAlert] = useState(false);
-  const [hoveredIngredient, setHoveredIngredient] = useState(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [score, setScore] = useState(0);
+  const [gameCompleted, setGameCompleted] = useState(false);
   const [progressSaving, setProgressSaving] = useState(false);
   const [progressSaved, setProgressSaved] = useState(false);
-  const [baconardoMessage, setBaconardoMessage] = useState('Welcome to Fried Egg Basics! I\'m Chef Baconardo! 🥓');
-  const [baconardoAnimation, setBaconardoAnimation] = useState('idle');
-  const [showIntro, setShowIntro] = useState(true);
+  const [showStartScreen, setShowStartScreen] = useState(true);
   const [starAnimationStage, setStarAnimationStage] = useState(0);
+  const [confettiPieces, setConfettiPieces] = useState([]);
+  const [animatingItems, setAnimatingItems] = useState([]);
+  const [draggedItem, setDraggedItem] = useState(null);
+  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [characterVisible, setCharacterVisible] = useState(true);
+  const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
+  const [hoveredIngredient, setHoveredIngredient] = useState(null);
 
+  // Updated ingredient positions with better spacing and smaller sizes
   const correctIngredients = [
-    { id: 1, name: "EGG", image: eggImg, description: "Fresh egg for frying", isCorrect: true },
-    { id: 2, name: "OIL", image: oilImg, description: "Oil to prevent sticking", isCorrect: true },
-    { id: 3, name: "SALT", image: saltImg, description: "Salt for seasoning", isCorrect: true },
-    { id: 4, name: "BUTTER", image: butterImg, description: "Butter for extra flavor", isCorrect: true }
+    { id: 'egg', name: 'Egg', image: eggImg, correct: true, size: 'medium', position: { left: '5%', top: '15%' } },
+    { id: 'oil', name: 'Oil', image: oilImg, correct: true, size: 'small', position: { left: '25%', top: '35%' } },
+    { id: 'salt', name: 'Salt', image: saltImg, correct: true, size: 'xsmall', position: { right: '15%', top: '20%' } },
+    { id: 'butter', name: 'Butter', image: butterImg, correct: true, size: 'small', position: { left: '30%', top: '65%' } }
   ];
 
   const wrongIngredients = [
-    { id: 5, name: "MILK", image: milkImg, isCorrect: false, hint: "Milk is not needed for a fried egg" },
-    { id: 6, name: "BREAD", image: breadImg, isCorrect: false, hint: "Bread is not an ingredient for frying eggs" },
-    { id: 7, name: "CHEESE", image: cheeseImg, isCorrect: false, hint: "Cheese is not required for a basic fried egg" }
+    { id: 'milk', name: 'Milk', image: milkImg, correct: false, size: 'small', position: { right: '25%', top: '60%' } },
+    { id: 'cheese', name: 'Cheese', image: cheeseImg, correct: false, size: 'small', position: { right: '5%', top: '45%' } }
   ];
 
   const allIngredients = [...correctIngredients, ...wrongIngredients];
-  const progressPercentage = (collectedIngredients.length / correctIngredients.length) * 100;
-  const allCollected = collectedIngredients.length === correctIngredients.length;
+  const availableIngredients = allIngredients.filter(ing => 
+    !collectedIngredients.some(collected => collected.id === ing.id)
+  );
 
-  // Get star rating based on performance
-  const getStarRating = () => {
-    // Always return 3 stars for perfect completion
-    return 3;
-  };
-
-  // Handle continue to next level
-  const handleContinue = () => {
-    if (progressSaving) return;
-    continueToNextLevel();
-  };
-
-  // Animate stars when celebration shows
-  useEffect(() => {
-    if (showCelebration) {
-      let currentStage = 0;
-      const interval = setInterval(() => {
-        currentStage++;
-        setStarAnimationStage(currentStage);
-        if (currentStage >= 3) {
-          clearInterval(interval);
-        }
-      }, 300);
-      
-      return () => clearInterval(interval);
-    }
-  }, [showCelebration]);
-
-  // Positions for ingredients inside the pan
-  const getPanIngredientPosition = (index, total) => {
-    const positions = [
-      { top: '30%', left: '30%', rotation: -5 },  // Egg - center left
-      { top: '25%', right: '30%', rotation: 5 },   // Oil - center right  
-      { top: '60%', left: '40%', rotation: -3 },   // Salt - bottom left
-      { top: '55%', right: '40%', rotation: 3 }    // Butter - bottom right
-    ];
-    return positions[index] || { top: '50%', left: '50%', rotation: 0 };
-  };
-
-  // Get student ID from localStorage
   const getStudentId = () => {
-    const studentId = localStorage.getItem('studentId');
-    const userRole = localStorage.getItem('userRole');
-    
-    if (userRole !== 'STUDENT') {
-      console.error('User is not a student:', userRole);
-      return null;
-    }
-    
-    if (!studentId || studentId === 'null') {
-      console.error('No student ID found in localStorage');
-      return null;
-    }
-    
-    const parsedId = parseInt(studentId, 10);
-    if (isNaN(parsedId)) {
-      console.error('Invalid student ID format:', studentId);
-      return null;
-    }
-    
-    return parsedId;
-  };
-
-  // Save progress to backend
-  const saveProgress = async () => {
-    if (progressSaving || progressSaved) return;
-
     try {
-      setProgressSaving(true);
-      const studentId = getStudentId();
+      const studentId = localStorage.getItem('studentId');
+      const userType = localStorage.getItem('userType');
       
-      if (!studentId || !lessonId) {
-        console.error('Cannot save progress - missing data:', { studentId, lessonId });
-        return;
+      console.log('Retrieving student ID:', { studentId, userType });
+      
+      if (!studentId || studentId === 'null' || studentId === 'undefined') {
+        console.warn('No student ID found in localStorage');
+        return null;
       }
       
-      const finalScore = 4; // 4 correct ingredients
+      const parsedId = parseInt(studentId, 10);
+      if (isNaN(parsedId)) {
+        console.warn('Invalid student ID format:', studentId);
+        return null;
+      }
       
-      const progressData = {
-        studentId: studentId,
-        lessonId: parseInt(lessonId, 10),
-        score: finalScore,
-        maxScore: 4,
-        completed: true,
-        starsEarned: 3
-      };
-      
-      await saveStudentLessonProgress(studentId, lessonId, progressData);
-      setProgressSaved(true);
-      
+      console.log('Successfully retrieved student ID:', parsedId);
+      return parsedId;
     } catch (error) {
-      console.error('Error saving progress:', error);
-    } finally {
-      setProgressSaving(false);
+      console.error('Error retrieving student ID:', error);
+      return null;
     }
+  };
+
+  const handleStartGame = () => {
+    setShowStartScreen(false);
+  };
+
+  const handleDragStart = (e, itemType) => {
+    e.dataTransfer.setData('text/plain', itemType);
+    setDraggedItem(itemType);
+    playSound('pickup');
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    
+    const itemType = e.dataTransfer.getData('text/plain');
+    const item = allIngredients.find(ing => ing.id === itemType);
+    
+    if (item) {
+      if (item.correct) {
+        // Get basket position for animation target
+        const basketRect = e.currentTarget.getBoundingClientRect();
+        const basketCenter = {
+          x: basketRect.left + basketRect.width / 2,
+          y: basketRect.top + basketRect.height / 2
+        };
+
+        // Start animation
+        const animatingItem = {
+          ...item,
+          startX: e.clientX,
+          startY: e.clientY,
+          targetX: basketCenter.x,
+          targetY: basketCenter.y,
+          id: `${item.id}-${Date.now()}`
+        };
+        
+        setAnimatingItems(prev => [...prev, animatingItem]);
+        
+        setFeedbackMessage(`Great! You added ${item.name.toLowerCase()} for your fried egg!`);
+        playSound('correct');
+        
+        // Auto-hide feedback message after 3 seconds
+        setTimeout(() => {
+          setFeedbackMessage('');
+        }, 3000);
+        
+        // Remove the item after animation completes
+        setTimeout(() => {
+          setAnimatingItems(prev => prev.filter(i => i.id !== animatingItem.id));
+          setCollectedIngredients(prev => [...prev, item]);
+          
+          // Update score (25 points per correct ingredient)
+          const newScore = score + 25;
+          setScore(newScore);
+          
+          // Check if all correct items are collected
+          const remainingCorrectItems = correctIngredients.filter(correct => 
+            !collectedIngredients.some(collected => collected.id === correct.id) && 
+            correct.id !== item.id
+          );
+          
+          if (remainingCorrectItems.length === 0) {
+            setTimeout(() => {
+              setGameCompleted(true);
+              setShowSuccess(true);
+              setCharacterVisible(false);
+              saveProgress();
+            }, 1500);
+          }
+        }, 600);
+        
+      } else {
+        // Incorrect item
+        setFeedbackMessage(`Oops! ${item.name} isn't needed for making fried eggs. Try again!`);
+        playSound('wrong');
+        
+        // Auto-hide feedback message after 3 seconds
+        setTimeout(() => {
+          setFeedbackMessage('');
+        }, 3000);
+      }
+    }
+    
+    setDraggedItem(null);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
   };
 
   const playSound = (type) => {
@@ -193,7 +208,7 @@ export default function FriedEggLevel1() {
         gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
         oscillator.start();
         oscillator.stop(audioContext.currentTime + 0.3);
-      } else {
+      } else if (type === 'wrong') {
         oscillator.type = 'sawtooth';
         oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
         oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.2);
@@ -201,132 +216,382 @@ export default function FriedEggLevel1() {
         gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
         oscillator.start();
         oscillator.stop(audioContext.currentTime + 0.2);
+      } else if (type === 'pickup') {
+        oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.2);
       }
-    } catch (e) {}
-  };
-
-  const triggerCorrectAnimation = () => {
-    setShowCorrectAnimation(true);
-    const pieces = [];
-    for (let i = 0; i < 50; i++) {
-      pieces.push({
-        id: i,
-        left: Math.random() * 100,
-        animationDelay: Math.random() * 2,
-        backgroundColor: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FF9800', '#4CAF50'][Math.floor(Math.random() * 8)]
-      });
+    } catch (e) {
+      console.log('Audio context not supported:', e);
     }
-    setConfettiPieces(pieces);
-    setTimeout(() => {
-      setShowCorrectAnimation(false);
-      setConfettiPieces([]);
-    }, 2000);
   };
 
-  // Baconardo feedback functions
-  const showBaconardoFeedback = (message, animation = 'idle', duration = 3000) => {
-    setBaconardoMessage(message);
-    setBaconardoAnimation(animation);
-    setTimeout(() => {
-      if (!allCollected && animation !== 'celebrate') {
-        setBaconardoMessage(`Find the remaining ingredients! ${correctIngredients.length - collectedIngredients.length} more to go!`);
-      }
-      setBaconardoAnimation('idle');
-    }, duration);
-  };
+  const saveProgress = async () => {
+    if (progressSaving || progressSaved) {
+      console.log('Progress already saving or saved, skipping');
+      return;
+    }
 
-  const handleDragStart = (e, ingredient) => {
-    setDraggedItem(ingredient);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    if (draggedItem) {
-      if (!draggedItem.isCorrect) {
-        setWrongIngredientAlert(true);
-        playSound('wrong');
-        
-        // Baconardo feedback for wrong ingredient
-        showBaconardoFeedback(`❌ Oops! ${draggedItem.hint}`, 'shake');
-        
-        setTimeout(() => setWrongIngredientAlert(false), 3000);
-        setDraggedItem(null);
+    try {
+      setProgressSaving(true);
+      const studentId = getStudentId();
+      
+      if (!studentId) {
+        console.error('Cannot save progress: No valid student ID found');
+        setProgressSaving(false);
         return;
       }
-      if (collectedIngredients.some(item => item.id === draggedItem.id)) {
-        showBaconardoFeedback('You already added that ingredient! Try a different one!', 'shake');
-        setDraggedItem(null);
+      
+      if (!lessonId) {
+        console.error('Cannot save progress: No lesson ID available');
+        setProgressSaving(false);
         return;
       }
-      setCollectedIngredients(prev => [...prev, draggedItem]);
-      triggerCorrectAnimation();
-      playSound('correct');
-      
-      // Baconardo feedback for correct ingredient
-      showBaconardoFeedback(`✅ Excellent! ${draggedItem.name} is a great choice for fried eggs!`, 'nod');
-      
-      if (collectedIngredients.length + 1 === correctIngredients.length) {
-        setTimeout(() => {
-          setShowCelebration(true);
-          showBaconardoFeedback('🎉 Outstanding! You found all the perfect ingredients for a delicious fried egg!', 'celebrate', 5000);
-          saveProgress();
-        }, 1500);
-      }
-    }
-    setDraggedItem(null);
-  };
 
-  const resetGame = () => {
-    setCollectedIngredients([]);
-    setShowCelebration(false);
-    setShowCorrectAnimation(false);
-    setConfettiPieces([]);
-    setWrongIngredientAlert(false);
-    setProgressSaved(false);
-    setProgressSaving(false);
-    setStarAnimationStage(0);
-    showBaconardoFeedback('Let\'s try again! Find egg, oil, salt, and butter for the perfect fried egg! 🍳', 'idle');
-  };
-
-  // Match Level 3 navigation functions
-  const goToHomepage = () => {
-    if (navigate) {
-      navigate('/homepage');
-    } else {
-      window.location.href = '/homepage';
+      const progressData = {
+        score: 100,
+        maxScore: 100,  
+        completed: true,
+        starsEarned: 3
+      };
+      
+      console.log('Saving progress data:', progressData);
+      
+      await saveStudentLessonProgress(
+        studentId, 
+        parseInt(lessonId, 10), 
+        progressData
+      );
+      
+      console.log('Progress saved successfully');
+      setProgressSaved(true);
+      
+    } catch (error) {
+      console.error('Error saving progress:', error);
+    } finally {
+      setProgressSaving(false);
     }
   };
 
-  const continueToNextLevel = async () => {
+  const getStarRating = () => {
+    if (score >= 90) return 3;
+    if (score >= 70) return 2;
+    if (score >= 50) return 1;
+    return 0;
+  };
+
+  const handleContinue = async () => {
+    console.log('Continue clicked, progress state:', { progressSaved, progressSaving });
+    
     if (!progressSaved && !progressSaving) {
+      console.log('Saving progress before continue...');
       await saveProgress();
+    } else if (progressSaving) {
+      console.log('Progress is currently saving, please wait...');
+      return;
     }
     
+    console.log('Navigating to next level...');
     setTimeout(() => {
-      // Navigate to Level 2 (fried-egg-level2)
       navigate('/lesson/cooking/level-2');
     }, 300);
   };
 
-  // IMPROVED: Higher ingredient positions for better visibility
-  const getIngredientPosition = (index) => {
-    const positions = [
-      { bottom: '22%', left: '8%' },    // Higher up
-      { bottom: '32%', right: '10%' },   // Higher up
-      { bottom: '26%', left: '72%' },    // Higher up
-      { bottom: '38%', right: '58%' },   // Higher up
-      { bottom: '20%', left: '42%' },    // Higher up
-      { bottom: '34%', right: '35%' },   // Higher up
-      { bottom: '24%', left: '86%' }     // Higher up
-    ];
-    return positions[index];
+  const resetGame = () => {
+    setCollectedIngredients([]);
+    setShowSuccess(false);
+    setScore(0);
+    setGameCompleted(false);
+    setProgressSaved(false);
+    setProgressSaving(false);
+    setAnimatingItems([]);
+    setFeedbackMessage('');
+    setCharacterVisible(true);
+    setStarAnimationStage(0);
+    setHoveredIngredient(null);
   };
+
+  const handleGoHome = () => {
+    navigate('/homepage');
+  };
+
+  useEffect(() => {
+    if (showSuccess) {
+      const animateStars = async () => {
+        setStarAnimationStage(0);
+        const totalStars = getStarRating();
+        
+        for (let i = 0; i < totalStars; i++) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+          setStarAnimationStage(i + 1);
+        }
+      };
+      
+      const timer = setTimeout(animateStars, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccess, score]);
+
+  useEffect(() => {
+    if (showSuccess) {
+      const createConfetti = () => {
+        const pieces = [];
+        for (let i = 0; i < 150; i++) {
+          pieces.push({
+            id: i,
+            x: Math.random() * 100,
+            y: -10,
+            rotation: Math.random() * 360,
+            color: [
+              '#FF0080', '#00FFFF', '#FF4500', '#9400D3', '#32CD32', '#FFD700', 
+              '#FF1493', '#00FF7F', '#1E90FF', '#FF6347', '#ADFF2F', '#FF69B4', 
+              '#00CED1', '#FFA500', '#DA70D6'
+            ][Math.floor(Math.random() * 15)],
+            size: Math.random() * 12 + 6,
+            speed: Math.random() * 4 + 2,
+            drift: (Math.random() - 0.5) * 3,
+            width: Math.random() * 8 + 4,
+            height: Math.random() * 12 + 6
+          });
+        }
+        setConfettiPieces(pieces);
+      };
+      
+      const timer = setTimeout(createConfetti, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccess]);
+
+  // Enhanced Character Component with Baconardo
+  const Character = () => {
+    if (!characterVisible) {
+      return null;
+    }
+
+    const getCharacterAnimation = () => {
+      if (feedbackMessage && feedbackMessage.includes('Oops!')) {
+        return 'shake 0.5s ease-in-out';
+      }
+      
+      if (gameCompleted) {
+        return 'celebrate 2s ease-in-out infinite';
+      }
+      
+      return 'float 3s ease-in-out infinite, subtleBlink 4s ease-in-out infinite';
+    };
+
+    const getCharacterMessage = () => {
+      if (feedbackMessage && feedbackMessage.includes('Oops!')) {
+        return 'Oops! Try again! 🐾';
+      }
+      
+      if (gameCompleted) {
+        return 'Perfect! All ingredients collected! 🎉';
+      }
+      
+      return `Find cooking ingredients! ${collectedIngredients.length}/4 collected!`;
+    };
+
+    return (
+      <Box
+        sx={{
+          position: 'fixed',
+          left: 20,
+          bottom: 20,
+          zIndex: 100,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }}
+      >
+        <Box
+          component="img"
+          src={baconardoImg}
+          alt="Baconardo the Cooking Cat"
+          sx={{
+            width: 120,
+            height: 'auto',
+            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+            outline: '4px solid white',
+            borderRadius: '50%',
+            animation: getCharacterAnimation(),
+            '@keyframes float': {
+              '0%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-10px)' },
+              '100%': { transform: 'translateY(0px)' }
+            },
+            '@keyframes celebrate': {
+              '0%': { transform: 'translateY(0px) rotate(0deg)' },
+              '25%': { transform: 'translateY(-15px) rotate(10deg)' },
+              '50%': { transform: 'translateY(-20px) rotate(0deg)' },
+              '75%': { transform: 'translateY(-15px) rotate(-10deg)' },
+              '100%': { transform: 'translateY(0px) rotate(0deg)' }
+            },
+            '@keyframes shake': {
+              '0%': { transform: 'translateX(0px)' },
+              '25%': { transform: 'translateX(-5px)' },
+              '50%': { transform: 'translateX(5px)' },
+              '75%': { transform: 'translateX(-5px)' },
+              '100%': { transform: 'translateX(0px)' }
+            },
+            '@keyframes subtleBlink': {
+              '0%, 90%, 100%': { opacity: 1 },
+              '95%': { opacity: 0.7 }
+            }
+          }}
+        />
+        <Paper
+          sx={{
+            position: 'absolute',
+            top: -80,
+            left: 140,
+            backgroundColor: 'white',
+            color: '#280B60',
+            padding: '12px 16px',
+            borderRadius: '20px',
+            fontSize: '1.1rem',
+            fontFamily: 'Poppins, sans-serif',
+            fontWeight: '700',
+            maxWidth: '180px',
+            boxShadow: '0 6px 16px rgba(0,0,0,0.3)',
+            border: '3px solid #FF9800',
+            animation: 'pulse 2s infinite',
+            '@keyframes pulse': {
+              '0%': { transform: 'scale(1)' },
+              '50%': { transform: 'scale(1.05)' },
+              '100%': { transform: 'scale(1)' }
+            },
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              top: '50%',
+              left: '-12px',
+              marginTop: '-8px',
+              borderWidth: '8px',
+              borderStyle: 'solid',
+              borderColor: 'transparent #FF9800 transparent transparent'
+            }
+          }}
+        >
+          {getCharacterMessage()}
+        </Paper>
+      </Box>
+    );
+  };
+
+  // Start screen with fixed alignment
+  if (showStartScreen) {
+    return (
+      <div style={{
+        minHeight: "100vh",
+        width: "100%",
+        backgroundImage: `url(${kitchenBg})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        display: "flex",
+        flexDirection: "column"
+      }}>
+        <Navbar />
+        <Box sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'linear-gradient(135deg, rgba(255, 202, 58, 0.8) 0%, rgba(255, 152, 0, 0.8) 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          zIndex: 1,
+          padding: 3
+        }}>
+          <Typography variant="h1" sx={{ 
+            color: 'white', 
+            fontWeight: 'bold', 
+            mb: 4,
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: { xs: '2.5rem', md: '4rem' },
+            textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
+            textAlign: 'center',
+            lineHeight: 1.2
+          }}>
+            Find the Right Ingredients
+          </Typography>
+          
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: { xs: 'column', md: 'row' },
+            alignItems: 'center', 
+            justifyContent: 'center',
+            mb: 6,
+            animation: 'float 3s ease-in-out infinite',
+            '@keyframes float': {
+              '0%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-10px)' },
+              '100%': { transform: 'translateY(0px)' }
+            },
+            maxWidth: '800px',
+            textAlign: 'center'
+          }}>
+            <Box
+              component="img"
+              src={baconardoImg}
+              alt="Baconardo"
+              sx={{
+                width: 120,
+                height: 'auto',
+                filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+                outline: '4px solid white',
+                borderRadius: '50%',
+                mr: { xs: 0, md: 4 },
+                mb: { xs: 3, md: 0 }
+              }}
+            />
+            <Typography variant="h4" sx={{ 
+              color: 'rgba(255, 255, 255, 0.95)', 
+              fontFamily: 'Inter, sans-serif',
+              lineHeight: 1.5,
+              textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+              maxWidth: '600px',
+              textAlign: { xs: 'center', md: 'left' }
+            }}>
+              Hi! I'm Baconardo! Let's cook the perfect fried egg with the right ingredients!
+            </Typography>
+          </Box>
+          
+          <Stack direction="row" spacing={3}>
+            <Button 
+              variant="contained"
+              onClick={handleStartGame}
+              sx={{ 
+                background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+                color: 'white',
+                px: 8,
+                py: 2,
+                borderRadius: '25px',
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: '700',
+                fontSize: '1.5rem',
+                textTransform: 'none',
+                boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
+                  transform: 'translateY(-2px)'
+                }
+              }}
+            >
+              Start Cooking!
+            </Button>
+          </Stack>
+        </Box>
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -335,817 +600,486 @@ export default function FriedEggLevel1() {
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundImage: kitchenBg ? `url(${kitchenBg})` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      backgroundImage: `url(${kitchenBg})`,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundAttachment: 'fixed',
+      overflow: 'hidden'
     }}>
-      <Box sx={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.3)",
-        zIndex: 1
-      }} />
+      {/* Animation Styles */}
+      <style>
+        {`
+          @keyframes flyToBasket {
+            0% {
+              transform: translate(0, 0) scale(1);
+              opacity: 1;
+            }
+            70% {
+              transform: translate(var(--target-x), var(--target-y)) scale(0.8);
+              opacity: 0.8;
+            }
+            100% {
+              transform: translate(var(--target-x), var(--target-y)) scale(0);
+              opacity: 0;
+            }
+          }
+
+          .animating-item {
+            position: fixed !important;
+            pointer-events: none;
+            z-index: 1000;
+            animation: flyToBasket 0.6s ease-in forwards;
+          }
+        `}
+      </style>
       
-      <Box sx={{ 
-        position: 'relative', 
-        zIndex: 2,
+      <Container maxWidth="xl" sx={{ 
+        py: 1,
         height: '100vh',
         display: 'flex',
         flexDirection: 'column'
       }}>
-        <Navbar />
-        
-        {/* Introduction Dialog with Chef Baconardo */}
-        <Dialog 
-          open={showIntro} 
-          maxWidth="md"
-          fullWidth
-          PaperProps={{
-            style: {
-              borderRadius: '20px',
-              background: 'linear-gradient(135deg, #FFF8E1, #FFECB3)',
-              border: '4px solid #FF9800'
-            }
-          }}
-        >
-          <DialogTitle style={{ 
-            textAlign: 'center', 
-            background: 'linear-gradient(45deg, #FF9800, #F57C00)',
-            color: 'white',
-            borderRadius: '15px 15px 0 0',
-            padding: '20px'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px' }}>
-              <div style={{ fontSize: '40px' }}>👨‍🍳</div>
-              <h2 style={{ margin: 0, fontSize: '28px' }}>Welcome to Cooking Level 1!</h2>
-              <div style={{ fontSize: '40px' }}>🍳</div>
-            </div>
-          </DialogTitle>
-          
-          <DialogContent style={{ padding: '30px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '20px' }}>
-              <img 
-                src={baconardoImg} 
-                alt="Chef Baconardo" 
-                style={{ 
-                  width: '120px', 
-                  height: '120px', 
-                  objectFit: 'contain',
-                  borderRadius: '50%',
-                  border: '3px solid #FF9800'
-                }} 
-              />
-              <div>
-                <h3 style={{ color: '#E65100', marginBottom: '10px', fontSize: '24px' }}>
-                  Fried Egg Time! 🥓
-                </h3>
-                <p style={{ fontSize: '16px', lineHeight: '1.6', color: '#5D4037' }}>
-                  "Hello! I'm Chef Baconardo! Let's cook the perfect fried egg together! 
-                  I'll guide you through selecting the right ingredients. Look for egg, oil, salt, and butter!"
-                </p>
-              </div>
-            </div>
-
-            <div style={{ 
-              background: 'rgba(76, 175, 80, 0.1)', 
-              padding: '15px', 
-              borderRadius: '12px',
-              border: '2px solid rgba(76, 175, 80, 0.3)',
-              textAlign: 'center',
-              marginTop: '20px'
-            }}>
-              <p style={{ margin: 0, color: '#2E7D32', fontWeight: 'bold', fontSize: '16px' }}>
-                👉 I'll guide you through each step from the top-right corner!
-              </p>
-            </div>
-          </DialogContent>
-          
-          <DialogActions style={{ justifyContent: 'center', padding: '20px' }}>
-            <Button
-              onClick={() => setShowIntro(false)}
-              variant="contained"
-              size="large"
-              sx={{
-                backgroundColor: '#4CAF50',
-                borderRadius: '25px',
-                padding: '12px 40px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                '&:hover': {
-                  backgroundColor: '#45a049',
-                  transform: 'scale(1.05)'
-                },
-                transition: 'all 0.3s ease'
-              }}
-            >
-              🚀 Start Cooking!
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Sound Toggle Button */}
-        <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 100 }}>
-          <button
-            onClick={() => setAutoPlayEnabled(!autoPlayEnabled)}
-            style={{
-              backgroundColor: autoPlayEnabled ? '#4CAF50' : '#FF5722',
-              color: 'white',
-              border: 'none',
-              borderRadius: '50%',
-              width: '50px',
-              height: '50px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-              fontSize: '20px',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-            onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            title={autoPlayEnabled ? 'Mute sounds' : 'Unmute sounds'}
-          >
-            {autoPlayEnabled ? '🔊' : '🔇'}
-          </button>
-        </div>
-
-        <Box sx={{
-          flex: 1,
-          overflowY: 'auto',
-          overflowX: 'hidden',
-          padding: '10px 15px',
-          paddingTop: '10px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center'
+        {/* Enhanced Progress Bar */}
+        <Box sx={{ 
+          maxWidth: '800px', 
+          mx: 'auto',
+          position: 'relative',
+          mb: 2,
+          zIndex: 1010,
+          mt: 2
         }}>
-          <div style={{
-            textAlign: 'center',
-            marginBottom: '12px',
-            width: '100%',
-            maxWidth: '1200px'
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 1 
           }}>
-      
-            {/* IMPROVED: Progress bar with better z-index handling */}
-            <div style={{ 
-              maxWidth: '500px', 
-              margin: '0 auto',
-              position: 'relative',
-              zIndex: 5 // Lower z-index to stay behind interactive elements
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
-                <h2 style={{ 
-                  fontSize: '24px', 
-                  fontWeight: 'bold', 
-                  color: 'white', 
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)' 
-                }}>
-                  {collectedIngredients.length} / {correctIngredients.length}
-                </h2>
-              </div>
-              
-              <div style={{ 
-                position: 'relative', 
-                width: '100%', 
-                height: '50px', 
-                background: 'linear-gradient(to right, #2196F3, #1976D2)', 
-                borderRadius: '25px', 
-                border: '3px solid rgba(255, 255, 255, 0.3)', 
-                overflow: 'hidden', 
-                boxShadow: '0 6px 20px rgba(33, 150, 243, 0.4)',
-                zIndex: 5
-              }}>
-                <div style={{ 
-                  position: 'absolute', 
-                  right: '-35px', 
-                  top: '50%', 
-                  transform: 'translateY(-50%)', 
-                  width: '50px', 
-                  height: '10px', 
-                  backgroundColor: 'rgba(255, 255, 255, 0.3)', 
-                  borderRadius: '5px', 
-                  zIndex: 2 
-                }} />
-                
-                <div style={{ 
-                  width: `${progressPercentage}%`, 
-                  height: '100%', 
-                  background: allCollected 
-                    ? 'linear-gradient(to right, #FFD700, #FFA500, #FF8C00)' 
-                    : 'linear-gradient(to right, #4CAF50, #66BB6A, #81C784)', 
-                  borderRadius: '21px', 
-                  transition: 'width 0.6s, background 0.3s', 
-                  position: 'relative', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'space-around', 
-                  padding: '0 10px' 
-                }}>
-                  <div style={{ 
-                    position: 'absolute', 
-                    top: 0, 
-                    left: '-100%', 
-                    width: '100%', 
-                    height: '100%', 
-                    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)', 
-                    animation: 'shimmer 2s infinite' 
-                  }} />
-                  
-                  {collectedIngredients.map((_, index) => (
-                    <span key={index} style={{ fontSize: '24px', zIndex: 2 }}>⭐</span>
-                  ))}
-                </div>
-                
-                <div style={{ 
-                  position: 'absolute', 
-                  top: '50%', 
-                  left: '50%', 
-                  transform: 'translate(-50%, -50%)', 
-                  fontSize: '28px', 
-                  zIndex: 3, 
-                  filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.6))',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '2px'
-                }}>
-                  <div>
-                    {allCollected ? '🎉' : progressPercentage > 75 ? '' : progressPercentage > 50 ? '🥚' : progressPercentage > 25 ? '🫒' : '👨‍🍳'}
-                  </div>
-                  <div style={{
-                    fontSize: '9px',
-                    fontWeight: 'bold',
-                    color: 'white',
-                    textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                    letterSpacing: '0.5px'
-                  }}>
-                    {allCollected ? 'DONE!' : 'PROGRESS'}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ 
-            position: 'relative', 
-            width: '100%', 
-            maxWidth: '1400px', 
-            height: '700px', 
-            margin: '0 auto 100px'
-          }}>
-            {/* Chef Baconardo Character with Speech Bubble - Upper Right, Larger */}
-            <div style={{
-              position: 'absolute',
-              right: '25px',
-              top: '10px',
-              zIndex: 10,
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'flex-start',
-              gap: '15px',
-              animation: baconardoAnimation === 'idle' ? 'baconardoIdle 3s ease-in-out infinite' : 
-                         baconardoAnimation === 'nod' ? 'baconardoNod 0.5s ease-out' :
-                         baconardoAnimation === 'shake' ? 'baconardoShake 0.5s ease-out' :
-                         'baconardoCelebrate 1s ease-out'
-            }}>
-              {/* Speech Bubble - Softer, more transparent */}
-              <div style={{
-                position: 'relative',
-                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(248, 250, 252, 0.8))',
-                backdropFilter: 'blur(12px)',
-                borderRadius: '20px',
-                padding: '14px 20px',
-                maxWidth: '240px',
-                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15), 0 2px 6px rgba(0, 0, 0, 0.1)',
-                border: '1.5px solid rgba(255, 255, 255, 0.7)',
-                animation: 'speechBubblePop 0.3s ease-out'
-              }}>
-                <p style={{
-                  margin: 0,
-                  fontSize: '13.5px',
-                  fontWeight: '600',
-                  color: '#2d3748',
-                  lineHeight: '1.5',
-                  textAlign: 'left',
-                  textShadow: '0 1px 2px rgba(255, 255, 255, 0.8)'
-                }}>
-                  {baconardoMessage}
-                </p>
-                {/* Speech Bubble Triangle - Softer style */}
-                <div style={{
-                  position: 'absolute',
-                  top: '24px',
-                  right: '-9px',
-                  width: 0,
-                  height: 0,
-                  borderTop: '9px solid transparent',
-                  borderBottom: '9px solid transparent',
-                  borderLeft: '10px solid rgba(255, 255, 255, 0.85)',
-                  filter: 'drop-shadow(2px 0 2px rgba(0, 0, 0, 0.1))'
-                }} />
-              </div>
-              
-              {/* Chef Baconardo Character Image */}
-              <img 
-                src={baconardoImg}
-                alt="Chef Baconardo"
-                style={{
-                  width: '110px',
-                  height: '110px',
-                  objectFit: 'contain',
-                  filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3))',
-                  cursor: 'pointer',
-                  transition: 'transform 0.3s ease',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.15)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                title="Chef Baconardo - Your cooking instructor!"
-              />
-            </div>
-
-            {/* Subtle inventory area indicator */}
-            <div style={{
-              position: 'absolute',
-              bottom: '0',
-              left: '0',
-              right: '0',
-              height: '4px',
-              background: 'linear-gradient(90deg, rgba(76, 175, 80, 0.6), rgba(33, 150, 243, 0.6), rgba(156, 39, 176, 0.6))',
-              borderRadius: '2px',
-              boxShadow: '0 0 20px rgba(76, 175, 80, 0.4), 0 0 40px rgba(33, 150, 243, 0.3)',
-              animation: 'glow 3s ease-in-out infinite'
-            }} />
-            <div style={{
-              position: 'absolute',
-              bottom: '10px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              fontSize: '13px',
-              color: 'rgba(255, 255, 255, 0.7)',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-              fontWeight: '600',
-              letterSpacing: '1px'
-            }}>
-              INGREDIENT INVENTORY
-            </div>
-
-            {/* IMPROVED: Frying pan with actual ingredient icons */}
-            <div
-              data-pan="true"
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              style={{
-                position: 'absolute',
-                left: '50%',
-                top: '45%',
-                transform: 'translate(-50%, -50%)',
-                width: '280px',
-                height: '280px',
-                background: allCollected 
-                  ? 'radial-gradient(circle, #FFD700, #FFA500)' 
-                  : 'radial-gradient(circle, #3F3F3F, #1A1A1A)',
-                borderRadius: '50%',
-                border: '14px solid #444',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: allCollected 
-                  ? 'inset 0 12px 24px rgba(0,0,0,0.4), 0 0 60px rgba(255, 215, 0, 0.8)' 
-                  : 'inset 0 12px 24px rgba(0,0,0,0.4), 0 0 40px rgba(76, 175, 80, 0.6), 0 0 80px rgba(76, 175, 80, 0.4)',
-                zIndex: 20, // Higher z-index to stay above progress bar
-                transition: 'all 0.3s',
-                animation: allCollected ? 'none' : 'panPulse 2s ease-in-out infinite',
-                overflow: 'hidden'
-              }}
-            >
-              {/* Display collected ingredients inside the pan */}
-              {collectedIngredients.map((ingredient, index) => {
-                const position = getPanIngredientPosition(index, collectedIngredients.length);
-                return (
-                  <div
-                    key={ingredient.id}
-                    style={{
-                      position: 'absolute',
-                      ...position,
-                      width: '60px',
-                      height: '60px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      animation: 'ingredientPopIn 0.5s ease-out forwards',
-                      transform: `rotate(${position.rotation}deg)`,
-                      zIndex: 21
-                    }}
-                  >
-                    <img 
-                      src={ingredient.image}
-                      alt={ingredient.name}
-                      style={{ 
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'contain',
-                        filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.5))',
-                      }}
-                    />
-                  </div>
-                );
-              })}
-
-              {/* Default pan content when no ingredients */}
-              {collectedIngredients.length === 0 && (
-                <>
-                  <div style={{ 
-                    fontSize: '130px', 
-                    marginBottom: '12px', 
-                    filter: 'drop-shadow(3px 3px 8px rgba(0,0,0,0.6))',
-                    zIndex: 21
-                  }}>
-                  
-                  </div>
-                  <div style={{ 
-                    color: 'white', 
-                    fontSize: '20px', 
-                    fontWeight: 'bold', 
-                    textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
-                    zIndex: 21
-                  }}>
-                  Drop here
-                  </div>
-                </>
-              )}
-
-              {/* Success message when all collected */}
-              {allCollected && (
-                <div style={{ 
-                  position: 'absolute',
-                  bottom: '20px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
-                  color: 'white', 
-                  fontSize: '20px', 
-                  fontWeight: 'bold', 
-                  textShadow: '2px 2px 6px rgba(0,0,0,0.9)',
-                  zIndex: 21,
-                  animation: 'pulse 2s infinite'
-                }}>
-                  ✨ Perfect! ✨
-                </div>
-              )}
-            </div>
-
-            {/* IMPROVED: Ingredients with higher z-index and better positioning */}
-            {allIngredients.filter(ing => !collectedIngredients.some(c => c.id === ing.id)).map((ingredient, index) => {
-              const position = getIngredientPosition(index);
-              const isHovered = hoveredIngredient === ingredient.id;
-              
+            {[...Array(4)].map((_, index) => {
+              const isFilled = index < collectedIngredients.length;
               return (
-                <div
-                  key={ingredient.id}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, ingredient)}
-                  onMouseEnter={() => setHoveredIngredient(ingredient.id)}
-                  onMouseLeave={() => setHoveredIngredient(null)}
-                  onClick={() => {
-                    if (!ingredient.isCorrect) {
-                      setWrongIngredientAlert(true);
-                      playSound('wrong');
-                      showBaconardoFeedback(`❌ ${ingredient.hint}`, 'shake');
-                      setTimeout(() => setWrongIngredientAlert(false), 3000);
-                    }
-                  }}
-                  style={{
-                    position: 'absolute',
-                    ...position,
-                    cursor: 'grab',
-                    userSelect: 'none',
-                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                    zIndex: isHovered ? 30 : 25, // Higher z-index than pan
-                    padding: '12px',
-                    background: isHovered 
-                      ? 'rgba(255, 255, 255, 0.25)' 
-                      : 'rgba(255, 255, 255, 0.15)',
-                    borderRadius: '16px',
-                    backdropFilter: 'blur(10px)',
-                    boxShadow: isHovered 
-                      ? '0 20px 50px rgba(0, 0, 0, 0.35), 0 8px 20px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.5)' 
-                      : '0 8px 25px rgba(0, 0, 0, 0.2), 0 3px 10px rgba(0, 0, 0, 0.15)',
-                    transform: isHovered ? 'scale(1.15) translateY(-20px)' : 'scale(1)',
-                    border: isHovered 
-                      ? (ingredient.isCorrect 
-                          ? '2px solid rgba(76, 175, 80, 0.8)' 
-                          : '2px solid rgba(244, 67, 54, 0.8)') 
-                      : '1px solid rgba(255, 255, 255, 0.3)',
-                    width: '70px',
-                    height: '70px',
+                <Box
+                  key={index}
+                  sx={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '50%',
+                    backgroundColor: isFilled ? '#4CAF50' : '#e0e0e0',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    animation: isHovered ? 'floatBounce 0.6s ease-out' : 'none'
+                    fontSize: '1.2rem',
+                    fontWeight: 'bold',
+                    color: isFilled ? 'white' : '#666',
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+                    transition: 'all 0.3s ease',
+                    border: '2px solid white',
+                    animation: isFilled ? 'popIn 0.5s ease-out' : 'none',
+                    '@keyframes popIn': {
+                      '0%': { transform: 'scale(0)' },
+                      '50%': { transform: 'scale(1.2)' },
+                      '100%': { transform: 'scale(1)' }
+                    }
                   }}
                 >
-                  {isHovered && (
-                    <div style={{ 
-                      position: 'absolute', 
-                      top: '50%', 
-                      left: '50%', 
-                      transform: 'translate(-50%, -50%)', 
-                      width: '140px', 
-                      height: '140px', 
-                      borderRadius: '50%', 
-                      border: ingredient.isCorrect 
-                        ? '4px solid rgba(76, 175, 80, 0.8)' 
-                        : '4px solid rgba(244, 67, 54, 0.8)' 
-                    }} />
-                  )}
-                  
-                  <img 
-                    src={ingredient.image}
-                    alt={ingredient.name}
-                    style={{ 
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'contain',
-                      filter: 'drop-shadow(3px 3px 6px rgba(0,0,0,0.5))',
-                      position: 'relative',
-                      zIndex: 2
-                    }}
-                  />
-                  
-                  {/* IMPROVED: Clearer visual feedback - only show checkmark when collected */}
-                  {collectedIngredients.some(c => c.id === ingredient.id) ? (
-                    <div style={{ 
-                      position: 'absolute', 
-                      top: '-5px', 
-                      right: '-5px', 
-                      width: '28px', 
-                      height: '28px', 
-                      borderRadius: '50%', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      backgroundColor: 'rgba(76, 175, 80, 0.95)', 
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.3)', 
-                      border: '2px solid rgba(255, 255, 255, 0.9)', 
-                      fontSize: '14px',
-                      fontWeight: 'bold',
-                      color: 'white',
-                      zIndex: 3
-                    }}>
-                      ✓
-                    </div>
-                  ) : (
-                    <div style={{ 
-                      position: 'absolute', 
-                      top: '-5px', 
-                      right: '-5px', 
-                      width: '28px', 
-                      height: '28px', 
-                      borderRadius: '50%', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      backgroundColor: ingredient.isCorrect 
-                        ? 'rgba(76, 175, 80, 0.3)'  // Dimmer for uncollected correct items
-                        : 'rgba(244, 67, 54, 0.3)', // Dimmer for wrong items
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.2)', 
-                      border: '2px solid rgba(255, 255, 255, 0.5)', 
-                      fontSize: '14px',
-                      fontWeight: 'bold',
-                      color: 'rgba(255, 255, 255, 0.7)',
-                      zIndex: 3
-                    }}>
-                      {ingredient.isCorrect ? '?' : '✗'}
-                    </div>
-                  )}
-                  
-                  {isHovered && (
-                    <div style={{ 
-                      position: 'absolute', 
-                      top: '-50px', 
-                      left: '50%', 
-                      transform: 'translateX(-50%)', 
-                      backgroundColor: 'rgba(0, 0, 0, 0.9)', 
-                      color: 'white', 
-                      padding: '8px 16px', 
-                      borderRadius: '12px', 
-                      fontSize: '14px', 
-                      fontWeight: 'bold', 
-                      whiteSpace: 'nowrap', 
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
-                      animation: 'fadeInDown 0.3s ease-out',
-                      zIndex: 35 // Highest z-index for tooltips
-                    }}>
-                      {ingredient.name}
-                      <div style={{
-                        fontSize: '11px',
-                        fontWeight: 'normal',
-                        marginTop: '2px',
-                        opacity: 0.9
-                      }}>
-                        {collectedIngredients.some(c => c.id === ingredient.id) 
-                          ? '✓ Collected' 
-                          : ingredient.isCorrect ? '✓ Needed' : '✗ Not needed'
-                        }
-                      </div>
-                    </div>
-                  )}
-                </div>
+                  {isFilled ? '✓' : index + 1}
+                </Box>
               );
             })}
-          </div>
-
-          {/* Floating Bottom Control Bar */}
-          <Box sx={{
-            position: 'fixed',
-            bottom: '20px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 100, // Highest z-index for controls
-            display: 'flex',
-            gap: 2,
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-            padding: '12px 24px',
-            borderRadius: '30px',
-            backdropFilter: 'blur(10px)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-            border: '2px solid rgba(255, 255, 255, 0.5)'
+          </Box>
+          
+          <LinearProgress 
+            variant="determinate" 
+            value={(collectedIngredients.length / 4) * 100} 
+            sx={{ 
+              height: 16,
+              borderRadius: '10px',
+              backgroundColor: 'rgba(255, 255, 255, 0.3)',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+              '& .MuiLinearProgress-bar': {
+                borderRadius: '10px',
+                background: 'linear-gradient(90deg, #FFC107 0%, #FF9800 50%, #4CAF50 100%)',
+                transition: 'width 0.5s ease-in-out'
+              }
+            }} 
+          />
+          
+          <Typography variant="body1" sx={{ 
+            color: 'white', 
+            fontWeight: 'bold',
+            fontFamily: 'Poppins, sans-serif',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            px: 2,
+            py: 1,
+            borderRadius: '10px',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+            textAlign: 'center',
+            mt: 1,
+            fontSize: '0.9rem'
           }}>
-            <Button
-              onClick={() => showBaconardoFeedback('Look for egg, oil, salt, and butter! Avoid milk, bread, and cheese! Remember: simple is delicious! 🥓', 'nod')}
-              variant="contained"
-              size="medium"
-              startIcon={<span style={{ fontSize: '18px' }}>💡</span>}
-              sx={{
-                backgroundColor: '#2196F3',
-                borderRadius: '20px',
-                minWidth: '100px',
-                textTransform: 'none',
-                fontWeight: 600,
-                boxShadow: '0 4px 0 #1565C0, 0 6px 20px rgba(33, 150, 243, 0.4)',
-                '&:hover': { 
-                  backgroundColor: '#1976D2', 
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 6px 0 #1565C0, 0 8px 25px rgba(33, 150, 243, 0.5)'
-                },
-                '&:active': {
-                  transform: 'translateY(2px)',
-                  boxShadow: '0 2px 0 #1565C0, 0 3px 10px rgba(33, 150, 243, 0.3)'
-                },
-                transition: 'all 0.2s ease'
-              }}
-            >
-              Help
-            </Button>
-            
-            <Button
-              onClick={resetGame}
-              variant="contained"
-              size="medium"
-              startIcon={<span style={{ fontSize: '18px' }}>🔄</span>}
-              sx={{
-                backgroundColor: '#FF9800',
-                borderRadius: '20px',
-                minWidth: '100px',
-                textTransform: 'none',
-                fontWeight: 600,
-                boxShadow: '0 4px 0 #E65100, 0 6px 20px rgba(255, 152, 0, 0.4)',
-                '&:hover': { 
-                  backgroundColor: '#F57C00', 
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 6px 0 #E65100, 0 8px 25px rgba(255, 152, 0, 0.5)'
-                },
-                '&:active': {
-                  transform: 'translateY(2px)',
-                  boxShadow: '0 2px 0 #E65100, 0 3px 10px rgba(255, 152, 0, 0.3)'
-                },
-                transition: 'all 0.2s ease'
-              }}
-            >
-              Reset
-            </Button>
-            
-            <Button
-              onClick={goToHomepage}
-              variant="contained"
-              size="medium"
-              startIcon={<span style={{ fontSize: '18px' }}>🏠</span>}
-              sx={{
-                backgroundColor: '#9C27B0',
-                borderRadius: '20px',
-                minWidth: '100px',
-                textTransform: 'none',
-                fontWeight: 600,
-                boxShadow: '0 4px 0 #6A1B9A, 0 6px 20px rgba(156, 39, 176, 0.4)',
-                '&:hover': { 
-                  backgroundColor: '#7B1FA2', 
-                  transform: 'translateY(-2px)',
-                  boxShadow: '0 6px 0 #6A1B9A, 0 8px 25px rgba(156, 39, 176, 0.5)'
-                },
-                '&:active': {
-                  transform: 'translateY(2px)',
-                  boxShadow: '0 2px 0 #6A1B9A, 0 3px 10px rgba(156, 39, 176, 0.3)'
-                },
-                transition: 'all 0.2s ease'
-              }}
-            >
-              Home
-            </Button>
+            Cooking Ingredients: {collectedIngredients.length}/4 collected
+          </Typography>
+        </Box>
 
-            {allCollected && (
-              <Button
-                onClick={continueToNextLevel}
-                disabled={progressSaving}
-                variant="contained"
-                size="medium"
-                startIcon={<span style={{ fontSize: '18px' }}>🚀</span>}
+        {/* Character Component */}
+        {!showStartScreen && <Character />}
+
+        {/* Less Distracting Navigation Buttons */}
+        <Box sx={{
+          position: 'fixed',
+          top: 18,
+          left: 18,
+          zIndex: 1020,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+          opacity: 0.8,
+          '&:hover': {
+            opacity: 1
+          }
+        }}>
+          <Button 
+            variant="contained"
+            onClick={resetGame}
+            sx={{ 
+              background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+              color: 'white',
+              width: 48,
+              height: 48,
+              minWidth: 48,
+              borderRadius: '10px',
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '700',
+              fontSize: '1rem',
+              textTransform: 'none',
+              boxShadow: '0 6px 12px rgba(255, 89, 94, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
+                transform: 'translateY(-2px)'
+              }
+            }}
+            aria-label="Reset"
+          >
+            🔄
+          </Button>
+          
+          <Button 
+            variant="contained"
+            onClick={handleGoHome}
+            sx={{ 
+              background: 'linear-gradient(135deg, #1982C4 0%, #1568A0 100%)',
+              color: 'white',
+              width: 48,
+              height: 48,
+              minWidth: 48,
+              borderRadius: '10px',
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '700',
+              fontSize: '1rem',
+              textTransform: 'none',
+              boxShadow: '0 6px 12px rgba(25, 130, 196, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #42A5F5 0%, #1982C4 100%)',
+                transform: 'translateY(-2px)'
+              }
+            }}
+            aria-label="Home"
+          >
+            🏠
+          </Button>
+
+          {/* Sound Toggle Button */}
+          <Button 
+            variant="contained"
+            onClick={() => setAutoPlayEnabled(!autoPlayEnabled)}
+            sx={{ 
+              background: 'linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%)',
+              color: 'white',
+              width: 48,
+              height: 48,
+              minWidth: 48,
+              borderRadius: '10px',
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: '700',
+              fontSize: '1rem',
+              textTransform: 'none',
+              boxShadow: '0 6px 12px rgba(76, 175, 80, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%)',
+                transform: 'translateY(-2px)'
+              }
+            }}
+            aria-label={autoPlayEnabled ? 'Mute sounds' : 'Unmute sounds'}
+          >
+            {autoPlayEnabled ? <VolumeUpIcon /> : <VolumeOffIcon />}
+          </Button>
+        </Box>
+
+        {/* Game Area - Basket Only, Nothing Below */}
+        {!gameCompleted && (
+          <Box 
+            sx={{ 
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%',
+              position: 'relative',
+              height: 'calc(100vh - 150px)',
+              overflow: 'hidden'
+            }}
+          >
+            {/* Basket Area */}
+            <Box 
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              sx={{
+                width: '300px',
+                height: '300px',
+                mx: 'auto',
+                position: 'relative',
+                backgroundImage: `url(${basketImg})`,
+                backgroundSize: 'contain',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                zIndex: 10,
+                animation: draggedItem ? 'basketGlow 1s infinite alternate' : 'none',
+                '@keyframes basketGlow': {
+                  '0%': { boxShadow: '0 0 20px rgba(255, 152, 0, 0.5)' },
+                  '100%': { boxShadow: '0 0 40px rgba(255, 152, 0, 0.8)' }
+                },
+                '&:hover': {
+                  transform: 'scale(1.05)',
+                  boxShadow: '0 0 30px rgba(255, 152, 0, 0.8)'
+                }
+              }}
+            >
+              {collectedIngredients.length === 0 && availableIngredients.some(item => item.correct) && (
+                <Typography 
+                  variant="h6"
+                  sx={{ 
+                    color: 'white',
+                    fontStyle: 'italic',
+                    textAlign: 'center',
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    px: 3,
+                    py: 2,
+                    borderRadius: '15px',
+                    fontWeight: 'bold',
+                    fontSize: '1.1rem',
+                    textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+                    border: '2px solid #FF9800',
+                    animation: 'bounce 2s infinite',
+                    '@keyframes bounce': {
+                      '0%, 100%': { transform: 'translateY(0)' },
+                      '50%': { transform: 'translateY(-5px)' }
+                    }
+                  }}
+                >
+                  Drop cooking ingredients here!
+                </Typography>
+              )}
+            </Box>
+
+            {/* Available Ingredients with Smaller Sizes */}
+            <Box sx={{ 
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 5,
+              pointerEvents: 'none'
+            }}>
+              {availableIngredients.map((item, index) => {
+                // Smaller size mapping
+                const sizeMap = {
+                  xsmall: '90px',
+                  small: '120px',
+                  medium: '150px', 
+                  large: '180px'
+                };
+                
+                const isHovered = hoveredIngredient === item.id;
+                
+                return (
+                  <Box
+                    key={item.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, item.id)}
+                    onMouseEnter={() => setHoveredIngredient(item.id)}
+                    onMouseLeave={() => setHoveredIngredient(null)}
+                    sx={{
+                      position: 'absolute',
+                      ...item.position,
+                      width: sizeMap[item.size],
+                      height: sizeMap[item.size],
+                      backgroundImage: `url(${item.image})`,
+                      backgroundSize: 'contain',
+                      backgroundPosition: 'center',
+                      backgroundRepeat: 'no-repeat',
+                      cursor: 'grab',
+                      transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                      filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.4))',
+                      animation: 'bounce 3s ease-in-out infinite',
+                      pointerEvents: 'auto',
+                      '@keyframes bounce': {
+                        '0%, 100%': { transform: 'translateY(0px)' },
+                        '50%': { transform: 'translateY(-3px)' }
+                      },
+                      '&:hover': {
+                        transform: isHovered ? 'scale(1.2) rotate(5deg)' : 'scale(1.15)',
+                        filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.6)) brightness(1.1)',
+                        zIndex: 15,
+                        animation: 'float 2s ease-in-out infinite',
+                        '@keyframes float': {
+                          '0%, 100%': { 
+                            transform: isHovered ? 'scale(1.2) rotate(5deg) translateY(0px)' : 'scale(1.15) translateY(0px)' 
+                          },
+                          '50%': { 
+                            transform: isHovered ? 'scale(1.2) rotate(5deg) translateY(-5px)' : 'scale(1.15) translateY(-5px)' 
+                          }
+                        }
+                      },
+                      '&:active': {
+                        transform: 'scale(1.1)',
+                      }
+                    }}
+                  />
+                );
+              })}
+            </Box>
+
+            {/* Animating Ingredients */}
+            {animatingItems.map((item) => {
+              const sizeMap = {
+                xsmall: '60px',
+                small: '80px',
+                medium: '100px', 
+                large: '120px'
+              };
+              
+              const deltaX = item.targetX - item.startX;
+              const deltaY = item.targetY - item.startY;
+              
+              return (
+                <Box
+                  key={item.id}
+                  className="animating-item"
+                  sx={{
+                    position: 'fixed',
+                    left: item.startX,
+                    top: item.startY,
+                    width: sizeMap[item.size],
+                    height: sizeMap[item.size],
+                    backgroundImage: `url(${item.image})`,
+                    backgroundSize: 'contain',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat',
+                    transform: 'translate(-50%, -50%)',
+                    zIndex: 1000,
+                    '--target-x': `${deltaX}px`,
+                    '--target-y': `${deltaY}px`,
+                  }}
+                />
+              );
+            })}
+          </Box>
+        )}
+
+        {/* Auto-disappearing Feedback Message */}
+        {feedbackMessage && (
+          <Box
+            sx={{
+              position: 'fixed',
+              bottom: 100,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 2000,
+              animation: 'slideUp 0.5s ease-out, fadeOut 0.5s ease-out 2.5s forwards',
+              '@keyframes slideUp': {
+                '0%': { transform: 'translateX(-50%) translateY(20px)', opacity: 0 },
+                '100%': { transform: 'translateX(-50%) translateY(0)', opacity: 1 }
+              },
+              '@keyframes fadeOut': {
+                '0%': { opacity: 1 },
+                '100%': { opacity: 0 }
+              }
+            }}
+          >
+            <Paper
+              sx={{
+                p: 2,
+                maxWidth: '500px',
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                borderRadius: '15px',
+                textAlign: 'center',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                border: feedbackMessage.includes('Oops!') ? '2px solid #FF595E' : '2px solid #4CAF50',
+                boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
+              }}
+            >
+              <Box
+                component="img"
+                src={baconardoImg}
+                alt="Baconardo"
                 sx={{
-                  backgroundColor: '#4CAF50',
-                  borderRadius: '20px',
-                  minWidth: '120px',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  boxShadow: '0 4px 0 #2E7D32, 0 6px 20px rgba(76, 175, 80, 0.4)',
-                  '&:hover': { 
-                    backgroundColor: '#45a049', 
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 6px 0 #2E7D32, 0 8px 25px rgba(76, 175, 80, 0.5)'
+                  width: 60,
+                  height: 'auto',
+                  filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+                  animation: feedbackMessage.includes('Oops!') ? 'shake 0.5s ease-in-out' : 'bounce 0.5s ease-in-out',
+                  '@keyframes shake': {
+                    '0%': { transform: 'translateX(0px)' },
+                    '25%': { transform: 'translateX(-3px)' },
+                    '50%': { transform: 'translateX(3px)' },
+                    '75%': { transform: 'translateX(-3px)' },
+                    '100%': { transform: 'translateX(0px)' }
                   },
-                  '&:active': {
-                    transform: 'translateY(2px)',
-                    boxShadow: '0 2px 0 #2E7D32, 0 3px 10px rgba(76, 175, 80, 0.3)'
-                  },
-                  animation: 'pulse 2s infinite',
-                  transition: 'all 0.2s ease'
+                  '@keyframes bounce': {
+                    '0%, 100%': { transform: 'translateY(0px)' },
+                    '50%': { transform: 'translateY(-5px)' }
+                  }
+                }}
+              />
+              
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  color: feedbackMessage.includes('Oops!') ? '#FF595E' : '#280B60',
+                  fontFamily: 'Poppins, sans-serif',
+                  fontWeight: '600',
+                  fontSize: '1rem',
+                  flex: 1
                 }}
               >
-                {progressSaving ? 'Saving...' : 'Next Level'}
-              </Button>
-            )}
+                {feedbackMessage}
+              </Typography>
+            </Paper>
           </Box>
-        </Box>
-      </Box>
-
-      {/* Wrong Alert */}
-      {wrongIngredientAlert && (
-        <div style={{ 
-          position: 'fixed', 
-          top: '20px', 
-          left: '50%', 
-          transform: 'translateX(-50%)', 
-          zIndex: 9999, 
-          backgroundColor: '#f44336', 
-          color: 'white', 
-          padding: '16px 24px', 
-          borderRadius: '12px', 
-          boxShadow: '0 8px 24px rgba(244, 67, 54, 0.5)', 
-          border: '3px solid rgba(255, 255, 255, 0.3)', 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '12px' 
-        }}>
-          <span style={{ fontSize: '32px' }}>❌</span>
-          <span style={{ fontSize: '18px', fontWeight: 'bold' }}>Wrong! Try again.</span>
-        </div>
-      )}
-
-      {/* Correct Animation */}
-      {showCorrectAnimation && (
-        <>
-          {confettiPieces.map((piece) => (
-            <div 
-              key={piece.id} 
-              style={{ 
-                position: 'fixed', 
-                top: '-10px', 
-                left: `${piece.left}%`, 
-                width: `${Math.random() * 8 + 4}px`, 
-                height: `${Math.random() * 8 + 4}px`, 
-                backgroundColor: piece.backgroundColor, 
-                zIndex: 9999, 
-                borderRadius: Math.random() > 0.5 ? '50%' : '0%', 
-                animation: `confettiFall ${Math.random() * 2 + 2}s linear forwards`, 
-                animationDelay: `${piece.animationDelay}s`,
-                transform: `rotate(${Math.random() * 360}deg)`,
-                opacity: Math.random() * 0.8 + 0.2
-              }} 
-            />
-          ))}
-        </>
-      )}
-
-      {/* Success Modal - Updated to match Level 3 style */}
-      {showCelebration && (
+        )}
+        
+        {/* Success Dialog */}
         <Dialog
-          open={showCelebration}
+          open={showSuccess}
           fullScreen
           PaperProps={{
-            sx: {
+            sx: { 
               background: 'linear-gradient(135deg, rgba(255, 202, 58, 0.95) 0%, rgba(230, 184, 0, 0.95) 100%)',
               display: 'flex',
               alignItems: 'center',
@@ -1154,7 +1088,6 @@ export default function FriedEggLevel1() {
             }
           }}
         >
-          {/* Confetti Animation */}
           <Box sx={{
             position: 'fixed',
             top: 0,
@@ -1165,91 +1098,82 @@ export default function FriedEggLevel1() {
             zIndex: 1000,
             overflow: 'hidden'
           }}>
-            {Array.from({ length: 50 }).map((_, i) => {
-              const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FF9800', '#4CAF50'];
-              const randomColor = colors[Math.floor(Math.random() * colors.length)];
-              const randomWidth = Math.random() * 12 + 6;
-              const randomHeight = Math.random() * 12 + 6;
-              const randomRotation = Math.random() * 360;
-              const randomDrift = (Math.random() - 0.5) * 2;
-              
-              return (
-                <Box
-                  key={i}
-                  sx={{
-                    position: 'absolute',
-                    left: `${Math.random() * 100}%`,
-                    top: `${-10}%`,
-                    width: `${randomWidth}px`,
-                    height: `${randomHeight}px`,
-                    backgroundColor: randomColor,
-                    transform: `rotate(${randomRotation}deg)`,
-                    boxShadow: `0 0 10px ${randomColor}`,
-                    animation: `confettiFall 4s linear infinite`,
-                    animationDelay: `${Math.random() * 3}s`,
-                    '@keyframes confettiFall': {
-                      '0%': {
-                        transform: `translateY(-100vh) rotate(${randomRotation}deg) scale(0.8)`,
-                        opacity: 1
-                      },
-                      '10%': {
-                        opacity: 1,
-                        transform: `translateY(-90vh) rotate(${randomRotation + 36}deg) scale(1)`
-                      },
-                      '90%': {
-                        opacity: 0.8,
-                        transform: `translateY(90vh) translateX(${randomDrift * 60}px) rotate(${randomRotation + 324}deg) scale(0.6)`
-                      },
-                      '100%': {
-                        transform: `translateY(100vh) translateX(${randomDrift * 70}px) rotate(${randomRotation + 360}deg) scale(0)`,
-                        opacity: 0
-                      }
+            {confettiPieces.map(piece => (
+              <Box
+                key={piece.id}
+                sx={{
+                  position: 'absolute',
+                  left: `${piece.x}%`,
+                  top: `${piece.y}%`,
+                  width: `${piece.width}px`,
+                  height: `${piece.height}px`,
+                  backgroundColor: piece.color,
+                  transform: `rotate(${piece.rotation}deg)`,
+                  boxShadow: `0 0 10px ${piece.color}`,
+                  animation: `confettiFall 4s linear infinite`,
+                  animationDelay: `${Math.random() * 3}s`,
+                  '@keyframes confettiFall': {
+                    '0%': {
+                      transform: `translateY(-100vh) rotate(${piece.rotation}deg) scale(0.8)`,
+                      opacity: 1
+                    },
+                    '10%': {
+                      opacity: 1,
+                      transform: `translateY(-90vh) rotate(${piece.rotation + 36}deg) scale(1)`
+                    },
+                    '90%': {
+                      opacity: 0.8,
+                      transform: `translateY(90vh) translateX(${piece.drift * 60}px) rotate(${piece.rotation + 324}deg) scale(0.6)`
+                    },
+                    '100%': {
+                      transform: `translateY(100vh) translateX(${piece.drift * 70}px) rotate(${piece.rotation + 360}deg) scale(0)`,
+                      opacity: 0
                     }
-                  }}
-                />
-              );
-            })}
+                  }
+                }}
+              />
+            ))}
           </Box>
-          
           <Box sx={{
             textAlign: 'center',
             color: 'white',
-            position: 'relative',
             zIndex: 1001,
-            padding: '20px'
+            px: 3
           }}>
-            {/* Trophy Icon */}
-            <EmojiEventsIcon sx={{
-              fontSize: 150,
-              color: 'white',
-              mb: 4,
-              filter: 'drop-shadow(3px 3px 6px rgba(0,0,0,0.5))'
-            }} />
-            
-            {/* Main Title */}
-            <Typography variant="h1" sx={{
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              mb: 4 
+            }}>
+              <EmojiEventsIcon sx={{ 
+                fontSize: 120,
+                color: 'white',
+                mr: 3
+              }} />
+            </Box>
+            <Typography variant="h1" sx={{ 
               fontWeight: 'bold',
               color: 'white',
               fontFamily: 'Poppins, sans-serif',
-              fontSize: { xs: '2rem', md: '3rem' },
+              fontSize: { xs: '2rem', md: '2.5rem' },
               textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
               mb: 2
             }}>
-              Perfect Fried Egg!
+              Ingredients Complete!
             </Typography>
-           
-            {/* Star Rating */}
+            
             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
               {[...Array(3)].map((_, i) => {
                 const isActive = i < getStarRating();
                 const shouldAnimate = i < starAnimationStage;
-               
+                
                 return (
-                  <StarIcon
-                    key={i}
-                    sx={{
+                  <StarIcon 
+                    key={i} 
+                    sx={{ 
                       color: isActive ? 'white' : 'rgba(255,255,255,0.3)',
-                      fontSize: 80,
+                      fontSize: 60,
                       mx: 1,
                       textShadow: isActive ? '2px 2px 4px rgba(0,0,0,0.3)' : 'none',
                       transform: shouldAnimate ? 'scale(1.3)' : 'scale(1)',
@@ -1269,30 +1193,28 @@ export default function FriedEggLevel1() {
                           opacity: 1
                         }
                       }
-                    }}
+                    }} 
                   />
                 );
               })}
             </Box>
-            
-            {/* Description */}
-            <Typography variant="h6" sx={{
+            <Typography variant="h6" sx={{ 
               color: 'white',
               fontFamily: 'Inter, sans-serif',
               lineHeight: 1.6,
               mb: 6,
               maxWidth: '800px',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+              textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+              fontSize: { xs: '1rem', md: '1.2rem' }
             }}>
-              You collected all the right ingredients! Your fried egg will be delicious and perfectly cooked!
+              Great job! You collected all the perfect ingredients for a delicious fried egg! Ready to cook!
             </Typography>
-           
-            {/* Progress Saving Indicator */}
+            
             {progressSaving && (
-              <Box sx={{
-                mb: 4,
-                p: 3,
-                backgroundColor: 'rgba(25, 130, 196, 0.8)',
+              <Box sx={{ 
+                mb: 4, 
+                p: 3, 
+                backgroundColor: 'rgba(25, 130, 196, 0.8)', 
                 borderRadius: '15px',
                 color: 'white'
               }}>
@@ -1302,13 +1224,12 @@ export default function FriedEggLevel1() {
                 </Typography>
               </Box>
             )}
-           
-            {/* Progress Saved Indicator */}
+            
             {progressSaved && (
-              <Box sx={{
-                mb: 4,
-                p: 3,
-                backgroundColor: 'rgba(144, 190, 109, 0.8)',
+              <Box sx={{ 
+                mb: 4, 
+                p: 3, 
+                backgroundColor: 'rgba(144, 190, 109, 0.8)', 
                 borderRadius: '15px',
                 color: 'white'
               }}>
@@ -1318,16 +1239,15 @@ export default function FriedEggLevel1() {
                 </Typography>
               </Box>
             )}
-           
-            {/* Action Buttons */}
+            
             <Box sx={{ display: 'flex', gap: 3, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Button
+              <Button 
                 onClick={() => {
-                  setShowCelebration(false);
+                  setShowSuccess(false);
                   resetGame();
-                }}
+                }} 
                 variant="outlined"
-                sx={{
+                sx={{ 
                   borderColor: 'white',
                   color: 'white',
                   px: 4,
@@ -1335,7 +1255,7 @@ export default function FriedEggLevel1() {
                   borderRadius: '25px',
                   fontFamily: 'Poppins, sans-serif',
                   fontWeight: '600',
-                  fontSize: '1.2rem',
+                  fontSize: '1.1rem',
                   borderWidth: '2px',
                   textTransform: 'none',
                   '&:hover': {
@@ -1347,33 +1267,10 @@ export default function FriedEggLevel1() {
               >
                 Cook Again
               </Button>
-              <Button
+              <Button 
                 variant="contained"
-                onClick={handleContinue}
-                disabled={progressSaving}
-                sx={{
-                  background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
-                  color: 'white',
-                  px: 6,
-                  py: 2,
-                  borderRadius: '25px',
-                  fontFamily: 'Poppins, sans-serif',
-                  fontWeight: '700',
-                  fontSize: '1.2rem',
-                  textTransform: 'none',
-                  boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
-                    transform: 'translateY(-2px)'
-                  }
-                }}
-              >
-                {progressSaving ? 'Saving...' : 'Next Level'}
-              </Button>
-              <Button
-                variant="contained"
-                onClick={goToHomepage}
-                sx={{
+                onClick={handleGoHome}
+                sx={{ 
                   background: 'linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%)',
                   color: 'white',
                   px: 4,
@@ -1381,7 +1278,7 @@ export default function FriedEggLevel1() {
                   borderRadius: '25px',
                   fontFamily: 'Poppins, sans-serif',
                   fontWeight: '600',
-                  fontSize: '1.2rem',
+                  fontSize: '1.1rem',
                   textTransform: 'none',
                   boxShadow: '0 10px 25px rgba(76, 175, 80, 0.5)',
                   '&:hover': {
@@ -1392,108 +1289,33 @@ export default function FriedEggLevel1() {
               >
                 Back to Home
               </Button>
+              <Button 
+                variant="contained"
+                onClick={handleContinue}
+                disabled={progressSaving}
+                sx={{ 
+                  background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+                  color: 'white',
+                  px: 6,
+                  py: 2,
+                  borderRadius: '25px',
+                  fontFamily: 'Poppins, sans-serif',
+                  fontWeight: '700',
+                  fontSize: '1.1rem',
+                  textTransform: 'none',
+                  boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
+                  '&:hover': { 
+                    background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
+                    transform: 'translateY(-2px)'
+                  }
+                }}
+              >
+                {progressSaving ? 'Saving...' : 'Continue'}
+              </Button>
             </Box>
           </Box>
         </Dialog>
-      )}
-
-      <style>{`
-        @keyframes confettiFall {
-          0% { transform: translateY(-10px) rotateZ(0deg); opacity: 1; }
-          100% { transform: translateY(100vh) rotateZ(720deg); opacity: 0; }
-        }
-        @keyframes correctPop {
-          0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-          50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-          100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
-        }
-        @keyframes shimmer {
-          0% { left: -100%; }
-          100% { left: 100%; }
-        }
-        @keyframes pulse {
-          0% { transform: scale(1); }
-          50% { transform: scale(1.05); }
-          100% { transform: scale(1); }
-        }
-        @keyframes fadeInDown {
-          0% { 
-            opacity: 0;
-            transform: translateX(-50%) translateY(-20px);
-          }
-          100% { 
-            opacity: 1;
-            transform: translateX(-50%) translateY(0);
-          }
-        }
-        @keyframes glow {
-          0%, 100% { 
-            opacity: 0.6;
-            boxShadow: 0 0 20px rgba(76, 175, 80, 0.4), 0 0 40px rgba(33, 150, 243, 0.3);
-          }
-          50% { 
-            opacity: 1;
-            boxShadow: 0 0 30px rgba(76, 175, 80, 0.6), 0 0 60px rgba(33, 150, 243, 0.5);
-          }
-        }
-        @keyframes panPulse {
-          0%, 100% {
-            boxShadow: inset 0 12px 24px rgba(0,0,0,0.4), 0 0 40px rgba(76, 175, 80, 0.6), 0 0 80px rgba(76, 175, 80, 0.4);
-          }
-          50% {
-            boxShadow: inset 0 12px 24px rgba(0,0,0,0.4), 0 0 60px rgba(76, 175, 80, 0.8), 0 0 100px rgba(76, 175, 80, 0.6);
-          }
-        }
-        @keyframes floatBounce {
-          0% { transform: translateY(0) scale(1); }
-          30% { transform: translateY(-25px) scale(1.15); }
-          50% { transform: translateY(-20px) scale(1.15); }
-          70% { transform: translateY(-25px) scale(1.15); }
-          100% { transform: translateY(-20px) scale(1.15); }
-        }
-        @keyframes baconardoIdle {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-3px); }
-        }
-        @keyframes baconardoNod {
-          0%, 100% { transform: translateY(0) rotate(0deg); }
-          50% { transform: translateY(3px) rotate(3deg); }
-        }
-        @keyframes baconardoShake {
-          0%, 100% { transform: translateY(0) rotate(0deg); }
-          25% { transform: translateY(0) rotate(-3deg); }
-          75% { transform: translateY(0) rotate(3deg); }
-        }
-        @keyframes baconardoCelebrate {
-          0%, 100% { transform: translateY(0) scale(1); }
-          25% { transform: translateY(-8px) scale(1.1) rotate(-8deg); }
-          75% { transform: translateY(-8px) scale(1.1) rotate(8deg); }
-        }
-        @keyframes speechBubblePop {
-          0% { transform: scale(0.8); opacity: 0; }
-          50% { transform: scale(1.05); }
-          100% { transform: scale(1); opacity: 1; }
-        }
-        @keyframes ingredientPopIn {
-          0% { 
-            transform: scale(0) rotate(0deg);
-            opacity: 0;
-          }
-          70% { 
-            transform: scale(1.1) rotate(var(--rotation, 0deg));
-            opacity: 0.8;
-          }
-          100% { 
-            transform: scale(1) rotate(var(--rotation, 0deg));
-            opacity: 1;
-          }
-        }
-        @keyframes starPop {
-          0% { transform: scale(0); opacity: 0; }
-          50% { transform: scale(1.5); opacity: 1; }
-          100% { transform: scale(1); opacity: 1; }
-        }
-      `}</style>
+      </Container>
     </div>
   );
 }
