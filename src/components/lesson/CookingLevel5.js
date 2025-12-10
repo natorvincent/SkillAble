@@ -9,7 +9,7 @@ import spoonImg from "../../assets/cookingLevel5/spoon.png";
 import riceImg from "../../assets/cookingLevel5/rice.png";
 
 // add MUI Dialog imports
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, CircularProgress } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography } from '@mui/material';
 
 const CookingLevel5 = () => {
   const navigate = useNavigate();
@@ -1581,56 +1581,275 @@ const CookingLevel5 = () => {
         </div>
       )}
 
-      {/* Success Modal */}
+      {/* Completion Dialog - with Confetti Celebration */}
       <Dialog
         open={showSuccess}
         onClose={() => {}}
-        maxWidth="sm"
-        fullWidth
+        fullScreen
         PaperProps={{
-          style: {
-            borderRadius: 20,
-            padding: 0,
-            overflow: 'hidden',
-            border: `3px solid ${colors.primary}`
+          sx: {
+            background: 'linear-gradient(135deg, rgba(255, 202, 58, 0.95) 0%, rgba(230, 184, 0, 0.95) 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexDirection: 'column'
           }
         }}
       >
-        <DialogTitle sx={{ textAlign: 'center', background: `linear-gradient(45deg, ${colors.primary}, ${colors.success})`, color: 'white', fontWeight: 800 }}>
-          🎨 Perfect Plating!
-        </DialogTitle>
-        <DialogContent>
-          {/* content simplified but kept same information */}
-          <Box sx={{ textAlign: 'center', py: 3 }}>
-            <div style={{ fontSize: 56, marginBottom: 12 }}>🎨</div>
-            <h3 style={{ margin: 0, color: '#065f46', fontWeight: 900 }}>Presentation Master! 👨‍🍳</h3>
-            <p style={{ color: '#047857', marginTop: 12 }}>
-              Outstanding work! You've arranged the dish beautifully with proper plating techniques. Your presentation is restaurant-quality!
-            </p>
+        {/* Confetti Animation */}
+        <Box sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+          zIndex: 1000,
+          overflow: 'hidden'
+        }}>
+          {Array.from({ length: 50 }).map((_, i) => (
+            <Box
+              key={i}
+              sx={{
+                position: 'absolute',
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * -20}%`,
+                width: `${Math.random() * 10 + 5}px`,
+                height: `${Math.random() * 10 + 5}px`,
+                backgroundColor: ['#FF595E', '#FFCA3A', '#8AC926', '#1982C4', '#6A4C93'][Math.floor(Math.random() * 5)],
+                transform: `rotate(${Math.random() * 360}deg)`,
+                boxShadow: '0 0 10px currentColor',
+                animation: `confettiFall 4s linear infinite`,
+                animationDelay: `${Math.random() * 3}s`,
+                '@keyframes confettiFall': {
+                  '0%': {
+                    transform: `translateY(-100vh) rotate(${Math.random() * 360}deg) scale(0.8)`,
+                    opacity: 1
+                  },
+                  '10%': {
+                    opacity: 1,
+                    transform: `translateY(-90vh) rotate(${Math.random() * 360 + 36}deg) scale(1)`
+                  },
+                  '90%': {
+                    opacity: 0.8,
+                    transform: `translateY(90vh) translateX(${Math.random() * 60}px) rotate(${Math.random() * 360 + 324}deg) scale(0.6)`
+                  },
+                  '100%': {
+                    transform: `translateY(100vh) translateX(${Math.random() * 70}px) rotate(${Math.random() * 360 + 360}deg) scale(0)`,
+                    opacity: 0
+                  }
+                }
+              }}
+            />
+          ))}
+        </Box>
 
-            <Box sx={{ mt: 2, p: 2, borderRadius: 2, border: `1px solid ${colors.primary}20`, background: `${colors.primary}08` }}>
-              <div style={{ fontWeight: 800, color: '#065f46', marginBottom: 8, display: 'flex', justifyContent: 'center', gap: 8 }}>
-                <CheckCircle size={18} /> All Plating Elements Completed:
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
-                <span style={{ background: 'white', padding: '6px 10px', borderRadius: 20 }}>🍚 Rice Base</span>
-                <span style={{ background: 'white', padding: '6px 10px', borderRadius: 20 }}>🍳 Garnished Egg</span>
-                <span style={{ background: 'white', padding: '6px 10px', borderRadius: 20 }}>🥄 Utensils Set</span>
+        <Box sx={{
+          textAlign: 'center',
+          color: 'white',
+          zIndex: 1001,
+          padding: 4
+        }}>
+          {/* Trophy Icon */}
+          <div style={{
+            fontSize: '150px',
+            marginBottom: '40px',
+            animation: 'bounceIn 0.8s ease-out'
+          }}>
+            🎨
+          </div>
+          
+          {/* Title */}
+          <Typography variant="h1" sx={{
+            fontWeight: 'bold',
+            color: 'white',
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: { xs: '2rem', md: '3rem' },
+            textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
+            mb: 2
+          }}>
+            Perfect Plating! 🏆
+          </Typography>
+          
+          {/* Star Rating */}
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            mb: 4,
+            animation: 'slideIn 0.6s ease-out'
+          }}>
+            {[...Array(3)].map((_, i) => {
+              const starRating = 3; // Perfect score for completing all items
+              const isActive = i < starRating;
+              
+              return (
+                <span
+                  key={i}
+                  style={{
+                    fontSize: '80px',
+                    margin: '0 16px',
+                    color: isActive ? 'white' : 'rgba(255,255,255,0.3)',
+                    textShadow: isActive ? '2px 2px 4px rgba(0,0,0,0.3)' : 'none',
+                    transform: isActive ? 'scale(1.3)' : 'scale(1)',
+                    transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                    animation: isActive ? 'starPop 0.6s ease-out' : 'none',
+                  }}
+                >
+                  {isActive ? '⭐' : '☆'}
+                </span>
+              );
+            })}
+          </Box>
+          
+          {/* Feedback Message */}
+          <Typography variant="h6" sx={{
+            color: 'white',
+            fontFamily: 'Inter, sans-serif',
+            lineHeight: 1.6,
+            mb: 6,
+            maxWidth: '800px',
+            textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+            backgroundColor: 'rgba(0,0,0,0.2)',
+            padding: '20px',
+            borderRadius: '15px'
+          }}>
+            <div style={{ fontSize: '1.2rem', fontWeight: '600' }}>
+              🎉 Masterful plating! You've arranged the dish beautifully with proper plating techniques. Your presentation is restaurant-quality!
+            </div>
+            
+            <Box sx={{ 
+              mt: 3, 
+              p: 2, 
+              backgroundColor: 'rgba(255,255,255,0.2)', 
+              borderRadius: '8px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 2
+            }}>
+              <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>✅ All Plating Elements Completed:</div>
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                gap: '12px', 
+                flexWrap: 'wrap' 
+              }}>
+                <span style={{ 
+                  background: 'rgba(255,255,255,0.9)', 
+                  padding: '8px 16px', 
+                  borderRadius: '20px',
+                  color: '#065f46',
+                  fontWeight: '600',
+                  fontSize: '0.9rem'
+                }}>
+                  🍚 Rice Base
+                </span>
+                <span style={{ 
+                  background: 'rgba(255,255,255,0.9)', 
+                  padding: '8px 16px', 
+                  borderRadius: '20px',
+                  color: '#065f46',
+                  fontWeight: '600',
+                  fontSize: '0.9rem'
+                }}>
+                  🍳 Garnished Egg
+                </span>
+                <span style={{ 
+                  background: 'rgba(255,255,255,0.9)', 
+                  padding: '8px 16px', 
+                  borderRadius: '20px',
+                  color: '#065f46',
+                  fontWeight: '600',
+                  fontSize: '0.9rem'
+                }}>
+                  🍽️ Utensils Set
+                </span>
               </div>
             </Box>
+          </Typography>
+          
+          {/* Action Buttons */}
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 3, 
+            justifyContent: 'center', 
+            flexWrap: 'wrap',
+            animation: 'slideIn 0.8s ease-out'
+          }}>
+            <Button
+              onClick={() => {
+                setShowSuccess(false);
+                handleReset();
+              }}
+              variant="outlined"
+              sx={{
+                borderColor: 'white',
+                color: 'white',
+                px: 4,
+                py: 2,
+                borderRadius: '25px',
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: '600',
+                fontSize: '1.2rem',
+                borderWidth: '2px',
+                textTransform: 'none',
+                '&:hover': {
+                  borderColor: 'white',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  borderWidth: '2px'
+                }
+              }}
+            >
+              🎨 Plate Again
+            </Button>
+            
+            <Button
+              onClick={() => navigate('/studentdashboard')}
+              variant="contained"
+              sx={{
+                background: 'linear-gradient(135deg, #10b981, #0da271)',
+                color: 'white',
+                px: 4,
+                py: 2,
+                borderRadius: '25px',
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: '600',
+                fontSize: '1.2rem',
+                textTransform: 'none',
+                boxShadow: '0 10px 25px rgba(16, 185, 129, 0.5)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #34d399, #10b981)',
+                  transform: 'translateY(-2px)'
+                }
+              }}
+            >
+              🏠 Back to Home
+            </Button>
+            
+            <Button
+              onClick={() => navigate('/lesson/cooking/level-6')}
+              variant="contained"
+              sx={{
+                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                color: 'white',
+                px: 6,
+                py: 2,
+                borderRadius: '25px',
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: '700',
+                fontSize: '1.2rem',
+                textTransform: 'none',
+                boxShadow: '0 10px 25px rgba(245, 158, 11, 0.5)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+                  transform: 'translateY(-2px)'
+                }
+              }}
+            >
+              🚀 Next Level
+            </Button>
           </Box>
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: 'center', gap: 2, p: 3 }}>
-          <Button variant="outlined" onClick={handleReset} sx={{ borderRadius: 2, minWidth: 140 }}>
-            🔄 Play Again
-          </Button>
-          <Button variant="contained" onClick={() => navigate('/studentdashboard')} sx={{ borderRadius: 2, background: `linear-gradient(135deg, ${colors.primary}, ${colors.success})` }}>
-            🏠 Return Home
-          </Button>
-          <Button variant="contained" onClick={() => navigate('/lesson/cooking/level-6')} sx={{ borderRadius: 2, background: `linear-gradient(135deg, ${colors.accent}, ${colors.warning})` }}>
-            Next Level <ArrowRight size={16} style={{ marginLeft: 8 }} />
-          </Button>
-        </DialogActions>
+        </Box>
       </Dialog>
 
       <style>{`
@@ -1669,8 +1888,22 @@ const CookingLevel5 = () => {
           100% { transform: scale(0) rotate(360deg); opacity: 0; }
         }
         @keyframes confettiFall {
-          0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
-          100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+          0% {
+            transform: translateY(-100vh) rotate(0deg) scale(0.8);
+            opacity: 1;
+          }
+          10% {
+            opacity: 1;
+            transform: translateY(-90vh) rotate(36deg) scale(1);
+          }
+          90% {
+            opacity: 0.8;
+            transform: translateY(90vh) translateX(60px) rotate(324deg) scale(0.6);
+          }
+          100% {
+            transform: translateY(100vh) translateX(70px) rotate(360deg) scale(0);
+            opacity: 0;
+          }
         }
         @keyframes float {
           0%, 100% { transform: translateY(0px); }
@@ -1690,6 +1923,20 @@ const CookingLevel5 = () => {
         @keyframes slideIn {
           0% { transform: translateX(100%); opacity: 0; }
           100% { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes starPop {
+          0% {
+            transform: scale(0);
+            opacity: 0;
+          }
+          50% {
+            transform: scale(1.5);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(1);
+            opacity: 1;
+          }
         }
       `}</style>
     </div>

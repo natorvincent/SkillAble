@@ -494,9 +494,6 @@ export default function RiceCookerSimulator() {
     </div>
   );
 
-  // NOTE: Removed the previous early "if (gameComplete) return (...full-screen result...)" block
-  // Instead we render the same app UI and show a Dialog when gameComplete === true (matching levels 1-3 UX)
-
   return (
     <div style={{
       position: "fixed",
@@ -669,6 +666,38 @@ export default function RiceCookerSimulator() {
           @keyframes chefBounce {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-5px); }
+          }
+          @keyframes confettiFall {
+            0% {
+              transform: translateY(-100vh) rotate(0deg) scale(0.8);
+              opacity: 1;
+            }
+            10% {
+              opacity: 1;
+              transform: translateY(-90vh) rotate(36deg) scale(1);
+            }
+            90% {
+              opacity: 0.8;
+              transform: translateY(90vh) translateX(60px) rotate(324deg) scale(0.6);
+            }
+            100% {
+              transform: translateY(100vh) translateX(70px) rotate(360deg) scale(0);
+              opacity: 0;
+            }
+          }
+          @keyframes starPop {
+            0% {
+              transform: scale(0);
+              opacity: 0;
+            }
+            50% {
+              transform: scale(1.5);
+              opacity: 1;
+            }
+            100% {
+              transform: scale(1);
+              opacity: 1;
+            }
           }
           .draggable {
             cursor: grab;
@@ -1808,61 +1837,275 @@ export default function RiceCookerSimulator() {
             )}
           </Box>
 
-          {/* Completion Dialog (matches levels 1-3 UX) */}
+          {/* Completion Dialog - with Confetti Celebration */}
           <Dialog
             open={gameComplete}
             onClose={() => {}}
-            maxWidth="sm"
-            fullWidth
+            fullScreen
             PaperProps={{
-              style: {
-                borderRadius: '12px',
-                background: 'linear-gradient(135deg, #FAF0E6, #FFF8DC)',
-                border: '2px solid #8B4513'
+              sx: {
+                background: 'linear-gradient(135deg, rgba(255, 202, 58, 0.95) 0%, rgba(230, 184, 0, 0.95) 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'column'
               }
             }}
           >
-            <DialogTitle style={{ textAlign: 'center', background: 'linear-gradient(45deg, #8B4513, #A0522D)', color: 'white', padding: '18px', borderRadius: '10px 10px 0 0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '30px' }}>{riceQuality.includes('Perfect') ? '🏆' : riceQuality.includes('Sticky') ? '😕' : riceQuality.includes('Mushy') ? '💦' : riceQuality.includes('Hard') ? '🪨' : '⭐'}</span>
-                <div style={{ fontWeight: 700 }}>{riceQuality || 'Cooking Complete'}</div>
+            {/* Confetti Animation */}
+            <Box sx={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none',
+              zIndex: 1000,
+              overflow: 'hidden'
+            }}>
+              {Array.from({ length: 50 }).map((_, i) => (
+                <Box
+                  key={i}
+                  sx={{
+                    position: 'absolute',
+                    left: `${Math.random() * 100}%`,
+                    top: `${Math.random() * -20}%`,
+                    width: `${Math.random() * 10 + 5}px`,
+                    height: `${Math.random() * 10 + 5}px`,
+                    backgroundColor: ['#FF595E', '#FFCA3A', '#8AC926', '#1982C4', '#6A4C93'][Math.floor(Math.random() * 5)],
+                    transform: `rotate(${Math.random() * 360}deg)`,
+                    boxShadow: '0 0 10px currentColor',
+                    animation: `confettiFall 4s linear infinite`,
+                    animationDelay: `${Math.random() * 3}s`,
+                    '@keyframes confettiFall': {
+                      '0%': {
+                        transform: `translateY(-100vh) rotate(${Math.random() * 360}deg) scale(0.8)`,
+                        opacity: 1
+                      },
+                      '10%': {
+                        opacity: 1,
+                        transform: `translateY(-90vh) rotate(${Math.random() * 360 + 36}deg) scale(1)`
+                      },
+                      '90%': {
+                        opacity: 0.8,
+                        transform: `translateY(90vh) translateX(${Math.random() * 60}px) rotate(${Math.random() * 360 + 324}deg) scale(0.6)`
+                      },
+                      '100%': {
+                        transform: `translateY(100vh) translateX(${Math.random() * 70}px) rotate(${Math.random() * 360 + 360}deg) scale(0)`,
+                        opacity: 0
+                      }
+                    }
+                  }}
+                />
+              ))}
+            </Box>
+
+            <Box sx={{
+              textAlign: 'center',
+              color: 'white',
+              zIndex: 1001,
+              padding: 4
+            }}>
+              {/* Trophy Icon */}
+              <div style={{
+                fontSize: '150px',
+                marginBottom: '40px',
+                animation: 'bounceIn 0.8s ease-out'
+              }}>
+                {riceQuality.includes('Perfect') ? '🏆' : riceQuality.includes('Good') ? '⭐' : '🍚'}
               </div>
-            </DialogTitle>
-
-            <DialogContent>
-              {mistakes.length > 0 ? (
-                <div style={{ backgroundColor: '#FAF0E6', padding: '12px', borderRadius: '8px', border: '1px solid #DEB887' }}>
-                  <div style={{ fontWeight: 700, color: '#8B4513', marginBottom: '8px' }}>⚠️ Cooking Notes:</div>
-                  {mistakes.map((m, i) => <div key={i} style={{ marginBottom: '6px', color: '#654321' }}>• {m}</div>)}
-                  <div style={{ marginTop: '8px', padding: '8px', backgroundColor: '#FFF8DC', borderRadius: '6px', color: '#8B4513' }}>
-                    💡 Pro Tip: Rinse rice 2-3 times and use the "Perfect Water" measurement!
+              
+              {/* Title */}
+              <Typography variant="h1" sx={{
+                fontWeight: 'bold',
+                color: 'white',
+                fontFamily: 'Poppins, sans-serif',
+                fontSize: { xs: '2rem', md: '3rem' },
+                textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
+                mb: 2
+              }}>
+                {riceQuality || 'Cooking Complete!'}
+              </Typography>
+              
+              {/* Star Rating */}
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                mb: 4,
+                animation: 'slideIn 0.6s ease-out'
+              }}>
+                {[...Array(3)].map((_, i) => {
+                  const starRating = mistakes.length === 0 ? 3 : mistakes.length === 1 ? 2 : 1;
+                  const isActive = i < starRating;
+                  
+                  return (
+                    <span
+                      key={i}
+                      style={{
+                        fontSize: '80px',
+                        margin: '0 16px',
+                        color: isActive ? 'white' : 'rgba(255,255,255,0.3)',
+                        textShadow: isActive ? '2px 2px 4px rgba(0,0,0,0.3)' : 'none',
+                        transform: isActive ? 'scale(1.3)' : 'scale(1)',
+                        transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                        animation: isActive ? 'starPop 0.6s ease-out' : 'none',
+                      }}
+                    >
+                      {isActive ? '⭐' : '☆'}
+                    </span>
+                  );
+                })}
+              </Box>
+              
+              {/* Feedback Message */}
+              <Typography variant="h6" sx={{
+                color: 'white',
+                fontFamily: 'Inter, sans-serif',
+                lineHeight: 1.6,
+                mb: 6,
+                maxWidth: '800px',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+                backgroundColor: 'rgba(0,0,0,0.2)',
+                padding: '20px',
+                borderRadius: '15px'
+              }}>
+                {mistakes.length > 0 ? (
+                  <div>
+                    <div style={{ fontWeight: 700, marginBottom: '12px', fontSize: '1.2rem' }}>Cooking Notes:</div>
+                    {mistakes.map((m, i) => (
+                      <div key={i} style={{ marginBottom: '8px', fontSize: '1rem' }}>• {m}</div>
+                    ))}
+                    <div style={{ marginTop: '16px', padding: '12px', backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: '8px' }}>
+                      💡 <strong>Pro Tip:</strong> Rinse rice 2-3 times and use the "Perfect Water" measurement for fluffy rice!
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div style={{ backgroundColor: '#F0FFF0', padding: '12px', borderRadius: '8px', border: '1px solid #90EE90' }}>
-                  <div style={{ color: '#228B22', fontWeight: 600 }}>🎉 Masterful cooking! You followed all the steps perfectly.</div>
-                </div>
-              )}
-
+                ) : (
+                  <div style={{ fontSize: '1.2rem' }}>
+                    🎉 Masterful cooking! You followed all the steps perfectly and created delicious fluffy rice!
+                  </div>
+                )}
+              </Typography>
+              
+              {/* Progress Saving Status */}
               {progressSaving && (
-                <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <CircularProgress size={18} />
-                  <Typography>Saving your rice cooking achievement...</Typography>
+                <Box sx={{
+                  mb: 4,
+                  p: 3,
+                  backgroundColor: 'rgba(25, 130, 196, 0.8)',
+                  borderRadius: '15px',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <CircularProgress size={30} sx={{ mr: 2, color: 'white' }} />
+                  <Typography variant="h5" sx={{ fontFamily: 'Poppins, sans-serif' }}>
+                    Saving your rice cooking achievement...
+                  </Typography>
                 </Box>
               )}
-
+              
               {progressSaved && (
-                <Box sx={{ mt: 2, p: 1, backgroundColor: 'rgba(34,139,34,0.08)', borderRadius: '8px', color: '#228B22' }}>
-                  ✅ Achievement unlocked! Progress saved.
+                <Box sx={{
+                  mb: 4,
+                  p: 3,
+                  backgroundColor: 'rgba(144, 190, 109, 0.8)',
+                  borderRadius: '15px',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <span style={{ fontSize: '30px', marginRight: '12px' }}>✅</span>
+                  <Typography variant="h6" sx={{ fontFamily: 'Poppins, sans-serif' }}>
+                    Progress saved successfully!
+                  </Typography>
                 </Box>
               )}
-            </DialogContent>
-
-            <DialogActions style={{ justifyContent: 'center', gap: '12px', padding: '16px' }}>
-              <Button onClick={resetGame} variant="outlined" sx={{ borderRadius: '20px', color: '#8B4513', borderColor: '#8B4513' }}>🔄 Try Again</Button>
-              <Button onClick={() => navigate('/studentdashboard')} variant="contained" sx={{ backgroundColor: '#8B4513', borderRadius: '20px' }}>🏠 Home</Button>
-              <Button onClick={() => navigate('/lesson/cooking/level-5')} variant="contained" sx={{ backgroundColor: '#228B22', borderRadius: '20px' }}>🚀 Next</Button>
-            </DialogActions>
+              
+              {/* Action Buttons */}
+              <Box sx={{ 
+                display: 'flex', 
+                gap: 3, 
+                justifyContent: 'center', 
+                flexWrap: 'wrap',
+                animation: 'slideIn 0.8s ease-out'
+              }}>
+                <Button
+                  onClick={() => {
+                    setGameComplete(false);
+                    resetGame();
+                  }}
+                  variant="outlined"
+                  sx={{
+                    borderColor: 'white',
+                    color: 'white',
+                    px: 4,
+                    py: 2,
+                    borderRadius: '25px',
+                    fontFamily: 'Poppins, sans-serif',
+                    fontWeight: '600',
+                    fontSize: '1.2rem',
+                    borderWidth: '2px',
+                    textTransform: 'none',
+                    '&:hover': {
+                      borderColor: 'white',
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      borderWidth: '2px'
+                    }
+                  }}
+                >
+                  🍳 Cook Again
+                </Button>
+                
+                <Button
+                  onClick={() => navigate('/studentdashboard')}
+                  variant="contained"
+                  sx={{
+                    background: 'linear-gradient(135deg, #8B4513 0%, #654321 100%)',
+                    color: 'white',
+                    px: 4,
+                    py: 2,
+                    borderRadius: '25px',
+                    fontFamily: 'Poppins, sans-serif',
+                    fontWeight: '600',
+                    fontSize: '1.2rem',
+                    textTransform: 'none',
+                    boxShadow: '0 10px 25px rgba(139, 69, 19, 0.5)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #A0522D 0%, #8B4513 100%)',
+                      transform: 'translateY(-2px)'
+                    }
+                  }}
+                >
+                  🏠 Back to Home
+                </Button>
+                
+                <Button
+                  onClick={() => navigate('/lesson/cooking/level-5')}
+                  variant="contained"
+                  disabled={progressSaving}
+                  sx={{
+                    background: 'linear-gradient(135deg, #228B22 0%, #1F7A1F 100%)',
+                    color: 'white',
+                    px: 6,
+                    py: 2,
+                    borderRadius: '25px',
+                    fontFamily: 'Poppins, sans-serif',
+                    fontWeight: '700',
+                    fontSize: '1.2rem',
+                    textTransform: 'none',
+                    boxShadow: '0 10px 25px rgba(34, 139, 34, 0.5)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #32CD32 0%, #228B22 100%)',
+                      transform: 'translateY(-2px)'
+                    }
+                  }}
+                >
+                  {progressSaving ? 'Saving...' : '🚀 Next Recipe'}
+                </Button>
+              </Box>
+            </Box>
           </Dialog>
 
           {/* Feedback Message - Realistic */}
