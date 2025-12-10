@@ -52,7 +52,7 @@ import scrubVideo5 from "../../assets/hygieneLevel1/scrub5.mp4"
 import scrubVideo6 from "../../assets/hygieneLevel1/scrub6.mp4"
 import scrubVideo7 from "../../assets/hygieneLevel1/scrub7.mp4"
 
-// Define keyframes outside of component to avoid recreation
+
 const keyframes = {
   bounceAndTilt: {
     '0%': { transform: 'translateY(0px) rotate(0deg)' },
@@ -176,6 +176,9 @@ export default function PersonalHygieneLevel1() {
   const [showStartScreen, setShowStartScreen] = useState(true);
   const [starAnimationStage, setStarAnimationStage] = useState(0);
   const [confettiPieces, setConfettiPieces] = useState([]);
+
+
+  const [score, setScore] = useState(0);
 
   // Add state to track when to hide all images
   const [hideAllImages, setHideAllImages] = useState(false);
@@ -349,6 +352,9 @@ export default function PersonalHygieneLevel1() {
   }
 };
 
+
+
+
   const playSoundEffect = (soundType) => {
     try {
       if (soundType === 'correct' && correctSoundRef.current) {
@@ -432,6 +438,25 @@ export default function PersonalHygieneLevel1() {
   };
 
   // Effects
+
+  useEffect(() => {
+    if (gameCompleted) {
+      setScore(100); // Set perfect score when completed
+    }
+  }, [gameCompleted]);
+
+
+   useEffect(() => {
+    const saveProgressOnComplete = async () => {
+      if (gameCompleted && !progressSaved && !progressSaving) {
+        console.log('Game completed, auto-saving progress...');
+        await saveProgress();
+      }
+    };
+    
+    saveProgressOnComplete();
+  }, [gameCompleted, progressSaved, progressSaving]);
+
   useEffect(() => {
     const cleanup = setInterval(() => {
       if (gameStep !== 2) {
@@ -532,42 +557,41 @@ const saveProgress = async () => {
   try {
     setProgressSaving(true);
     
-    // Force get student ID directly
-    const studentId = parseInt(localStorage.getItem('studentId'), 10);
+    const studentId = getStudentId();
     const lessonIdNum = parseInt(lessonId, 10);
     
-    console.log('Force saving with:', { studentId, lessonId: lessonIdNum });
+    console.log('Saving progress with:', { studentId, lessonId: lessonIdNum });
     
     if (!studentId || !lessonIdNum) {
       throw new Error(`Missing IDs: studentId=${studentId}, lessonId=${lessonIdNum}`);
     }
     
-    const response = await fetch('http://localhost:8080/api/progress/lesson', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        studentId: studentId,
-        lessonId: lessonIdNum,
+    // Use the progress service function instead of direct fetch
+    const result = await saveStudentLessonProgress(
+      studentId,
+      lessonIdNum,
+      {
         score: 100,
         maxScore: 100,
         completed: true,
-        starsEarned: 3
-      }),
-    });
-
-    if (response.ok) {
-      const result = await response.json();
-      console.log('SUCCESS:', result);
+        starsEarned: 3,
+        moduleId: moduleId ? parseInt(moduleId, 10) : null
+      }
+    );
+    
+    console.log('Progress save result:', result);
+    
+    if (result.success || result.queued) {
       setProgressSaved(true);
+      console.log('Progress saved or queued successfully');
     } else {
-      throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+      throw new Error('Progress save failed');
     }
     
   } catch (error) {
     console.error('Save error:', error);
-    alert(`Save failed: ${error.message}`);
+    // Don't use alert in production - use a better error handling method
+    setProgressSaved(false);
   } finally {
     setProgressSaving(false);
   }
@@ -625,6 +649,7 @@ const saveProgress = async () => {
   const handleContinue = async () => {
   console.log('Continue clicked, progress state:', { progressSaved, progressSaving });
   
+  // Save progress if not already saved
   if (!progressSaved && !progressSaving) {
     console.log('Saving progress before continue...');
     await saveProgress();
@@ -633,6 +658,7 @@ const saveProgress = async () => {
     return;
   }
   
+  // Stop audio
   if (audioRef.current) {
     audioRef.current.pause();
     setAudioPlaying(false);
