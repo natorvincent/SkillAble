@@ -9,13 +9,15 @@ import {
   Stack,
   LinearProgress,
   CircularProgress,
-  Chip
+  Chip,
+  IconButton
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '../Navbar';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import StarIcon from '@mui/icons-material/Star';
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import Loader from '../Loader';
 import { 
   getStudentLessonProgress, 
@@ -37,12 +39,6 @@ import characterCatWorried from "../../assets/hygienelevel3/cat_worried.png"
 import characterCatHelpful from "../../assets/hygienelevel3/cat_helpful.png"
 import characterCatExcited from "../../assets/hygienelevel3/cat_excited.png"
 
-// Audio files
-import backgroundMusic from '../../assets/background-music.mp3';
-import correctSound from "../../assets/hygieneLevel1/correct-sound.mp3"
-import incorrectSound from "../../assets/hygieneLevel1/incorrect-sound.mp3"
-import successSound from "../../assets/hygieneLevel1/success-sound.mp3"
-
 // Video files
 import scrubVideo from "../../assets/hygieneLevel1/scrub1.mp4"
 import scrubVideo2 from "../../assets/hygieneLevel1/scrub2.mp4"
@@ -52,7 +48,10 @@ import scrubVideo5 from "../../assets/hygieneLevel1/scrub5.mp4"
 import scrubVideo6 from "../../assets/hygieneLevel1/scrub6.mp4"
 import scrubVideo7 from "../../assets/hygieneLevel1/scrub7.mp4"
 
+// Audio files
+import purrnandolvl1 from "../../assets/hygieneLevel1/purrnandolvl1.mp3"
 
+// Define keyframes outside of component to avoid recreation
 const keyframes = {
   bounceAndTilt: {
     '0%': { transform: 'translateY(0px) rotate(0deg)' },
@@ -168,23 +167,20 @@ export default function PersonalHygieneLevel1() {
   const [gameCompleted, setGameCompleted] = useState(false);
   const [progressSaving, setProgressSaving] = useState(false);
   const [progressSaved, setProgressSaved] = useState(false);
-  const [audioPlaying, setAudioPlaying] = useState(false);
-  const audioRef = useRef(null);
-  const correctSoundRef = useRef(null);
-  const incorrectSoundRef = useRef(null);
-  const successSoundRef = useRef(null);
-  const [showStartScreen, setShowStartScreen] = useState(true);
+  const [score, setScore] = useState(0);
+  
+  // Start screen is removed - set to false
+  const [showStartScreen, setShowStartScreen] = useState(false);
+  
   const [starAnimationStage, setStarAnimationStage] = useState(0);
   const [confettiPieces, setConfettiPieces] = useState([]);
-
-
-  const [score, setScore] = useState(0);
 
   // Add state to track when to hide all images
   const [hideAllImages, setHideAllImages] = useState(false);
 
-  // Add state for character introduction
-  const [showCharacterIntroduction, setShowCharacterIntroduction] = useState(false);
+  // Start directly with character introduction
+  const [showCharacterIntroduction, setShowCharacterIntroduction] = useState(true);
+  
   // Add state for hand introduction
   const [showHandIntroduction, setShowHandIntroduction] = useState(false);
   // Add state for sink introduction
@@ -196,6 +192,9 @@ export default function PersonalHygieneLevel1() {
   const [showStep4Introduction, setShowStep4Introduction] = useState(false);
   // Add state for step 5 introduction
   const [showStep5Introduction, setShowStep5Introduction] = useState(false);
+
+  // Audio state
+  const [purrnandoAudioRef, setPurrnandoAudioRef] = useState(null);
 
   // Scratch card effect states
   const [scratchMarks, setScratchMarks] = useState([]);
@@ -251,12 +250,96 @@ export default function PersonalHygieneLevel1() {
     return relX >= 65 && relX <= 98 && relY >= 3 && relY <= 30;
   };
 
-  const handleStartGame = () => {
-    setShowStartScreen(false);
-    setShowCharacterIntroduction(true);
+  const getStudentId = () => {
+    try {
+      const studentId = localStorage.getItem('studentId');
+      
+      console.log('Retrieving student ID:', { studentId });
+      
+      // Check if we have a valid student ID
+      if (!studentId || studentId === 'null' || studentId === 'undefined') {
+        console.warn('No student ID found in localStorage');
+        return null;
+      }
+      
+      const parsedId = parseInt(studentId, 10);
+      if (isNaN(parsedId)) {
+        console.warn('Invalid student ID format:', studentId);
+        return null;
+      }
+      
+      console.log('Successfully retrieved student ID:', parsedId);
+      return parsedId;
+    } catch (error) {
+      console.error('Error retrieving student ID:', error);
+      return null;
+    }
   };
 
+  // Audio functions
+  const playPurrnandoAudio = () => {
+    if (purrnandoAudioRef) {
+      purrnandoAudioRef.currentTime = 0;
+      purrnandoAudioRef.play().catch(error => {
+        console.log('Purrnando audio play prevented:', error);
+      });
+    }
+  };
+
+  const stopPurrnandoAudio = () => {
+    if (purrnandoAudioRef) {
+      purrnandoAudioRef.pause();
+      purrnandoAudioRef.currentTime = 0;
+    }
+  };
+
+  // Initialize audio when component mounts
+  useEffect(() => {
+    // Create and play purrnando audio immediately when character introduction shows
+    const purrnandoAudio = new Audio(purrnandolvl1);
+    purrnandoAudio.volume = 0.7;
+    setPurrnandoAudioRef(purrnandoAudio);
+    
+    // Play purrnando audio immediately when character introduction appears
+    const playPurrnandoAudioOnMount = () => {
+      if (showCharacterIntroduction) {
+        purrnandoAudio.play().catch(error => {
+          console.log('Purrnando audio autoplay prevented:', error);
+          const playOnInteraction = () => {
+            purrnandoAudio.play();
+            document.removeEventListener('click', playOnInteraction);
+            document.removeEventListener('touchstart', playOnInteraction);
+          };
+          document.addEventListener('click', playOnInteraction);
+          document.addEventListener('touchstart', playOnInteraction);
+        });
+      }
+    };
+
+    const timer = setTimeout(playPurrnandoAudioOnMount, 1000);
+
+    return () => {
+      clearTimeout(timer);
+      if (purrnandoAudio) {
+        purrnandoAudio.pause();
+        purrnandoAudio.currentTime = 0;
+      }
+    };
+  }, [showCharacterIntroduction]);
+
+  // Clean up audio when component unmounts
+  useEffect(() => {
+    return () => {
+      if (purrnandoAudioRef) {
+        purrnandoAudioRef.pause();
+        purrnandoAudioRef.currentTime = 0;
+      }
+    };
+  }, [purrnandoAudioRef]);
+
   const handleCharacterIntroductionComplete = () => {
+    // Stop purrnando audio when introduction is complete
+    stopPurrnandoAudio();
     setShowCharacterIntroduction(false);
     setShowHandIntroduction(true);
   };
@@ -278,7 +361,6 @@ export default function PersonalHygieneLevel1() {
     setTimeout(() => {
       setGameStep(2);
       setShowStep2Introduction(true);
-      playSoundEffect('correct');
     }, 500);
   };
 
@@ -309,7 +391,6 @@ export default function PersonalHygieneLevel1() {
 
       if (isInSoapArea(relativeX, relativeY)) {
         setSoapPlaced(true);
-        playSoundEffect('correct');
         
         setTimeout(() => {
           setGameStep(4);
@@ -322,53 +403,48 @@ export default function PersonalHygieneLevel1() {
   const handleHandRub = () => {
     if (gameStep !== 4 || handsRubbed) return;
     setShowScrubVideo(true);
-    playSoundEffect('correct');
   };
 
-  const getStudentId = () => {
-  try {
-    const studentId = localStorage.getItem('studentId');
-    const userType = localStorage.getItem('userType');
-    
-    console.log('Retrieving student ID:', { studentId, userType });
-    
-    // Check if we have a valid student ID regardless of userType
-    if (!studentId || studentId === 'null' || studentId === 'undefined') {
-      console.warn('No student ID found in localStorage');
-      return null;
-    }
-    
-    const parsedId = parseInt(studentId, 10);
-    if (isNaN(parsedId)) {
-      console.warn('Invalid student ID format:', studentId);
-      return null;
-    }
-    
-    console.log('Successfully retrieved student ID:', parsedId);
-    return parsedId;
-  } catch (error) {
-    console.error('Error retrieving student ID:', error);
-    return null;
-  }
-};
-
-
-
-
-  const playSoundEffect = (soundType) => {
+  const saveProgress = async () => {
     try {
-      if (soundType === 'correct' && correctSoundRef.current) {
-        correctSoundRef.current.currentTime = 0;
-        correctSoundRef.current.play();
-      } else if (soundType === 'incorrect' && incorrectSoundRef.current) {
-        incorrectSoundRef.current.currentTime = 0;
-        incorrectSoundRef.current.play();
-      } else if (soundType === 'success' && successSoundRef.current) {
-        successSoundRef.current.currentTime = 0;
-        successSoundRef.current.play();
+      setProgressSaving(true);
+      
+      const studentId = getStudentId();
+      const lessonIdNum = parseInt(lessonId, 10);
+      
+      console.log('Saving progress with:', { studentId, lessonId: lessonIdNum });
+      
+      if (!studentId || !lessonIdNum) {
+        throw new Error(`Missing IDs: studentId=${studentId}, lessonId=${lessonIdNum}`);
       }
+      
+      // Use the progress service function instead of direct fetch
+      const result = await saveStudentLessonProgress(
+        studentId,
+        lessonIdNum,
+        {
+          score: 100,
+          maxScore: 100,
+          completed: true,
+          starsEarned: 3,
+          moduleId: moduleId ? parseInt(moduleId, 10) : null
+        }
+      );
+      
+      console.log('Progress save result:', result);
+      
+      if (result.success || result.queued) {
+        setProgressSaved(true);
+        console.log('Progress saved or queued successfully');
+      } else {
+        throw new Error('Progress save failed');
+      }
+      
     } catch (error) {
-      console.log('Error playing sound:', error);
+      console.error('Save error:', error);
+      setProgressSaved(false);
+    } finally {
+      setProgressSaving(false);
     }
   };
 
@@ -392,7 +468,6 @@ export default function PersonalHygieneLevel1() {
             setRightHandWet(true);
             setHideAllImages(true);
             setShowWetHands(true);
-            playSoundEffect('correct');
             setTimeout(() => {
               setShowWetHands(false);
               setHideAllImages(false);
@@ -402,7 +477,6 @@ export default function PersonalHygieneLevel1() {
           } else if (gameStep === 5) {
             setHideAllImages(true);
             setShowWetHands(true);
-            playSoundEffect('correct');
             setTimeout(() => {
               setShowWetHands(false);
               setHideAllImages(false);
@@ -410,7 +484,6 @@ export default function PersonalHygieneLevel1() {
               
               setTimeout(() => {
                 setShowSuccess(true);
-                playSoundEffect('success');
                 setGameCompleted(true);
               }, 1000);
             }, 2000);
@@ -438,15 +511,13 @@ export default function PersonalHygieneLevel1() {
   };
 
   // Effects
-
   useEffect(() => {
     if (gameCompleted) {
       setScore(100); // Set perfect score when completed
     }
   }, [gameCompleted]);
 
-
-   useEffect(() => {
+  useEffect(() => {
     const saveProgressOnComplete = async () => {
       if (gameCompleted && !progressSaved && !progressSaving) {
         console.log('Game completed, auto-saving progress...');
@@ -469,16 +540,16 @@ export default function PersonalHygieneLevel1() {
   }, [gameStep]);
 
   useEffect(() => {
-  console.log('Progress state:', {
-    studentId: getStudentId(),
-    lessonId,
-    moduleId,
-    gameCompleted,
-    progressSaving,
-    progressSaved,
-    showSuccess
-  });
-}, [gameCompleted, progressSaving, progressSaved, showSuccess, lessonId, moduleId]);
+    console.log('Progress state:', {
+      studentId: getStudentId(),
+      lessonId,
+      moduleId,
+      gameCompleted,
+      progressSaving,
+      progressSaved,
+      showSuccess
+    });
+  }, [gameCompleted, progressSaving, progressSaved, showSuccess, lessonId, moduleId]);
 
   useEffect(() => {
     const fetchUserProgress = async () => {
@@ -553,51 +624,10 @@ export default function PersonalHygieneLevel1() {
     };
   }, [gameStep, faucetOn]);
 
-const saveProgress = async () => {
-  try {
-    setProgressSaving(true);
-    
-    const studentId = getStudentId();
-    const lessonIdNum = parseInt(lessonId, 10);
-    
-    console.log('Saving progress with:', { studentId, lessonId: lessonIdNum });
-    
-    if (!studentId || !lessonIdNum) {
-      throw new Error(`Missing IDs: studentId=${studentId}, lessonId=${lessonIdNum}`);
-    }
-    
-    // Use the progress service function instead of direct fetch
-    const result = await saveStudentLessonProgress(
-      studentId,
-      lessonIdNum,
-      {
-        score: 100,
-        maxScore: 100,
-        completed: true,
-        starsEarned: 3,
-        moduleId: moduleId ? parseInt(moduleId, 10) : null
-      }
-    );
-    
-    console.log('Progress save result:', result);
-    
-    if (result.success || result.queued) {
-      setProgressSaved(true);
-      console.log('Progress saved or queued successfully');
-    } else {
-      throw new Error('Progress save failed');
-    }
-    
-  } catch (error) {
-    console.error('Save error:', error);
-    // Don't use alert in production - use a better error handling method
-    setProgressSaved(false);
-  } finally {
-    setProgressSaving(false);
-  }
-};
-
   const resetGame = () => {
+    // Stop audio when resetting game
+    stopPurrnandoAudio();
+    
     setShowFeedback(false);
     setShowSuccess(false);
     setGameCompleted(false);
@@ -632,14 +662,6 @@ const saveProgress = async () => {
     setSinkPulseScale(1);
 
     setGermBlobs(initializeGerms());
-
-    if (audioRef.current) {
-      try {
-        audioRef.current.play().then(() => {
-          setAudioPlaying(true);
-        }).catch(() => {});
-      } catch (err) {}
-    }
   };
 
   const getStarRating = () => {
@@ -647,34 +669,25 @@ const saveProgress = async () => {
   };
 
   const handleContinue = async () => {
-  console.log('Continue clicked, progress state:', { progressSaved, progressSaving });
-  
-  // Save progress if not already saved
-  if (!progressSaved && !progressSaving) {
-    console.log('Saving progress before continue...');
-    await saveProgress();
-  } else if (progressSaving) {
-    console.log('Progress is currently saving, please wait...');
-    return;
-  }
-  
-  // Stop audio
-  if (audioRef.current) {
-    audioRef.current.pause();
-    setAudioPlaying(false);
-  }
-  
-  console.log('Navigating back...');
-  setTimeout(() => {
-    navigate(-1);
-  }, 300);
-};
+    console.log('Continue clicked, progress state:', { progressSaved, progressSaving });
+    
+    if (!progressSaved && !progressSaving) {
+      console.log('Saving progress before continue...');
+      await saveProgress();
+    } else if (progressSaving) {
+      console.log('Progress is currently saving, please wait...');
+      return;
+    }
+    
+    console.log('Navigating back...');
+    setTimeout(() => {
+      navigate(-1);
+    }, 300);
+  };
 
   const handleGoHome = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      setAudioPlaying(false);
-    }
+    // Stop audio when going home
+    stopPurrnandoAudio();
     navigate(-1);
   };
 
@@ -694,43 +707,6 @@ const saveProgress = async () => {
       return () => clearTimeout(timer);
     }
   }, [showSuccess, gameCompleted]);
-
-  useEffect(() => {
-    const audio = new Audio(backgroundMusic);
-    audio.loop = true;
-    audio.volume = 0.3;
-    audioRef.current = audio;
-
-    const correctAudio = new Audio(correctSound);
-    const incorrectAudio = new Audio(incorrectSound);
-    const successAudio = new Audio(successSound);
-    
-    correctAudio.volume = 0.7;
-    incorrectAudio.volume = 0.7;
-    successAudio.volume = 0.7;
-    
-    correctSoundRef.current = correctAudio;
-    incorrectSoundRef.current = incorrectAudio;
-    successSoundRef.current = successAudio;
-
-    const playAudio = () => {
-      audio.play().then(() => {
-        setAudioPlaying(true);
-      }).catch(error => {
-        console.log('Audio autoplay prevented:', error);
-      });
-    };
-
-    const timer = setTimeout(playAudio, 1000);
-
-    return () => {
-      clearTimeout(timer);
-      if (audio) {
-        audio.pause();
-        audio.currentTime = 0;
-      }
-    };
-  }, []);
 
   useEffect(() => {
     if (showSuccess) {
@@ -763,114 +739,148 @@ const saveProgress = async () => {
   }, [showSuccess]);
 
   // Character Introduction Popup Component
-  const CharacterIntroductionPopup = () => (
-    <Box
-      sx={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 2000
-      }}
-    >
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center',
-        mb: 15,
-        position: 'relative'
-      }}>
-        <Box
-          component="img"
-          src={characterCatExcited}
-          alt="Purrnando the Cat"
-          sx={{
-            width: 400,
-            height: 400,
-            filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3))',
-            animation: 'bounceAndTilt 3s ease-in-out infinite',
-            '@keyframes bounceAndTilt': keyframes.bounceAndTilt
-          }}
-        />
-      </Box>
-      
-      <Paper
+  const CharacterIntroductionPopup = () => {
+    return (
+      <Box
         sx={{
           position: 'fixed',
-          bottom: 50,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          borderRadius: '20px',
-          padding: 3,
-          maxWidth: '600px',
-          width: '90%',
-          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
-          border: '3px solid #FFD166',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
-          gap: 3
+          justifyContent: 'center',
+          zIndex: 2000
         }}
       >
-        <Box sx={{ flex: 1, textAlign: 'left' }}>
-          <Typography
-            variant="h4"
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          mb: 15,
+          position: 'relative'
+        }}>
+          <IconButton
+            onClick={playPurrnandoAudio}
             sx={{
-              fontWeight: 'bold',
-              color: '#280B60',
-              mb: 1,
-              fontFamily: 'Poppins, sans-serif'
-            }}
-          >
-            Hi! I'm Purrnando! 🐱
-          </Typography>
-          
-          <Typography
-            variant="h6"
-            sx={{
-              color: '#333',
-              mb: 2,
-              fontFamily: 'Inter, sans-serif',
-              lineHeight: 1.4
-            }}
-          >
-            I'm here to help you learn how to wash your hands properly! 
-            Keeping your hands clean is super important for staying healthy.
-            Ready to learn with me?
-          </Typography>
-          
-          <Button
-            variant="contained"
-            onClick={handleCharacterIntroductionComplete}
-            sx={{
-              background: 'linear-gradient(135deg, #FFD166 0%, #FFB700 100%)',
-              color: '#280B60',
-              px: 4,
-              py: 1,
-              borderRadius: '20px',
-              fontFamily: 'Poppins, sans-serif',
-              fontWeight: '700',
-              fontSize: '1.1rem',
-              textTransform: 'none',
-              boxShadow: '0 4px 15px rgba(255, 209, 102, 0.4)',
+              position: 'absolute',
+              top: 10,
+              right: 10,
+              backgroundColor: 'rgba(25, 130, 196, 0.9)',
+              color: 'white',
+              width: 50,
+              height: 50,
+              zIndex: 2001,
               '&:hover': {
-                background: 'linear-gradient(135deg, #FFDC87 0%, #FFD166 100%)',
-                transform: 'translateY(-2px)'
+                backgroundColor: 'rgba(25, 130, 196, 1)',
+                transform: 'scale(1.1)'
               }
             }}
+            title="Replay Purrnando's Introduction"
           >
-            YES, LET'S GO! 🐾
-          </Button>
+            <VolumeUpIcon sx={{ fontSize: 25 }} />
+          </IconButton>
+          
+          <Box
+            component="img"
+            src={characterCatExcited}
+            alt="Purrnando the Cat"
+            sx={{
+              width: 400,
+              height: 400,
+              filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3))',
+              animation: 'bounceAndTilt 3s ease-in-out infinite',
+              '@keyframes bounceAndTilt': keyframes.bounceAndTilt,
+              cursor: 'pointer',
+              '&:hover': {
+                animation: 'bounceAndTilt 1s ease-in-out infinite',
+                transform: 'scale(1.05)',
+              },
+              transition: 'transform 0.3s ease'
+            }}
+          />
         </Box>
-      </Paper>
-    </Box>
-  );
+        
+        <Paper
+          sx={{
+            position: 'fixed',
+            bottom: 150,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            borderRadius: '20px',
+            padding: 3,
+            maxWidth: '600px',
+            width: '90%',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
+            border: '3px solid #FFD166',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 3
+          }}
+        >
+          <Box sx={{ flex: 1, textAlign: 'left' }}>
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 'bold',
+                color: '#280B60',
+                mb: 1,
+                fontFamily: 'Poppins, sans-serif'
+              }}
+            >
+              Hi! I'm Purrnando! 🐱
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+              <Button
+                variant="contained"
+                onClick={handleCharacterIntroductionComplete}
+                sx={{
+                  background: 'linear-gradient(135deg, #FFD166 0%, #FFB700 100%)',
+                  color: '#280B60',
+                  px: 4,
+                  py: 3,
+                  borderRadius: '20px',
+                  fontFamily: 'Poppins, sans-serif',
+                  fontWeight: '700',
+                  fontSize: '1.1rem',
+                  textTransform: 'none',
+                  boxShadow: '0 4px 15px rgba(255, 209, 102, 0.4)',
+                  animation: (theme) => `
+                    pulse 2s infinite ${theme.transitions.easing.easeInOut}
+                  `,
+                  '@keyframes pulse': {
+                    '0%': {
+                      background: 'linear-gradient(135deg, #FFD166 0%, #FFB700 100%)',
+                      boxShadow: '0 4px 15px rgba(255, 209, 102, 0.4)',
+                    },
+                    '50%': {
+                      background: 'linear-gradient(135deg, #FFDC87 0%, #FFD166 100%)',
+                      boxShadow: '0 4px 20px rgba(255, 209, 102, 0.6)',
+                    },
+                    '100%': {
+                      background: 'linear-gradient(135deg, #FFD166 0%, #FFB700 100%)',
+                      boxShadow: '0 4px 15px rgba(255, 209, 102, 0.4)',
+                    },
+                  },
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #FFDC87 0%, #FFD166 100%)',
+                    transform: 'translateY(-2px)',
+                    animation: 'none',
+                  },
+                }}
+              >
+                YES, LET'S GO! 🐾
+              </Button>
+            </Box>
+          </Box>
+        </Paper>
+      </Box>
+    );
+  };
 
   // Hand Introduction Popup Component
   const HandIntroductionPopup = () => (
@@ -1099,7 +1109,7 @@ const saveProgress = async () => {
       <Paper
         sx={{
           position: 'fixed',
-          bottom: 50,
+          bottom: 120,
           left: '50%',
           transform: 'translateX(-50%)',
           backgroundColor: 'rgba(255, 255, 255, 0.95)',
@@ -1148,19 +1158,6 @@ const saveProgress = async () => {
             Oh no! You need to clean your hands!
           </Typography>
           
-          <Typography
-            variant="body1"
-            sx={{
-              color: '#333',
-              mb: 2,
-              fontSize: '1rem',
-              fontFamily: 'Inter, sans-serif',
-              lineHeight: 1.4
-            }}
-          >
-            Look at these dirty hands! They're covered in germs and mud and need a good wash. 
-            Let's learn how to make them clean and healthy!
-          </Typography>
           
           <Button
             variant="contained"
@@ -1169,7 +1166,7 @@ const saveProgress = async () => {
               background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
               color: 'white',
               px: 4,
-              py: 1,
+              py: 3,
               borderRadius: '20px',
               fontFamily: 'Poppins, sans-serif',
               fontWeight: '700',
@@ -2169,89 +2166,6 @@ const saveProgress = async () => {
     </Box>
   );
 
-  // Start screen
-  if (showStartScreen) {
-    return (
-      <div style={{
-        minHeight: "100vh",
-        width: "100%",
-        backgroundImage: `url(${bathroomBg})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-        position: "fixed"
-      }}>
-        <Navbar />
-        <Box sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'linear-gradient(135deg, rgba(144, 190, 109, 0.8) 0%, rgba(25, 130, 196, 0.8) 100%)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'column',
-          zIndex: 1
-        }}>
-          <Typography variant="h1" sx={{ 
-            color: 'white', 
-            fontWeight: 'bold', 
-            mb: 2,
-            fontFamily: 'Poppins, sans-serif',
-            fontSize: { xs: '3rem', md: '5rem' },
-            textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
-            textAlign: 'center'
-          }}>
-            Handwashing
-          </Typography>
-          
-          <Typography variant="h4" sx={{ 
-            color: 'rgba(255, 255, 255, 0.95)', 
-            mb: 6,
-            fontFamily: 'Inter, sans-serif',
-            lineHeight: 1.5,
-            textAlign: 'center',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-            maxWidth: '600px',
-            px: 2
-          }}>
-            Learn how to wash your hands properly to keep them clean and healthy!
-          </Typography>
-          
-          <Stack direction="row" spacing={3}>
-            <Button 
-              variant="contained"
-              onClick={handleStartGame}
-              sx={{ 
-                background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
-                color: 'white',
-                px: 8,
-                py: 2,
-                borderRadius: '25px',
-                fontFamily: 'Poppins, sans-serif',
-                fontWeight: '700',
-                fontSize: '1.5rem',
-                textTransform: 'none',
-                boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
-                  transform: 'translateY(-2px)'
-                }
-              }}
-            >
-              Start!
-            </Button>
-          </Stack>
-        </Box>
-      </div>
-    );
-  }
-
   if (loading) {
     return (
       <div style={{
@@ -2307,7 +2221,7 @@ const saveProgress = async () => {
             </Typography>
             <Button 
               variant="contained" 
-              onClick={() => navigate('/studentdashboard')}
+              onClick={() => navigate('/homepage')}
               sx={{ 
                 backgroundColor: '#FF595E',
                 fontSize: '1.2rem',
@@ -2316,7 +2230,7 @@ const saveProgress = async () => {
                 borderRadius: '20px',
                 fontFamily: 'Poppins, sans-serif',
                 fontWeight: '600',
-                '&:hover': { backgroundColor: '#412223ff' }
+                '&:hover': { backgroundColor: '#E04549' }
               }}
             >
               Go Home
@@ -2393,48 +2307,6 @@ const saveProgress = async () => {
               }} 
             />
           </Box>
-        </Box>
-
-        <Box sx={{ 
-          position: 'fixed',
-          top: 100,
-          right: 20,
-          zIndex: 1000
-        }}>
-          <Button
-            onClick={() => {
-              if (audioRef) {
-                if (audioPlaying) {
-                  audioRef.pause();
-                  setAudioPlaying(false);
-                } else {
-                  audioRef.play().then(() => {
-                    setAudioPlaying(true);
-                  }).catch(error => {
-                    console.log('Audio play failed:', error);
-                  });
-                }
-              }
-            }}
-            sx={{
-              minWidth: '60px',
-              width: '60px',
-              height: '60px',
-              borderRadius: '50%',
-              background: audioPlaying 
-                ? 'linear-gradient(135deg, #90BE6D 0%, #7BA05B 100%)'
-                : 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
-              color: 'white',
-              fontSize: '1.5rem',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
-              '&:hover': {
-                transform: 'scale(1.1)',
-                boxShadow: '0 6px 20px rgba(0,0,0,0.4)'
-              }
-            }}
-          >
-            {audioPlaying ? '🔊' : '🔇'}
-          </Button>
         </Box>
 
         <Box sx={{ 
@@ -2763,7 +2635,17 @@ const saveProgress = async () => {
                        {/* Only show mud in steps 1-4, not in step 5 */}
                        {gameStep < 5 && (
                          <Box component="img" src={mudImg} alt="Mud on left hand" draggable={false}
-                           sx={{ position: 'absolute', left: '60%', bottom: '18%', transform: 'translate(-50%, 0)', width: 165, height: 'auto', zIndex: 7, pointerEvents: 'none' }} />
+                           sx={{
+                             position: 'absolute',
+                             left: '60%',
+                             bottom: '18%',
+                             transform: 'translate(-50%, 0)',
+                             width: 165,
+                             height: 'auto',
+                             zIndex: 7,
+                             pointerEvents: 'none'
+                           }}
+                         />
                        )}
                      </Box>
    
@@ -2774,7 +2656,17 @@ const saveProgress = async () => {
                       {/* Only show mud in steps 1-4, not in step 5 */}
                       {gameStep < 5 && (
                         <Box component="img" src={mudImg} alt="Mud on right hand" draggable={false}
-                          sx={{ position: 'absolute', left: '45%', bottom: '35%', transform: 'translate(-50%, 0)', width: 120, height: 'auto', zIndex: 7, pointerEvents: 'none' }} />
+                          sx={{
+                            position: 'absolute',
+                            left: '45%',
+                            bottom: '35%',
+                            transform: 'translate(-50%, 0)',
+                            width: 120,
+                            height: 'auto',
+                            zIndex: 7,
+                            pointerEvents: 'none'
+                          }}
+                        />
                       )}
                       {/* Show soap only in steps 3-4, not in step 5 */}
                       {soapPlaced && gameStep < 5 && (
