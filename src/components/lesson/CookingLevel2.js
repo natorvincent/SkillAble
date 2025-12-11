@@ -16,6 +16,7 @@ import StarIcon from '@mui/icons-material/Star';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import Navbar from '../Navbar';
+import { saveStudentLessonProgress } from '../../services/progressService';
 
 // Import kitchen background and ingredient images
 import kitchenBg from "../../assets/sortingLevel1/kitchen.jpg";
@@ -153,50 +154,95 @@ export default function CookingLevel2() {
   };
 
   // Save progress to database
-  const saveProgress = async () => {
-    if (progressSaving || progressSaved) return;
+  // const saveProgress = async () => {
+  //   if (progressSaving || progressSaved) return;
 
-    try {
-      setProgressSaving(true);
-      const studentId = getStudentId();
+  //   try {
+  //     setProgressSaving(true);
+  //     const studentId = getStudentId();
       
-      if (!studentId || !lessonId) {
-        console.error('Cannot save progress - missing data:', { studentId, lessonId });
-        return;
-      }
+  //     if (!studentId || !lessonId) {
+  //       console.error('Cannot save progress - missing data:', { studentId, lessonId });
+  //       return;
+  //     }
       
-      const finalScore = 3;
+  //     const finalScore = 3;
       
-      const progressData = {
-        studentId: studentId,
-        lessonId: parseInt(lessonId, 10),
-        score: finalScore,
-        maxScore: 3,
-        completed: true,
-        starsEarned: 3
-      };
+  //     const progressData = {
+  //       studentId: studentId,
+  //       lessonId: parseInt(lessonId, 10),
+  //       score: finalScore,
+  //       maxScore: 3,
+  //       completed: true,
+  //       starsEarned: 3
+  //     };
       
-      console.log('Progress simulatedly saved:', progressData);
-      setProgressSaved(true);
+  //     console.log('Progress simulatedly saved:', progressData);
+  //     setProgressSaved(true);
       
-    } catch (error) {
-      console.error('Error saving progress:', error);
-    } finally {
-      setProgressSaving(false);
+  //   } catch (error) {
+  //     console.error('Error saving progress:', error);
+  //   } finally {
+  //     setProgressSaving(false);
+  //   }
+  // };
+
+
+  const saveProgress = async () => {
+  if (progressSaving || progressSaved) return;
+
+  try {
+    setProgressSaving(true);
+    const studentId = getStudentId();
+    
+    if (!studentId || !lessonId) {
+      console.error('Cannot save progress - missing data:', { studentId, lessonId });
+      return;
     }
-  };
+    
+    const finalScore = 3;
+    
+    const progressData = {
+      studentId: studentId,
+      lessonId: parseInt(lessonId, 10),
+      score: finalScore,
+      maxScore: 3,
+      completed: true,
+      starsEarned: 3
+    };
+    
+    console.log('Progress simulatedly saved:', progressData);
+    setProgressSaved(true);
+    
+  } catch (error) {
+    console.error('Error saving progress:', error);
+  } finally {
+    setProgressSaving(false);
+  }
+};
+// end of saveProgress
+
+
 
   const handleGoHome = () => {
     navigate('/studentdashboard');
   };
 
-  const continueToNextLevel = async () => {
-    if (!progressSaved && !progressSaving) {
-      await saveProgress();
-    }
+  // const continueToNextLevel = async () => {
+  //   if (!progressSaved && !progressSaving) {
+  //     await saveProgress();
+  //   }
     
-    navigate('/lesson/cooking/level-3');
-  };
+  //   navigate('/lesson/cooking/level-3');
+  // };
+
+const continueToNextLevel = async () => {
+  if (!progressSaved && !progressSaving) {
+    await saveProgress();
+  }
+  
+  navigate('/lesson/cooking/level-3');
+};
 
   // Initialize audio elements
   useEffect(() => {
