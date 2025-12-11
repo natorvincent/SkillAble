@@ -16,7 +16,7 @@ import StarIcon from '@mui/icons-material/Star';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import Navbar from '../Navbar';
-// import { saveStudentLessonProgress } from '../../services/progressService';
+import { saveStudentLessonProgress } from '../../services/progressService';
 
 // Import kitchen background and ingredient images
 import kitchenBg from "../../assets/sortingLevel1/kitchen.jpg";
@@ -241,8 +241,7 @@ const saveProgress = async () => {
   } catch (error) {
     console.error('Error saving progress:', error);
     // Show user-friendly error
-    setFeedbackMessage('Unable to save progress. Your progress will be saved locally and synced later.');
-    setTimeout(() => setFeedbackMessage(''), 5000);
+   
     
     // Mark as saved locally (queued)
     setProgressSaved(true);
