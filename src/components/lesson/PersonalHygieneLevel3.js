@@ -855,50 +855,6 @@ const VideoPopup = ({ onContinue, currentStep, firstHandDragCompleted, firstFoot
   );
 };
 
-// Add Progress Display Component
-const ProgressDisplay = ({ currentProgress, progressSaving, progressSaved }) => (
-  <Box sx={{
-    position: 'fixed',
-    top: 100,
-    left: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    color: 'white',
-    padding: '10px 15px',
-    borderRadius: '10px',
-    zIndex: 1020,
-    minWidth: '200px'
-  }}>
-    <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
-      Progress: {Math.round(currentProgress.score)}%
-    </Typography>
-    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-      {[...Array(3)].map((_, i) => (
-        <StarIcon 
-          key={i} 
-          sx={{ 
-            fontSize: 16,
-            color: i < currentProgress.starsEarned ? '#FFD700' : 'rgba(255, 255, 255, 0.3)',
-            mr: 0.5
-          }} 
-        />
-      ))}
-    </Box>
-    <Typography variant="caption">
-      Steps: {currentProgress.stepsCompleted}/24
-    </Typography>
-    {progressSaving && (
-      <Typography variant="caption" sx={{ display: 'block', color: '#90BE6D', mt: 1 }}>
-        Saving...
-      </Typography>
-    )}
-    {progressSaved && (
-      <Typography variant="caption" sx={{ display: 'block', color: '#90BE6D', mt: 1 }}>
-        Saved ✓
-      </Typography>
-    )}
-  </Box>
-);
-
 export default function NailCareGame() {
   const navigate = useNavigate();
   const { moduleId, lessonId } = useParams();
@@ -956,15 +912,6 @@ export default function NailCareGame() {
   const gameAreaRef = useRef(null);
   const videoRef = useRef(null);
 
-  // ADDED: Progress tracking state
-  const [currentProgress, setCurrentProgress] = useState({
-    score: 0,
-    completed: false,
-    starsEarned: 0,
-    stepsCompleted: 0,
-    totalSteps: 24 // 20 nails + 4 cleanup steps (hands and feet completion)
-  });
-
   const nailDropZones = {
     leftHand: [
       { x: 37, y: 18, width: 4, height: 8 },
@@ -996,203 +943,26 @@ export default function NailCareGame() {
     ]
   };
 
-  // UPDATED: Improved getProgressPercentage function
-  const getProgressPercentage = () => {
-    const totalSteps = 24; // 20 nails + 2 hands completion + 2 feet completion
-    
-    // Count completed nails
-    const completedNailsCount = completedNails.length;
-    
-    // Count completed steps (hands/feet completion)
-    let completedStepsCount = completedNailsCount;
-    if (completedFirstHand) completedStepsCount += 1;
-    if (currentStep === 'second-hand' && clippingCount >= 5) completedStepsCount += 1;
-    if (completedFirstFoot) completedStepsCount += 1;
-    if (currentStep === 'second-foot' && clippingCount >= 5) completedStepsCount += 1;
-    if (clippingsCleaned) completedStepsCount += 1;
-    
-    const progress = (completedStepsCount / totalSteps) * 100;
-    
-    // Update current progress
-    setCurrentProgress(prev => ({
-      ...prev,
-      score: progress,
-      stepsCompleted: completedStepsCount
-    }));
-    
-    return progress;
-  };
-
-  // UPDATED: Enhanced completeGame function
-  const completeGame = () => {
-    setScore(100);
-    setGameCompleted(true);
-    
-    // Update progress to completed
-    setCurrentProgress(prev => ({
-      ...prev,
-      score: 100,
-      completed: true,
-      starsEarned: 3
-    }));
-    
-    playSoundEffect('success');
-    
-    // Auto-save progress
-    setTimeout(async () => {
-      await saveProgress();
-    }, 500);
-    
-    setTimeout(() => {
-      setShowSuccess(true);
-    }, 1000);
-  };
-
-  // UPDATED: Enhanced getStudentId function
-  const getStudentId = () => {
-    try {
-      // Try multiple possible storage locations
-      let studentId = localStorage.getItem('studentId') || 
-                     localStorage.getItem('userId') || 
-                     sessionStorage.getItem('studentId') ||
-                     sessionStorage.getItem('userId');
-      
-      const userType = localStorage.getItem('userType') || 'student';
-      
-      console.log('Retrieving student ID:', { studentId, userType });
-      
-      if (!studentId || studentId === 'null' || studentId === 'undefined' || studentId === '') {
-        console.warn('No student ID found in storage');
-        
-        // Check if this is a demo/sample user
-        if (window.location.search.includes('demo=true')) {
-          console.log('Using demo student ID');
-          return 999; // Demo user ID
-        }
-        
-        return null;
-      }
-      
-      const parsedId = parseInt(studentId, 10);
-      if (isNaN(parsedId)) {
-        console.warn('Invalid student ID format:', studentId);
-        
-        // Try to extract numbers from the string
-        const match = studentId.match(/\d+/);
-        if (match) {
-          const extractedId = parseInt(match[0], 10);
-          console.log('Extracted student ID:', extractedId);
-          return extractedId;
-        }
-        
-        return null;
-      }
-      
-      console.log('Successfully retrieved student ID:', parsedId);
-      return parsedId;
-    } catch (error) {
-      console.error('Error retrieving student ID:', error);
-      return null;
-    }
-  };
-
-  // UPDATED: Enhanced saveProgress function
-  const saveProgress = async () => {
-    if (progressSaving || progressSaved) {
-      console.log('Progress already saving or saved, skipping');
-      return;
-    }
-
-    try {
-      setProgressSaving(true);
-      
-      const studentId = getStudentId();
-      
-      console.log('Authentication check:', { 
-        studentId, 
-        userType: localStorage.getItem('userType'),
-        studentIdFromStorage: localStorage.getItem('studentId')
-      });
-      
-      if (!studentId) {
-        console.error('Cannot save progress: No valid student ID found');
-        
-        let errorMessage = 'Please log in to save your progress.\n\n';
-        errorMessage += `Debug Info:\n`;
-        errorMessage += `- User type: ${localStorage.getItem('userType') || 'Not set'}\n`;
-        errorMessage += `- Student ID: ${localStorage.getItem('studentId') || 'Not found'}`;
-        
-        alert(errorMessage);
-        setProgressSaving(false);
-        return;
-      }
-      
-      if (!lessonId) {
-        console.error('Cannot save progress: No lesson ID available');
-        alert('Lesson ID is missing. Cannot save progress.');
-        setProgressSaving(false);
-        return;
-      }
-
-      const progressData = {
-        score: currentProgress.score,
-        maxScore: 100,  
-        completed: currentProgress.completed,
-        starsEarned: currentProgress.starsEarned,
-        moduleId: moduleId ? parseInt(moduleId, 10) : null,
-        extra: {
-          stepsCompleted: currentProgress.stepsCompleted,
-          completedNailsCount: completedNails.length,
-          completedFirstHand,
-          completedFirstFoot,
-          clippingsCleaned
-        }
-      };
-      
-      console.log('Saving progress data:', progressData);
-      
-      const result = await saveStudentLessonProgress(
-        studentId, 
-        parseInt(lessonId, 10), 
-        progressData
-      );
-      
-      console.log('Progress save result:', result);
-      setProgressSaved(true);
-      
-    } catch (error) {
-      console.error('Error saving progress:', error);
-      
-      if (error.message.includes('No student ID available')) {
-        alert('Please log in to save your progress.');
-      } else {
-        alert('Failed to save progress. Please try again.');
-      }
-    } finally {
-      setProgressSaving(false);
-    }
-  };
-
   const getCharacterMessage = () => {
-    switch (currentStep) {
-      case 'hand-selection':
-        return 'Choose a hand to start! 🐾';
-      case 'first-hand':
-        return `Drag to each nail! ${clippingCount}/5 done!`;
-      case 'second-hand':
-        return `Almost there! ${clippingCount}/5 done!`;
-      case 'foot-selection':
-        return 'Now choose a foot! 🦶';
-      case 'first-foot':
-        return `Foot nails! ${clippingCount}/5 done!`;
-      case 'second-foot':
-        return `Last foot! ${clippingCount}/5 done!`;
-      case 'complete':
-        return 'Perfect hygiene! You trimmed all nails! 🎉';
-      default:
-        return 'Let\'s trim those nails!';
-    }
-  };
+  switch (currentStep) {
+    case 'hand-selection':
+      return 'Choose a hand to start! 🐾';
+    case 'first-hand':
+      return `Drag to each nail! ${clippingCount}/5 done!`;
+    case 'second-hand':
+      return `Almost there! ${clippingCount}/5 done!`;
+    case 'foot-selection':
+      return 'Now choose a foot! 🦶';
+    case 'first-foot':
+      return `Foot nails! ${clippingCount}/5 done!`;
+    case 'second-foot':
+      return `Last foot! ${clippingCount}/5 done!`;
+    case 'complete':
+      return 'Perfect hygiene! You trimmed all nails! 🎉';
+    default:
+      return 'Let\'s trim those nails!';
+  }
+};
 
   const handleStartGame = () => {
     setShowStartScreen(false);
@@ -1467,62 +1237,71 @@ export default function NailCareGame() {
   };
 
   const handleVideoNext = () => {
-    setShowVideo(false);
-    setClippingCount(prev => prev + 1);
-    setScore(prev => Math.min(100, prev + 5));
-    
-    if (clippingCount + 1 >= 5) {
-      if (currentStep === 'first-hand') {
-        setShowAfterFirstHand(true);
+  setShowVideo(false);
+  setClippingCount(prev => prev + 1);
+  setScore(prev => Math.min(100, prev + 5));
+  
+  if (clippingCount + 1 >= 5) {
+    if (currentStep === 'first-hand') {
+      setShowAfterFirstHand(true);
+      
+      setTimeout(() => {
+        setShowAfterFirstHand(false);
+        setCompletedFirstHand(true);
+        setCurrentStep('second-hand');
+        setClippingCount(0);
         
-        setTimeout(() => {
-          setShowAfterFirstHand(false);
-          setCompletedFirstHand(true);
-          setCurrentStep('second-hand');
-          setClippingCount(0);
-          
-          removeCompletedClippings('first-hand');
-          
-          const clipperPosition = { x: 25, y: 50 };
-          setNailClipperPosition(clipperPosition);
-          setOriginalClipperPosition(clipperPosition);
-        }, 3000);
-      } else if (currentStep === 'second-hand') {
-        setShowAfterFirstHand(true);
+        removeCompletedClippings('first-hand');
         
-        setTimeout(() => {
-          setShowAfterFirstHand(false);
-          setCurrentStep('foot-selection');
-          setClippingCount(0);
-          
-          removeCompletedClippings('second-hand');
-        }, 3000);
-      } else if (currentStep === 'first-foot') {
-        setShowAfterFirstFoot(true);
+        const clipperPosition = { x: 25, y: 50 };
+        setNailClipperPosition(clipperPosition);
+        setOriginalClipperPosition(clipperPosition);
+      }, 3000);
+    } else if (currentStep === 'second-hand') {
+      setShowAfterFirstHand(true);
+      
+      setTimeout(() => {
+        setShowAfterFirstHand(false);
+        setCurrentStep('foot-selection');
+        setClippingCount(0);
         
-        setTimeout(() => {
-          setShowAfterFirstFoot(false);
-          setCompletedFirstFoot(true);
-          setCurrentStep('second-foot');
-          setClippingCount(0);
-          
-          removeCompletedClippings('first-foot');
-          
-          const clipperPosition = { x: 25, y: 50 };
-          setNailClipperPosition(clipperPosition);
-          setOriginalClipperPosition(clipperPosition);
-        }, 3000);
-      } else if (currentStep === 'second-foot') {
-        setShowAfterFirstFoot(true);
+        removeCompletedClippings('second-hand');
+      }, 3000);
+    } else if (currentStep === 'first-foot') {
+      setShowAfterFirstFoot(true);
+      
+      setTimeout(() => {
+        setShowAfterFirstFoot(false);
+        setCompletedFirstFoot(true);
+        setCurrentStep('second-foot');
+        setClippingCount(0);
         
-        setTimeout(() => {
-          setShowAfterFirstFoot(false);
-          completeGame();
-          
-          removeCompletedClippings('second-foot');
-        }, 3000);
-      }
+        removeCompletedClippings('first-foot');
+        
+        const clipperPosition = { x: 25, y: 50 };
+        setNailClipperPosition(clipperPosition);
+        setOriginalClipperPosition(clipperPosition);
+      }, 3000);
+    } else if (currentStep === 'second-foot') {
+      setShowAfterFirstFoot(true);
+      
+      setTimeout(() => {
+        setShowAfterFirstFoot(false);
+        completeGame();
+        
+        removeCompletedClippings('second-foot');
+      }, 3000);
     }
+  }
+};
+
+  const completeGame = () => {
+    setScore(100);
+    setGameCompleted(true);
+    playSoundEffect('success');
+    setTimeout(() => {
+      setShowSuccess(true);
+    }, 1000);
   };
 
   const getCurrentInstruction = () => {
@@ -1547,6 +1326,82 @@ export default function NailCareGame() {
         return 'Great job! All nails are trimmed.';
       default:
         return 'Complete the nail care activity';
+    }
+  };
+
+  const getProgressPercentage = () => {
+    const totalSteps = 20;
+    let completedSteps = completedNails.length;
+    
+    return (completedSteps / totalSteps) * 100;
+  };
+
+  const saveProgress = async () => {
+    if (progressSaving || progressSaved) {
+      console.log('Progress already saving or saved, skipping');
+      return;
+    }
+
+    try {
+      setProgressSaving(true);
+      
+      const studentId = getStudentId();
+      
+      console.log('Authentication check:', { 
+        studentId, 
+        userType: localStorage.getItem('userType'),
+        studentIdFromStorage: localStorage.getItem('studentId')
+      });
+      
+      if (!studentId) {
+        console.error('Cannot save progress: No valid student ID found');
+        
+        let errorMessage = 'Please log in to save your progress.\n\n';
+        errorMessage += `Debug Info:\n`;
+        errorMessage += `- User type: ${localStorage.getItem('userType') || 'Not set'}\n`;
+        errorMessage += `- Student ID: ${localStorage.getItem('studentId') || 'Not found'}`;
+        
+        alert(errorMessage);
+        setProgressSaving(false);
+        return;
+      }
+      
+      if (!lessonId) {
+        console.error('Cannot save progress: No lesson ID available');
+        alert('Lesson ID is missing. Cannot save progress.');
+        setProgressSaving(false);
+        return;
+      }
+
+      const progressData = {
+        score: 100,
+        maxScore: 100,  
+        completed: true,
+        starsEarned: 3,
+        moduleId: moduleId ? parseInt(moduleId, 10) : null
+      };
+      
+      console.log('Saving progress data:', progressData);
+      
+      const result = await saveStudentLessonProgress(
+        studentId, 
+        parseInt(lessonId, 10), 
+        progressData
+      );
+      
+      console.log('Progress save result:', result);
+      setProgressSaved(true);
+      
+    } catch (error) {
+      console.error('Error saving progress:', error);
+      
+      if (error.message.includes('No student ID available')) {
+        alert('Please log in to save your progress.');
+      } else {
+        alert('Failed to save progress. Please try again.');
+      }
+    } finally {
+      setProgressSaving(false);
     }
   };
 
@@ -1579,69 +1434,6 @@ export default function NailCareGame() {
     }, 300);
   };
 
-  // ADDED: Auto-save useEffect
-  useEffect(() => {
-    const autoSaveProgress = async () => {
-      if (currentProgress.score > 0 && !currentProgress.completed) {
-        const progressPercentage = getProgressPercentage();
-        
-        // Auto-save when reaching milestones (25%, 50%, 75%)
-        if (progressPercentage >= 25 || progressPercentage >= 50 || progressPercentage >= 75) {
-          console.log('Auto-saving progress at:', progressPercentage, '%');
-          
-          // Update stars based on progress
-          let stars = 0;
-          if (progressPercentage >= 50) stars = 1;
-          if (progressPercentage >= 75) stars = 2;
-          if (progressPercentage >= 95) stars = 3;
-          
-          setCurrentProgress(prev => ({
-            ...prev,
-            score: progressPercentage,
-            starsEarned: stars
-          }));
-          
-          // Only save if user is logged in
-          const studentId = getStudentId();
-          if (studentId && lessonId && !progressSaving && !progressSaved) {
-            try {
-              const progressData = {
-                score: progressPercentage,
-                maxScore: 100,
-                completed: false,
-                starsEarned: stars,
-                moduleId: moduleId ? parseInt(moduleId, 10) : null,
-                extra: {
-                  stepsCompleted: currentProgress.stepsCompleted,
-                  autoSaved: true
-                }
-              };
-              
-              await saveStudentLessonProgress(
-                studentId,
-                parseInt(lessonId, 10),
-                progressData
-              );
-              console.log('Progress auto-saved successfully');
-            } catch (error) {
-              console.log('Auto-save failed, will retry later:', error);
-            }
-          }
-        }
-      }
-    };
-    
-    // Trigger auto-save when significant progress is made
-    if (completedNails.length > 0 && completedNails.length % 5 === 0) {
-      autoSaveProgress();
-    }
-    
-    if (completedFirstHand || completedFirstFoot) {
-      autoSaveProgress();
-    }
-    
-  }, [completedNails.length, completedFirstHand, completedFirstFoot, currentProgress.score]);
-
   useEffect(() => {
     const fetchUserProgress = async () => {
       try {
@@ -1656,12 +1448,6 @@ export default function NailCareGame() {
         if (progressResponse && progressResponse.data) {
           const progressData = progressResponse.data;
           setScore(progressData.score || 0);
-          setCurrentProgress(prev => ({
-            ...prev,
-            score: progressData.score || 0,
-            completed: progressData.completed || false,
-            starsEarned: progressData.starsEarned || 0
-          }));
           console.log('Loaded existing progress:', progressData);
           
           if (progressData.completed) {
@@ -1788,84 +1574,6 @@ export default function NailCareGame() {
     }
   }, [showSuccess]);
 
-  // UPDATED: Enhanced resetGame function
-  const resetGame = () => {
-    setShowFeedback(false);
-    setShowSuccess(false);
-    setScore(0);
-    setGameCompleted(false);
-    setProgressSaved(false);
-    setProgressSaving(false);
-    
-    // Reset progress state
-    setCurrentProgress({
-      score: 0,
-      completed: false,
-      starsEarned: 0,
-      stepsCompleted: 0,
-      totalSteps: 24
-    });
-    
-    setCurrentStep('hand-selection');
-    setSelectedHand(null);
-    setSelectedFoot(null);
-    setClippingCount(0);
-    setCompletedFirstHand(false);
-    setCompletedFirstFoot(false);
-    setShowNailClipper(false);
-    setIsDraggingClipper(false);
-    setIsDraggingClippings(false);
-    setShowVideo(false);
-    setShowAfterFirstHand(false);
-    setShowAfterFirstFoot(false);
-    setCompletedNails([]);
-    setHoveredNailIndex(-1);
-    setClippingsCleaned(false);
-    setNailClippingsPositions({});
-    setDraggedClippingId(null);
-    setOriginalClippingPositions({});
-    
-    setFirstHandDragCompleted(false);
-    setFirstFootDragCompleted(false);
-    
-    setShowCharacterIntroduction(true);
-    setShowHandIntroduction(false);
-    setShowToolIntroduction(false);
-    
-    if (audioRef && !audioPlaying) {
-      audioRef.play().then(() => {
-        setAudioPlaying(true);
-      }).catch(error => {
-        console.log('Audio play failed:', error);
-      });
-    }
-  };
-
-  const handleGoHome = () => {
-    if (audioRef) {
-      audioRef.pause();
-      setAudioPlaying(false);
-    }
-    navigate(-1);
-  };
-
-  const playSoundEffect = (soundType) => {
-    try {
-      if (soundType === 'correct' && correctSoundRef) {
-        correctSoundRef.currentTime = 0;
-        correctSoundRef.play();
-      } else if (soundType === 'incorrect' && incorrectSoundRef) {
-        incorrectSoundRef.currentTime = 0;
-        incorrectSoundRef.play();
-      } else if (soundType === 'success' && successSoundRef) {
-        successSoundRef.currentTime = 0;
-        successSoundRef.play();
-      }
-    } catch (error) {
-      console.log('Error playing sound:', error);
-    }
-  };
-
   const renderNailDropZones = () => {
     if ((currentStep !== 'first-hand' && currentStep !== 'second-hand' && 
          currentStep !== 'first-foot' && currentStep !== 'second-foot') || !isDraggingClipper) {
@@ -1902,43 +1610,44 @@ export default function NailCareGame() {
   };
 
   const renderNailClippings = () => {
-    if (currentStep !== 'first-hand' && currentStep !== 'second-hand' && 
-        currentStep !== 'first-foot' && currentStep !== 'second-foot') {
-      return null;
-    }
+  if (currentStep !== 'first-hand' && currentStep !== 'second-hand' && 
+      currentStep !== 'first-foot' && currentStep !== 'second-foot') {
+    return null;
+  }
 
-    return completedNails.map(nailKey => {
-      const position = nailClippingsPositions[nailKey];
-      if (!position) return null;
+  return completedNails.map(nailKey => {
+    const position = nailClippingsPositions[nailKey];
+    if (!position) return null;
 
-      const rotation = (nailKey.split('').reduce((a, b) => a + b.charCodeAt(0), 0) % 360);
+    // Generate a random but consistent rotation for each nail based on its key
+    const rotation = (nailKey.split('').reduce((a, b) => a + b.charCodeAt(0), 0) % 360);
 
-      return (
-        <Box
-          key={nailKey}
-          component="img"
-          src={nailClippingsImg}
-          alt="Nail Clippings"
-          sx={{
-            position: 'absolute',
-            left: `${position.x}%`,
-            top: `${position.y}%`,
-            transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
-            width: 60,
-            height: 60,
-            zIndex: 60,
-            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
-            animation: 'floatClippings 2s ease-in-out infinite',
-            '@keyframes floatClippings': {
-              '0%': { transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(1)` },
-              '50%': { transform: `translate(-50%, -55%) rotate(${rotation}deg) scale(1.05)` },
-              '100%': { transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(1)` }
-            }
-          }}
-        />
-      );
-    });
-  };
+    return (
+      <Box
+        key={nailKey}
+        component="img"
+        src={nailClippingsImg}
+        alt="Nail Clippings"
+        sx={{
+          position: 'absolute',
+          left: `${position.x}%`,
+          top: `${position.y}%`,
+          transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+          width: 60,
+          height: 60,
+          zIndex: 60,
+          filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+          animation: 'floatClippings 2s ease-in-out infinite',
+          '@keyframes floatClippings': {
+            '0%': { transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(1)` },
+            '50%': { transform: `translate(-50%, -55%) rotate(${rotation}deg) scale(1.05)` },
+            '100%': { transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(1)` }
+          }
+        }}
+      />
+    );
+  });
+};
 
   const removeCompletedClippings = (completedStep) => {
     console.log(`Removing clippings for: ${completedStep}`);
@@ -2392,6 +2101,100 @@ export default function NailCareGame() {
     }
   };
 
+  const resetGame = () => {
+    setShowFeedback(false);
+    setShowSuccess(false);
+    setScore(0);
+    setGameCompleted(false);
+    setProgressSaved(false);
+    setProgressSaving(false);
+    
+    setCurrentStep('hand-selection');
+    setSelectedHand(null);
+    setSelectedFoot(null);
+    setClippingCount(0);
+    setCompletedFirstHand(false);
+    setCompletedFirstFoot(false);
+    setShowNailClipper(false);
+    setIsDraggingClipper(false);
+    setIsDraggingClippings(false);
+    setShowVideo(false);
+    setShowAfterFirstHand(false);
+    setShowAfterFirstFoot(false);
+    setCompletedNails([]);
+    setHoveredNailIndex(-1);
+    setClippingsCleaned(false);
+    setNailClippingsPositions({});
+    setDraggedClippingId(null);
+    setOriginalClippingPositions({});
+    
+    setFirstHandDragCompleted(false);
+    setFirstFootDragCompleted(false);
+    
+    setShowCharacterIntroduction(true);
+    setShowHandIntroduction(false);
+    setShowToolIntroduction(false);
+    
+    if (audioRef && !audioPlaying) {
+      audioRef.play().then(() => {
+        setAudioPlaying(true);
+      }).catch(error => {
+        console.log('Audio play failed:', error);
+      });
+    }
+  };
+
+  const handleGoHome = () => {
+    if (audioRef) {
+      audioRef.pause();
+      setAudioPlaying(false);
+    }
+    navigate(-1);
+  };
+
+  const getStudentId = () => {
+    try {
+      const studentId = localStorage.getItem('studentId');
+      const userType = localStorage.getItem('userType');
+      
+      console.log('Retrieving student ID:', { studentId, userType });
+      
+      if (!studentId || studentId === 'null' || studentId === 'undefined') {
+        console.warn('No student ID found in localStorage');
+        return null;
+      }
+      
+      const parsedId = parseInt(studentId, 10);
+      if (isNaN(parsedId)) {
+        console.warn('Invalid student ID format:', studentId);
+        return null;
+      }
+      
+      console.log('Successfully retrieved student ID:', parsedId);
+      return parsedId;
+    } catch (error) {
+      console.error('Error retrieving student ID:', error);
+      return null;
+    }
+  };
+
+  const playSoundEffect = (soundType) => {
+    try {
+      if (soundType === 'correct' && correctSoundRef) {
+        correctSoundRef.currentTime = 0;
+        correctSoundRef.play();
+      } else if (soundType === 'incorrect' && incorrectSoundRef) {
+        incorrectSoundRef.currentTime = 0;
+        incorrectSoundRef.play();
+      } else if (soundType === 'success' && successSoundRef) {
+        successSoundRef.currentTime = 0;
+        successSoundRef.play();
+      }
+    } catch (error) {
+      console.log('Error playing sound:', error);
+    }
+  };
+
   if (showStartScreen) {
     return (
       <div style={{
@@ -2606,15 +2409,6 @@ export default function NailCareGame() {
           </Box>
         </Box>
 
-        {/* ADDED: Progress Display */}
-        {!showStartScreen && !showCharacterIntroduction && 
-         !showHandIntroduction && !showToolIntroduction && 
-         <ProgressDisplay 
-           currentProgress={currentProgress}
-           progressSaving={progressSaving}
-           progressSaved={progressSaved}
-         />}
-
         {!showStartScreen && !showCharacterIntroduction && !showHandIntroduction && !showToolIntroduction && !showVideo && !showAfterFirstHand && !showAfterFirstFoot && (
           <CharacterCat 
             gameState={currentStep}
@@ -2631,6 +2425,7 @@ export default function NailCareGame() {
           flexDirection: 'column',
           gap: 2
         }}>
+          {/* Reset Button - Image with Larger Hover */}
           <Box
             component="img"
             src={require("../../assets/hygienelevel3/resetbtn.png")}
@@ -2657,6 +2452,7 @@ export default function NailCareGame() {
             }}
           />
           
+          {/* Home Button - Image with Larger Hover */}
           <Box
             component="img"
             src={require("../../assets/hygienelevel3/homebtn.png")}
