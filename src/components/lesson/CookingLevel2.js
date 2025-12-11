@@ -153,85 +153,38 @@ export default function CookingLevel2() {
   };
 
   // Save progress to database
-  // const saveProgress = async () => {
-  //   if (progressSaving || progressSaved) return;
-
-  //   try {
-  //     setProgressSaving(true);
-  //     const studentId = getStudentId();
-      
-  //     if (!studentId || !lessonId) {
-  //       console.error('Cannot save progress - missing data:', { studentId, lessonId });
-  //       return;
-  //     }
-      
-  //     const finalScore = 3;
-      
-  //     const progressData = {
-  //       studentId: studentId,
-  //       lessonId: parseInt(lessonId, 10),
-  //       score: finalScore,
-  //       maxScore: 3,
-  //       completed: true,
-  //       starsEarned: 3
-  //     };
-      
-  //     console.log('Progress simulatedly saved:', progressData);
-  //     setProgressSaved(true);
-      
-  //   } catch (error) {
-  //     console.error('Error saving progress:', error);
-  //   } finally {
-  //     setProgressSaving(false);
-  //   }
-  // };
-
   const saveProgress = async () => {
-      if (progressSaving || progressSaved) {
-        console.log('Progress already saving or saved, skipping');
+    if (progressSaving || progressSaved) return;
+
+    try {
+      setProgressSaving(true);
+      const studentId = getStudentId();
+      
+      if (!studentId || !lessonId) {
+        console.error('Cannot save progress - missing data:', { studentId, lessonId });
         return;
       }
-  
-      try {
-        setProgressSaving(true);
-        const studentId = getStudentId();
-        
-        if (!studentId) {
-          console.error('Cannot save progress: No valid student ID found');
-          setProgressSaving(false);
-          return;
-        }
-        
-        if (!lessonId) {
-          console.error('Cannot save progress: No lesson ID available');
-          setProgressSaving(false);
-          return;
-        }
-  
-        const progressData = {
-          score: 100,
-          maxScore: 100,  
-          completed: true,
-          starsEarned: 3,
-        };
-        
-        console.log('Saving progress data:', progressData);
-        
-        await saveStudentLessonProgress(
-          studentId, 
-          parseInt(lessonId, 10), 
-          progressData
-        );
-        
-        console.log('Progress saved successfully');
-        setProgressSaved(true);
-        
-      } catch (error) {
-        console.error('Error saving progress:', error);
-      } finally {
-        setProgressSaving(false);
-      }
-    };
+      
+      const finalScore = 3;
+      
+      const progressData = {
+        studentId: studentId,
+        lessonId: parseInt(lessonId, 10),
+        score: finalScore,
+        maxScore: 3,
+        completed: true,
+        starsEarned: 3
+      };
+      
+      console.log('Progress simulatedly saved:', progressData);
+      setProgressSaved(true);
+      
+    } catch (error) {
+      console.error('Error saving progress:', error);
+    } finally {
+      setProgressSaving(false);
+    }
+  };
 
   const handleGoHome = () => {
     navigate('/studentdashboard');
