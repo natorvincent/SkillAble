@@ -3,14 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Box, Button, Stack, LinearProgress, Chip, Typography, Dialog } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { 
-  getStudentLessonProgress, 
-  saveStudentLessonProgress,
-  updateModuleProgress,
-  getStudentModuleProgressStats
-} from '../../services/progressService';
-
-
 // Import all images
 import whiteShirtImg from '../../assets/householdLevel1/BlueWhiteShirt.png';
 import bluePajamasImg from '../../assets/householdLevel1/BluePajamas.png';
@@ -179,46 +171,6 @@ const HouseholdLevel1 = () => {
   const [isTablet, setIsTablet] = useState(false);
   
 
-  const [studentId, setStudentId] = useState(null);
-
-
-  // Load student ID and progress on component mount
-useEffect(() => {
-  // Get student ID from localStorage
-  const storedStudentId = localStorage.getItem('studentId');
-  if (storedStudentId) {
-    setStudentId(parseInt(storedStudentId, 10));
-  }
-  
-  // Load lesson progress if student ID exists
-  const loadProgress = async () => {
-    if (storedStudentId) {
-      try {
-        const progress = await getStudentLessonProgress(
-          parseInt(storedStudentId, 10), 
-          'household-level1'  // or your specific lesson ID
-        );
-        
-        // If progress exists and is completed, skip to end
-        if (progress && progress.completed) {
-          setCurrentItemIndex(clothingItems.length);
-          setGameWon(true);
-          setAvatar('happy');
-          setCorrectItems(clothingItems.length);
-        }
-        
-        // If there's partial progress, you could restore it
-        // Example: setCorrectItems(progress.score || 0);
-      } catch (error) {
-        console.log('Could not load progress:', error);
-      }
-    }
-  };
-  
-  loadProgress();
-}, []);
-
-
   // Detect tablet size
   useEffect(() => {
     const checkScreenSize = () => {
@@ -232,32 +184,34 @@ useEffect(() => {
   }, []);
 
 
-  const handleNextLevel = async () => {
-  try {
-    // Save current level completion
-    if (studentId) {
-      await saveStudentLessonProgress(studentId, 'household-level1', {
-        score: clothingItems.length, // Perfect score
-        maxScore: clothingItems.length,
-        completed: true,
-        starsEarned: 3,
-        moduleSlug: 'household'
-      });
-    }
-    
-    // Navigate to next level
-    if (lessonId) {
-      navigate(`/lesson/household-chores/level-2/${lessonId}`);
-    } else {
+  const handleNextLevel = () => {
+    try {
+      // Try to save progress (with error handling)
+      try {
+        saveStudentLessonProgress('household', 'level2', 100);
+      } catch (error) {
+        console.log('Progress saving not available in demo');
+      }
+      
+      try {
+        updateModuleProgress('household', 'level2');
+      } catch (error) {
+        console.log('Module progress update not available in demo');
+      }
+      
+      // Navigate to next level
+      if (lessonId) {
+        navigate(`/lesson/household-chores/level-2/${lessonId}`);
+      } else {
+        navigate('/lesson/household-chores/level-2');
+      }
+      
+    } catch (error) {
+      console.log('Next level functionality:', error);
+      // Fallback navigation
       navigate('/lesson/household-chores/level-2');
     }
-    
-  } catch (error) {
-    console.log('Next level navigation error:', error);
-    // Fallback navigation
-    navigate('/lesson/household-chores/level-2');
-  }
-};
+  };
   
   // Audio states
   const [audioPlaying, setAudioPlaying] = useState(false);
@@ -382,36 +336,20 @@ useEffect(() => {
     setDragOverMachine(null);
   };
 
-  const handleDrop = async (e, machineType) => {
-  e.preventDefault();
-  setDragOverMachine(null);
-  
-  if (!draggedItem) return;
-
-  const isCorrect = draggedItem.type === machineType;
-
-  if (isCorrect) {
-    setAvatar('happy');
-    const newCorrectItems = correctItems + 1;
-    setCorrectItems(newCorrectItems);
+  const handleDrop = (e, machineType) => {
+    e.preventDefault();
+    setDragOverMachine(null);
     
-    // Save partial progress after each correct item
-    if (studentId && newCorrectItems > 0) {
-      try {
-        await saveStudentLessonProgress(studentId, 'household-level1', {
-          score: newCorrectItems,
-          maxScore: clothingItems.length,
-          completed: newCorrectItems === clothingItems.length,
-          starsEarned: Math.min(3, Math.floor((newCorrectItems / clothingItems.length) * 3)),
-          moduleSlug: 'household'
-        });
-      } catch (error) {
-        console.log('Progress save error:', error);
-      }
-    }
-    
-    // Play success sound effect
-    playSuccessSound();
+    if (!draggedItem) return;
+
+    const isCorrect = draggedItem.type === machineType;
+
+    if (isCorrect) {
+      setAvatar('happy');
+      setCorrectItems(prev => prev + 1);
+      
+      // Play success sound effect
+      playSuccessSound();
       
       // Get the position of the clothing item for confetti
       const clothingItemRect = e.currentTarget.getBoundingClientRect();
@@ -456,7 +394,6 @@ useEffect(() => {
     
     setDraggedItem(null);
   };
- 
 
   const resetGame = () => {
     setCurrentItemIndex(0);
@@ -465,25 +402,9 @@ useEffect(() => {
     setAvatar('wonder');
   };
 
-  const handleGoHome = async () => {
-  try {
-    // Save progress before going home
-    if (studentId) {
-      await saveStudentLessonProgress(studentId, 'household-level1', {
-        score: correctItems,
-        maxScore: clothingItems.length,
-        completed: gameWon,
-        starsEarned: Math.min(3, Math.floor((correctItems / clothingItems.length) * 3)),
-        moduleSlug: 'household'
-      });
-    }
-  } catch (error) {
-    console.log('Progress save error:', error);
-  }
-  
-  navigate('/studentdashboard');
-};
-
+  const handleGoHome = () => {
+    navigate('/studentdashboard');
+  };
 
   const avatarImages = {
     wonder: wonderingImg,
