@@ -255,7 +255,8 @@ export default function FriedEggLevel1() {
         score: 100,
         maxScore: 100,  
         completed: true,
-        starsEarned: 3
+        starsEarned: 3,
+         moduleId: moduleId ? parseInt(moduleId, 10) : null
       };
       
       console.log('Saving progress data:', progressData);
