@@ -29,6 +29,121 @@ import saltImg from "../../assets/cookingLevel2/salt.png";
 import saltPouringImg from "../../assets/cookingLevel2/salt-pouring.png";
 import knifeImg from "../../assets/cookingLevel2/knife.png";
 
+// Asset preloader component
+const AssetPreloader = ({ onLoadComplete }) => {
+  const [progress, setProgress] = useState(0);
+  const [loadedCount, setLoadedCount] = useState(0);
+  
+  // All game assets to preload
+  const assets = [
+    kitchenBg,
+    baconardoImg,
+    springOnionImg,
+    springOnionChoppedImg,
+    eggImg,
+    eggCrackedImg,
+    saltImg,
+    saltPouringImg,
+    knifeImg
+  ];
+  
+  useEffect(() => {
+    let completed = 0;
+    
+    const loadAsset = (src) => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          completed++;
+          setLoadedCount(completed);
+          setProgress(Math.round((completed / assets.length) * 100));
+          resolve();
+        };
+        img.onerror = () => {
+          completed++;
+          setLoadedCount(completed);
+          setProgress(Math.round((completed / assets.length) * 100));
+          resolve(); // Continue even if some images fail
+        };
+        img.src = src;
+        
+        // Force preload by loading image
+        if (img.complete) {
+          completed++;
+          setLoadedCount(completed);
+          setProgress(Math.round((completed / assets.length) * 100));
+          resolve();
+        }
+      });
+    };
+    
+    const preloadAll = async () => {
+      // Preload all assets in parallel
+      await Promise.all(assets.map(loadAsset));
+      
+      // Add a small delay to ensure all images are cached
+      setTimeout(() => {
+        onLoadComplete();
+      }, 300);
+    };
+    
+    preloadAll();
+  }, [assets.length, onLoadComplete]);
+  
+  return (
+    <Box sx={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'linear-gradient(135deg, rgba(40, 11, 96, 0.95) 0%, rgba(106, 13, 173, 0.95) 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'column',
+      zIndex: 9999
+    }}>
+      <Box sx={{ width: '80%', maxWidth: '400px', mb: 4 }}>
+        <Typography variant="h4" sx={{ color: 'white', mb: 3, textAlign: 'center', fontFamily: 'Poppins' }}>
+          Loading Cooking Adventure...
+        </Typography>
+        <LinearProgress 
+          variant="determinate" 
+          value={progress} 
+          sx={{ 
+            height: 12, 
+            borderRadius: 6,
+            backgroundColor: 'rgba(255,255,255,0.2)',
+            '& .MuiLinearProgress-bar': {
+              background: 'linear-gradient(90deg, #FFC107 0%, #FF9800 50%, #FF5722 100%)',
+              borderRadius: 6
+            }
+          }} 
+        />
+        <Typography variant="body2" sx={{ color: 'white', mt: 1, textAlign: 'center' }}>
+          {loadedCount}/{assets.length} assets loaded
+        </Typography>
+      </Box>
+      
+      {/* Preload hidden images */}
+      <Box sx={{ display: 'none' }}>
+        {assets.map((src, index) => (
+          <img 
+            key={index}
+            src={src}
+            alt="preload"
+            onLoad={(e) => {
+              // Force browser to cache the image
+              e.target.style.visibility = 'hidden';
+            }}
+          />
+        ))}
+      </Box>
+    </Box>
+  );
+};
+
 export default function CookingLevel2() {
   const navigate = useNavigate();
   const { lessonId } = useParams();
@@ -39,11 +154,9 @@ export default function CookingLevel2() {
   const shakeSoundRef = useRef(null);
   const successSoundRef = useRef(null);
 
-  // Sound management
+  // Game states
   const [isMuted, setIsMuted] = useState(false);
   const [showStartScreen, setShowStartScreen] = useState(true);
-
-  // Sequential ingredient flow
   const [currentIngredientIndex, setCurrentIngredientIndex] = useState(0);
   const [springOnionChops, setSpringOnionChops] = useState(0);
   const [eggCracked, setEggCracked] = useState(false);
@@ -52,32 +165,60 @@ export default function CookingLevel2() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [starAnimationStage, setStarAnimationStage] = useState(0);
   const [confettiPieces, setConfettiPieces] = useState([]);
-  
-  // Progress tracking states
   const [progressSaving, setProgressSaving] = useState(false);
   const [progressSaved, setProgressSaved] = useState(false);
-  
-  // Simple animation states
   const [onionAnimation, setOnionAnimation] = useState(false);
   const [eggAnimation, setEggAnimation] = useState(false);
   const [saltAnimation, setSaltAnimation] = useState(false);
   const [knifeChop, setKnifeChop] = useState(false);
   const [onionPieces, setOnionPieces] = useState([]);
-  
-  // Baconardo states
   const [showBaconardo, setShowBaconardo] = useState(true);
   const [baconardoMessage, setBaconardoMessage] = useState('Welcome to Ingredient Preparation! I\'m Chef Baconardo! 🥓');
   const [baconardoAnimation, setBaconardoAnimation] = useState('idle');
-  
-  // Progress tracking
   const [completedTasks, setCompletedTasks] = useState({
     onion: false,
     egg: false,
     salt: false
   });
 
+  // Asset loading states
+  const [assetsLoaded, setAssetsLoaded] = useState(false);
+  const [gameReady, setGameReady] = useState(false);
+  
+  // Cache loaded images for instant reuse
+  const imageCache = useRef({});
+
   const requiredChops = 5;
   const requiredShakes = 3;
+
+  // Preload images into cache
+  useEffect(() => {
+    if (!assetsLoaded) return;
+    
+    const loadToCache = (src) => {
+      if (!imageCache.current[src]) {
+        const img = new Image();
+        img.src = src;
+        imageCache.current[src] = img;
+      }
+    };
+    
+    // Preload all game images into cache
+    [
+      kitchenBg,
+      baconardoImg,
+      springOnionImg,
+      springOnionChoppedImg,
+      eggImg,
+      eggCrackedImg,
+      saltImg,
+      saltPouringImg,
+      knifeImg
+    ].forEach(loadToCache);
+    
+    // Small delay to ensure cache is populated
+    setTimeout(() => setGameReady(true), 100);
+  }, [assetsLoaded]);
 
   const getStarRating = () => {
     return 3;
@@ -153,137 +294,86 @@ export default function CookingLevel2() {
     return parsedId;
   };
 
-  // Save progress to database
-  // const saveProgress = async () => {
-  //   if (progressSaving || progressSaved) return;
-
-  //   try {
-  //     setProgressSaving(true);
-  //     const studentId = getStudentId();
-      
-  //     if (!studentId || !lessonId) {
-  //       console.error('Cannot save progress - missing data:', { studentId, lessonId });
-  //       return;
-  //     }
-      
-  //     const finalScore = 3;
-      
-  //     const progressData = {
-  //       studentId: studentId,
-  //       lessonId: parseInt(lessonId, 10),
-  //       score: finalScore,
-  //       maxScore: 3,
-  //       completed: true,
-  //       starsEarned: 3
-  //     };
-      
-  //     console.log('Progress simulatedly saved:', progressData);
-  //     setProgressSaved(true);
-      
-  //   } catch (error) {
-  //     console.error('Error saving progress:', error);
-  //   } finally {
-  //     setProgressSaving(false);
-  //   }
-  // };
-const saveProgress = async () => {
-  if (progressSaving || progressSaved) {
-    console.log('Progress already saving or saved, skipping');
-    return;
-  }
-
-  try {
-    setProgressSaving(true);
-    const studentId = getStudentId();
-    
-    console.log('DEBUG: Starting saveProgress:', {
-      studentId,
-      lessonId,
-      studentIdValid: !!studentId,
-      lessonIdValid: !!lessonId
-    });
-    
-    if (!studentId) {
-      console.error('Cannot save progress: No valid student ID found');
-      setProgressSaving(false);
-      return;
-    }
-    
-    if (!lessonId) {
-      console.error('Cannot save progress: No lesson ID available');
-      setProgressSaving(false);
+  const saveProgress = async () => {
+    if (progressSaving || progressSaved) {
+      console.log('Progress already saving or saved, skipping');
       return;
     }
 
-    const progressData = {
-      score: 100,
-      maxScore: 100,  
-      completed: true,
-      starsEarned: 3,
-    };
-    
-    console.log('DEBUG: Calling saveStudentLessonProgress with:', {
-      studentId,
-      lessonId,
-      progressData
-    });
-    
-    // Use the imported progress service function
-    await saveStudentLessonProgress(
-      studentId, 
-      parseInt(lessonId, 10), 
-      progressData
-    );
-    
-    console.log('Progress saved successfully');
-    setProgressSaved(true);
-    
-  } catch (error) {
-    console.error('Error saving progress:', error);
-    // Show user-friendly error
-   
-    
-    // Mark as saved locally (queued)
-    setProgressSaved(true);
-  } finally {
-    setProgressSaving(false);
-  }
-};
-// end of saveProgress
+    try {
+      setProgressSaving(true);
+      const studentId = getStudentId();
+      
+      console.log('DEBUG: Starting saveProgress:', {
+        studentId,
+        lessonId,
+        studentIdValid: !!studentId,
+        lessonIdValid: !!lessonId
+      });
+      
+      if (!studentId) {
+        console.error('Cannot save progress: No valid student ID found');
+        setProgressSaving(false);
+        return;
+      }
+      
+      if (!lessonId) {
+        console.error('Cannot save progress: No lesson ID available');
+        setProgressSaving(false);
+        return;
+      }
 
-
+      const progressData = {
+        score: 100,
+        maxScore: 100,  
+        completed: true,
+        starsEarned: 3,
+      };
+      
+      console.log('DEBUG: Calling saveStudentLessonProgress with:', {
+        studentId,
+        lessonId,
+        progressData
+      });
+      
+      // Use the imported progress service function
+      await saveStudentLessonProgress(
+        studentId, 
+        parseInt(lessonId, 10), 
+        progressData
+      );
+      
+      console.log('Progress saved successfully');
+      setProgressSaved(true);
+      
+    } catch (error) {
+      console.error('Error saving progress:', error);
+      setProgressSaved(true);
+    } finally {
+      setProgressSaving(false);
+    }
+  };
 
   const handleGoHome = () => {
     navigate('/studentdashboard');
   };
 
-  // const continueToNextLevel = async () => {
-  //   if (!progressSaved && !progressSaving) {
-  //     await saveProgress();
-  //   }
+  const handleContinue = async () => {
+    console.log('Continue clicked, progress state:', { progressSaved, progressSaving });
     
-  //   navigate('/lesson/cooking/level-3');
-  // };
-
-  // Handle continue button click
-const handleContinue = async () => {
-  console.log('Continue clicked, progress state:', { progressSaved, progressSaving });
-  
-  if (!progressSaved && !progressSaving) {
-    console.log('Saving progress before continue...');
-    await saveProgress();
-  } else if (progressSaving) {
-    console.log('Progress is currently saving, please wait...');
-    return;
-  }
-  
-  console.log('Navigating to next level...');
-  setTimeout(() => {
-    navigate('/lesson/cooking/level-3');
-  }, 300);
-};
-
-// 
+    if (!progressSaved && !progressSaving) {
+      console.log('Saving progress before continue...');
+      await saveProgress();
+    } else if (progressSaving) {
+      console.log('Progress is currently saving, please wait...');
+      return;
+    }
+    
+    console.log('Navigating to next level...');
+    setTimeout(() => {
+      navigate('/lesson/cooking/level-3');
+    }, 300);
+  };
 
   // Initialize audio elements
   useEffect(() => {
@@ -585,8 +675,13 @@ const handleContinue = async () => {
   const completedCount = Object.values(completedTasks).filter(Boolean).length;
   const progressPercentage = ((currentIngredientIndex + (getCurrentIngredientCompleted() ? 1 : 0)) / totalIngredients) * 100;
 
-  // Start screen
-  if (showStartScreen) {
+  // Show preloader until assets are loaded
+  if (!assetsLoaded) {
+    return <AssetPreloader onLoadComplete={() => setAssetsLoaded(true)} />;
+  }
+
+  // Start screen only after game is ready
+  if (showStartScreen || !gameReady) {
     return (
       <div style={{
         minHeight: "100vh",
@@ -645,6 +740,7 @@ const handleContinue = async () => {
               component="img"
               src={baconardoImg}
               alt="Baconardo"
+              loading="eager"
               sx={{
                 width: 120,
                 height: 'auto',
@@ -671,6 +767,7 @@ const handleContinue = async () => {
             <Button 
               variant="contained"
               onClick={handleStartGame}
+              disabled={!gameReady}
               sx={{ 
                 background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
                 color: 'white',
@@ -688,7 +785,7 @@ const handleContinue = async () => {
                 }
               }}
             >
-              Start Cooking!
+              {gameReady ? 'Start Cooking!' : 'Loading...'}
             </Button>
           </Stack>
         </Box>
@@ -709,7 +806,18 @@ const handleContinue = async () => {
       backgroundAttachment: 'fixed',
       overflow: 'hidden'
     }}>
-      {/* Animation Styles */}
+      {/* Hidden preloaded images for browser cache */}
+      <div style={{ display: 'none' }}>
+        {ingredients.map((item, index) => (
+          <img key={`before-${index}`} src={item.beforeImage} alt="" />
+        ))}
+        {ingredients.map((item, index) => (
+          <img key={`after-${index}`} src={item.afterImage} alt="" />
+        ))}
+        <img src={knifeImg} alt="" />
+        <img src={baconardoImg} alt="" />
+      </div>
+      
       <style>
         {`
           @keyframes confettiFall {
@@ -837,6 +945,7 @@ const handleContinue = async () => {
             component="img"
             src={baconardoImg}
             alt="Baconardo the Cooking Cat"
+            loading="eager"
             sx={{
               width: 120,
               height: 'auto',
@@ -1022,21 +1131,21 @@ const handleContinue = async () => {
             }}
           >
             {/* Current Step Instruction */}
-              <Typography variant="h7" sx={{ 
-                color: 'white',
-                fontWeight: 'bold',
-                fontFamily: 'Poppins, sans-serif',
-                // REMOVED: backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                px: 3,
-                py: 2,
-                borderRadius: '10px',
-                textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
-                mb: 3,
-                textAlign: 'center',
-                maxWidth: '600px'
-              }}>
-                {currentIngredient.intro}
-              </Typography>
+            <Typography variant="h7" sx={{ 
+              color: 'white',
+              fontWeight: 'bold',
+              fontFamily: 'Poppins, sans-serif',
+              px: 3,
+              py: 2,
+              borderRadius: '10px',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+              mb: 3,
+              textAlign: 'center',
+              maxWidth: '600px'
+            }}>
+              {currentIngredient.intro}
+            </Typography>
+            
             {/* Ingredient Display Area */}
             <Box 
               onClick={handleIngredientAction}
@@ -1127,6 +1236,7 @@ const handleContinue = async () => {
                     <img 
                       src={knifeImg}
                       alt="Knife"
+                      loading="eager"
                       style={{
                         width: '100%',
                         height: '100%',
@@ -1143,6 +1253,7 @@ const handleContinue = async () => {
                     <img 
                       src={springOnionImg}
                       alt="Spring Onion"
+                      loading="eager"
                       style={{
                         width: `${100 - (springOnionChops * 15)}px`,
                         height: `${100 - (springOnionChops * 15)}px`,
@@ -1181,6 +1292,7 @@ const handleContinue = async () => {
                   <img 
                     src={currentIngredient.afterImage}
                     alt={currentIngredient.name}
+                    loading="eager"
                     style={{
                       width: '100px',
                       height: '100px',
@@ -1194,6 +1306,7 @@ const handleContinue = async () => {
                   <img 
                     src={getCurrentIngredientCompleted() ? currentIngredient.afterImage : currentIngredient.beforeImage}
                     alt={currentIngredient.name}
+                    loading="eager"
                     style={{
                       width: '100px',
                       height: '100px',
@@ -1286,7 +1399,7 @@ const handleContinue = async () => {
           </Box>
         )}
 
-        {/* Success Dialog - Updated to match Level 1 style */}
+        {/* Success Dialog */}
         <Dialog
           open={showCompletion}
           fullScreen
@@ -1446,7 +1559,7 @@ const handleContinue = async () => {
               </Box>
             )}
             
-            {/* Action Buttons - All in one row */}
+            {/* Action Buttons */}
             <Box sx={{ 
               display: 'flex', 
               flexDirection: 'row',
@@ -1510,7 +1623,6 @@ const handleContinue = async () => {
               
               <Button 
                 variant="contained"
-                // onClick={continueToNextLevel}
                 onClick={handleContinue}
                 disabled={progressSaving}
                 sx={{ 

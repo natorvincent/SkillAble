@@ -6,7 +6,9 @@ import {
   CircularProgress, 
   Typography,
   Dialog,
-  Stack
+  Stack,
+  LinearProgress,
+  Paper
 } from '@mui/material';
 import Confetti from 'react-confetti';
 import confetti from 'canvas-confetti';
@@ -33,6 +35,124 @@ import outletImg from "../../assets/cookingLevel3/outlet.png";
 // Import Baconardo asset
 import baconardoImg from "../../assets/cookingLevel3/Baconardo.png";
 
+// Asset preloader component
+const AssetPreloader = ({ onLoadComplete }) => {
+  const [progress, setProgress] = useState(0);
+  const [loadedCount, setLoadedCount] = useState(0);
+  
+  // All game assets to preload
+  const assets = [
+    kitchenBg,
+    baconardoImg,
+    oilImg,
+    butterImg,
+    eggImg,
+    saltImg,
+    springOnionImg,
+    spatulaImg,
+    cookedEggImg,
+    fryingPanImg,
+    plugImg,
+    outletImg
+  ];
+  
+  useEffect(() => {
+    let completed = 0;
+    
+    const loadAsset = (src) => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          completed++;
+          setLoadedCount(completed);
+          setProgress(Math.round((completed / assets.length) * 100));
+          resolve();
+        };
+        img.onerror = () => {
+          completed++;
+          setLoadedCount(completed);
+          setProgress(Math.round((completed / assets.length) * 100));
+          resolve(); // Continue even if some images fail
+        };
+        img.src = src;
+        
+        // Force preload by loading image
+        if (img.complete) {
+          completed++;
+          setLoadedCount(completed);
+          setProgress(Math.round((completed / assets.length) * 100));
+          resolve();
+        }
+      });
+    };
+    
+    const preloadAll = async () => {
+      // Preload all assets in parallel
+      await Promise.all(assets.map(loadAsset));
+      
+      // Add a small delay to ensure all images are cached
+      setTimeout(() => {
+        onLoadComplete();
+      }, 300);
+    };
+    
+    preloadAll();
+  }, [assets.length, onLoadComplete]);
+  
+  return (
+    <Box sx={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'linear-gradient(135deg, rgba(40, 11, 96, 0.95) 0%, rgba(106, 13, 173, 0.95) 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'column',
+      zIndex: 9999
+    }}>
+      <Box sx={{ width: '80%', maxWidth: '400px', mb: 4 }}>
+        <Typography variant="h4" sx={{ color: 'white', mb: 3, textAlign: 'center', fontFamily: 'Poppins' }}>
+          Loading Final Cooking Adventure...
+        </Typography>
+        <LinearProgress 
+          variant="determinate" 
+          value={progress} 
+          sx={{ 
+            height: 12, 
+            borderRadius: 6,
+            backgroundColor: 'rgba(255,255,255,0.2)',
+            '& .MuiLinearProgress-bar': {
+              background: 'linear-gradient(90deg, #FFC107 0%, #FF9800 50%, #FF5722 100%)',
+              borderRadius: 6
+            }
+          }} 
+        />
+        <Typography variant="body2" sx={{ color: 'white', mt: 1, textAlign: 'center' }}>
+          {loadedCount}/{assets.length} assets loaded
+        </Typography>
+      </Box>
+      
+      {/* Preload hidden images */}
+      <Box sx={{ display: 'none' }}>
+        {assets.map((src, index) => (
+          <img 
+            key={index}
+            src={src}
+            alt="preload"
+            onLoad={(e) => {
+              // Force browser to cache the image
+              e.target.style.visibility = 'hidden';
+            }}
+          />
+        ))}
+      </Box>
+    </Box>
+  );
+};
+
 const CookingLevel3 = () => {
   const navigate = useNavigate();
   const { lessonId } = useParams();
@@ -40,6 +160,11 @@ const CookingLevel3 = () => {
 
   // Add start screen state
   const [showStartScreen, setShowStartScreen] = useState(true);
+  const [assetsLoaded, setAssetsLoaded] = useState(false);
+  const [gameReady, setGameReady] = useState(false);
+  
+  // Cache loaded images for instant reuse
+  const imageCache = useRef({});
 
   const [gameState, setGameState] = useState({
     currentStep: 0,
@@ -76,6 +201,38 @@ const CookingLevel3 = () => {
   const [dragItem, setDragItem] = useState(null);
   const panRef = useRef(null);
   const panHeatTimerRef = useRef(null);
+
+  // Preload images into cache
+  useEffect(() => {
+    if (!assetsLoaded) return;
+    
+    const loadToCache = (src) => {
+      if (!imageCache.current[src]) {
+        const img = new Image();
+        img.src = src;
+        imageCache.current[src] = img;
+      }
+    };
+    
+    // Preload all game images into cache
+    [
+      kitchenBg,
+      baconardoImg,
+      oilImg,
+      butterImg,
+      eggImg,
+      saltImg,
+      springOnionImg,
+      spatulaImg,
+      cookedEggImg,
+      fryingPanImg,
+      plugImg,
+      outletImg
+    ].forEach(loadToCache);
+    
+    // Small delay to ensure cache is populated
+    setTimeout(() => setGameReady(true), 100);
+  }, [assetsLoaded]);
 
   // Handle start game
   const handleStartGame = () => {
@@ -150,8 +307,13 @@ const CookingLevel3 = () => {
     };
   }, []);
 
-  // Start screen
-  if (showStartScreen) {
+  // Show preloader until assets are loaded
+  if (!assetsLoaded) {
+    return <AssetPreloader onLoadComplete={() => setAssetsLoaded(true)} />;
+  }
+
+  // Start screen only after game is ready
+  if (showStartScreen || !gameReady) {
     return (
       <div style={{
         minHeight: "100vh",
@@ -210,6 +372,7 @@ const CookingLevel3 = () => {
               component="img"
               src={baconardoImg}
               alt="Baconardo"
+              loading="eager"
               sx={{
                 width: 120,
                 height: 'auto',
@@ -228,7 +391,7 @@ const CookingLevel3 = () => {
               maxWidth: '600px',
               textAlign: { xs: 'center', md: 'left' }
             }}>
-              Hi! I'm Baconardo! Let’s finish this yummy fried egg!
+              Hi! I'm Baconardo! Let's finish this yummy fried egg!
             </Typography>
           </Box>
           
@@ -236,6 +399,7 @@ const CookingLevel3 = () => {
             <Button 
               variant="contained"
               onClick={handleStartGame}
+              disabled={!gameReady}
               sx={{ 
                 background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
                 color: 'white',
@@ -253,7 +417,7 @@ const CookingLevel3 = () => {
                 }
               }}
             >
-              Start Cooking!
+              {gameReady ? 'Start Cooking!' : 'Loading...'}
             </Button>
           </Stack>
         </Box>
@@ -461,7 +625,7 @@ const CookingLevel3 = () => {
   };
 
   const goToHomepage = () => {
-    navigate('/homepage');
+    navigate('/studentdashboard');
   };
 
   const continueToNextLevel = () => {
@@ -534,6 +698,24 @@ const CookingLevel3 = () => {
     };
   };
 
+  // Hidden preloaded images for browser cache
+  const HiddenPreload = () => (
+    <div style={{ display: 'none' }}>
+      <img src={kitchenBg} alt="" />
+      <img src={baconardoImg} alt="" />
+      <img src={oilImg} alt="" />
+      <img src={butterImg} alt="" />
+      <img src={eggImg} alt="" />
+      <img src={saltImg} alt="" />
+      <img src={springOnionImg} alt="" />
+      <img src={spatulaImg} alt="" />
+      <img src={cookedEggImg} alt="" />
+      <img src={fryingPanImg} alt="" />
+      <img src={plugImg} alt="" />
+      <img src={outletImg} alt="" />
+    </div>
+  );
+
   return (
     <div style={{
       position: "fixed",
@@ -546,6 +728,8 @@ const CookingLevel3 = () => {
       backgroundPosition: "center",
       backgroundAttachment: "fixed",
     }}>
+      <HiddenPreload />
+      
       <Box sx={{
         position: "absolute",
         top: 0,
@@ -735,6 +919,7 @@ const CookingLevel3 = () => {
               <img 
                 src={baconardoImg} 
                 alt="Baconardo" 
+                loading="eager"
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
             </div>
@@ -892,7 +1077,7 @@ const CookingLevel3 = () => {
                   isCompleted={gameState.stepsCompleted[0]}
                   style={{ width: '80px', height: '60px', textAlign: 'center' }}
                 >
-                  <img src={plugImg} alt="Power Plug" style={{ width: '50px', height: '50px', objectFit: 'contain' }} />
+                  <img src={plugImg} alt="Power Plug" loading="eager" style={{ width: '50px', height: '50px', objectFit: 'contain' }} />
                   <div style={{ fontSize: '10px', fontWeight: 'bold' }}>Power Plug</div>
                 </DraggableItem>
 
@@ -903,7 +1088,7 @@ const CookingLevel3 = () => {
                     isCompleted={gameState.stepsCompleted[3]}
                     style={{ width: '100px', height: '70px', textAlign: 'center' }}
                   >
-                    <img src={fryingPanImg} alt="Frying Pan" style={{ width: '70px', height: '50px', objectFit: 'contain' }} />
+                    <img src={fryingPanImg} alt="Frying Pan" loading="eager" style={{ width: '70px', height: '50px', objectFit: 'contain' }} />
                     <div style={{ fontSize: '10px', fontWeight: 'bold' }}>Frying Pan</div>
                   </DraggableItem>
                 )}
@@ -947,7 +1132,7 @@ const CookingLevel3 = () => {
                   </>
                 ) : (
                   <>
-                    <img src={outletImg} alt="Electrical Outlet" style={{ width: '50px', height: '50px', objectFit: 'contain' }} />
+                    <img src={outletImg} alt="Electrical Outlet" loading="eager" style={{ width: '50px', height: '50px', objectFit: 'contain' }} />
                     <div style={{ fontSize: '10px', fontWeight: 'bold', color: '#666' }}>
                       OUTLET
                     </div>
@@ -1193,6 +1378,7 @@ const CookingLevel3 = () => {
                         <img 
                           src={cookedEggImg} 
                           alt="Cooked Egg" 
+                          loading="eager"
                           style={{
                             width: '80%',
                             height: '80%',
@@ -1330,7 +1516,7 @@ const CookingLevel3 = () => {
                     isCompleted={gameState.stepsCompleted[5]}
                     style={{ height: '90px', textAlign: 'center' }}
                   >
-                    <img src={oilImg} alt="Cooking Oil" style={{ width: '60px', height: '60px', objectFit: 'contain' }} />
+                    <img src={oilImg} alt="Cooking Oil" loading="eager" style={{ width: '60px', height: '60px', objectFit: 'contain' }} />
                     <div style={{ fontSize: '10px', fontWeight: 'bold' }}>Cooking Oil</div>
                   </DraggableItem>
 
@@ -1340,7 +1526,7 @@ const CookingLevel3 = () => {
                     isCompleted={gameState.stepsCompleted[6]}
                     style={{ height: '90px', textAlign: 'center' }}
                   >
-                    <img src={butterImg} alt="Butter" style={{ width: '60px', height: '60px', objectFit: 'contain' }} />
+                    <img src={butterImg} alt="Butter" loading="eager" style={{ width: '60px', height: '60px', objectFit: 'contain' }} />
                     <div style={{ fontSize: '10px', fontWeight: 'bold' }}>Butter</div>
                   </DraggableItem>
 
@@ -1350,7 +1536,7 @@ const CookingLevel3 = () => {
                     isCompleted={gameState.stepsCompleted[7]}
                     style={{ height: '90px', textAlign: 'center' }}
                   >
-                    <img src={eggImg} alt="Egg" style={{ width: '60px', height: '60px', objectFit: 'contain' }} />
+                    <img src={eggImg} alt="Egg" loading="eager" style={{ width: '60px', height: '60px', objectFit: 'contain' }} />
                     <div style={{ fontSize: '10px', fontWeight: 'bold' }}>Egg</div>
                   </DraggableItem>
 
@@ -1360,7 +1546,7 @@ const CookingLevel3 = () => {
                     isCompleted={gameState.stepsCompleted[8]}
                     style={{ height: '90px', textAlign: 'center' }}
                   >
-                    <img src={saltImg} alt="Salt" style={{ width: '60px', height: '60px', objectFit: 'contain' }} />
+                    <img src={saltImg} alt="Salt" loading="eager" style={{ width: '60px', height: '60px', objectFit: 'contain' }} />
                     <div style={{ fontSize: '10px', fontWeight: 'bold' }}>Salt</div>
                   </DraggableItem>
 
@@ -1378,7 +1564,7 @@ const CookingLevel3 = () => {
                       gap: '8px'
                     }}
                   >
-                    <img src={springOnionImg} alt="Spring Onion" style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
+                    <img src={springOnionImg} alt="Spring Onion" loading="eager" style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
                     <div style={{ fontSize: '10px', fontWeight: 'bold' }}>Spring Onion</div>
                   </DraggableItem>
                 </div>
@@ -1416,7 +1602,7 @@ const CookingLevel3 = () => {
                     isCompleted={gameState.stepsCompleted[9]}
                     style={{ width: '140px', height: '80px', textAlign: 'center' }}
                   >
-                    <img src={spatulaImg} alt="Wooden Spatula" style={{ width: '70px', height: '60px', objectFit: 'contain' }} />
+                    <img src={spatulaImg} alt="Wooden Spatula" loading="eager" style={{ width: '70px', height: '60px', objectFit: 'contain' }} />
                     <div style={{ fontSize: '10px', fontWeight: 'bold' }}>Wooden Spatula</div>
                   </DraggableItem>
                 </div>

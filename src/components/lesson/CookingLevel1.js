@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
   Box, 
@@ -19,12 +19,9 @@ import StarIcon from '@mui/icons-material/Star';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 
-// Import images
+// Image imports remain the same
 import kitchenBg from "../../assets/sortingLevel1/kitchen.jpg";
-// Import Baconardo images
-import baconardoImg from "../../assets/cookingLevel1/Baconardo.png"; 
-
-// Import cooking ingredient images
+import baconardoImg from "../../assets/cookingLevel1/Baconardo.png";
 import eggImg from "../../assets/cookingLevel1/egg.png";
 import oilImg from "../../assets/cookingLevel1/oil.png";
 import saltImg from "../../assets/cookingLevel1/salt.png";
@@ -32,12 +29,126 @@ import butterImg from "../../assets/cookingLevel1/butter.png";
 import milkImg from "../../assets/cookingLevel1/milk.png";
 import breadImg from "../../assets/cookingLevel1/bread.png";
 import cheeseImg from "../../assets/cookingLevel1/cheese.png";
-
-// Import basket image
 import basketImg from "../../assets/hygienelevel4/showerbasket.png";
 
 // Import services
 import { saveStudentLessonProgress } from '../../services/progressService';
+
+// Asset preloader component
+const AssetPreloader = ({ onLoadComplete }) => {
+  const [progress, setProgress] = useState(0);
+  const [loadedCount, setLoadedCount] = useState(0);
+  
+  // All game assets to preload
+  const assets = [
+    kitchenBg,
+    baconardoImg,
+    eggImg,
+    oilImg,
+    saltImg,
+    butterImg,
+    milkImg,
+    breadImg,
+    cheeseImg,
+    basketImg
+  ];
+  
+  useEffect(() => {
+    let completed = 0;
+    
+    const loadAsset = (src) => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          completed++;
+          setLoadedCount(completed);
+          setProgress(Math.round((completed / assets.length) * 100));
+          resolve();
+        };
+        img.onerror = () => {
+          completed++;
+          setLoadedCount(completed);
+          setProgress(Math.round((completed / assets.length) * 100));
+          resolve(); // Continue even if some images fail
+        };
+        img.src = src;
+        
+        // Force preload by loading image
+        if (img.complete) {
+          completed++;
+          setLoadedCount(completed);
+          setProgress(Math.round((completed / assets.length) * 100));
+          resolve();
+        }
+      });
+    };
+    
+    const preloadAll = async () => {
+      // Preload all assets in parallel
+      await Promise.all(assets.map(loadAsset));
+      
+      // Add a small delay to ensure all images are cached
+      setTimeout(() => {
+        onLoadComplete();
+      }, 300);
+    };
+    
+    preloadAll();
+  }, [assets.length, onLoadComplete]);
+  
+  return (
+    <Box sx={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'linear-gradient(135deg, rgba(40, 11, 96, 0.95) 0%, rgba(106, 13, 173, 0.95) 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'column',
+      zIndex: 9999
+    }}>
+      <Box sx={{ width: '80%', maxWidth: '400px', mb: 4 }}>
+        <Typography variant="h4" sx={{ color: 'white', mb: 3, textAlign: 'center', fontFamily: 'Poppins' }}>
+          Loading Cooking Adventure...
+        </Typography>
+        <LinearProgress 
+          variant="determinate" 
+          value={progress} 
+          sx={{ 
+            height: 12, 
+            borderRadius: 6,
+            backgroundColor: 'rgba(255,255,255,0.2)',
+            '& .MuiLinearProgress-bar': {
+              background: 'linear-gradient(90deg, #FFC107 0%, #FF9800 50%, #FF5722 100%)',
+              borderRadius: 6
+            }
+          }} 
+        />
+        <Typography variant="body2" sx={{ color: 'white', mt: 1, textAlign: 'center' }}>
+          {loadedCount}/{assets.length} assets loaded
+        </Typography>
+      </Box>
+      
+      {/* Preload hidden images */}
+      <Box sx={{ display: 'none' }}>
+        {assets.map((src, index) => (
+          <img 
+            key={index}
+            src={src}
+            alt="preload"
+            onLoad={(e) => {
+              // Force browser to cache the image
+              e.target.style.visibility = 'hidden';
+            }}
+          />
+        ))}
+      </Box>
+    </Box>
+  );
+};
 
 export default function FriedEggLevel1() {
   const navigate = useNavigate();
@@ -58,8 +169,43 @@ export default function FriedEggLevel1() {
   const [characterVisible, setCharacterVisible] = useState(true);
   const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
   const [hoveredIngredient, setHoveredIngredient] = useState(null);
+  const [assetsLoaded, setAssetsLoaded] = useState(false);
+  const [gameReady, setGameReady] = useState(false);
+  
+  // Cache loaded images for instant reuse
+  const imageCache = useRef({});
 
-  // Updated ingredient positions with better spacing and smaller sizes
+  // Preload images into cache
+  useEffect(() => {
+    if (!assetsLoaded) return;
+    
+    const loadToCache = (src) => {
+      if (!imageCache.current[src]) {
+        const img = new Image();
+        img.src = src;
+        imageCache.current[src] = img;
+      }
+    };
+    
+    // Preload all game images into cache
+    [
+      kitchenBg,
+      baconardoImg,
+      eggImg,
+      oilImg,
+      saltImg,
+      butterImg,
+      milkImg,
+      breadImg,
+      cheeseImg,
+      basketImg
+    ].forEach(loadToCache);
+    
+    // Small delay to ensure cache is populated
+    setTimeout(() => setGameReady(true), 100);
+  }, [assetsLoaded]);
+
+  // Updated ingredient positions
   const correctIngredients = [
     { id: 'egg', name: 'Egg', image: eggImg, correct: true, size: 'medium', position: { left: '5%', top: '15%' } },
     { id: 'oil', name: 'Oil', image: oilImg, correct: true, size: 'small', position: { left: '25%', top: '35%' } },
@@ -121,14 +267,12 @@ export default function FriedEggLevel1() {
     
     if (item) {
       if (item.correct) {
-        // Get basket position for animation target
         const basketRect = e.currentTarget.getBoundingClientRect();
         const basketCenter = {
           x: basketRect.left + basketRect.width / 2,
           y: basketRect.top + basketRect.height / 2
         };
 
-        // Start animation
         const animatingItem = {
           ...item,
           startX: e.clientX,
@@ -143,21 +287,17 @@ export default function FriedEggLevel1() {
         setFeedbackMessage(`Great! You added ${item.name.toLowerCase()} for your fried egg!`);
         playSound('correct');
         
-        // Auto-hide feedback message after 3 seconds
         setTimeout(() => {
           setFeedbackMessage('');
         }, 3000);
         
-        // Remove the item after animation completes
         setTimeout(() => {
           setAnimatingItems(prev => prev.filter(i => i.id !== animatingItem.id));
           setCollectedIngredients(prev => [...prev, item]);
           
-          // Update score (25 points per correct ingredient)
           const newScore = score + 25;
           setScore(newScore);
           
-          // Check if all correct items are collected
           const remainingCorrectItems = correctIngredients.filter(correct => 
             !collectedIngredients.some(collected => collected.id === correct.id) && 
             correct.id !== item.id
@@ -174,11 +314,9 @@ export default function FriedEggLevel1() {
         }, 600);
         
       } else {
-        // Incorrect item
         setFeedbackMessage(`Oops! ${item.name} isn't needed for making fried eggs. Try again!`);
         playSound('wrong');
         
-        // Auto-hide feedback message after 3 seconds
         setTimeout(() => {
           setFeedbackMessage('');
         }, 3000);
@@ -315,7 +453,7 @@ export default function FriedEggLevel1() {
   };
 
   const handleGoHome = () => {
-    navigate('/homepage');
+    navigate('/studentdashboard');
   };
 
   useEffect(() => {
@@ -365,7 +503,7 @@ export default function FriedEggLevel1() {
     }
   }, [showSuccess]);
 
-  // Enhanced Character Component with Baconardo
+  // Character Component with preloaded image
   const Character = () => {
     if (!characterVisible) {
       return null;
@@ -411,6 +549,7 @@ export default function FriedEggLevel1() {
           component="img"
           src={baconardoImg}
           alt="Baconardo the Cooking Cat"
+          loading="eager" // Force eager loading for critical image
           sx={{
             width: 120,
             height: 'auto',
@@ -482,8 +621,13 @@ export default function FriedEggLevel1() {
     );
   };
 
-  // Start screen with fixed alignment
-  if (showStartScreen) {
+  // Show preloader until assets are loaded
+  if (!assetsLoaded) {
+    return <AssetPreloader onLoadComplete={() => setAssetsLoaded(true)} />;
+  }
+
+  // Show start screen only after game is ready
+  if (showStartScreen || !gameReady) {
     return (
       <div style={{
         minHeight: "100vh",
@@ -542,6 +686,7 @@ export default function FriedEggLevel1() {
               component="img"
               src={baconardoImg}
               alt="Baconardo"
+              loading="eager"
               sx={{
                 width: 120,
                 height: 'auto',
@@ -568,6 +713,7 @@ export default function FriedEggLevel1() {
             <Button 
               variant="contained"
               onClick={handleStartGame}
+              disabled={!gameReady}
               sx={{ 
                 background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
                 color: 'white',
@@ -585,7 +731,7 @@ export default function FriedEggLevel1() {
                 }
               }}
             >
-              Start Cooking!
+              {gameReady ? 'Start Cooking!' : 'Loading...'}
             </Button>
           </Stack>
         </Box>
@@ -606,7 +752,15 @@ export default function FriedEggLevel1() {
       backgroundAttachment: 'fixed',
       overflow: 'hidden'
     }}>
-      {/* Animation Styles */}
+      {/* Hidden preloaded images for browser cache */}
+      <div style={{ display: 'none' }}>
+        {allIngredients.map((item, index) => (
+          <img key={index} src={item.image} alt="" />
+        ))}
+        <img src={basketImg} alt="" />
+        <img src={baconardoImg} alt="" />
+      </div>
+      
       <style>
         {`
           @keyframes flyToBasket {
@@ -793,7 +947,6 @@ export default function FriedEggLevel1() {
             🏠
           </Button>
 
-          {/* Sound Toggle Button */}
           <Button 
             variant="contained"
             onClick={() => setAutoPlayEnabled(!autoPlayEnabled)}
@@ -823,7 +976,7 @@ export default function FriedEggLevel1() {
           </Button>
         </Box>
 
-        {/* Game Area - Basket Only, Nothing Below */}
+        {/* Game Area */}
         {!gameCompleted && (
           <Box 
             sx={{ 
@@ -895,7 +1048,7 @@ export default function FriedEggLevel1() {
               )}
             </Box>
 
-            {/* Available Ingredients with Smaller Sizes */}
+            {/* Available Ingredients */}
             <Box sx={{ 
               position: 'absolute',
               top: 0,
@@ -906,7 +1059,6 @@ export default function FriedEggLevel1() {
               pointerEvents: 'none'
             }}>
               {availableIngredients.map((item, index) => {
-                // Smaller size mapping
                 const sizeMap = {
                   xsmall: '90px',
                   small: '120px',
@@ -1039,6 +1191,7 @@ export default function FriedEggLevel1() {
                 component="img"
                 src={baconardoImg}
                 alt="Baconardo"
+                loading="eager"
                 sx={{
                   width: 60,
                   height: 'auto',
