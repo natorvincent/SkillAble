@@ -25,7 +25,7 @@ import basketImg from '../../assets/householdLevel1/Basket.png';
 import laundryBgImg from '../../assets/householdLevel1/BackgroundLaundry.png';
 import bubbleImg from '../../assets/householdLevel1/bubble2.png';
 import wrongImg from '../../assets/householdLevel1/Wrong1.png';
-
+import pointFingerImg from '../../assets/householdLevel1/pointingfinger.png';
 import Navbar from '../Navbar';
 
 // Import sound effects
@@ -589,42 +589,43 @@ const HouseholdLevel1 = () => {
           pt: isTablet ? 0.5 : 1
         }}>
           {/* Progress Bar Section */}
-          <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1} sx={{ 
-            maxWidth: isTablet ? '600px' : '800px', 
-            mx: 'auto',
-            flexWrap: 'wrap'
-          }}>
-            <Typography variant="body1" sx={{ 
-              color: 'white', 
-              fontWeight: 'bold',
-              fontFamily: 'Poppins, sans-serif',
-              backgroundColor: 'rgba(0, 0, 0, 0.7)',
-              px: isTablet ? 1 : 2,
-              py: isTablet ? 0.5 : 1,
-              borderRadius: '10px',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
-              fontSize: isTablet ? '0.9rem' : '1rem'
+            <Box sx={{ 
+              position: 'absolute',
+              top: '20px',
+              left: '20px',
+              right: '20px',
+              zIndex: 1000
             }}>
-              Step {currentItemIndex + 1}/{clothingItems.length}: Sort Laundry
-            </Typography>
-          </Stack>
-          
-          <Box sx={{ maxWidth: isTablet ? '600px' : '800px', mx: 'auto' }}>
-            <LinearProgress 
-              variant="determinate" 
-              value={(correctItems / clothingItems.length) * 100} 
-              sx={{ 
-                height: isTablet ? 6 : 8, 
+              <Typography variant="h6" sx={{ 
+                color: 'white', 
+                fontWeight: 'bold',
+                fontFamily: 'Poppins, sans-serif',
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                px: 2,
+                py: 1,
                 borderRadius: '10px',
-                backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
-                '& .MuiLinearProgress-bar': {
+                boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+                mb: 1,
+                display: 'inline-block'
+              }}>
+                Step {currentItemIndex + 1}/{clothingItems.length}: Sort Laundry
+              </Typography>
+
+              <LinearProgress 
+                variant="determinate" 
+                value={(correctItems / clothingItems.length) * 100} 
+                sx={{ 
+                  height: 12, 
                   borderRadius: '10px',
-                  backgroundColor: '#90BE6D'
-                }
-              }} 
-            />
-          </Box>
+                  backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                  boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                  '& .MuiLinearProgress-bar': {
+                    borderRadius: '10px',
+                    backgroundColor: '#4CAF50'
+                  }
+                }} 
+              />
+            </Box>
 
           {/* Instructions Section */}
           <Box sx={{ 
@@ -1189,7 +1190,8 @@ const HouseholdLevel1 = () => {
                     height: "auto",
                     objectFit: "contain",
                     filter: "drop-shadow(0 8px 20px rgba(0,0,0,0.3))",
-                    zIndex: 200
+                    zIndex: 200,
+                    top: isTablet ? "-20px" : "-30px" // Negative values move up
                   }}
                 />
               </div>
@@ -1201,15 +1203,15 @@ const HouseholdLevel1 = () => {
                 animate={{ scale: avatar === 'happy' ? [1, 1.1, 1] : 1 }}
                 transition={{ duration: 3 }}
                 style={{
-                  width: isTablet ? "700px" : "900px",
-                  height: isTablet ? "700px" : "900px",
+                  width: isTablet ? "750px" : "950px",
+                  height: isTablet ? "750px" : "950px",
                   objectFit: "contain",
                   filter: "drop-shadow(0 12px 24px rgba(0,0,0,0.5))",
                   position: "absolute",
-                  left: isTablet ? "-120px" : "-200px",
+                  left: isTablet ? "-80px" : "-100px",
                   transform: isTablet
-                  ? "scale(0.9) translateY(-15px)"   // was -40px
-                  : "scale(1.1) translateY(-25px)",     // was -60px
+                    ? "scale(1.0) translateY(-15px)"   // Full scale
+                    : "scale(1.2) translateY(-25px)",  // Larger scale
                   zIndex: 150,
                   pointerEvents: "none"
                 }}
@@ -1227,6 +1229,7 @@ const HouseholdLevel1 = () => {
                   gap: isTablet ? "1rem" : "2rem",
                   marginTop: isTablet ? "-30px" : "-60px",
                   width: "100%",
+                  
                 }}
               >
                 {/* WHITE MACHINE */}
@@ -1246,6 +1249,7 @@ const HouseholdLevel1 = () => {
                         ? "drop-shadow(0 0 30px rgba(255,255,255,1))"
                         : "drop-shadow(0 6px 15px rgba(0,0,0,0.25))",
                     marginRight: isTablet ? "-0.5rem" : "-5rem",  // PULL RIGHT MACHINE CLOSER
+                    marginLeft: isTablet ? "-20px" : "-40px"  // Negative margin = move left
                   }}
                 >
                   <img
@@ -1270,7 +1274,7 @@ const HouseholdLevel1 = () => {
                       fontFamily: "Poppins, sans-serif",
                       textShadow: "3px 3px 8px rgba(0,0,0,0.4)", // Better shadow
                       letterSpacing: "3px",  // More spacing
-                      marginTop: "-20px",
+                      marginTop: "-80px",
                     }}
                   >
                     WHITES
@@ -1322,7 +1326,7 @@ const HouseholdLevel1 = () => {
                       WebkitBackgroundClip: "text",
                       WebkitTextFillColor: "transparent",
                       backgroundClip: "text",
-                      marginTop: "-20px",
+                      marginTop: "-80px",
                     }}
                   >
                     COLOURS

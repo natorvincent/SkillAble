@@ -1,5 +1,4 @@
 import starsImg from '../../assets/householdLevel2/stars.png';
-
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
@@ -14,9 +13,8 @@ import {
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useNavigate, useParams } from 'react-router-dom';
 
-
 // For items
-import condomImg from '../../assets/householdLevel2/condom.png';
+import diaperImg from '../../assets/householdLevel2/diaper.png';
 import toiletPaperImg from '../../assets/householdLevel2/paper towel.png';
 import blueWhiteShirtImg from '../../assets/householdLevel2/BlueWhiteShirt.png';
 import cottonBudsImg from '../../assets/householdLevel2/cotton buds.png';
@@ -40,6 +38,7 @@ import web2Img from '../../assets/householdLevel2/web2.png';
 import web3Img from '../../assets/householdLevel2/web3.png';
 import web4Img from '../../assets/householdLevel2/web4.png';
 import bubbleImg from '../../assets/householdLevel2/bubble1.png';
+import towelImg from '../../assets/householdLevel2/towel.png';
 
 // For Background Images
 import bathroomBackground from '../../assets/householdLevel2/BathroomBackground1.png';
@@ -76,7 +75,7 @@ const theme = createTheme({
 
 const HouseholdLevel2 = () => {
   const [showStartScreen, setShowStartScreen] = useState(true);
-  const [currentStep, setCurrentStep] = useState(1); // 1: Laundry, 2: Trash, 3: Floor, 4: Walls
+  const [currentStep, setCurrentStep] = useState(1); // 1: Laundry, 2: Trash, 3: Water spits, 4: Mud stains, 5: Cobwebs
   const [gameCompleted, setGameCompleted] = useState(false);
   const [score, setScore] = useState(0);
   const [draggedItem, setDraggedItem] = useState(null);
@@ -92,62 +91,55 @@ const HouseholdLevel2 = () => {
   const navigate = useNavigate();
   const { lessonId } = useParams();
 
-  // All items scattered around the bathroom - ALL ON FLOOR (higher y values)
+  // All items scattered around the bathroom
   const [allItems, setAllItems] = useState([
-    // Laundry Items - Keep away from edges (x: 10-85, y: 15-75)
-  { id: 1, name: 'Blue White Shirt', image: blueWhiteShirtImg, x: 15, y: 80, collected: false, type: 'laundry', step: 1, rotation: -25, size: 100 },
-  { id: 2, name: 'Dark Blue Shirt', image: darkBlueShirtImg, x: 30, y: 82, collected: false, type: 'laundry', step: 1, rotation: 30, size: 100 },
-  { id: 3, name: 'Light Blue Shirt', image: lightBlueShirtImg, x: 45, y: 80, collected: false, type: 'laundry', step: 1, rotation: -10, size: 100 },
-  { id: 4, name: 'Dirty Short', image: dirtyShortImg, x: 70, y: 85, collected: false, type: 'laundry', step: 1, rotation: 75, size: 100 },
-  { id: 5, name: 'Pants', image: pantsImg, x: 55, y: 80, collected: false, type: 'laundry', step: 1, rotation: -60, size: 100 },
+    // Laundry Items - Step 1
+    { id: 1, name: 'Blue White Shirt', image: blueWhiteShirtImg, x: 15, y: 80, collected: false, type: 'laundry', step: 1, rotation: -25, size: 100 },
+    { id: 2, name: 'Dark Blue Shirt', image: darkBlueShirtImg, x: 30, y: 82, collected: false, type: 'laundry', step: 1, rotation: 30, size: 100 },
+    { id: 3, name: 'Light Blue Shirt', image: lightBlueShirtImg, x: 45, y: 80, collected: false, type: 'laundry', step: 1, rotation: -10, size: 100 },
+    { id: 4, name: 'Dirty Short', image: dirtyShortImg, x: 70, y: 85, collected: false, type: 'laundry', step: 1, rotation: 75, size: 100 },
+    { id: 5, name: 'Pants', image: pantsImg, x: 55, y: 80, collected: false, type: 'laundry', step: 1, rotation: -60, size: 100 },
 
-    
-    // Trash Items - Adjusted (avoid x < 8 and y > 75)
-  { id: 6, name: 'Condom', image: condomImg, x: 5, y: 80, collected: false, type: 'trash', step: 2, rotation: 50, size: 80 },
-  { id: 7, name: 'Toilet Paper', image: toiletPaperImg, x: 20, y: 83, collected: false, type: 'trash', step: 2, rotation: 40, size: 100 },
-  { id: 8, name: 'Cotton Buds', image: cottonBudsImg, x: 65, y: 79, collected: false, type: 'trash', step: 2, rotation: -15, size: 100 },
-  { id: 9, name: 'Pads', image: padsImg, x: 75, y: 85, collected: false, type: 'trash', step: 2, rotation: -25, size: 100 },
-  { id: 10, name: 'Shampoo', image: shampooImg, x: 60, y: 85, collected: false, type: 'trash', step: 2, rotation: -80, size: 100 },
-  { id: 11, name: 'Toilet Brush', image: toiletbrushImg, x: 80, y: 86, collected: false, type: 'trash', step: 2, rotation: 90, size: 100 }
-]);
-
-  // Floor dirt spots using actual images - Scattered all around floor and walls
-  const [dirtSpots, setDirtSpots] = useState([
-    // Mud stains on floor and walls
-    { id: 1, x: 20, y: 65, cleaned: false, image: mudStainImg1, size: 150 },
-    { id: 2, x: 55, y: 60, cleaned: false, image: mudStainImg2, size: 150 },
-    { id: 3, x: 70, y: 55, cleaned: false, image: mudStainImg1, size: 150 },
-    { id: 4, x: 45, y: 50, cleaned: false, image: mudStainImg2, size: 150 },
-    { id: 5, x: 25, y: 40, cleaned: false, image: mudStainImg1, size: 150 },
-    { id: 6, x: 80, y: 35, cleaned: false, image: mudStainImg2, size: 150 },
-    { id: 7, x: 35, y: 30, cleaned: false, image: mudStainImg1, size: 150 },
-    { id: 8, x: 65, y: 25, cleaned: false, image: mudStainImg2, size: 150 },
-  
-    // Water spits ONLY on floor (higher y values)
-    { id: 9, x: 1, y: 85, cleaned: false, image: waterSpitImg, size: 120 },
-    { id: 10, x: 40, y: 85, cleaned: false, image: waterSpitImg, size: 120 },
-    { id: 11, x: 60, y: 85, cleaned: false, image: waterSpitImg, size: 120 },
-    { id: 12, x: 80, y: 85, cleaned: false, image: waterSpitImg, size: 120 },
-    { id: 13, x: 30, y: 85, cleaned: false, image: waterSpitImg, size: 120 }
+    // Trash Items - Step 2
+    { id: 6, name: 'Diaper', image: diaperImg, x: 5, y: 80, collected: false, type: 'trash', step: 2, rotation: 50, size: 80 },
+    { id: 7, name: 'Toilet Paper', image: toiletPaperImg, x: 20, y: 83, collected: false, type: 'trash', step: 2, rotation: 40, size: 100 },
+    { id: 8, name: 'Cotton Buds', image: cottonBudsImg, x: 65, y: 79, collected: false, type: 'trash', step: 2, rotation: -15, size: 100 },
+    { id: 9, name: 'Pads', image: padsImg, x: 75, y: 85, collected: false, type: 'trash', step: 2, rotation: -25, size: 100 },
+    { id: 10, name: 'Shampoo', image: shampooImg, x: 60, y: 85, collected: false, type: 'trash', step: 2, rotation: -80, size: 100 },
+    { id: 11, name: 'Toilet Brush', image: toiletbrushImg, x: 80, y: 86, collected: false, type: 'trash', step: 2, rotation: 90, size: 100 }
   ]);
 
-  // Cobwebs using actual images - 8 webs scattered around walls, larger
+  // Dirt spots with proper step assignments
+  const [dirtSpots, setDirtSpots] = useState([
+    // Water spits ONLY on floor - cleaned with broom in step 3
+    { id: 9, x: 1, y: 85, cleaned: false, image: waterSpitImg, size: 120, type: 'water', step: 3 },
+    { id: 10, x: 40, y: 85, cleaned: false, image: waterSpitImg, size: 120, type: 'water', step: 3 },
+    { id: 11, x: 60, y: 85, cleaned: false, image: waterSpitImg, size: 120, type: 'water', step: 3 },
+    { id: 12, x: 80, y: 85, cleaned: false, image: waterSpitImg, size: 120, type: 'water', step: 3 },
+    { id: 13, x: 30, y: 85, cleaned: false, image: waterSpitImg, size: 120, type: 'water', step: 3 },
+    
+    // Mud stains - will be cleaned with towel in step 4
+    { id: 1, x: 20, y: 65, cleaned: false, image: mudStainImg1, size: 150, type: 'mud', step: 4 },
+    { id: 2, x: 55, y: 60, cleaned: false, image: mudStainImg2, size: 150, type: 'mud', step: 4 },
+    { id: 3, x: 70, y: 55, cleaned: false, image: mudStainImg1, size: 150, type: 'mud', step: 4 },
+    { id: 4, x: 45, y: 50, cleaned: false, image: mudStainImg2, size: 150, type: 'mud', step: 4 },
+    { id: 5, x: 25, y: 40, cleaned: false, image: mudStainImg1, size: 150, type: 'mud', step: 4 },
+    { id: 6, x: 80, y: 35, cleaned: false, image: mudStainImg2, size: 150, type: 'mud', step: 4 },
+    { id: 7, x: 35, y: 30, cleaned: false, image: mudStainImg1, size: 150, type: 'mud', step: 4 },
+    { id: 8, x: 65, y: 25, cleaned: false, image: mudStainImg2, size: 150, type: 'mud', step: 4 },
+    { id: 9, x: 55, y: 15, cleaned: false, image: mudStainImg1, size: 150, type: 'mud', step: 4 }
+  ]);
+
+  // Cobwebs - Step 5
   const [cobwebs, setCobwebs] = useState([
-    // 🕸 Left wall (upper and middle)
-  { id: 1, x: 4, y: 5, cleaned: false, image: web1Img, size: 90 },
-  { id: 2, x: 30, y: 20, cleaned: false, image: web2Img, size: 90 },
-
-  // 🕸 Top middle area
-  { id: 3, x: 35, y: 3, cleaned: false, image: web3Img, size: 80 },
-  { id: 4, x: 50, y: 6, cleaned: false, image: web4Img, size: 90 },
-
-  // 🕸 Right wall (upper and mid-top)
-  { id: 5, x: 80, y: 5, cleaned: false, image: web1Img, size: 85 },
-  { id: 6, x: 68, y: 18, cleaned: false, image: web2Img, size: 90 },
-
-  // 🕸 Upper corners near walls
-  { id: 7, x: 2, y: 40, cleaned: false, image: web3Img, size: 90 },
-  { id: 8, x: 85, y: 38, cleaned: false, image: web4Img, size: 90 },
+    { id: 1, x: 4, y: 3, cleaned: false, image: web1Img, size: 250, step: 5 },
+    { id: 2, x: 30, y: 12, cleaned: false, image: web2Img, size: 190, step: 5 },
+    { id: 3, x: 35, y: 1, cleaned: false, image: web3Img, size: 120, step: 5 },
+    { id: 4, x: 50, y: 3, cleaned: false, image: web4Img, size: 100, step: 5 },
+    { id: 5, x: 75, y: 3, cleaned: false, image: web1Img, size: 250, step: 5 },
+    { id: 6, x: 68, y: 18, cleaned: false, image: web2Img, size: 120, step: 5 },
+    { id: 7, x: 2, y: 40, cleaned: false, image: web3Img, size: 190, step: 5 },
+    { id: 8, x: 85, y: 38, cleaned: false, image: web4Img, size: 150, step: 5 },
   ]);
 
   // Available tools for each step
@@ -155,49 +147,45 @@ const HouseholdLevel2 = () => {
     { id: 1, name: 'Basin', image: basinImg, step: 1, collected: false, used: false },
     { id: 2, name: 'Trash Can', image: trashCanImg, step: 2, collected: false, used: false },
     { id: 3, name: 'Broom', image: broomImg, step: 3, collected: false, used: false },
-    { id: 4, name: 'Duster', image: dusterImg, step: 4, collected: false, used: false }
+    { id: 4, name: 'Towel', image: towelImg, step: 4, collected: false, used: false },
+    { id: 5, name: 'Duster', image: dusterImg, step: 5, collected: false, used: false }
   ]);
 
   // Add twinkling stars effect for task completion
   const triggerTaskStars = (x, y, count = 3) => {
     const newStars = Array.from({ length: count }, (_, index) => ({
       id: Date.now() + index,
-      x: x + (Math.random() * 40 - 20), // Random position around the task
+      x: x + (Math.random() * 40 - 20),
       y: y + (Math.random() * 40 - 20),
-      size: Math.random() * 60 + 50, // Size between 30-70px
-      delay: index * 200 // Stagger the appearance
+      size: Math.random() * 60 + 50,
+      delay: index * 200
     }));
     
     setTaskStars(prev => [...prev, ...newStars]);
     
-    // Remove stars after animation
     setTimeout(() => {
       setTaskStars(prev => prev.filter(star => !newStars.find(ns => ns.id === star.id)));
     }, 2000);
   };
 
   useEffect(() => {
-  const createBubbles = () => {
-    const newBubbles = Array.from({ length: 6 }, (_, index) => ({
-      id: Date.now() + index, // Unique ID
-      x: Math.random() * 70 + 25, // Random position within bathtub width (15-85%)
-      y: Math.random() * 20 + 30, // Start from TOP of bathtub (10-30%)
-      size: Math.random() * 25 + 20, // Random size between 20-45px
-      opacity: Math.random() * 0.6 + 0.2, // Random opacity between 0.2-0.8
-      animationDelay: Math.random() * 8, // Longer delay between 0-8 seconds
-      floatSpeed: Math.random() * 5 + 2 // Longer duration (4-7 seconds),
+    const createBubbles = () => {
+      const newBubbles = Array.from({ length: 6 }, (_, index) => ({
+        id: Date.now() + index,
+        x: Math.random() * 70 + 25,
+        y: Math.random() * 20 + 30,
+        size: Math.random() * 25 + 20,
+        opacity: Math.random() * 0.6 + 0.2,
+        animationDelay: Math.random() * 8,
+        floatSpeed: Math.random() * 5 + 2
       }));
-    setBubbles(prev => [...prev, ...newBubbles].slice(-15)); // Keep only 15 bubbles max
-  };
+      setBubbles(prev => [...prev, ...newBubbles].slice(-15));
+    };
 
-  // Create initial bubbles
-  createBubbles();
-  
-  // Add new bubbles every 3 seconds
-  const bubbleInterval = setInterval(createBubbles, 3000);
-  
-  return () => clearInterval(bubbleInterval);
-}, []);
+    createBubbles();
+    const bubbleInterval = setInterval(createBubbles, 3000);
+    return () => clearInterval(bubbleInterval);
+  }, []);
 
   // Refs for drop zones
   const basinRef = useRef(null);
@@ -207,13 +195,15 @@ const HouseholdLevel2 = () => {
   const currentStepItems = allItems.filter(item => item.step === currentStep && !item.collected);
   const collectedItems = allItems.filter(item => item.collected);
 
-  // Progress tracking
+  // Step progress calculation for 5 steps
   const stepProgress = {
     1: (allItems.filter(item => item.step === 1 && item.collected).length / allItems.filter(item => item.step === 1).length) * 100,
     2: (allItems.filter(item => item.step === 2 && item.collected).length / allItems.filter(item => item.step === 2).length) * 100,
-    3: (dirtSpots.filter(spot => spot.cleaned).length / dirtSpots.length) * 100,
-    4: (cobwebs.filter(web => web.cleaned).length / cobwebs.length) * 100
+    3: (dirtSpots.filter(spot => spot.step === 3 && spot.cleaned).length / dirtSpots.filter(spot => spot.step === 3).length) * 100,
+    4: (dirtSpots.filter(spot => spot.step === 4 && spot.cleaned).length / dirtSpots.filter(spot => spot.step === 4).length) * 100,
+    5: (cobwebs.filter(web => web.cleaned).length / cobwebs.length) * 100
   };
+
   // Background music setup
   useEffect(() => {
     const audio = new Audio(bathroomBackgroundMusic);
@@ -230,7 +220,6 @@ const HouseholdLevel2 = () => {
     };
 
     const timer = setTimeout(playAudio, 1000);
-
     return () => {
       clearTimeout(timer);
       if (audio) {
@@ -240,28 +229,25 @@ const HouseholdLevel2 = () => {
     };
   }, []);
 
-
-
-  // Check step completion and unlock tools
+  // Check step completion and unlock tools for 5 steps
   useEffect(() => {
     const currentProgress = stepProgress[currentStep];
     
     if (currentProgress === 100) {
-      // Unlock next tool
       const nextStep = currentStep + 1;
-      if (nextStep <= 4) {
+      if (nextStep <= 5) {
         setAvailableTools(prev => prev.map(tool => 
           tool.step === nextStep ? { ...tool, collected: true } : tool
         ));
         setTimeout(() => {
           setCurrentStep(nextStep);
-          setScore(prev => prev + 25);
-          setSelectedTool(null); // Deselect tool when moving to next step
+          setScore(prev => prev + 20);
+          setSelectedTool(null);
         }, 1500);
       } else {
         setTimeout(() => {
           setGameCompleted(true);
-          setScore(prev => prev + 25);
+          setScore(prev => prev + 20);
         }, 1500);
       }
     }
@@ -279,17 +265,15 @@ const HouseholdLevel2 = () => {
     setShowStartScreen(false);
   };
 
-  // REPLACE WITH THIS UPDATED VERSION:
-const handleToolSelect = (tool) => {
-  if (tool.collected && tool.step === currentStep) {
-    setSelectedTool(tool);
-    // Trigger animation when basin or trash can is selected
-    if (tool.step === 1 || tool.step === 2) {
-      setShowDropZone(true);
+  // Tool selection handler
+  const handleToolSelect = (tool) => {
+    if (tool.collected && tool.step === currentStep) {
+      setSelectedTool(tool);
+      if (tool.step === 1 || tool.step === 2) {
+        setShowDropZone(true);
+      }
     }
-  }
-};
-  
+  };
 
   // Drag and drop handlers
   const handleDragStart = (e, item) => {
@@ -301,207 +285,248 @@ const handleToolSelect = (tool) => {
     e.preventDefault();
   };
 
-  // Updated handleDrop function with stars for each item completion
+  // Drop handler for laundry and trash
   const handleDrop = (e, target) => {
     e.preventDefault();
     if (!draggedItem || !selectedTool) return;
 
     if (currentStep === 1 && target === 'basin' && draggedItem.type === 'laundry' && selectedTool.step === 1) {
-      // Handle laundry drop in basin
       setAllItems(prev => 
         prev.map(item => 
           item.id === draggedItem.id ? { ...item, collected: true } : item
         )
       );
-      // Add to collected laundry with position for display
       setCollectedLaundry(prev => [
         ...prev,
         {
           ...draggedItem,
           containerPosition: {
-            x: Math.random() * 60 + 20, // Random position inside basin (20-80%)
-            y: Math.random() * 30 + 50  // Random position inside basin (30-70%)
+            x: Math.random() * 60 + 20,
+            y: Math.random() * 30 + 50
           },
-          size: 40 // Smaller size for inside container
+          size: 40
         }
       ]);
       setScore(prev => prev + 8);
-      
-      // Show stars at the item's original position
       triggerTaskStars(draggedItem.x, draggedItem.y, 6);
       
     } else if (currentStep === 2 && target === 'trash' && draggedItem.type === 'trash' && selectedTool.step === 2) {
-      // Handle trash drop in trash can
       setAllItems(prev => 
         prev.map(item => 
           item.id === draggedItem.id ? { ...item, collected: true } : item
         )
       );
-      // Add to collected trash with position for display
       setCollectedTrash(prev => [
         ...prev,
         {
           ...draggedItem,
           containerPosition: {
-            x: Math.random() * 50 + 25, // Random position inside trash can
-            y: Math.random() * 30 + 35  // Random position inside trash can
+            x: Math.random() * 50 + 25,
+            y: Math.random() * 30 + 35
           },
-          size: 35 // Smaller size for inside container
+          size: 35
         }
       ]);
       setScore(prev => prev + 8);
-      
-      // Show stars at the item's original position
       triggerTaskStars(draggedItem.x, draggedItem.y, 6);
     }
 
     setDraggedItem(null);
   };
 
-  // Floor cleaning handler with improved fade-out animation and stars
-const handleFloorClean = (e) => {
-  if (currentStep !== 3 || selectedTool?.step !== 3) return;
+  // Step 3: Clean water spits with broom
+  const handleStep3Clean = (e) => {
+    if (currentStep !== 3 || !selectedTool || selectedTool?.step !== 3) return;
 
-  const rect = e.currentTarget.getBoundingClientRect();
-  const x = ((e.clientX - rect.left) / rect.width) * 100;
-  const y = ((e.clientY - rect.top) / rect.height) * 100;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
 
-  // Show broom image at cursor position
-  setSelectedTool(prev => ({ ...prev, cleaningPosition: { x, y } }));
+    setSelectedTool(prev => ({ ...prev, cleaningPosition: { x, y } }));
 
-  // Check if broom is near any dirt spot
-  const updatedDirt = dirtSpots.map(spot => {
-    if (!spot.cleaned && !spot.cleaning && Math.abs(spot.x - x) < 10 && Math.abs(spot.y - y) < 10) {
-      setScore(prev => prev + 6);
-      
-      // Mark as cleaning to start animation
-      const cleaningSpot = { ...spot, cleaning: true, cleaningProgress: 0 };
-      setDirtSpots(prev => prev.map(s => 
-        s.id === spot.id ? cleaningSpot : s
-      ));
+    const updatedDirt = dirtSpots.map(spot => {
+      if (spot.step === 3 && !spot.cleaned && !spot.cleaning && Math.abs(spot.x - x) < 10 && Math.abs(spot.y - y) < 10) {
+        if (selectedTool.name !== 'Broom') {
+          console.log('Use Broom for water spits!');
+          return spot;
+        }
 
-      // Animate the cleaning progress with smoother fade
-      const startTime = Date.now();
-      const animateCleaning = () => {
-        const elapsed = Date.now() - startTime;
-        const progress = Math.min(elapsed / 1500, 1); // Faster animation - 1.5 seconds
-        
+        setScore(prev => prev + 8);
+        const cleaningSpot = { ...spot, cleaning: true, cleaningProgress: 0 };
         setDirtSpots(prev => prev.map(s => 
-          s.id === spot.id ? { 
-            ...s, 
-            cleaningProgress: progress,
-            // Apply fade effect based on progress
-            opacity: 1 - progress,
-            scale: 1 - (progress * 0.5) // Scale down while fading
-          } : s
+          s.id === spot.id ? cleaningSpot : s
         ));
 
-        if (progress < 1) {
-          requestAnimationFrame(animateCleaning);
-        } else {
-          // Set cleaned to true after animation completes
+        const startTime = Date.now();
+        const animateCleaning = () => {
+          const elapsed = Date.now() - startTime;
+          const progress = Math.min(elapsed / 1500, 1);
+          
           setDirtSpots(prev => prev.map(s => 
-            s.id === spot.id ? { ...s, cleaned: true, cleaning: false } : s
+            s.id === spot.id ? { 
+              ...s, 
+              cleaningProgress: progress,
+              opacity: 1 - progress,
+              scale: 1 - (progress * 0.5)
+            } : s
           ));
-          
-          // Show stars at the cleaned spot position
-          triggerTaskStars(spot.x, spot.y, 8);
+
+          if (progress < 1) {
+            requestAnimationFrame(animateCleaning);
+          } else {
+            setDirtSpots(prev => prev.map(s => 
+              s.id === spot.id ? { ...s, cleaned: true, cleaning: false } : s
+            ));
+            triggerTaskStars(spot.x, spot.y, 8);
+          }
+        };
+
+        requestAnimationFrame(animateCleaning);
+        return cleaningSpot;
+      }
+      return spot;
+    });
+
+    setDirtSpots(updatedDirt);
+  };
+
+  // Step 4: Clean mud stains with towel
+  const handleStep4Clean = (e) => {
+    if (currentStep !== 4 || !selectedTool || selectedTool?.step !== 4) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    setSelectedTool(prev => ({ ...prev, cleaningPosition: { x, y } }));
+
+    const updatedDirt = dirtSpots.map(spot => {
+      if (spot.step === 4 && !spot.cleaned && !spot.cleaning && Math.abs(spot.x - x) < 10 && Math.abs(spot.y - y) < 10) {
+        if (selectedTool.name !== 'Towel') {
+          console.log('Use Towel for mud stains!');
+          return spot;
         }
-      };
 
-      requestAnimationFrame(animateCleaning);
-      return cleaningSpot;
-    }
-    return spot;
-  });
-
-  setDirtSpots(updatedDirt);
-};
-
-// Wall cleaning handler with improved fade-out animation and stars
-const handleWallClean = (e) => {
-  if (currentStep !== 4 || selectedTool?.step !== 4) return;
-
-  const rect = e.currentTarget.getBoundingClientRect();
-  const x = ((e.clientX - rect.left) / rect.width) * 100;
-  const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-  // Show duster image at cursor position
-  setSelectedTool(prev => ({ ...prev, cleaningPosition: { x, y } }));
-
-  // Check if duster is near any cobweb
-  const updatedWebs = cobwebs.map(web => {
-    if (!web.cleaned && !web.cleaning && Math.abs(web.x - x) < 12 && Math.abs(web.y - y) < 12) {
-      setScore(prev => prev + 8);
-      
-      // Mark as cleaning to start animation
-      const cleaningWeb = { ...web, cleaning: true, cleaningProgress: 0 };
-      setCobwebs(prev => prev.map(w => 
-        w.id === web.id ? cleaningWeb : w
-      ));
-
-      // Animate the cleaning progress with smoother fade
-      const startTime = Date.now();
-      const animateCleaning = () => {
-        const elapsed = Date.now() - startTime;
-        const progress = Math.min(elapsed / 1500, 1); // Faster animation - 1.5 seconds
-        
-        setCobwebs(prev => prev.map(w => 
-          w.id === web.id ? { 
-            ...w, 
-            cleaningProgress: progress,
-            // Apply fade effect based on progress
-            opacity: 1 - progress,
-            scale: 1 - (progress * 0.5) // Scale down while fading
-          } : w
+        setScore(prev => prev + 8);
+        const cleaningSpot = { ...spot, cleaning: true, cleaningProgress: 0 };
+        setDirtSpots(prev => prev.map(s => 
+          s.id === spot.id ? cleaningSpot : s
         ));
 
-        if (progress < 1) {
-          requestAnimationFrame(animateCleaning);
-        } else {
-          // Set cleaned to true after animation completes
-          setCobwebs(prev => prev.map(w => 
-            w.id === web.id ? { ...w, cleaned: true, cleaning: false } : w
-          ));
+        const startTime = Date.now();
+        const animateCleaning = () => {
+          const elapsed = Date.now() - startTime;
+          const progress = Math.min(elapsed / 1500, 1);
           
-          // Show stars at the cleaned web position
-          triggerTaskStars(web.x, web.y, 8);
+          setDirtSpots(prev => prev.map(s => 
+            s.id === spot.id ? { 
+              ...s, 
+              cleaningProgress: progress,
+              opacity: 1 - progress,
+              scale: 1 - (progress * 0.5)
+            } : s
+          ));
+
+          if (progress < 1) {
+            requestAnimationFrame(animateCleaning);
+          } else {
+            setDirtSpots(prev => prev.map(s => 
+              s.id === spot.id ? { ...s, cleaned: true, cleaning: false } : s
+            ));
+            triggerTaskStars(spot.x, spot.y, 8);
+          }
+        };
+
+        requestAnimationFrame(animateCleaning);
+        return cleaningSpot;
+      }
+      return spot;
+    });
+
+    setDirtSpots(updatedDirt);
+  };
+
+  // Step 5: Clean cobwebs with duster
+  const handleStep5Clean = (e) => {
+    if (currentStep !== 5 || !selectedTool || selectedTool?.step !== 5) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    setSelectedTool(prev => ({ ...prev, cleaningPosition: { x, y } }));
+
+    const updatedWebs = cobwebs.map(web => {
+      if (!web.cleaned && !web.cleaning && Math.abs(web.x - x) < 12 && Math.abs(web.y - y) < 12) {
+        if (selectedTool.name !== 'Duster') {
+          console.log('Use Duster for cobwebs!');
+          return web;
         }
-      };
 
-      requestAnimationFrame(animateCleaning);
-      return cleaningWeb;
-    }
-    return web;
-  });
+        setScore(prev => prev + 8);
+        const cleaningWeb = { ...web, cleaning: true, cleaningProgress: 0 };
+        setCobwebs(prev => prev.map(w => 
+          w.id === web.id ? cleaningWeb : w
+        ));
 
-  setCobwebs(updatedWebs);
-}
+        const startTime = Date.now();
+        const animateCleaning = () => {
+          const elapsed = Date.now() - startTime;
+          const progress = Math.min(elapsed / 1500, 1);
+          
+          setCobwebs(prev => prev.map(w => 
+            w.id === web.id ? { 
+              ...w, 
+              cleaningProgress: progress,
+              opacity: 1 - progress,
+              scale: 1 - (progress * 0.5)
+            } : w
+          ));
 
+          if (progress < 1) {
+            requestAnimationFrame(animateCleaning);
+          } else {
+            setCobwebs(prev => prev.map(w => 
+              w.id === web.id ? { ...w, cleaned: true, cleaning: false } : w
+            ));
+            triggerTaskStars(web.x, web.y, 8);
+          }
+        };
+
+        requestAnimationFrame(animateCleaning);
+        return cleaningWeb;
+      }
+      return web;
+    });
+
+    setCobwebs(updatedWebs);
+  };
+
+  // Reset game function
   const resetGame = () => {
-  setCurrentStep(1);
-  setGameCompleted(false);
-  setScore(0);
-  setSelectedTool(null);
-  setAllItems(prev => prev.map(item => ({ ...item, collected: false })));
-  setDirtSpots(prev => prev.map(spot => ({ ...spot, cleaned: false })));
-  setCobwebs(prev => prev.map(web => ({ ...web, cleaned: false })));
-  setAvailableTools(prev => prev.map(tool => ({ ...tool, collected: tool.step === 1, used: false 
-
-  })));
-  // Reset collected items in containers
-  setCollectedLaundry([]);
-  setCollectedTrash([]);
-  setTaskStars([]);
-};
+    setCurrentStep(1);
+    setGameCompleted(false);
+    setScore(0);
+    setSelectedTool(null);
+    setAllItems(prev => prev.map(item => ({ ...item, collected: false })));
+    setDirtSpots(prev => prev.map(spot => ({ ...spot, cleaned: false, cleaning: false })));
+    setCobwebs(prev => prev.map(web => ({ ...web, cleaned: false, cleaning: false })));
+    setAvailableTools(prev => prev.map(tool => ({ 
+      ...tool, 
+      collected: tool.step === 1, 
+      used: false 
+    })));
+    setCollectedLaundry([]);
+    setCollectedTrash([]);
+    setTaskStars([]);
+  };
 
   const handleGoHome = () => {
-    window.location.href = '/homepage';
+    window.location.href = '/studentdashboard';
   };
 
   const handleNextLevel = () => {
     try {
-      // Try to save progress (with error handling)
       try {
         saveStudentLessonProgress('household', 'level3', 100);
       } catch (error) {
@@ -514,7 +539,6 @@ const handleWallClean = (e) => {
         console.log('Module progress update not available in demo');
       }
       
-      // Navigate to next level
       if (lessonId) {
         navigate(`/lesson/household-chores/level-3/${lessonId}`);
       } else {
@@ -523,7 +547,6 @@ const handleWallClean = (e) => {
       
     } catch (error) {
       console.log('Next level functionality:', error);
-      // Fallback navigation
       navigate('/lesson/household-chores/level-3');
     }
   };
@@ -544,7 +567,7 @@ const handleWallClean = (e) => {
         backgroundRepeat: "no-repeat",
         display: "flex",
         flexDirection: "column",
-        overflow: "hidden" // Prevent scrolling on start screen
+        overflow: "hidden"
       }}>
         <Navbar />
         <Box sx={{
@@ -617,7 +640,6 @@ const handleWallClean = (e) => {
   // Main game screen
   return (
     <ThemeProvider theme={theme}>
-      {/* Single Root Container with Background */}
       <div style={{
         position: 'fixed',
         top: 0,
@@ -852,13 +874,14 @@ const handleWallClean = (e) => {
                 borderRadius: '10px',
                 boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
                 mb: 1,
-                display: 'inline-block' // <-- makes background wrap to content
+                display: 'inline-block'
               }}>
-                Step {currentStep}/4: {
+                Step {currentStep}/5: {
                   currentStep === 1 ? 'Collect Laundry' :
                   currentStep === 2 ? 'Dispose Trash' :
-                  currentStep === 3 ? 'Sweep Floor' :
-                  'Wipe Walls'
+                  currentStep === 3 ? 'Sweep Floor: Clean water spits with Broom' :
+                  currentStep === 4 ? 'Wipe Floor: Clean mud stains with Towel' :
+                  'Dust Walls: Clean cobwebs with Duster'
                 }
                 {selectedTool && ` - Using: ${selectedTool.name}`}
               </Typography>
@@ -888,10 +911,15 @@ const handleWallClean = (e) => {
               right: 0,
               bottom: '10px', 
               top: '10px',
-              cursor: (currentStep === 3 || currentStep === 4) && selectedTool ? 'crosshair' : 'default',
+              cursor: (currentStep >= 3 && currentStep <= 5) && selectedTool ? 'crosshair' : 'default',
               overflow: 'hidden'
             }}
-            onMouseMove={currentStep === 3 ? handleFloorClean : currentStep === 4 ? handleWallClean : undefined}
+            onMouseMove={
+              currentStep === 3 ? handleStep3Clean : 
+              currentStep === 4 ? handleStep4Clean : 
+              currentStep === 5 ? handleStep5Clean : 
+              undefined
+            }
             >
               {/* BathTub Image with Bubbles */}
               <div
@@ -915,34 +943,34 @@ const handleWallClean = (e) => {
                   }}
                 />
                 
-                 {/* Bubbles starting from higher positions, floating upward */}
-                  {bubbles.map(bubble => (
-                    <div
-                      key={bubble.id}
+                {/* Bubbles */}
+                {bubbles.map(bubble => (
+                  <div
+                    key={bubble.id}
+                    style={{
+                      position: 'absolute',
+                      left: `${bubble.x}%`,
+                      top: `${bubble.y}%`,
+                      width: `${bubble.size}px`,
+                      height: `${bubble.size}px`,
+                      opacity: bubble.opacity,
+                      animation: `floatUpLong ${bubble.floatSpeed}s ease-in-out ${bubble.animationDelay}s infinite`,
+                      zIndex: 9
+                    }}
+                  >
+                    <img 
+                      src={bubbleImg} 
+                      alt="Bubble"
                       style={{
-                        position: 'absolute',
-                        left: `${bubble.x}%`,
-                        top: `${bubble.y}%`, // Higher starting point
-                        width: `${bubble.size}px`,
-                        height: `${bubble.size}px`,
-                        opacity: bubble.opacity,
-                        animation: `floatUpLong ${bubble.floatSpeed}s ease-in-out ${bubble.animationDelay}s infinite`,
-                        zIndex: 9
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain',
+                        filter: 'drop-shadow(0 1px 3px rgba(255,255,255,0.5)) brightness(1.1)'
                       }}
-                    >
-                      <img 
-                        src={bubbleImg} 
-                        alt="Bubble"
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'contain',
-                          filter: 'drop-shadow(0 1px 3px rgba(255,255,255,0.5)) brightness(1.1)'
-                        }}
-                      />
-                    </div>
-                  ))}
-                </div>
+                    />
+                  </div>
+                ))}
+              </div>
 
               {/* All Scattered Items with Hints */}
               {allItems.map(item => !item.collected && (
@@ -992,7 +1020,7 @@ const handleWallClean = (e) => {
                 </div>
               ))}
 
-              {/* Dirt Spots with fade-out animation */}
+              {/* Dirt Spots - Show ALL un-cleaned spots */}
               {dirtSpots.map(spot => !spot.cleaned && (
                 <div
                   key={spot.id}
@@ -1005,11 +1033,13 @@ const handleWallClean = (e) => {
                     zIndex: 5,
                     opacity: spot.cleaning ? 1 - (spot.cleaningProgress || 0) : 1,
                     transform: spot.cleaning ? `scale(${1 - ((spot.cleaningProgress || 0) * 0.5)})` : 'scale(1)',
-                    transition: spot.cleaning ? 'all 0.1s ease-out' : 'none'
+                    transition: spot.cleaning ? 'all 0.1s ease-out' : 'none',
+                    pointerEvents: (spot.step === currentStep && selectedTool?.step === currentStep) ? 'auto' : 'none',
+                    // Remove the dimming filter - keep all spots fully visible
                   }}
                 >
-                  {/* Hint Circle for Dirt Spots */}
-                  {showHints && currentStep === 3 && selectedTool?.step === 3 && (
+                  {/* Hint Circle - only show for current step with correct tool */}
+                  {showHints && spot.step === currentStep && selectedTool?.step === currentStep && (
                     <div style={{
                       position: 'absolute',
                       top: '50%',
@@ -1017,7 +1047,7 @@ const handleWallClean = (e) => {
                       transform: 'translate(-50%, -50%)',
                       width: `${(spot.size || 60) + 5}px`,
                       height: `${(spot.size || 60) + 5}px`,
-                      border: '2px solid #FF6B6B',
+                      border: `2px solid ${spot.type === 'mud' ? '#8B4513' : '#4ECDC4'}`,
                       borderRadius: '50%',
                       animation: 'pulse 2s infinite',
                       zIndex: -1
@@ -1025,7 +1055,7 @@ const handleWallClean = (e) => {
                   )}
                   <img 
                     src={spot.image} 
-                    alt="Dirt spot"
+                    alt={`${spot.type} stain`}
                     style={{
                       width: '100%',
                       height: '100%',
@@ -1036,7 +1066,7 @@ const handleWallClean = (e) => {
                 </div>
               ))}
 
-              {/* Cobwebs with fade-out animation */}
+              {/* Cobwebs - Show ALL un-cleaned cobwebs */}
               {cobwebs.map(web => !web.cleaned && (
                 <div
                   key={web.id}
@@ -1049,18 +1079,20 @@ const handleWallClean = (e) => {
                     zIndex: 5,
                     opacity: web.cleaning ? 1 - (web.cleaningProgress || 0) : 1,
                     transform: web.cleaning ? `scale(${1 - ((web.cleaningProgress || 0) * 0.5)})` : 'scale(1)',
-                    transition: web.cleaning ? 'all 0.1s ease-out' : 'none'
+                    transition: web.cleaning ? 'all 0.1s ease-out' : 'none',
+                    pointerEvents: (currentStep === 5 && selectedTool?.step === 5) ? 'auto' : 'none',
+                    // Remove the dimming filter - keep all cobwebs fully visible
                   }}
                 > 
-                  {/* Glowing Pulse Hint for Cobwebs */}
-                  {showHints && currentStep === 4 && selectedTool?.step === 4 && (
+                  {/* Glowing Pulse Hint - only show for step 5 with correct tool */}
+                  {showHints && currentStep === 5 && selectedTool?.step === 5 && (
                     <div style={{
                       position: 'absolute',
                       top: '50%',
                       left: '50%',
                       transform: 'translate(-50%, -50%)',
-                      width: `${(web.size || 80) + 20}px`,
-                      height: `${(web.size || 80) + 20}px`,
+                      width: `${(web.size || 80) + 40}px`,
+                      height: `${(web.size || 80) + 40}px`,
                       background: 'radial-gradient(circle, rgba(78,205,196,0.3) 0%, rgba(78,205,196,0) 70%)',
                       borderRadius: '50%',
                       animation: 'glowPulse 2s infinite',
@@ -1071,14 +1103,15 @@ const handleWallClean = (e) => {
                     src={web.image} 
                     alt="Cobweb"
                     style={{
-                      width: '200%',
-                      height: '200%',
+                      width: '100%',
+                      height: '100%',
                       objectFit: 'contain',
                       filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))'
                     }}
                   />
                 </div>
               ))}
+
               {/* Cleaning Tool Display */}
               {selectedTool?.cleaningPosition && (
                 <div
@@ -1094,7 +1127,7 @@ const handleWallClean = (e) => {
                   }}
                 >
                   <img 
-                    src={currentStep === 3 ? broomImg : dusterImg} 
+                    src={selectedTool.image}
                     alt="Cleaning tool"
                     style={{
                       width: '100%',
@@ -1106,8 +1139,7 @@ const handleWallClean = (e) => {
                 </div>
               )}
 
-
-              {/* Drop Zones with Fade-in Animation from Right */}
+              {/* Drop Zones for Steps 1 and 2 */}
               {currentStep === 1 && selectedTool?.step === 1 && (
                 <Box
                   ref={basinRef}
@@ -1134,7 +1166,6 @@ const handleWallClean = (e) => {
                     }
                   }}
                 >
-                  {/* Basin Image */}
                   <img 
                     src={basinImg} 
                     alt="Drop laundry here"
@@ -1177,7 +1208,6 @@ const handleWallClean = (e) => {
                     }
                   }}
                 >
-                  {/* Trash Can Image */}
                   <img 
                     src={trashCanImg} 
                     alt="Drop trash here"
@@ -1191,7 +1221,6 @@ const handleWallClean = (e) => {
                       left: 0
                     }}
                   />
-                  
                 </Box>
               )}
             </div>
@@ -1239,117 +1268,117 @@ const handleWallClean = (e) => {
         </div>
 
         {/* Success Dialog */}
-          <Dialog
-            open={gameCompleted}
-            fullScreen
-            PaperProps={{
-              sx: { 
-                background: 'linear-gradient(135deg, rgba(255, 202, 58, 0.95) 0%, rgba(230, 184, 0, 0.95) 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexDirection: 'column'
-              }
-            }}
-          >
-            <Box sx={{
-              textAlign: 'center',
-              color: 'white',
-              zIndex: 1001
+        <Dialog
+          open={gameCompleted}
+          fullScreen
+          PaperProps={{
+            sx: { 
+              background: 'linear-gradient(135deg, rgba(255, 202, 58, 0.95) 0%, rgba(230, 184, 0, 0.95) 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'column'
+            }
+          }}
+        >
+          <Box sx={{
+            textAlign: 'center',
+            color: 'white',
+            zIndex: 1001
+          }}>
+            <Typography variant="h1" sx={{ 
+              fontSize: '150px',
+              mb: 4
             }}>
-              <Typography variant="h1" sx={{ 
-                fontSize: '150px',
-                mb: 4
-              }}>
-                🏆
-              </Typography>
-              
-              <Typography variant="h1" sx={{ 
+              🏆
+            </Typography>
+            
+            <Typography variant="h1" sx={{ 
+              fontWeight: 'bold',
+              color: 'white',
+              fontFamily: 'Poppins, sans-serif',
+              fontSize: { xs: '2rem', md: '3rem' },
+              textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
+              mb: 2
+            }}>
+              Bathroom Perfectly Cleaned!
+            </Typography>
+            
+            <Chip 
+              label="All Steps Completed!"
+              sx={{
+                backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                color: 'white',
                 fontWeight: 'bold',
-                color: 'white',
+                fontSize: '1.1rem',
                 fontFamily: 'Poppins, sans-serif',
-                fontSize: { xs: '2rem', md: '3rem' },
-                textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
-                mb: 2
-              }}>
-                Bathroom Perfectly Cleaned!
-              </Typography>
-              
-              <Chip 
-                label="All Steps Completed!"
-                sx={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                mb: 4,
+                px: 3,
+                py: 1
+              }}
+            />
+            
+            <Typography variant="h6" sx={{ 
+              color: 'white',
+              fontFamily: 'Inter, sans-serif',
+              lineHeight: 1.6,
+              mb: 6,
+              maxWidth: '800px',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+            }}>
+              Excellent work! You've successfully cleaned the entire bathroom!
+            </Typography>
+            
+            <Box sx={{ display: 'flex', gap: 3, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Button 
+                onClick={resetGame}
+                variant="outlined"
+                sx={{ 
+                  borderColor: 'white',
                   color: 'white',
-                  fontWeight: 'bold',
-                  fontSize: '1.1rem',
+                  px: 4,
+                  py: 2,
+                  borderRadius: '25px',
                   fontFamily: 'Poppins, sans-serif',
-                  mb: 4,
-                  px: 3,
-                  py: 1
-                }}
-              />
-              
-              <Typography variant="h6" sx={{ 
-                color: 'white',
-                fontFamily: 'Inter, sans-serif',
-                lineHeight: 1.6,
-                mb: 6,
-                maxWidth: '800px',
-                textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
-              }}>
-                Excellent work! You've successfully cleaned the entire bathroom!
-              </Typography>
-              
-              <Box sx={{ display: 'flex', gap: 3, justifyContent: 'center', flexWrap: 'wrap' }}>
-                <Button 
-                  onClick={resetGame}
-                  variant="outlined"
-                  sx={{ 
+                  fontWeight: '600',
+                  fontSize: '1.2rem',
+                  borderWidth: '2px',
+                  textTransform: 'none',
+                  '&:hover': {
                     borderColor: 'white',
-                    color: 'white',
-                    px: 4,
-                    py: 2,
-                    borderRadius: '25px',
-                    fontFamily: 'Poppins, sans-serif',
-                    fontWeight: '600',
-                    fontSize: '1.2rem',
-                    borderWidth: '2px',
-                    textTransform: 'none',
-                    '&:hover': {
-                      borderColor: 'white',
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                      borderWidth: '2px'
-                    }
-                  }}
-                >
-                  Play Again
-                </Button>
-                
-                <Button 
-                  variant="contained"
-                  onClick={handleNextLevel}
-                  sx={{ 
-                    background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)',
-                    color: 'white',
-                    px: 6,
-                    py: 2,
-                    borderRadius: '25px',
-                    fontFamily: 'Poppins, sans-serif',
-                    fontWeight: '700',
-                    fontSize: '1.2rem',
-                    textTransform: 'none',
-                    boxShadow: '0 10px 25px rgba(33, 150, 243, 0.5)',
-                    '&:hover': { 
-                      background: 'linear-gradient(135deg, #42A5F5 0%, #2196F3 100%)',
-                      transform: 'translateY(-2px)'
-                    }
-                  }}
-                >
-                  Next Level
-                </Button>
-              </Box>
-            </Box>  
-          </Dialog>
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: '2px'
+                  }
+                }}
+              >
+                Play Again
+              </Button>
+              
+              <Button 
+                variant="contained"
+                onClick={handleNextLevel}
+                sx={{ 
+                  background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)',
+                  color: 'white',
+                  px: 6,
+                  py: 2,
+                  borderRadius: '25px',
+                  fontFamily: 'Poppins, sans-serif',
+                  fontWeight: '700',
+                  fontSize: '1.2rem',
+                  textTransform: 'none',
+                  boxShadow: '0 10px 25px rgba(33, 150, 243, 0.5)',
+                  '&:hover': { 
+                    background: 'linear-gradient(135deg, #42A5F5 0%, #2196F3 100%)',
+                    transform: 'translateY(-2px)'
+                  }
+                }}
+              >
+                Next Level
+              </Button>
+            </Box>
+          </Box>  
+        </Dialog>
 
         <style>
           {`
@@ -1371,29 +1400,21 @@ const handleWallClean = (e) => {
             .drop-zone-animation {
               animation: slideInFromLeft 0.6s ease-out forwards;
             }
-              @keyframes glowPulse {
+            @keyframes glowPulse {
               0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
               50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
             }
-
             @keyframes dashPulse {
               0%, 100% { opacity: 0.7; border-color: #4ECDC4; }
               50% { opacity: 1; border-color: #26C6DA; }
             }
-
             @keyframes sparkle {
               0%, 100% { opacity: 0; transform: scale(0); }
               50% { opacity: 1; transform: scale(1); }
             }
-
             @keyframes rotate {
               0% { transform: translate(-50%, -50%) rotate(0deg); }
               100% { transform: translate(-50%, -50%) rotate(360deg); }
-            }
-            @keyframes pulse {
-              0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-              50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.7; }
-              100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
             }
             @keyframes floatUpLong {
               0% {
@@ -1421,7 +1442,6 @@ const handleWallClean = (e) => {
                 opacity: 0;
               }
             }
-
             @keyframes taskStarBlink {
               0% {
                 opacity: 0;

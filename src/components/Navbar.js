@@ -114,8 +114,6 @@ function Navbar() {
     }
   };
 
-  // REMOVED: fetchProgressStats function entirely
-
   const handleLogout = () => {
     if (isLogoutInProgress.current) return;
     isLogoutInProgress.current = true;
@@ -196,11 +194,6 @@ function Navbar() {
     return isLoggedIn && currentPath !== '/' && currentPath !== '/login' && currentPath !== '/register';
   };
 
-  const shouldShowProgressStats = () => {
-    // REMOVED: Progress stats display to reduce API calls
-    return false;
-  };
-
   const shouldShowMyBadges = () => {
     return isLoggedIn && userProfile?.userType === "STUDENT";
   };
@@ -220,6 +213,14 @@ function Navbar() {
     return "User";
   };
 
+  // Helper function to check if navbar links should be shown
+  const shouldShowNavbarLinks = () => {
+    const currentPath = location.pathname;
+    
+    // Only show navbar links on Landing Page and Student Dashboard
+    return currentPath === '/' || currentPath === '/studentdashboard';
+  };
+
   const homeTarget = getHomeTarget();
 
   return (
@@ -233,17 +234,24 @@ function Navbar() {
           />
         </div>
       </RouterLink>
-      <ul className="navbar-links">
-        <li>
-          <a href="/" onClick={handleHomeClick}>Home</a>
-        </li>
-        <li><a href="/about">About us</a></li>
-        <li><a href="/contact">Contact</a></li>
-      </ul>
+      
+      {/* Navbar links - ONLY shown on Landing Page and Student Dashboard */}
+      {shouldShowNavbarLinks() ? (
+          <div className="navbar-links-container">
+            <ul className="navbar-links">
+              <li>
+                <a href="/" onClick={handleHomeClick}>Home</a>
+              </li>
+              <li><a href="/about">About us</a></li>
+              <li><a href="/contact">Contact</a></li>
+            </ul>
+          </div>
+        ) : (
+          /* Empty container when links are hidden to maintain layout */
+          <div className="navbar-links-container" style={{ visibility: 'hidden' }}></div>
+        )}
 
       <div className="navbar-right">
-        {/* REMOVED: Progress stats display */}
-
         {shouldShowProfileDropdown() && (
           <div className="profile-dropdown" ref={dropdownRef}>
             <div 

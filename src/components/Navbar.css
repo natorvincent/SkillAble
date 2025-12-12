@@ -20,19 +20,23 @@
   height: 100%;
   max-height: 70px; /* FIX: Match navbar height */
   overflow: hidden; /* FIX: Contain the logo within navbar bounds */
+  flex: 0 0 auto;
 }
 
 .navbar-logo-img {
-  height: 150px; /* Your logo can be ANY size */
+  height: 200px; /* Your logo can be ANY size */
   width: auto;
   max-width: 200px;
   object-fit: contain;
   transition: opacity 0.2s ease;
   transform: translateY(-15px); 
 }
-
-
-
+/* Center section for navbar links - ONLY when they exist */
+.navbar-links-container {
+  display: flex;
+  justify-content: center;
+  flex: 1;
+}
 
 .navbar-links {
   display: flex;
@@ -50,7 +54,7 @@
   display: flex;
   align-items: center;
   transform: translateY(-10px); /* Move right section up same amount */
-  
+  flex: 0 0 auto; 
 }
 
 .navbar-links li a {

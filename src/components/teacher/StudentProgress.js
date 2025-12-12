@@ -505,10 +505,10 @@ function StudentProgress() {
               mb: 1,
               textShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
-              Student Progress & Difficulty Management
+              Student Progress
             </Typography>
             <Typography variant="h6" sx={{ 
-              color: alpha("#ffffff", 0.9),
+              color: alpha("#413b3bff", 0.9),
               fontWeight: 400
             }}>
               Track performance and customize difficulty levels for each student
