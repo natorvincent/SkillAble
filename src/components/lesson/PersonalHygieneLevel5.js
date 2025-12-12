@@ -1259,7 +1259,7 @@ export default function DressUpGame() {
 
   const handleContinue = () => {
     saveProgress();
-    navigate('/');
+    navigate('/studentdashboard');
   };
 
   const getCharacterMessage = () => {

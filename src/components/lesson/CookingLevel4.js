@@ -1,8 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Box, Button, CircularProgress, Typography, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { 
+  Box, 
+  Button, 
+  CircularProgress, 
+  Typography, 
+  Dialog,
+  LinearProgress,
+  Paper,
+  Stack 
+} from '@mui/material';
 import { Droplet, Sparkles, ChefHat, Clock, Thermometer, ArrowRight, RotateCcw, Target, CheckCircle } from 'lucide-react';
 import Navbar from '../Navbar';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import StarIcon from '@mui/icons-material/Star';
+import Confetti from 'react-confetti';
+import confetti from 'canvas-confetti';
 
 // Import realistic kitchen background
 import kitchenBg from "../../assets/cookingLevel3/bgkitchen.jpg";
@@ -23,6 +37,154 @@ import {
   saveStudentLessonProgress,
   updateModuleProgress
 } from '../../services/progressService';
+
+// Asset preloader component
+const AssetPreloader = ({ onLoadComplete }) => {
+  const [progress, setProgress] = useState(0);
+  const [loadedCount, setLoadedCount] = useState(0);
+  
+  // All game assets to preload
+  const assets = [
+    kitchenBg,
+    baconardoImg,
+    countertopImg,
+    sinkImg,
+    riceCookerImg,
+    cookingPotImg,
+    riceBagImg,
+    waterBottleImg,
+    ricePaddleImg
+  ];
+  
+  useEffect(() => {
+    let completed = 0;
+    
+    const loadAsset = (src) => {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          completed++;
+          setLoadedCount(completed);
+          setProgress(Math.round((completed / assets.length) * 100));
+          resolve();
+        };
+        img.onerror = () => {
+          completed++;
+          setLoadedCount(completed);
+          setProgress(Math.round((completed / assets.length) * 100));
+          resolve(); // Continue even if some images fail
+        };
+        img.src = src;
+        
+        // Force preload by loading image
+        if (img.complete) {
+          completed++;
+          setLoadedCount(completed);
+          setProgress(Math.round((completed / assets.length) * 100));
+          resolve();
+        }
+      });
+    };
+    
+    const preloadAll = async () => {
+      // Preload all assets in parallel
+      await Promise.all(assets.map(loadAsset));
+      
+      // Add a small delay to ensure all images are cached
+      setTimeout(() => {
+        onLoadComplete();
+      }, 300);
+    };
+    
+    preloadAll();
+  }, [assets.length, onLoadComplete]);
+  
+  return (
+    <Box sx={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'linear-gradient(135deg, rgba(139, 69, 19, 0.95) 0%, rgba(160, 82, 45, 0.95) 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'column',
+      zIndex: 9999
+    }}>
+      <Box sx={{ width: '80%', maxWidth: '400px', mb: 4 }}>
+        <Typography variant="h4" sx={{ color: 'white', mb: 3, textAlign: 'center', fontFamily: 'Poppins' }}>
+          Loading Perfect Rice Cooking...
+        </Typography>
+        <LinearProgress 
+          variant="determinate" 
+          value={progress} 
+          sx={{ 
+            height: 12, 
+            borderRadius: 6,
+            backgroundColor: 'rgba(255,255,255,0.2)',
+            '& .MuiLinearProgress-bar': {
+              background: 'linear-gradient(90deg, #8B4513 0%, #A0522D 50%, #D2691E 100%)',
+              borderRadius: 6
+            }
+          }} 
+        />
+        <Typography variant="body2" sx={{ color: 'white', mt: 1, textAlign: 'center' }}>
+          {loadedCount}/{assets.length} assets loaded
+        </Typography>
+      </Box>
+      
+      {/* Preload hidden images */}
+      <Box sx={{ display: 'none' }}>
+        {assets.map((src, index) => (
+          <img 
+            key={index}
+            src={src}
+            alt="preload"
+            onLoad={(e) => {
+              // Force browser to cache the image
+              e.target.style.visibility = 'hidden';
+            }}
+          />
+        ))}
+      </Box>
+    </Box>
+  );
+};
+
+// Asset preloading system
+const preloadImage = (src) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.src = src;
+    img.onload = () => resolve({ src, status: 'loaded' });
+    img.onerror = (err) => reject({ src, status: 'error', err });
+    
+    // Force browser to cache by loading now
+    document.body.appendChild(img);
+    img.style.display = 'none';
+    setTimeout(() => {
+      if (img.parentNode) {
+        img.parentNode.removeChild(img);
+      }
+      resolve({ src, status: 'loaded' });
+    }, 100);
+  });
+};
+
+// List of all images to preload
+const ALL_ASSETS = [
+  kitchenBg,
+  baconardoImg,
+  countertopImg,
+  sinkImg,
+  riceCookerImg,
+  cookingPotImg,
+  riceBagImg,
+  waterBottleImg,
+  ricePaddleImg
+];
 
 export default function RiceCookerSimulator() {
   const navigate = useNavigate();
@@ -52,11 +214,151 @@ export default function RiceCookerSimulator() {
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [showFeedback, setShowFeedback] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const [showIntro, setShowIntro] = useState(true);
   const [cookerTemperature, setCookerTemperature] = useState(25);
   const [cookerTimer, setCookerTimer] = useState(0);
+  const [assetsLoaded, setAssetsLoaded] = useState(false);
+  const [showStartScreen, setShowStartScreen] = useState(true);
+  const [gameReady, setGameReady] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [starAnimationStage, setStarAnimationStage] = useState(0);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [confettiPieces, setConfettiPieces] = useState([]);
 
   const panRef = useRef(null);
+  const imageCacheRef = useRef(new Map());
+
+  // Preload all images on component mount
+  useEffect(() => {
+    let isMounted = true;
+    
+    const preloadAllAssets = async () => {
+      if (!isMounted) return;
+      
+      try {
+        const totalAssets = ALL_ASSETS.length;
+        let loadedCount = 0;
+        
+        // Preload images with progress tracking
+        const preloadPromises = ALL_ASSETS.map(async (src, index) => {
+          try {
+            // Check if already cached
+            if (imageCacheRef.current.has(src)) {
+              loadedCount++;
+              return;
+            }
+            
+            // Create and load image
+            const img = new Image();
+            
+            return new Promise((resolve) => {
+              img.onload = () => {
+                if (isMounted) {
+                  // Cache the image
+                  imageCacheRef.current.set(src, {
+                    element: img,
+                    loaded: true,
+                    timestamp: Date.now()
+                  });
+                  
+                  loadedCount++;
+                  resolve();
+                }
+              };
+              
+              img.onerror = () => {
+                console.warn(`Failed to load image: ${src}`);
+                loadedCount++;
+                resolve(); // Continue even if one image fails
+              };
+              
+              // Start loading
+              img.src = src;
+              
+              // Force browser to cache by creating image element
+              img.style.display = 'none';
+              img.crossOrigin = 'anonymous';
+              document.body.appendChild(img);
+            });
+          } catch (err) {
+            console.warn(`Error preloading ${src}:`, err);
+            loadedCount++;
+          }
+        });
+        
+        // Wait for all images to load or timeout
+        await Promise.allSettled([
+          ...preloadPromises,
+          new Promise(resolve => setTimeout(resolve, 2000)) // Max 2 second timeout
+        ]);
+        
+        if (isMounted) {
+          setAssetsLoaded(true);
+          setGameReady(true);
+        }
+      } catch (error) {
+        console.error('Error preloading assets:', error);
+        if (isMounted) {
+          setAssetsLoaded(true);
+          setGameReady(true);
+        }
+      }
+    };
+    
+    preloadAllAssets();
+    
+    // Cleanup
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Create confetti pieces when success shows
+  useEffect(() => {
+    if (showSuccess) {
+      const pieces = Array.from({ length: 50 }, (_, i) => ({
+        id: i,
+        x: Math.random() * 100,
+        y: -10,
+        width: Math.random() * 12 + 6,
+        height: Math.random() * 12 + 6,
+        color: ['#8B4513', '#A0522D', '#D2691E', '#DEB887', '#F5DEB3'][Math.floor(Math.random() * 5)],
+        rotation: Math.random() * 360,
+        drift: (Math.random() - 0.5) * 2
+      }));
+      setConfettiPieces(pieces);
+      
+      // Also trigger canvas confetti
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#8B4513', '#A0522D', '#D2691E', '#DEB887']
+      });
+    }
+  }, [showSuccess]);
+
+  // Animate stars when success shows
+  useEffect(() => {
+    if (showSuccess) {
+      let currentStage = 0;
+      const interval = setInterval(() => {
+        currentStage++;
+        setStarAnimationStage(currentStage);
+        if (currentStage >= 3) {
+          clearInterval(interval);
+        }
+      }, 300);
+      
+      return () => clearInterval(interval);
+    }
+  }, [showSuccess]);
+
+  // Get star rating based on performance
+  const getStarRating = () => {
+    if (mistakes.length === 0 && waterAmount === 'perfect') return 3;
+    else if (mistakes.length <= 1) return 2;
+    else return 1;
+  };
 
   const riceCookingSteps = [
     { id: 0, instruction: "🍲 Place the cooking pot on the counter", focus: 'setup' },
@@ -337,7 +639,7 @@ export default function RiceCookerSimulator() {
       setRiceQuality('Good Rice ⭐');
     }
     
-    setGameComplete(true);
+    setShowSuccess(true);
     saveProgress();
   };
 
@@ -352,7 +654,7 @@ export default function RiceCookerSimulator() {
     setIsResting(false);
     setRestingProgress(0);
     setIsServed(false);
-    setGameComplete(false);
+    setShowSuccess(false);
     setRiceQuality('');
     setMistakes([]);
     setDraggedItem(null);
@@ -365,10 +667,17 @@ export default function RiceCookerSimulator() {
     setCurrentStep(0);
     setCookerTemperature(25);
     setCookerTimer(0);
+    setStarAnimationStage(0);
   };
 
   const handleStartGame = () => {
-    setShowIntro(false);
+    if (assetsLoaded) {
+      setShowStartScreen(false);
+    }
+  };
+
+  const handleContinue = () => {
+    navigate('/studentdashboard');
   };
 
   const DraggableItem = ({ type, isActive, isCompleted, children, style = {} }) => (
@@ -498,24 +807,32 @@ export default function RiceCookerSimulator() {
     </div>
   );
 
-  // Start screen
-  if (showIntro) {
+  // Show preloader until assets are loaded
+  if (!assetsLoaded) {
+    return <AssetPreloader onLoadComplete={() => setAssetsLoaded(true)} />;
+  }
+
+  // Start screen only after game is ready
+  if (showStartScreen || !gameReady) {
     return (
       <div style={{
         minHeight: "100vh",
         width: "100%",
-        background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
+        backgroundImage: `url(${kitchenBg})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
         display: "flex",
         flexDirection: "column"
       }}>
         <Navbar />
-        <div style={{
+        <Box sx={{
           position: 'absolute',
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'linear-gradient(135deg, rgba(139, 69, 19, 0.9) 0%, rgba(160, 82, 45, 0.9) 100%)',
+          background: 'linear-gradient(135deg, rgba(139, 69, 19, 0.8) 0%, rgba(160, 82, 45, 0.8) 100%)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -523,153 +840,87 @@ export default function RiceCookerSimulator() {
           zIndex: 1,
           padding: 3
         }}>
-          <h1 style={{ 
+          <Typography variant="h1" sx={{ 
             color: 'white', 
             fontWeight: 'bold', 
-            marginBottom: '24px',
+            mb: 4,
             fontFamily: 'Poppins, sans-serif',
-            fontSize: '4rem',
+            fontSize: { xs: '2.5rem', md: '4rem' },
             textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
             textAlign: 'center',
             lineHeight: 1.2
           }}>
-            Perfect Rice Cooking
-          </h1>
+           Master Perfect Rice Cooking
+          </Typography>
           
-          <div style={{ 
+          <Box sx={{ 
             display: 'flex', 
-            flexDirection: 'row',
+            flexDirection: { xs: 'column', md: 'row' },
             alignItems: 'center', 
             justifyContent: 'center',
-            marginBottom: '40px',
+            mb: 6,
             animation: 'float 3s ease-in-out infinite',
+            '@keyframes float': {
+              '0%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-10px)' },
+              '100%': { transform: 'translateY(0px)' }
+            },
             maxWidth: '800px',
             textAlign: 'center'
           }}>
-            <div
-              style={{
-                width: 180,
-                height: 180,
+            <Box
+              component="img"
+              src={baconardoImg}
+              alt="Baconardo"
+              loading="eager"
+              sx={{
+                width: 120,
+                height: 'auto',
                 filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
                 outline: '4px solid white',
                 borderRadius: '50%',
-                marginRight: '24px',
-                overflow: 'hidden',
-                background: 'white'
+                mr: { xs: 0, md: 4 },
+                mb: { xs: 3, md: 0 }
               }}
-            >
-              <img 
-                src={baconardoImg}
-                alt="Baconardo"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover'
-                }}
-              />
-            </div>
-            <h2 style={{ 
+            />
+            <Typography variant="h4" sx={{ 
               color: 'rgba(255, 255, 255, 0.95)', 
               fontFamily: 'Inter, sans-serif',
               lineHeight: 1.5,
-              fontSize: '1.8rem',
               textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
               maxWidth: '600px',
-              textAlign: 'left',
-              marginLeft: '24px'
+              textAlign: { xs: 'center', md: 'left' }
             }}>
               Hello! I'm Chef Baconardo! Let's master the art of cooking perfect, fluffy rice! Follow my instructions to create restaurant-quality rice.
-            </h2>
-          </div>
+            </Typography>
+          </Box>
           
-          <div style={{ 
-            display: 'flex', 
-            gap: '20px',
-            marginBottom: '40px'
-          }}>
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              padding: '20px',
-              borderRadius: '15px',
-              textAlign: 'center',
-              minWidth: '200px',
-              backdropFilter: 'blur(10px)',
-              border: '2px solid rgba(255, 255, 255, 0.2)'
-            }}>
-              <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🍚</div>
-              <h3 style={{ color: 'white', marginBottom: '10px' }}>Step-by-Step</h3>
-              <p style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '0.9rem' }}>
-                Follow 8 easy steps to cook perfect rice
-              </p>
-            </div>
-            
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              padding: '20px',
-              borderRadius: '15px',
-              textAlign: 'center',
-              minWidth: '200px',
-              backdropFilter: 'blur(10px)',
-              border: '2px solid rgba(255, 255, 255, 0.2)'
-            }}>
-              <div style={{ fontSize: '3rem', marginBottom: '10px' }}>👨‍🍳</div>
-              <h3 style={{ color: 'white', marginBottom: '10px' }}>Chef's Tips</h3>
-              <p style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '0.9rem' }}>
-                Learn professional rice cooking techniques
-              </p>
-            </div>
-            
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              padding: '20px',
-              borderRadius: '15px',
-              textAlign: 'center',
-              minWidth: '200px',
-              backdropFilter: 'blur(10px)',
-              border: '2px solid rgba(255, 255, 255, 0.2)'
-            }}>
-              <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🎯</div>
-              <h3 style={{ color: 'white', marginBottom: '10px' }}>Interactive</h3>
-              <p style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '0.9rem' }}>
-                Drag & drop to complete each cooking step
-              </p>
-            </div>
-          </div>
-          
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button 
+          <Stack direction="row" spacing={3}>
+            <Button 
+              variant="contained"
               onClick={handleStartGame}
-              style={{ 
+              disabled={!gameReady}
+              sx={{ 
                 background: 'linear-gradient(135deg, #FFCA3A 0%, #FFA500 100%)',
                 color: '#8B4513',
-                padding: '16px 32px',
+                px: 8,
+                py: 2,
                 borderRadius: '25px',
                 fontFamily: 'Poppins, sans-serif',
                 fontWeight: '700',
                 fontSize: '1.5rem',
                 textTransform: 'none',
                 boxShadow: '0 10px 25px rgba(255, 202, 58, 0.5)',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, #FFD700 0%, #FFCA3A 100%)';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, #FFCA3A 0%, #FFA500 100%)';
-                e.currentTarget.style.transform = 'translateY(0)';
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #FFD700 0%, #FFCA3A 100%)',
+                  transform: 'translateY(-2px)'
+                }
               }}
             >
-              <ChefHat size={24} />
-              Start Cooking!
-            </button>
-          </div>
-        </div>
+              {gameReady ? 'Start Cooking!' : 'Loading...'}
+            </Button>
+          </Stack>
+        </Box>
       </div>
     );
   }
@@ -757,37 +1008,15 @@ export default function RiceCookerSimulator() {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-5px); }
           }
-          @keyframes confettiFall {
-            0% {
-              transform: translateY(-100vh) rotate(0deg) scale(0.8);
-              opacity: 1;
-            }
-            10% {
-              opacity: 1;
-              transform: translateY(-90vh) rotate(36deg) scale(1);
-            }
-            90% {
-              opacity: 0.8;
-              transform: translateY(90vh) translateX(60px) rotate(324deg) scale(0.6);
-            }
-            100% {
-              transform: translateY(100vh) translateX(70px) rotate(360deg) scale(0);
-              opacity: 0;
-            }
+          @keyframes starPop {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.5); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
           }
           @keyframes starPop {
-            0% {
-              transform: scale(0);
-              opacity: 0;
-            }
-            50% {
-              transform: scale(1.5);
-              opacity: 1;
-            }
-            100% {
-              transform: scale(1);
-              opacity: 1;
-            }
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.5); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
           }
           .draggable {
             cursor: grab;
@@ -1901,7 +2130,7 @@ export default function RiceCookerSimulator() {
               Home
             </Button>
 
-            {gameComplete && (
+            {isServed && (
               <Button
                 onClick={() => navigate('/lesson/cooking/level-5')}
                 variant="contained"
@@ -1927,23 +2156,33 @@ export default function RiceCookerSimulator() {
             )}
           </Box>
 
-          {/* Completion Dialog - Enhanced with Perfect Rice Cooking theme */}
+          {/* Success Dialog - Matching Level 3 Style */}
           <Dialog
-            open={gameComplete}
-            onClose={() => {}}
+            open={showSuccess}
             fullScreen
             PaperProps={{
               sx: {
-                background: 'linear-gradient(135deg, rgba(139, 69, 19, 0.95) 0%, rgba(160, 82, 45, 0.95) 100%)',
+                background: 'linear-gradient(135deg, rgba(255, 202, 58, 0.95) 0%, rgba(230, 184, 0, 0.95) 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                flexDirection: 'column',
-                padding: 4
+                flexDirection: 'column'
               }
             }}
           >
             {/* Confetti Animation */}
+            {showConfetti && (
+              <Confetti
+                width={window.innerWidth}
+                height={window.innerHeight}
+                recycle={false}
+                numberOfPieces={200}
+                gravity={0.1}
+                colors={['#8B4513', '#A0522D', '#D2691E', '#DEB887']}
+                style={{ position: 'fixed', zIndex: 2000 }}
+              />
+            )}
+            
             <Box sx={{
               position: 'fixed',
               top: 0,
@@ -1954,35 +2193,35 @@ export default function RiceCookerSimulator() {
               zIndex: 1000,
               overflow: 'hidden'
             }}>
-              {Array.from({ length: 50 }).map((_, i) => (
+              {confettiPieces.map(piece => (
                 <Box
-                  key={i}
+                  key={piece.id}
                   sx={{
                     position: 'absolute',
-                    left: `${Math.random() * 100}%`,
-                    top: `${Math.random() * -20}%`,
-                    width: `${Math.random() * 10 + 5}px`,
-                    height: `${Math.random() * 10 + 5}px`,
-                    backgroundColor: ['#8B4513', '#A0522D', '#D2691E', '#DEB887', '#F5DEB3'][Math.floor(Math.random() * 5)],
-                    transform: `rotate(${Math.random() * 360}deg)`,
-                    boxShadow: '0 0 10px currentColor',
+                    left: `${piece.x}%`,
+                    top: `${piece.y}%`,
+                    width: `${piece.width}px`,
+                    height: `${piece.height}px`,
+                    backgroundColor: piece.color,
+                    transform: `rotate(${piece.rotation}deg)`,
+                    boxShadow: `0 0 10px ${piece.color}`,
                     animation: `confettiFall 4s linear infinite`,
                     animationDelay: `${Math.random() * 3}s`,
                     '@keyframes confettiFall': {
                       '0%': {
-                        transform: `translateY(-100vh) rotate(${Math.random() * 360}deg) scale(0.8)`,
+                        transform: `translateY(-100vh) rotate(${piece.rotation}deg) scale(0.8)`,
                         opacity: 1
                       },
                       '10%': {
                         opacity: 1,
-                        transform: `translateY(-90vh) rotate(${Math.random() * 360 + 36}deg) scale(1)`
+                        transform: `translateY(-90vh) rotate(${piece.rotation + 36}deg) scale(1)`
                       },
                       '90%': {
                         opacity: 0.8,
-                        transform: `translateY(90vh) translateX(${Math.random() * 60}px) rotate(${Math.random() * 360 + 324}deg) scale(0.6)`
+                        transform: `translateY(90vh) translateX(${piece.drift * 60}px) rotate(${piece.rotation + 324}deg) scale(0.6)`
                       },
                       '100%': {
-                        transform: `translateY(100vh) translateX(${Math.random() * 70}px) rotate(${Math.random() * 360 + 360}deg) scale(0)`,
+                        transform: `translateY(100vh) translateX(${piece.drift * 70}px) rotate(${piece.rotation + 360}deg) scale(0)`,
                         opacity: 0
                       }
                     }
@@ -1990,237 +2229,113 @@ export default function RiceCookerSimulator() {
                 />
               ))}
             </Box>
-
+            
             <Box sx={{
               textAlign: 'center',
               color: 'white',
+              position: 'relative',
               zIndex: 1001,
-              padding: 4,
-              width: '100%',
-              maxWidth: '800px'
+              padding: '20px'
             }}>
-              {/* Trophy or Rice Bowl Icon */}
-              <div style={{
-                fontSize: '150px',
-                marginBottom: '30px',
-                animation: 'bounceIn 0.8s ease-out'
-              }}>
-                {riceQuality.includes('Perfect') ? '🏆' : riceQuality.includes('Good') ? '⭐' : '🍚'}
-              </div>
+              {/* Trophy Icon */}
+              <EmojiEventsIcon sx={{
+                fontSize: 150,
+                color: 'white',
+                mb: 4,
+                filter: 'drop-shadow(3px 3px 6px rgba(0,0,0,0.5))'
+              }} />
               
-              {/* Title */}
+              {/* Main Title */}
               <Typography variant="h1" sx={{
                 fontWeight: 'bold',
                 color: 'white',
                 fontFamily: 'Poppins, sans-serif',
-                fontSize: { xs: '2.5rem', md: '3.5rem' },
+                fontSize: { xs: '2rem', md: '3rem' },
                 textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
                 mb: 2
               }}>
-                {riceQuality || 'Cooking Complete!'}
+                {riceQuality || 'Perfect Rice Cooking!'}
               </Typography>
-              
-              {/* Subtitle */}
-              <Typography variant="h5" sx={{
-                color: 'rgba(255, 255, 255, 0.9)',
-                fontFamily: 'Inter, sans-serif',
-                mb: 4,
-                textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
-              }}>
-                {riceQuality.includes('Perfect') 
-                  ? 'You cooked perfect restaurant-quality rice! 🎉' 
-                  : riceQuality.includes('Good')
-                  ? 'Good job! Your rice turned out well!'
-                  : 'Practice makes perfect! Try again for better results!'}
-              </Typography>
-              
+             
               {/* Star Rating */}
-              <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                mb: 4,
-                animation: 'slideIn 0.6s ease-out'
-              }}>
-                {[...Array(5)].map((_, i) => {
-                  let starRating;
-                  if (mistakes.length === 0 && waterAmount === 'perfect') starRating = 5;
-                  else if (mistakes.length === 0) starRating = 4;
-                  else if (mistakes.length === 1) starRating = 3;
-                  else if (mistakes.length === 2) starRating = 2;
-                  else starRating = 1;
-                  
-                  const isActive = i < starRating;
-                  
+              <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+                {[...Array(3)].map((_, i) => {
+                  const isActive = i < getStarRating();
+                  const shouldAnimate = i < starAnimationStage;
+                 
                   return (
-                    <span
+                    <StarIcon
                       key={i}
-                      style={{
-                        fontSize: '60px',
-                        margin: '0 8px',
-                        color: isActive ? '#FFD700' : 'rgba(255, 255, 255, 0.2)',
-                        textShadow: isActive ? '0 0 20px rgba(255, 215, 0, 0.7)' : 'none',
-                        transform: isActive ? 'scale(1.2)' : 'scale(1)',
+                      sx={{
+                        color: isActive ? 'white' : 'rgba(255,255,255,0.3)',
+                        fontSize: 80,
+                        mx: 1,
+                        textShadow: isActive ? '2px 2px 4px rgba(0,0,0,0.3)' : 'none',
+                        transform: shouldAnimate ? 'scale(1.3)' : 'scale(1)',
                         transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                        animation: isActive ? 'starPop 0.6s ease-out' : 'none',
+                        animation: shouldAnimate ? 'starPop 0.6s ease-out' : 'none'
                       }}
-                    >
-                      {isActive ? '★' : '☆'}
-                    </span>
+                    />
                   );
                 })}
               </Box>
               
-              {/* Feedback Message */}
-              <Box sx={{
-                backgroundColor: 'rgba(0,0,0,0.3)',
-                padding: '25px',
-                borderRadius: '20px',
+              {/* Description */}
+              <Typography variant="h6" sx={{
+                color: 'white',
+                fontFamily: 'Inter, sans-serif',
+                lineHeight: 1.6,
                 mb: 6,
-                border: '2px solid rgba(255, 255, 255, 0.2)',
-                backdropFilter: 'blur(10px)'
+                maxWidth: '800px',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
               }}>
-                {mistakes.length > 0 ? (
-                  <div>
-                    <Typography variant="h6" sx={{
-                      color: 'white',
-                      fontFamily: 'Inter, sans-serif',
-                      mb: 3,
-                      fontWeight: '700',
-                      fontSize: '1.4rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '10px'
-                    }}>
-                      <Target size={24} />
-                      Cooking Notes
-                      <Target size={24} />
-                    </Typography>
-                    <Box sx={{ textAlign: 'left' }}>
-                      {mistakes.map((m, i) => (
-                        <Box key={i} sx={{
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: '12px',
-                          mb: 2,
-                          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                          padding: '12px',
-                          borderRadius: '10px'
-                        }}>
-                          <span style={{ color: '#FF6B6B', fontSize: '1.2rem' }}>⚠️</span>
-                          <Typography sx={{ 
-                            color: 'white', 
-                            fontFamily: 'Inter, sans-serif',
-                            fontSize: '1rem',
-                            flex: 1
-                          }}>
-                            {m}
-                          </Typography>
-                        </Box>
-                      ))}
-                    </Box>
-                    <Box sx={{
-                      mt: 3,
-                      p: 2,
-                      backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                      borderRadius: '12px',
-                      border: '1px solid rgba(255, 255, 255, 0.3)'
-                    }}>
-                      <Typography sx={{
-                        color: 'white',
-                        fontFamily: 'Inter, sans-serif',
-                        fontSize: '1rem',
-                        fontWeight: '600',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px'
-                      }}>
-                        <ChefHat size={20} />
-                        <span>💡 <strong>Pro Tip:</strong> Rinse rice 2-3 times and use the "Perfect Water" measurement for fluffy rice!</span>
-                      </Typography>
-                    </Box>
-                  </div>
-                ) : (
-                  <div>
-                    <Typography variant="h6" sx={{
-                      color: 'white',
-                      fontFamily: 'Inter, sans-serif',
-                      mb: 2,
-                      fontWeight: '700',
-                      fontSize: '1.5rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '10px'
-                    }}>
-                      <CheckCircle size={28} />
-                      Masterful Cooking Achievement!
-                      <CheckCircle size={28} />
-                    </Typography>
-                    <Typography sx={{
-                      color: 'white',
-                      fontFamily: 'Inter, sans-serif',
-                      fontSize: '1.2rem',
-                      lineHeight: 1.6
-                    }}>
-                      🎉 Excellent work! You followed all professional cooking techniques perfectly and created delicious, fluffy restaurant-quality rice!
-                    </Typography>
-                  </div>
-                )}
-              </Box>
-              
-              {/* Progress Saving Status */}
+                {riceQuality.includes('Perfect') 
+                  ? 'You cooked perfect restaurant-quality rice! Followed all steps perfectly! 🎉' 
+                  : riceQuality.includes('Good')
+                  ? 'Good job! Your rice turned out well! With a little practice, you\'ll make perfect rice!'
+                  : 'Practice makes perfect! Try again for better results!'}
+              </Typography>
+             
+              {/* Progress Saving Indicator */}
               {progressSaving && (
                 <Box sx={{
                   mb: 4,
                   p: 3,
                   backgroundColor: 'rgba(25, 130, 196, 0.8)',
                   borderRadius: '15px',
-                  color: 'white',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
+                  color: 'white'
                 }}>
                   <CircularProgress size={30} sx={{ mr: 2, color: 'white' }} />
-                  <Typography variant="h5" sx={{ fontFamily: 'Poppins, sans-serif' }}>
-                    Saving your rice cooking achievement...
+                  <Typography variant="h5" sx={{ fontFamily: 'Poppins, sans-serif', display: 'inline' }}>
+                    Saving your progress...
                   </Typography>
                 </Box>
               )}
-              
+             
+              {/* Progress Saved Indicator */}
               {progressSaved && (
                 <Box sx={{
                   mb: 4,
                   p: 3,
                   backgroundColor: 'rgba(144, 190, 109, 0.8)',
                   borderRadius: '15px',
-                  color: 'white',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
+                  color: 'white'
                 }}>
-                  <CheckCircle size={30} style={{ marginRight: '12px' }} />
-                  <Typography variant="h6" sx={{ fontFamily: 'Poppins, sans-serif' }}>
+                  <CheckCircleIcon sx={{ mr: 2, fontSize: 30, verticalAlign: 'middle' }} />
+                  <Typography variant="h6" sx={{ fontFamily: 'Poppins, sans-serif', display: 'inline' }}>
                     Progress saved successfully!
                   </Typography>
                 </Box>
               )}
-              
+             
               {/* Action Buttons */}
-              <Box sx={{ 
-                display: 'flex', 
-                gap: 3, 
-                justifyContent: 'center', 
-                flexWrap: 'wrap',
-                animation: 'slideIn 0.8s ease-out'
-              }}>
+              <Box sx={{ display: 'flex', gap: 3, justifyContent: 'center', flexWrap: 'wrap' }}>
                 <Button
                   onClick={() => {
-                    setGameComplete(false);
+                    setShowSuccess(false);
                     resetGame();
                   }}
                   variant="outlined"
-                  startIcon={<RotateCcw size={20} />}
                   sx={{
                     borderColor: 'white',
                     color: 'white',
@@ -2241,37 +2356,10 @@ export default function RiceCookerSimulator() {
                 >
                   Cook Again
                 </Button>
-                
                 <Button
-                  onClick={() => navigate('/studentdashboard')}
                   variant="contained"
-                  startIcon={<span>🏠</span>}
-                  sx={{
-                    background: 'linear-gradient(135deg, #8B4513 0%, #654321 100%)',
-                    color: 'white',
-                    px: 4,
-                    py: 2,
-                    borderRadius: '25px',
-                    fontFamily: 'Poppins, sans-serif',
-                    fontWeight: '600',
-                    fontSize: '1.2rem',
-                    textTransform: 'none',
-                    boxShadow: '0 10px 25px rgba(139, 69, 19, 0.5)',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #A0522D 0%, #8B4513 100%)',
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 15px 30px rgba(139, 69, 19, 0.7)'
-                    }
-                  }}
-                >
-                  Back to Home
-                </Button>
-                
-                <Button
                   onClick={() => navigate('/lesson/cooking/level-5')}
-                  variant="contained"
                   disabled={progressSaving}
-                  startIcon={<ArrowRight size={20} />}
                   sx={{
                     background: 'linear-gradient(135deg, #FFCA3A 0%, #FFA500 100%)',
                     color: '#8B4513',
@@ -2285,16 +2373,33 @@ export default function RiceCookerSimulator() {
                     boxShadow: '0 10px 25px rgba(255, 202, 58, 0.5)',
                     '&:hover': {
                       background: 'linear-gradient(135deg, #FFD700 0%, #FFCA3A 100%)',
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 15px 30px rgba(255, 202, 58, 0.7)'
-                    },
-                    '&.Mui-disabled': {
-                      background: 'linear-gradient(135deg, #cccccc 0%, #999999 100%)',
-                      color: '#666666'
+                      transform: 'translateY(-2px)'
                     }
                   }}
                 >
                   {progressSaving ? 'Saving...' : 'Next Recipe'}
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={handleContinue}
+                  sx={{
+                    background: 'linear-gradient(135deg, #8B4513 0%, #654321 100%)',
+                    color: 'white',
+                    px: 4,
+                    py: 2,
+                    borderRadius: '25px',
+                    fontFamily: 'Poppins, sans-serif',
+                    fontWeight: '600',
+                    fontSize: '1.2rem',
+                    textTransform: 'none',
+                    boxShadow: '0 10px 25px rgba(139, 69, 19, 0.5)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #A0522D 0%, #8B4513 100%)',
+                      transform: 'translateY(-2px)'
+                    }
+                  }}
+                >
+                  Back to Home
                 </Button>
               </Box>
             </Box>

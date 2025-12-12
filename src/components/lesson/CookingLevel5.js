@@ -1,15 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, RotateCcw, CheckCircle, ArrowRight, ChefHat, Target, Clock, Lightbulb, X, Star } from 'lucide-react';
+import { Sparkles, RotateCcw, CheckCircle, ArrowRight, ChefHat, Target, Clock, Lightbulb } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Dialog, 
   Box, 
   Button, 
-  Typography, 
-  CircularProgress,
-  Card
+  Typography 
 } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import StarIcon from '@mui/icons-material/Star';
 import Navbar from '../Navbar';
@@ -25,15 +22,14 @@ import baconardoImg from "../../assets/cookingLevel3/Baconardo.png";
 
 const CookingLevel5 = () => {
   const navigate = useNavigate();
-  const audioRef = useRef(null);
   
   // Add start screen state
   const [showStartScreen, setShowStartScreen] = useState(true);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
   
   const [placedItems, setPlacedItems] = useState({});
   const [draggedItem, setDraggedItem] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [confetti, setConfetti] = useState([]);
   const [sparkles, setSparkles] = useState([]);
   const [justPlaced, setJustPlaced] = useState(null);
   const [currentStep, setCurrentStep] = useState(0);
@@ -46,12 +42,45 @@ const CookingLevel5 = () => {
   const [completedSteps, setCompletedSteps] = useState([]);
   const [confettiPieces, setConfettiPieces] = useState([]);
 
+  // Simple image preloading
+  useEffect(() => {
+    const images = [
+      forkImg,
+      friedEggWithGarnishImg,
+      spoonImg,
+      riceImg,
+      baconardoImg
+    ];
+    
+    let loadedCount = 0;
+    const totalImages = images.length;
+    
+    images.forEach(src => {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => {
+        loadedCount++;
+        if (loadedCount === totalImages) {
+          setImagesLoaded(true);
+        }
+      };
+      img.onerror = () => {
+        loadedCount++;
+        if (loadedCount === totalImages) {
+          setImagesLoaded(true);
+        }
+      };
+    });
+  }, []);
+
   // Handle start game
   const handleStartGame = () => {
-    setShowStartScreen(false);
+    if (imagesLoaded) {
+      setShowStartScreen(false);
+    }
   };
 
-  // ===== ALL HOOKS MUST BE HERE (BEFORE CONDITIONAL RETURN) =====
+  // ===== ALL HOOKS MUST BE AT THE TOP LEVEL =====
 
   // Update current step based on placed items
   useEffect(() => {
@@ -80,6 +109,36 @@ const CookingLevel5 = () => {
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [draggedItem]);
+
+  // Add CSS animations
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes bounce {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+      }
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      @keyframes confettiFall {
+        0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      if (document.head.contains(style)) {
+        document.head.removeChild(style);
+      }
+    };
+  }, []);
 
   // ===== END OF HOOKS SECTION =====
 
@@ -170,8 +229,11 @@ const CookingLevel5 = () => {
           <div style={{ display: 'flex', gap: '12px' }}>
             <button 
               onClick={handleStartGame}
+              disabled={!imagesLoaded}
               style={{ 
-                background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+                background: imagesLoaded 
+                  ? 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)' 
+                  : '#ccc',
                 color: 'white',
                 padding: '16px 32px',
                 borderRadius: '25px',
@@ -179,21 +241,26 @@ const CookingLevel5 = () => {
                 fontWeight: '700',
                 fontSize: '1.5rem',
                 textTransform: 'none',
-                boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
+                boxShadow: imagesLoaded ? '0 10px 25px rgba(255, 89, 94, 0.5)' : 'none',
                 border: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease'
+                cursor: imagesLoaded ? 'pointer' : 'not-allowed',
+                transition: 'all 0.3s ease',
+                opacity: imagesLoaded ? 1 : 0.7
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)';
-                e.currentTarget.style.transform = 'translateY(-2px)';
+                if (imagesLoaded) {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)';
-                e.currentTarget.style.transform = 'translateY(0)';
+                if (imagesLoaded) {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }
               }}
             >
-              Start Plating!
+              {imagesLoaded ? 'Start Plating!' : 'Loading...'}
             </button>
           </div>
         </div>
@@ -299,62 +366,6 @@ const CookingLevel5 = () => {
     }
   ];
 
-  // Play sound effects
-  const playSound = (type) => {
-    try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      
-      if (type === 'place') {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.5);
-      } else if (type === 'success') {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime); // E5
-        oscillator.frequency.exponentialRampToValueAtTime(523.25, audioContext.currentTime + 0.3); // C5
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.5);
-      } else if (type === 'complete') {
-        const frequencies = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
-        frequencies.forEach((freq, index) => {
-          setTimeout(() => {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
-            gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-            
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.3);
-          }, index * 100);
-        });
-      }
-    } catch (e) {
-      console.log("Audio not supported");
-    }
-  };
-
   // Calculate optimal positions for centered plating
   const getOptimalPosition = (itemId, allPlacedItems) => {
     const plateCenter = { x: 50, y: 50 };
@@ -396,9 +407,6 @@ const CookingLevel5 = () => {
 
     setDraggedItem(item);
     setShowDropHint(true);
-    
-    // Play drag start sound
-    playSound('place');
     e.dataTransfer.effectAllowed = 'move';
   };
 
@@ -435,15 +443,18 @@ const CookingLevel5 = () => {
     setDraggedItem(null);
     setShowDropHint(false);
     
-    // Play success sound
-    playSound('place');
-    
     // Play success animation
     createSparkles(finalPosition.x, finalPosition.y);
     
     // Add bounce animation
     setTimeout(() => {
-      createBounceAnimation(finalPosition.x, finalPosition.y);
+      const bounceEl = document.querySelector(`[data-item-id="${justPlaced}"]`);
+      if (bounceEl) {
+        bounceEl.style.animation = 'bounce 0.6s ease';
+        setTimeout(() => {
+          bounceEl.style.animation = '';
+        }, 600);
+      }
     }, 100);
 
     // Check if all essential items (including utensils) are placed
@@ -452,7 +463,6 @@ const CookingLevel5 = () => {
       setTimeout(() => {
         triggerConfetti();
         setShowSuccess(true);
-        playSound('complete');
       }, 800);
     }
   };
@@ -474,16 +484,6 @@ const CookingLevel5 = () => {
     }, 1200);
   };
 
-  const createBounceAnimation = (x, y) => {
-    const bounceEl = document.querySelector(`[data-item-id="${justPlaced}"]`);
-    if (bounceEl) {
-      bounceEl.style.animation = 'bounce 0.6s ease';
-      setTimeout(() => {
-        bounceEl.style.animation = '';
-      }, 600);
-    }
-  };
-
   const handleDragOver = (e) => {
     e.preventDefault();
   };
@@ -493,23 +493,18 @@ const CookingLevel5 = () => {
     if (allEssentialPlaced) {
       triggerConfetti();
       setShowSuccess(true);
-      playSound('complete');
-    } else {
-      playSound('success');
     }
   };
 
   const handleReset = () => {
     setPlacedItems({});
     setShowSuccess(false);
-    setConfetti([]);
     setSparkles([]);
     setJustPlaced(null);
     setCurrentStep(0);
     setHoveredIngredient(null);
     setSelectedUtensil(null);
     setCompletedSteps([]);
-    playSound('place');
   };
 
   const triggerConfetti = () => {
@@ -533,10 +528,6 @@ const CookingLevel5 = () => {
       });
     }
     setConfettiPieces(newConfetti);
-  };
-
-  const isTipCompleted = (tip) => {
-    return tip.relatedItems.some(itemId => placedItems[itemId]);
   };
 
   const isItemAvailable = (item) => {
@@ -1664,25 +1655,6 @@ const CookingLevel5 = () => {
         </div>
       )}
 
-      {/* Confetti Animation */}
-      {confetti.map((conf) => (
-        <div
-          key={conf.id}
-          style={{
-            position: 'fixed',
-            top: '-20px',
-            left: `${conf.left}%`,
-            fontSize: '24px',
-            zIndex: 1000,
-            pointerEvents: 'none',
-            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
-            transform: `rotate(${conf.rotation}deg)`
-          }}
-        >
-          {conf.emoji}
-        </div>
-      ))}
-
       {/* Order Error Message */}
       {showOrderError && (
         <div style={{
@@ -1751,7 +1723,8 @@ const CookingLevel5 = () => {
                 height: `${piece.height}px`,
                 backgroundColor: piece.color,
                 transform: `rotate(${piece.rotation}deg)`,
-                boxShadow: `0 0 10px ${piece.color}`
+                boxShadow: `0 0 10px ${piece.color}`,
+                animation: 'confettiFall 3s ease-out forwards'
               }}
             />
           ))}
