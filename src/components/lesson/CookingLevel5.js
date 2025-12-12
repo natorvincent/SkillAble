@@ -1,15 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, RotateCcw, CheckCircle, ArrowRight, ChefHat, Target, Clock, Lightbulb, X, Star } from 'lucide-react';
+import { Sparkles, RotateCcw, CheckCircle, ArrowRight, ChefHat, Target, Clock, Lightbulb } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Dialog, 
   Box, 
   Button, 
-  Typography, 
-  CircularProgress,
-  Card
+  Typography 
 } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import StarIcon from '@mui/icons-material/Star';
 import Navbar from '../Navbar';
@@ -23,100 +20,16 @@ import riceImg from "../../assets/cookingLevel5/rice.png";
 // Import Baconardo asset
 import baconardoImg from "../../assets/cookingLevel3/Baconardo.png";
 
-// Image preloader hook
-const useImagePreloader = (imageUrls) => {
-  const [loadedCount, setLoadedCount] = useState(0);
-  const [totalImages, setTotalImages] = useState(0);
-  const [isComplete, setIsComplete] = useState(false);
-  const imageCache = useRef(new Map());
-
-  useEffect(() => {
-    if (!imageUrls || imageUrls.length === 0) {
-      setIsComplete(true);
-      return;
-    }
-
-    setTotalImages(imageUrls.length);
-    let loaded = 0;
-
-    const loadImage = (url) => {
-      return new Promise((resolve, reject) => {
-        // Check cache first
-        if (imageCache.current.has(url)) {
-          resolve(url);
-          return;
-        }
-
-        const img = new Image();
-        img.src = url;
-        
-        img.onload = () => {
-          imageCache.current.set(url, true);
-          loaded++;
-          setLoadedCount(loaded);
-          resolve(url);
-        };
-        
-        img.onerror = () => {
-          console.warn(`Failed to load image: ${url}`);
-          loaded++;
-          setLoadedCount(loaded);
-          resolve(url); // Resolve even on error to continue
-        };
-
-        // Add to browser's cache with preload link
-        const link = document.createElement('link');
-        link.rel = 'preload';
-        link.as = 'image';
-        link.href = url;
-        document.head.appendChild(link);
-      });
-    };
-
-    // Load all images in parallel with concurrency limit
-    const concurrencyLimit = 6;
-    const batches = [];
-    for (let i = 0; i < imageUrls.length; i += concurrencyLimit) {
-      batches.push(imageUrls.slice(i, i + concurrencyLimit));
-    }
-
-    const loadBatches = async () => {
-      for (const batch of batches) {
-        await Promise.allSettled(batch.map(loadImage));
-      }
-      setIsComplete(true);
-    };
-
-    loadBatches();
-  }, [imageUrls]);
-
-  return { loadedCount, totalImages, isComplete, progress: totalImages ? (loadedCount / totalImages) * 100 : 100 };
-};
-
 const CookingLevel5 = () => {
   const navigate = useNavigate();
   
-  // Define all image URLs for preloading
-  const imageUrls = [
-    forkImg,
-    friedEggWithGarnishImg,
-    spoonImg,
-    riceImg,
-    baconardoImg
-  ];
-
-  // Use image preloader
-  const { loadedCount, totalImages, isComplete, progress } = useImagePreloader(imageUrls);
-  
-  // Add loading screen state
-  const [showLoadingScreen, setShowLoadingScreen] = useState(true);
   // Add start screen state
-  const [showStartScreen, setShowStartScreen] = useState(false);
+  const [showStartScreen, setShowStartScreen] = useState(true);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
   
   const [placedItems, setPlacedItems] = useState({});
   const [draggedItem, setDraggedItem] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [confetti, setConfetti] = useState([]);
   const [sparkles, setSparkles] = useState([]);
   const [justPlaced, setJustPlaced] = useState(null);
   const [currentStep, setCurrentStep] = useState(0);
@@ -129,23 +42,45 @@ const CookingLevel5 = () => {
   const [completedSteps, setCompletedSteps] = useState([]);
   const [confettiPieces, setConfettiPieces] = useState([]);
 
-  // Handle loading completion
+  // Simple image preloading
   useEffect(() => {
-    if (isComplete) {
-      // Small delay for smooth transition
-      setTimeout(() => {
-        setShowLoadingScreen(false);
-        setShowStartScreen(true);
-      }, 300);
-    }
-  }, [isComplete]);
+    const images = [
+      forkImg,
+      friedEggWithGarnishImg,
+      spoonImg,
+      riceImg,
+      baconardoImg
+    ];
+    
+    let loadedCount = 0;
+    const totalImages = images.length;
+    
+    images.forEach(src => {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => {
+        loadedCount++;
+        if (loadedCount === totalImages) {
+          setImagesLoaded(true);
+        }
+      };
+      img.onerror = () => {
+        loadedCount++;
+        if (loadedCount === totalImages) {
+          setImagesLoaded(true);
+        }
+      };
+    });
+  }, []);
 
   // Handle start game
   const handleStartGame = () => {
-    setShowStartScreen(false);
+    if (imagesLoaded) {
+      setShowStartScreen(false);
+    }
   };
 
-  // ===== ALL HOOKS MUST BE HERE (BEFORE CONDITIONAL RETURN) =====
+  // ===== ALL HOOKS MUST BE HERE =====
 
   // Update current step based on placed items
   useEffect(() => {
@@ -175,191 +110,7 @@ const CookingLevel5 = () => {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [draggedItem]);
 
-  // Preload background gradients and CSS animations
-  useEffect(() => {
-    // Pre-create CSS for animations
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes float {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-20px); }
-      }
-      @keyframes bounce {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.1); }
-      }
-      @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.7; }
-      }
-      @keyframes shimmer {
-        0% { background-position: -200% center; }
-        100% { background-position: 200% center; }
-      }
-      .preload-bg {
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-      }
-      .gradient-primary {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      }
-      .gradient-accent {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-      }
-      .gradient-success {
-        background: linear-gradient(135deg, rgba(255, 202, 58, 0.95) 0%, rgba(230, 184, 0, 0.95) 100%);
-      }
-      .gradient-plate {
-        background: linear-gradient(135deg, #fafaf9 0%, #f5f5f4 100%);
-      }
-    `;
-    document.head.appendChild(style);
-
-    // Preload fonts
-    const link1 = document.createElement('link');
-    link1.rel = 'preconnect';
-    link1.href = 'https://fonts.googleapis.com';
-    document.head.appendChild(link1);
-    
-    const link2 = document.createElement('link');
-    link2.rel = 'preconnect';
-    link2.href = 'https://fonts.gstatic.com';
-    link2.crossOrigin = 'true';
-    document.head.appendChild(link2);
-    
-    const link3 = document.createElement('link');
-    link3.rel = 'preload';
-    link3.as = 'style';
-    link3.href = 'https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap';
-    link3.onload = () => link3.rel = 'stylesheet';
-    document.head.appendChild(link3);
-
-    return () => {
-      document.head.removeChild(style);
-      document.head.removeChild(link1);
-      document.head.removeChild(link2);
-      document.head.removeChild(link3);
-    };
-  }, []);
-
   // ===== END OF HOOKS SECTION =====
-
-  // Loading screen
-  if (showLoadingScreen) {
-    return (
-      <div style={{
-        minHeight: "100vh",
-        width: "100%",
-        background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        fontFamily: 'Poppins, sans-serif'
-      }}>
-        <div style={{
-          width: '200px',
-          height: '200px',
-          marginBottom: '40px',
-          position: 'relative'
-        }}>
-          {/* Animated chef hat */}
-          <div style={{
-            position: 'absolute',
-            top: '0',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: '120px',
-            height: '60px',
-            background: '#FF595E',
-            borderRadius: '60px 60px 0 0',
-            animation: 'pulse 1.5s infinite ease-in-out'
-          }} />
-          <div style={{
-            position: 'absolute',
-            top: '60px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: '80px',
-            height: '80px',
-            background: '#FF595E',
-            borderRadius: '0 0 40px 40px'
-          }} />
-        </div>
-        
-        <h1 style={{
-          fontSize: '2.5rem',
-          fontWeight: '800',
-          color: '#1f2937',
-          marginBottom: '20px',
-          textAlign: 'center',
-          background: 'linear-gradient(135deg, #10b981, #f59e0b)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundSize: '200% auto',
-          animation: 'shimmer 2s infinite linear'
-        }}>
-          Loading Kitchen...
-        </h1>
-        
-        <div style={{
-          width: '300px',
-          height: '12px',
-          background: '#e5e7eb',
-          borderRadius: '6px',
-          overflow: 'hidden',
-          marginBottom: '20px'
-        }}>
-          <div style={{
-            width: `${progress}%`,
-            height: '100%',
-            background: 'linear-gradient(90deg, #10b981, #f59e0b)',
-            transition: 'width 0.3s ease-out',
-            borderRadius: '6px'
-          }} />
-        </div>
-        
-        <p style={{
-          fontSize: '1rem',
-          color: '#6b7280',
-          textAlign: 'center',
-          marginBottom: '30px'
-        }}>
-          {loadedCount} of {totalImages} ingredients ready
-        </p>
-        
-        <div style={{
-          display: 'flex',
-          gap: '10px',
-          opacity: 0.7
-        }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            background: `url(${riceImg}) center/contain no-repeat`,
-            filter: 'grayscale(1)'
-          }} />
-          <div style={{
-            width: '40px',
-            height: '40px',
-            background: `url(${friedEggWithGarnishImg}) center/contain no-repeat`,
-            filter: 'grayscale(1)'
-          }} />
-          <div style={{
-            width: '40px',
-            height: '40px',
-            background: `url(${spoonImg}) center/contain no-repeat`,
-            filter: 'grayscale(1)'
-          }} />
-          <div style={{
-            width: '40px',
-            height: '40px',
-            background: `url(${forkImg}) center/contain no-repeat`,
-            filter: 'grayscale(1)'
-          }} />
-        </div>
-      </div>
-    );
-  }
 
   // Start screen
   if (showStartScreen) {
@@ -384,9 +135,7 @@ const CookingLevel5 = () => {
           justifyContent: 'center',
           flexDirection: 'column',
           zIndex: 1,
-          padding: 3,
-          opacity: 0,
-          animation: 'fadeIn 0.5s ease-out forwards'
+          padding: 3
         }}>
           <h1 style={{ 
             color: 'white', 
@@ -396,10 +145,7 @@ const CookingLevel5 = () => {
             fontSize: '4rem',
             textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
             textAlign: 'center',
-            lineHeight: 1.2,
-            opacity: 0,
-            transform: 'translateY(20px)',
-            animation: 'slideUp 0.6s ease-out 0.2s forwards'
+            lineHeight: 1.2
           }}>
             Master the Art of Plating
           </h1>
@@ -412,9 +158,7 @@ const CookingLevel5 = () => {
             marginBottom: '40px',
             animation: 'float 3s ease-in-out infinite',
             maxWidth: '800px',
-            textAlign: 'center',
-            opacity: 0,
-            animation: 'fadeIn 0.6s ease-out 0.4s forwards, float 3s ease-in-out 1s infinite'
+            textAlign: 'center'
           }}>
             <div
               style={{
@@ -436,10 +180,6 @@ const CookingLevel5 = () => {
                   height: '100%',
                   objectFit: 'cover'
                 }}
-                onLoad={(e) => {
-                  // Force GPU acceleration for smooth animation
-                  e.currentTarget.style.transform = 'translateZ(0)';
-                }}
               />
             </div>
             <h2 style={{ 
@@ -456,17 +196,14 @@ const CookingLevel5 = () => {
             </h2>
           </div>
           
-          <div style={{ 
-            display: 'flex', 
-            gap: '12px',
-            opacity: 0,
-            transform: 'translateY(20px)',
-            animation: 'slideUp 0.6s ease-out 0.6s forwards'
-          }}>
+          <div style={{ display: 'flex', gap: '12px' }}>
             <button 
               onClick={handleStartGame}
+              disabled={!imagesLoaded}
               style={{ 
-                background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+                background: imagesLoaded 
+                  ? 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)' 
+                  : '#ccc',
                 color: 'white',
                 padding: '16px 32px',
                 borderRadius: '25px',
@@ -474,22 +211,26 @@ const CookingLevel5 = () => {
                 fontWeight: '700',
                 fontSize: '1.5rem',
                 textTransform: 'none',
-                boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
+                boxShadow: imagesLoaded ? '0 10px 25px rgba(255, 89, 94, 0.5)' : 'none',
                 border: 'none',
-                cursor: 'pointer',
+                cursor: imagesLoaded ? 'pointer' : 'not-allowed',
                 transition: 'all 0.3s ease',
-                transform: 'translateZ(0)' // Force GPU acceleration
+                opacity: imagesLoaded ? 1 : 0.7
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)';
-                e.currentTarget.style.transform = 'translateY(-2px) translateZ(0)';
+                if (imagesLoaded) {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)';
-                e.currentTarget.style.transform = 'translateY(0) translateZ(0)';
+                if (imagesLoaded) {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }
               }}
             >
-              Start Plating!
+              {imagesLoaded ? 'Start Plating!' : 'Loading...'}
             </button>
           </div>
         </div>
@@ -523,8 +264,7 @@ const CookingLevel5 = () => {
       icon: '🍚', 
       label: "Completed",
       quantity: '1 Bowl',
-      description: 'Jasmine rice base',
-      preloaded: true
+      description: 'Jasmine rice base'
     },
     { 
       id: 'egg', 
@@ -538,8 +278,7 @@ const CookingLevel5 = () => {
       icon: '🍳', 
       label: "Next Step",
       quantity: '1 Piece',
-      description: 'Garnished with spring onions',
-      preloaded: true
+      description: 'Garnished with spring onions'
     }
   ];
 
@@ -554,8 +293,7 @@ const CookingLevel5 = () => {
       scale: 2.0, 
       zIndex: 4, 
       icon: '🥄',
-      tooltip: 'Use spoon to scoop rice',
-      preloaded: true
+      tooltip: 'Use spoon to scoop rice'
     },
     { 
       id: 'fork', 
@@ -567,8 +305,7 @@ const CookingLevel5 = () => {
       scale: 2.0, 
       zIndex: 4, 
       icon: '🍴',
-      tooltip: 'Use fork for garnish',
-      preloaded: true
+      tooltip: 'Use fork for garnish'
     }
   ];
 
@@ -598,62 +335,6 @@ const CookingLevel5 = () => {
       description: 'Spoon on left, fork on right'
     }
   ];
-
-  // Play sound effects
-  const playSound = (type) => {
-    try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      
-      if (type === 'place') {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.5);
-      } else if (type === 'success') {
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime); // E5
-        oscillator.frequency.exponentialRampToValueAtTime(523.25, audioContext.currentTime + 0.3); // C5
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-        
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.5);
-      } else if (type === 'complete') {
-        const frequencies = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
-        frequencies.forEach((freq, index) => {
-          setTimeout(() => {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
-            gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-            
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.3);
-          }, index * 100);
-        });
-      }
-    } catch (e) {
-      console.log("Audio not supported");
-    }
-  };
 
   // Calculate optimal positions for centered plating
   const getOptimalPosition = (itemId, allPlacedItems) => {
@@ -696,9 +377,6 @@ const CookingLevel5 = () => {
 
     setDraggedItem(item);
     setShowDropHint(true);
-    
-    // Play drag start sound
-    playSound('place');
     e.dataTransfer.effectAllowed = 'move';
   };
 
@@ -735,15 +413,18 @@ const CookingLevel5 = () => {
     setDraggedItem(null);
     setShowDropHint(false);
     
-    // Play success sound
-    playSound('place');
-    
     // Play success animation
     createSparkles(finalPosition.x, finalPosition.y);
     
     // Add bounce animation
     setTimeout(() => {
-      createBounceAnimation(finalPosition.x, finalPosition.y);
+      const bounceEl = document.querySelector(`[data-item-id="${justPlaced}"]`);
+      if (bounceEl) {
+        bounceEl.style.animation = 'bounce 0.6s ease';
+        setTimeout(() => {
+          bounceEl.style.animation = '';
+        }, 600);
+      }
     }, 100);
 
     // Check if all essential items (including utensils) are placed
@@ -752,7 +433,6 @@ const CookingLevel5 = () => {
       setTimeout(() => {
         triggerConfetti();
         setShowSuccess(true);
-        playSound('complete');
       }, 800);
     }
   };
@@ -774,16 +454,6 @@ const CookingLevel5 = () => {
     }, 1200);
   };
 
-  const createBounceAnimation = (x, y) => {
-    const bounceEl = document.querySelector(`[data-item-id="${justPlaced}"]`);
-    if (bounceEl) {
-      bounceEl.style.animation = 'bounce 0.6s ease';
-      setTimeout(() => {
-        bounceEl.style.animation = '';
-      }, 600);
-    }
-  };
-
   const handleDragOver = (e) => {
     e.preventDefault();
   };
@@ -793,23 +463,18 @@ const CookingLevel5 = () => {
     if (allEssentialPlaced) {
       triggerConfetti();
       setShowSuccess(true);
-      playSound('complete');
-    } else {
-      playSound('success');
     }
   };
 
   const handleReset = () => {
     setPlacedItems({});
     setShowSuccess(false);
-    setConfetti([]);
     setSparkles([]);
     setJustPlaced(null);
     setCurrentStep(0);
     setHoveredIngredient(null);
     setSelectedUtensil(null);
     setCompletedSteps([]);
-    playSound('place');
   };
 
   const triggerConfetti = () => {
@@ -835,10 +500,6 @@ const CookingLevel5 = () => {
     setConfettiPieces(newConfetti);
   };
 
-  const isTipCompleted = (tip) => {
-    return tip.relatedItems.some(itemId => placedItems[itemId]);
-  };
-
   const isItemAvailable = (item) => {
     if (placedItems[item.id]) return false;
     if (item.id === 'egg' && !placedItems.rice) return false;
@@ -852,6 +513,34 @@ const CookingLevel5 = () => {
   // Calculate progress percentage
   const progressPercentage = (completedSteps.length / tips.length) * 100;
 
+  // Add CSS animations
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes bounce {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+      }
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      @keyframes confettiFall {
+        0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -861,9 +550,7 @@ const CookingLevel5 = () => {
       display: 'flex',
       flexDirection: 'column',
       overflow: 'hidden',
-      height: '100vh',
-      opacity: 0,
-      animation: 'fadeIn 0.5s ease-out forwards'
+      height: '100vh'
     }}>
       <Navbar />
       
@@ -878,8 +565,7 @@ const CookingLevel5 = () => {
         position: 'sticky',
         top: '20px',
         zIndex: 100,
-        flexShrink: 0,
-        transform: 'translateZ(0)' // GPU acceleration
+        flexShrink: 0
       }}>
         {/* Background accent */}
         <div style={{
@@ -976,8 +662,7 @@ const CookingLevel5 = () => {
           flexDirection: 'column',
           gap: '20px',
           minHeight: 'min-content',
-          alignSelf: 'flex-start',
-          transform: 'translateZ(0)' // GPU acceleration
+          alignSelf: 'flex-start'
         }}>
           
           {/* Food Items */}
@@ -1050,8 +735,7 @@ const CookingLevel5 = () => {
                       position: 'relative',
                       transform: hoveredIngredient === item.id && isAvailable && !isPlaced ? 'translateY(-4px) scale(1.02)' : 'none',
                       filter: isAvailable ? 'none' : 'grayscale(1)',
-                      overflow: 'hidden',
-                      willChange: 'transform' // Optimize animations
+                      overflow: 'hidden'
                     }}
                   >
                     {/* Completed animation */}
@@ -1101,13 +785,6 @@ const CookingLevel5 = () => {
                           objectFit: 'contain',
                           filter: isPlaced ? 'saturate(0.8)' : 'saturate(1.2)'
                         }} 
-                        onLoad={(e) => {
-                          // Mark as loaded for smooth transitions
-                          e.currentTarget.style.opacity = '1';
-                          e.currentTarget.style.transition = 'opacity 0.3s ease';
-                        }}
-                        loading="eager"
-                        decoding="async"
                       />
                     </div>
                     
@@ -1268,8 +945,6 @@ const CookingLevel5 = () => {
                           height: '40px', 
                           objectFit: 'contain'
                         }} 
-                        loading="eager"
-                        decoding="async"
                       />
                     </div>
                     <div style={{ flex: '1', minWidth: 0 }}>
@@ -1344,8 +1019,7 @@ const CookingLevel5 = () => {
           flexDirection: 'column',
           minHeight: 'min-content',
           alignSelf: 'flex-start',
-          minWidth: 0,
-          transform: 'translateZ(0)' // GPU acceleration
+          minWidth: 0
         }}>
           <div style={{
             display: 'flex',
@@ -1395,8 +1069,7 @@ const CookingLevel5 = () => {
                 inset 0 4px 12px rgba(255, 255, 255, 0.8),
                 0 0 0 1px rgba(0,0,0,0.05)
               `,
-              filter: 'drop-shadow(0 8px 32px rgba(0, 0, 0, 0.1))',
-              willChange: 'transform, box-shadow' // Optimize animations
+              filter: 'drop-shadow(0 8px 32px rgba(0, 0, 0, 0.1))'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = 'linear-gradient(135deg, #f8f8f7 0%, #f0f0ee 100%)';
@@ -1482,8 +1155,7 @@ const CookingLevel5 = () => {
                   transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
                   zIndex: placed.item.zIndex,
                   filter: 'drop-shadow(0 12px 24px rgba(0,0,0,0.4))',
-                  pointerEvents: 'none',
-                  willChange: 'transform' // Optimize animations
+                  pointerEvents: 'none'
                 }}
               >
                 {placed.item.id === 'rice' ? (
@@ -1509,12 +1181,8 @@ const CookingLevel5 = () => {
                         width: '120px',
                         height: '120px',
                         objectFit: 'contain',
-                        filter: 'contrast(1.15) brightness(1.1) saturate(1.2)',
-                        opacity: 1, // Already loaded
-                        transition: 'none' // No fade-in since preloaded
+                        filter: 'contrast(1.15) brightness(1.1) saturate(1.2)'
                       }}
-                      loading="eager"
-                      decoding="sync" // Sync since already loaded
                     />
                   </div>
                 ) : (
@@ -1525,12 +1193,8 @@ const CookingLevel5 = () => {
                       width: '140px',
                       height: '140px',
                       objectFit: 'contain',
-                      filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.3))',
-                      opacity: 1, // Already loaded
-                      transition: 'none' // No fade-in since preloaded
+                      filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.3))'
                     }}
-                    loading="eager"
-                    decoding="sync" // Sync since already loaded
                   />
                 )}
               </div>
@@ -1581,9 +1245,7 @@ const CookingLevel5 = () => {
                   fontSize: `${sparkle.size}px`,
                   pointerEvents: 'none',
                   zIndex: 10,
-                  filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.9))',
-                  opacity: 0,
-                  animation: `fadeIn 0.2s ${sparkle.delay}s forwards, fadeOut 0.5s ${sparkle.delay + 0.7}s forwards`
+                  filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.9))'
                 }}
               >
                 ✨
@@ -1600,8 +1262,7 @@ const CookingLevel5 = () => {
               borderRadius: '14px',
               textAlign: 'center',
               border: `3px solid ${colors.primary}`,
-              boxShadow: `0 6px 24px ${colors.primary}30`,
-              animation: 'slideUp 0.5s ease-out'
+              boxShadow: `0 6px 24px ${colors.primary}30`
             }}>
               <div style={{
                 fontSize: '16px',
@@ -1628,8 +1289,7 @@ const CookingLevel5 = () => {
           flexDirection: 'column',
           gap: '16px',
           minHeight: 'min-content',
-          alignSelf: 'flex-start',
-          transform: 'translateZ(0)' // GPU acceleration
+          alignSelf: 'flex-start'
         }}>
           
           {/* Tips Panel with Progress Bar */}
@@ -1815,18 +1475,17 @@ const CookingLevel5 = () => {
                   letterSpacing: '0.5px',
                   position: 'relative',
                   overflow: 'hidden',
-                  width: '100%',
-                  transform: 'translateZ(0)' // GPU acceleration
+                  width: '100%'
                 }}
                 onMouseEnter={(e) => {
                   if (allEssentialPlaced && !showSuccess) {
-                    e.currentTarget.style.transform = 'translateY(-4px) translateZ(0)';
+                    e.currentTarget.style.transform = 'translateY(-4px)';
                     e.currentTarget.style.boxShadow = `0 12px 40px ${colors.primary}50, 0 0 0 3px ${colors.primary}30`;
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (allEssentialPlaced && !showSuccess) {
-                    e.currentTarget.style.transform = 'translateY(0) translateZ(0)';
+                    e.currentTarget.style.transform = 'translateY(0)';
                     e.currentTarget.style.boxShadow = `0 8px 32px ${colors.primary}40, 0 0 0 2px ${colors.primary}20`;
                   }
                 }}
@@ -1853,15 +1512,14 @@ const CookingLevel5 = () => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '10px',
-                    width: '100%',
-                    transform: 'translateZ(0)' // GPU acceleration
+                    width: '100%'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px) translateZ(0)';
+                    e.currentTarget.style.transform = 'translateY(-4px)';
                     e.currentTarget.style.boxShadow = `0 12px 40px ${colors.accent}50, 0 0 0 3px ${colors.accent}30`;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0) translateZ(0)';
+                    e.currentTarget.style.transform = 'translateY(0)';
                     e.currentTarget.style.boxShadow = `0 8px 32px ${colors.accent}40, 0 0 0 2px ${colors.accent}20`;
                   }}
                 >
@@ -1888,17 +1546,16 @@ const CookingLevel5 = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '10px',
-                  width: '100%',
-                  transform: 'translateZ(0)' // GPU acceleration
+                  width: '100%'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px) translateZ(0)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
                   e.currentTarget.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.15)';
                   e.currentTarget.style.borderColor = colors.neutral;
                   e.currentTarget.style.color = colors.text;
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0) translateZ(0)';
+                  e.currentTarget.style.transform = 'translateY(0)';
                   e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.1)';
                   e.currentTarget.style.borderColor = `${colors.neutral}30`;
                   e.currentTarget.style.color = colors.neutral;
@@ -1926,17 +1583,16 @@ const CookingLevel5 = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '10px',
-                  width: '100%',
-                  transform: 'translateZ(0)' // GPU acceleration
+                  width: '100%'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px) translateZ(0)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
                   e.currentTarget.style.boxShadow = `0 8px 24px ${colors.primary}20`;
                   e.currentTarget.style.borderColor = colors.primary;
                   e.currentTarget.style.color = colors.primary;
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0) translateZ(0)';
+                  e.currentTarget.style.transform = 'translateY(0)';
                   e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.1)';
                   e.currentTarget.style.borderColor = `${colors.primary}30`;
                   e.currentTarget.style.color = colors.text;
@@ -1985,8 +1641,7 @@ const CookingLevel5 = () => {
           display: 'flex',
           alignItems: 'center',
           gap: '10px',
-          maxWidth: '180px',
-          animation: 'slideInRight 0.3s ease-out'
+          maxWidth: '180px'
         }}>
           <ChefHat size={18} />
           <div>
@@ -1997,25 +1652,6 @@ const CookingLevel5 = () => {
           </div>
         </div>
       )}
-
-      {/* Confetti Animation */}
-      {confetti.map((conf) => (
-        <div
-          key={conf.id}
-          style={{
-            position: 'fixed',
-            top: '-20px',
-            left: `${conf.left}%`,
-            fontSize: '24px',
-            zIndex: 1000,
-            pointerEvents: 'none',
-            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
-            transform: `rotate(${conf.rotation}deg)`
-          }}
-        >
-          {conf.emoji}
-        </div>
-      ))}
 
       {/* Order Error Message */}
       {showOrderError && (
@@ -2038,8 +1674,7 @@ const CookingLevel5 = () => {
           alignItems: 'center',
           gap: '12px',
           backdropFilter: 'blur(8px)',
-          maxWidth: '90%',
-          animation: 'shake 0.5s ease-in-out'
+          maxWidth: '90%'
         }}>
           <ChefHat size={24} />
           <div>
@@ -2087,22 +1722,20 @@ const CookingLevel5 = () => {
                 backgroundColor: piece.color,
                 transform: `rotate(${piece.rotation}deg)`,
                 boxShadow: `0 0 10px ${piece.color}`,
-                animation: `confettiFall 3s ease-out forwards`
+                animation: 'confettiFall 3s ease-out forwards'
               }}
             />
           ))}
         </Box>
         <Box sx={{
           textAlign: 'center',
-          color: 'white',
-          animation: 'scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)'
+          color: 'white'
         }}>
           <EmojiEventsIcon sx={{
             fontSize: 150,
             color: 'white',
             mb: 4,
-            filter: 'drop-shadow(3px 3px 6px rgba(0,0,0,0.5))',
-            animation: 'bounce 1s infinite'
+            filter: 'drop-shadow(3px 3px 6px rgba(0,0,0,0.5))'
           }} />
           <Typography variant="h1" sx={{
             fontWeight: 'bold',
@@ -2124,8 +1757,7 @@ const CookingLevel5 = () => {
                     color: 'white',
                     fontSize: 80,
                     mx: 1,
-                    textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-                    animation: `pulse 1s ${i * 0.2}s infinite`
+                    textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
                   }}
                 />
               );
@@ -2194,45 +1826,6 @@ const CookingLevel5 = () => {
           </Box>
         </Box>
       </Dialog>
-
-      {/* Add CSS animations */}
-      <style>
-        {`
-          @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-          }
-          @keyframes fadeOut {
-            from { opacity: 1; }
-            to { opacity: 0; }
-          }
-          @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-          @keyframes slideInRight {
-            from { opacity: 0; transform: translateX(20px); }
-            to { opacity: 1; transform: translateX(0); }
-          }
-          @keyframes shake {
-            0%, 100% { transform: translate(-50%, -50%); }
-            10%, 30%, 50%, 70%, 90% { transform: translate(-50%, -50%) translateX(-5px); }
-            20%, 40%, 60%, 80% { transform: translate(-50%, -50%) translateX(5px); }
-          }
-          @keyframes confettiFall {
-            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
-          }
-          @keyframes scaleIn {
-            from { transform: scale(0.8); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-          }
-          img {
-            image-rendering: -webkit-optimize-contrast;
-            image-rendering: crisp-edges;
-          }
-        `}
-      </style>
     </div>
   );
 };
