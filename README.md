@@ -22,7 +22,7 @@ SkillAble is a responsive web application designed to help users explore and enh
 - Framer Motion:** 12.12.1 (`framer-motion`)
 - Axios:** 1.9.0 (`axios`)
 - Testing Libraries:** @testing-library/react 16.3.0, @testing-library/jest-dom 6.6.3
-- Other notable deps:** `react-dnd` 16.0.1, `react-dnd-html5-backend` 16.0.1, `use-sound` 5.0.0, `react-icons` 5.5.0, `react-lottie` 1.2.10
+- Other notable dependencies:** `react-dnd` 16.0.1, `react-dnd-html5-backend` 16.0.1, `use-sound` 5.0.0, `react-icons` 5.5.0, `react-lottie` 1.2.10
 > Note: The dependency versions above are sourced from `package.json` in this repository. The project was developed with Create React App tooling (`react-scripts`) and targets modern browsers.
 
 Recommended runtime:
