@@ -10,7 +10,12 @@ import {
   LinearProgress,
   CircularProgress,
   Chip,
-  IconButton
+  IconButton,
+  Slider,
+  Drawer,
+  Switch,
+  FormControlLabel,
+  Divider
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '../Navbar';
@@ -18,6 +23,10 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import StarIcon from '@mui/icons-material/Star';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import VolumeOffIcon from '@mui/icons-material/VolumeOff';
+import VolumeDownIcon from '@mui/icons-material/VolumeDown';
+import VolumeMuteIcon from '@mui/icons-material/VolumeMute';
+import SettingsIcon from '@mui/icons-material/Settings';
 import Loader from '../Loader';
 import { 
   getStudentLessonProgress, 
@@ -25,6 +34,7 @@ import {
 } from '../../services/progressService';
 
 // Images
+import pinkBg from "../../assets/hygienelevel3/pinkbg.png"
 import bathroomBg from "../../assets/hygieneLevel1/bathroom.png"
 import sinkImg from "../../assets/hygieneLevel1/sink.png"
 import faucetImg from "../../assets/hygieneLevel1/onfaucet.png"
@@ -33,6 +43,7 @@ import rightHandImg from "../../assets/hygieneLevel1/righthand.png"
 import germsImg from "../../assets/hygieneLevel1/germ.png"
 import mudImg from "../../assets/hygieneLevel1/mud.png"
 import soapImg from "../../assets/hygieneLevel1/soap.png"
+import bubbleImg from "../../assets/hygieneLevel1/bubble.png"
 import wetHandsImg from "../../assets/hygieneLevel1/wash.gif"
 
 import characterCatWorried from "../../assets/hygienelevel3/cat_worried.png"
@@ -50,6 +61,26 @@ import scrubVideo7 from "../../assets/hygieneLevel1/scrub7.mp4"
 
 // Audio files
 import purrnandolvl1 from "../../assets/hygieneLevel1/purrnandolvl1.mp3"
+import dirtyhandsSound from "../../assets/hygieneLevel1/dirtyhands.mp3";
+import sinkSound from "../../assets/hygieneLevel1/sink.mp3";
+import wethandsSound from "../../assets/hygieneLevel1/wethands.mp3"; // Added
+import soapSound from "../../assets/hygieneLevel1/soap.mp3"; // Added
+import rubscrubSound from "../../assets/hygieneLevel1/rubscrub.mp3"; // Added
+import rinseSound from "../../assets/hygieneLevel1/rinse.mp3";
+import scrub1Sound from "../../assets/hygieneLevel1/scrub1.mp3";
+import scrub2Sound from "../../assets/hygieneLevel1/scrub2.mp3";
+import scrub3Sound from "../../assets/hygieneLevel1/scrub3.mp3";
+import scrub4Sound from "../../assets/hygieneLevel1/scrub4.mp3";
+import scrub5Sound from "../../assets/hygieneLevel1/scrub5.mp3";
+import scrub6Sound from "../../assets/hygieneLevel1/scrub6.mp3";
+import scrub7Sound from "../../assets/hygieneLevel1/scrub7.mp3";
+import completeSound from "../../assets/hygieneLevel1/complete.mp3"; // Add this import
+
+// NEW AUDIO FILES - Added
+import backgroundMusic from "../../assets/hygieneLevel1/background-music.mp3";
+import correctSound from "../../assets/hygieneLevel1/correct-sound.mp3";
+import incorrectSound from "../../assets/hygieneLevel1/incorrect-sound.mp3";
+import successSound from "../../assets/hygieneLevel1/success-sound.mp3";
 
 // Define keyframes outside of component to avoid recreation
 const keyframes = {
@@ -156,9 +187,255 @@ const keyframes = {
   }
 };
 
+// Asset Loading Manager - Moved outside the main component
+const AssetLoader = ({ onComplete }) => {
+  const [progress, setProgress] = useState(0);
+  const [loadedAssets, setLoadedAssets] = useState(0);
+  const [totalAssets, setTotalAssets] = useState(0);
+  
+  useEffect(() => {
+    // List of all assets to preload
+    const imageAssets = [
+      pinkBg, bathroomBg, sinkImg, faucetImg, leftHandImg, rightHandImg,
+      germsImg, mudImg, soapImg, bubbleImg, wetHandsImg,
+      characterCatWorried, characterCatHelpful, characterCatExcited,
+      require("../../assets/hygienelevel3/resetbtn.png"),
+      require("../../assets/hygienelevel3/homebtn.png")
+    ];
+    
+    const videoAssets = [
+      scrubVideo, scrubVideo2, scrubVideo3, scrubVideo4, scrubVideo5, scrubVideo6, scrubVideo7
+    ];
+    
+    const audioAssets = [
+      purrnandolvl1, dirtyhandsSound, sinkSound, wethandsSound, soapSound, rubscrubSound,
+      rinseSound, scrub1Sound, scrub2Sound, scrub3Sound, scrub4Sound, scrub5Sound,
+      scrub6Sound, scrub7Sound, completeSound,
+      // NEW: Add the new audio files
+      backgroundMusic, correctSound, incorrectSound, successSound
+    ];
+    
+    const allAssets = [...imageAssets, ...videoAssets, ...audioAssets];
+    setTotalAssets(allAssets.length);
+    
+    let completed = 0;
+    
+    const updateProgress = () => {
+      completed++;
+      setLoadedAssets(completed);
+      const newProgress = Math.round((completed / allAssets.length) * 100);
+      setProgress(newProgress);
+      
+      if (completed === allAssets.length) {
+        // All assets loaded
+        setTimeout(() => {
+          onComplete();
+        }, 500); // Small delay to show 100%
+      }
+    };
+    
+    // Preload images
+    imageAssets.forEach(src => {
+      const img = new Image();
+      img.src = src;
+      img.onload = updateProgress;
+      img.onerror = updateProgress; // Continue even if some assets fail
+    });
+    
+    // Preload videos
+    videoAssets.forEach(src => {
+      const video = document.createElement('video');
+      video.src = src;
+      video.preload = 'auto';
+      video.onloadeddata = updateProgress;
+      video.onerror = updateProgress;
+      // Force load
+      video.load();
+    });
+    
+    // Preload audio
+    audioAssets.forEach(src => {
+      const audio = new Audio();
+      audio.src = src;
+      audio.preload = 'auto';
+      audio.oncanplaythrough = updateProgress;
+      audio.onerror = updateProgress;
+      // Force load
+      audio.load();
+    });
+  }, [onComplete]);
+  
+  return (
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#FFD166',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999
+      }}
+    >
+      {/* Main loading container */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 3,
+          width: '100%',
+          maxWidth: 500,
+          px: 3
+        }}
+      >
+        {/* Loader Component */}
+        <Loader />
+        
+        {/* Loading text */}
+        <Typography
+          variant="h5"
+          sx={{
+            color: 'white',
+            fontWeight: 'bold',
+            fontFamily: 'Poppins, sans-serif',
+            textAlign: 'center',
+            mb: 2,
+            textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+          }}
+        >
+          Loading game assets...
+        </Typography>
+        
+        {/* Loading animation dots */}
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 1.5,
+            mt: 2
+          }}
+        >
+          {[1, 2, 3].map((dot) => (
+            <Box
+              key={dot}
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: '50%',
+                backgroundColor: progress >= (dot * 33) ? '#4AA8E8' : 'rgba(255, 255, 255, 0.2)',
+                animation: progress >= (dot * 33) ? 'pulseDot 1.5s infinite' : 'none',
+                animationDelay: `${dot * 0.2}s`,
+                '@keyframes pulseDot': {
+                  '0%, 100%': { transform: 'scale(1)', opacity: 1 },
+                  '50%': { transform: 'scale(1.2)', opacity: 0.7 }
+                }
+              }}
+            />
+          ))}
+        </Box>
+      </Box>
+      
+      {/* Bottom tip text */}
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 40,
+          width: '100%',
+          textAlign: 'center',
+          px: 2
+        }}
+      >
+        <Typography
+          variant="caption"
+          sx={{
+            color: 'white',
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '0.8rem'
+          }}
+        >
+          Loading all assets for smooth gameplay...
+        </Typography>
+      </Box>
+      
+      {/* Decorative elements */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+          zIndex: -1,
+          overflow: 'hidden'
+        }}
+      >
+        {/* Animated background circles */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '20%',
+            left: '10%',
+            width: 100,
+            height: 100,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255, 89, 94, 0.1) 0%, transparent 70%)',
+            animation: 'float 8s ease-in-out infinite',
+            '@keyframes float': {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-20px)' }
+            }
+          }}
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: '30%',
+            right: '15%',
+            width: 80,
+            height: 80,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255, 209, 102, 0.1) 0%, transparent 70%)',
+            animation: 'float 10s ease-in-out infinite',
+            animationDelay: '1s',
+            '@keyframes float': {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-15px)' }
+            }
+          }}
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '60%',
+            left: '20%',
+            width: 60,
+            height: 60,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(74, 168, 232, 0.1) 0%, transparent 70%)',
+            animation: 'float 12s ease-in-out infinite',
+            animationDelay: '2s',
+            '@keyframes float': {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-25px)' }
+            }
+          }}
+        />
+      </Box>
+    </Box>
+  );
+};
+
 export default function PersonalHygieneLevel1() {
   const navigate = useNavigate();
   const { moduleId, lessonId } = useParams();
+  const [assetsLoaded, setAssetsLoaded] = useState(false);
   const [lesson, setLesson] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -195,6 +472,36 @@ export default function PersonalHygieneLevel1() {
 
   // Audio state
   const [purrnandoAudioRef, setPurrnandoAudioRef] = useState(null);
+  const [dirtyhandsAudioRef, setDirtyhandsAudioRef] = useState(null);
+  const [sinkAudioRef, setSinkAudioRef] = useState(null);
+  const [wethandsAudioRef, setWethandsAudioRef] = useState(null); // Added
+  const [soapAudioRef, setSoapAudioRef] = useState(null); // Added
+  const [rubscrubAudioRef, setRubscrubAudioRef] = useState(null); // Added
+  const [rinseAudioRef, setRinseAudioRef] = useState(null);
+
+  const [scrub1AudioRef, setScrub1AudioRef] = useState(null);
+  const [scrub2AudioRef, setScrub2AudioRef] = useState(null);
+  const [scrub3AudioRef, setScrub3AudioRef] = useState(null);
+  const [scrub4AudioRef, setScrub4AudioRef] = useState(null);
+  const [scrub5AudioRef, setScrub5AudioRef] = useState(null);
+  const [scrub6AudioRef, setScrub6AudioRef] = useState(null);
+  const [scrub7AudioRef, setScrub7AudioRef] = useState(null);
+
+  const [completeAudioRef, setCompleteAudioRef] = useState(null);
+  const [showCleanHands, setShowCleanHands] = useState(false);
+
+  // NEW: Audio refs for the new sounds
+  const [backgroundMusicRef, setBackgroundMusicRef] = useState(null);
+  const [correctSoundRef, setCorrectSoundRef] = useState(null);
+  const [incorrectSoundRef, setIncorrectSoundRef] = useState(null);
+  const [successSoundRef, setSuccessSoundRef] = useState(null);
+
+  // ADDED: Settings state
+  const [showSettings, setShowSettings] = useState(false);
+  const [musicEnabled, setMusicEnabled] = useState(true);
+  const [soundEffectsEnabled, setSoundEffectsEnabled] = useState(true);
+  const [musicVolume, setMusicVolume] = useState(30); // 0-100
+  const [soundEffectsVolume, setSoundEffectsVolume] = useState(50); // 0-100
 
   // Scratch card effect states
   const [scratchMarks, setScratchMarks] = useState([]);
@@ -209,7 +516,7 @@ export default function PersonalHygieneLevel1() {
   const [isDragging, setIsDragging] = useState(false);
   const [draggedItem, setDraggedItem] = useState(null);
   const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
-  const [teethBubbles, setTeethBubbles] = useState([]);
+  const [showBubbles, setShowBubbles] = useState(false);
   
   const [sinkTimer, setSinkTimer] = useState(10);
   const [showSinkPulse, setShowSinkPulse] = useState(false);
@@ -278,7 +585,8 @@ export default function PersonalHygieneLevel1() {
 
   // Audio functions
   const playPurrnandoAudio = () => {
-    if (purrnandoAudioRef) {
+    if (purrnandoAudioRef && soundEffectsEnabled) {
+      purrnandoAudioRef.volume = soundEffectsVolume / 100;
       purrnandoAudioRef.currentTime = 0;
       purrnandoAudioRef.play().catch(error => {
         console.log('Purrnando audio play prevented:', error);
@@ -293,50 +601,367 @@ export default function PersonalHygieneLevel1() {
     }
   };
 
-  // Initialize audio when component mounts
-  useEffect(() => {
-    // Create and play purrnando audio immediately when character introduction shows
-    const purrnandoAudio = new Audio(purrnandolvl1);
-    purrnandoAudio.volume = 0.7;
-    setPurrnandoAudioRef(purrnandoAudio);
+  const playDirtyhandsAudio = () => {
+    if (dirtyhandsAudioRef && soundEffectsEnabled) {
+      dirtyhandsAudioRef.volume = soundEffectsVolume / 100;
+      dirtyhandsAudioRef.currentTime = 0;
+      dirtyhandsAudioRef.play().catch(error => {
+        console.log('Dirtyhands audio play prevented:', error);
+      });
+    }
+  };
+
+  const playSinkAudio = () => {
+    if (sinkAudioRef && soundEffectsEnabled) {
+      sinkAudioRef.volume = soundEffectsVolume / 100;
+      sinkAudioRef.currentTime = 0;
+      sinkAudioRef.play().catch(error => {
+        console.log('Sink audio play prevented:', error);
+      });
+    }
+  };
+
+  const playWethandsAudio = () => { // Added
+    if (wethandsAudioRef && soundEffectsEnabled) {
+      wethandsAudioRef.volume = soundEffectsVolume / 100;
+      wethandsAudioRef.currentTime = 0;
+      wethandsAudioRef.play().catch(error => {
+        console.log('Wethands audio play prevented:', error);
+      });
+    }
+  };
+
+  const playSoapAudio = () => { // Added
+    if (soapAudioRef && soundEffectsEnabled) {
+      soapAudioRef.volume = soundEffectsVolume / 100;
+      soapAudioRef.currentTime = 0;
+      soapAudioRef.play().catch(error => {
+        console.log('Soap audio play prevented:', error);
+      });
+    }
+  };
+
+  const playRubscrubAudio = () => { // Added
+    if (rubscrubAudioRef && soundEffectsEnabled) {
+      rubscrubAudioRef.volume = soundEffectsVolume / 100;
+      rubscrubAudioRef.currentTime = 0;
+      rubscrubAudioRef.play().catch(error => {
+        console.log('Rubscrub audio play prevented:', error);
+      });
+    }
+  };
+  
+  const playRinseAudio = () => {
+    if (rinseAudioRef && soundEffectsEnabled) {
+      rinseAudioRef.volume = soundEffectsVolume / 100;
+      rinseAudioRef.currentTime = 0;
+      rinseAudioRef.play().catch(error => {
+        console.log('Rinse audio play prevented:', error);
+      });
+    }
+  };
+  
+  const playScrub1Audio = () => {
+    if (scrub1AudioRef && soundEffectsEnabled) {
+      scrub1AudioRef.volume = soundEffectsVolume / 100;
+      scrub1AudioRef.currentTime = 0;
+      scrub1AudioRef.play().catch(error => {
+        console.log('Scrub1 audio play prevented:', error);
+      });
+    }
+  };
+
+  const playScrub2Audio = () => {
+    if (scrub2AudioRef && soundEffectsEnabled) {
+      scrub2AudioRef.volume = soundEffectsVolume / 100;
+      scrub2AudioRef.currentTime = 0;
+      scrub2AudioRef.play().catch(error => {
+        console.log('Scrub2 audio play prevented:', error);
+      });
+    }
+  };
+  
+  const playScrub3Audio = () => {
+    if (scrub3AudioRef && soundEffectsEnabled) {
+      scrub3AudioRef.volume = soundEffectsVolume / 100;
+      scrub3AudioRef.currentTime = 0;
+      scrub3AudioRef.play().catch(error => {
+        console.log('Scrub3 audio play prevented:', error);
+      });
+    }
+  };
+
+  const playScrub4Audio = () => {
+    if (scrub4AudioRef && soundEffectsEnabled) {
+      scrub4AudioRef.volume = soundEffectsVolume / 100;
+      scrub4AudioRef.currentTime = 0;
+      scrub4AudioRef.play().catch(error => {
+        console.log('Scrub4 audio play prevented:', error);
+      });
+    }
+  };
+  
+  const playScrub5Audio = () => {
+    if (scrub5AudioRef && soundEffectsEnabled) {
+      scrub5AudioRef.volume = soundEffectsVolume / 100;
+      scrub5AudioRef.currentTime = 0;
+      scrub5AudioRef.play().catch(error => {
+        console.log('Scrub5 audio play prevented:', error);
+      });
+    }
+  };
+
+  const playScrub6Audio = () => {
+    if (scrub6AudioRef && soundEffectsEnabled) {
+      scrub6AudioRef.volume = soundEffectsVolume / 100;
+      scrub6AudioRef.currentTime = 0;
+      scrub6AudioRef.play().catch(error => {
+        console.log('Scrub6 audio play prevented:', error);
+      });
+    }
+  };
+  
+  const playScrub7Audio = () => {
+    if (scrub7AudioRef && soundEffectsEnabled) {
+      scrub7AudioRef.volume = soundEffectsVolume / 100;
+      scrub7AudioRef.currentTime = 0;
+      scrub7AudioRef.play().catch(error => {
+        console.log('Scrub7 audio play prevented:', error);
+      });
+    }
+  };
+  
+  const playCompleteAudio = () => {
+    if (completeAudioRef && soundEffectsEnabled) {
+      completeAudioRef.volume = soundEffectsVolume / 100;
+      completeAudioRef.currentTime = 0;
+      completeAudioRef.play().catch(error => {
+        console.log('Complete audio play prevented:', error);
+        // If audio fails to play, continue anyway after a delay
+        setTimeout(() => {
+          setShowCleanHands(false);
+          setShowSuccess(true);
+          setGameCompleted(true);
+        }, 3000);
+      });
+    } else {
+      // If audio ref not available, continue after delay
+      setTimeout(() => {
+        setShowCleanHands(false);
+        setShowSuccess(true);
+        setGameCompleted(true);
+      }, 3000);
+    }
+  };
+
+  const stopCompleteAudio = () => {
+    if (completeAudioRef) {
+      completeAudioRef.onended = null;
+      completeAudioRef.pause();
+      completeAudioRef.currentTime = 0;
+    }
+  };
+
+  const stopScrub1Audio = () => {
+    if (scrub1AudioRef) {
+      scrub1AudioRef.pause();
+      scrub1AudioRef.currentTime = 0;
+    }
+  };
+
+  const stopScrub2Audio = () => {
+    if (scrub2AudioRef) {
+      scrub2AudioRef.pause();
+      scrub2AudioRef.currentTime = 0;
+    }
+  };
+
+  const stopScrub3Audio = () => {
+    if (scrub3AudioRef) {
+      scrub3AudioRef.pause();
+      scrub3AudioRef.currentTime = 0;
+    }
+  };
+
+  const stopScrub4Audio = () => {
+    if (scrub4AudioRef) {
+      scrub4AudioRef.pause();
+      scrub4AudioRef.currentTime = 0;
+    }
+  };
+
+  const stopScrub5Audio = () => {
+    if (scrub5AudioRef) {
+      scrub5AudioRef.pause();
+      scrub5AudioRef.currentTime = 0;
+    }
+  };
+
+  const stopScrub6Audio = () => {
+    if (scrub6AudioRef) {
+      scrub6AudioRef.pause();
+      scrub6AudioRef.currentTime = 0;
+    }
+  };
+
+  const stopScrub7Audio = () => {
+    if (scrub7AudioRef) {
+      scrub7AudioRef.pause();
+      scrub7AudioRef.currentTime = 0;
+    }
+  };
+  
+  const stopRinseAudio = () => {
+    if (rinseAudioRef) {
+      rinseAudioRef.pause();
+      rinseAudioRef.currentTime = 0;
+    }
+  };
+
+  const stopDirtyhandsAudio = () => {
+    if (dirtyhandsAudioRef) {
+      dirtyhandsAudioRef.pause();
+      dirtyhandsAudioRef.currentTime = 0;
+    }
+  };
+
+  const stopSinkAudio = () => {
+    if (sinkAudioRef) {
+      sinkAudioRef.pause();
+      sinkAudioRef.currentTime = 0;
+    }
+  };
+
+  const stopWethandsAudio = () => { // Added
+    if (wethandsAudioRef) {
+      wethandsAudioRef.pause();
+      wethandsAudioRef.currentTime = 0;
+    }
+  };
+
+  const stopSoapAudio = () => { // Added
+    if (soapAudioRef) {
+      soapAudioRef.pause();
+      soapAudioRef.currentTime = 0;
+    }
+  };
+
+  const stopRubscrubAudio = () => { // Added
+    if (rubscrubAudioRef) {
+      rubscrubAudioRef.pause();
+      rubscrubAudioRef.currentTime = 0;
+    }
+  };
+
+  // NEW: Audio functions for the new sounds
+  const playBackgroundMusic = () => {
+    if (backgroundMusicRef && musicEnabled) {
+      backgroundMusicRef.loop = true;
+      backgroundMusicRef.volume = musicVolume / 100;
+      backgroundMusicRef.play().catch(error => {
+        console.log('Background music play prevented:', error);
+      });
+    }
+  };
+
+  const stopBackgroundMusic = () => {
+    if (backgroundMusicRef) {
+      backgroundMusicRef.pause();
+      backgroundMusicRef.currentTime = 0;
+    }
+  };
+
+  const updateBackgroundMusicVolume = () => {
+    if (backgroundMusicRef) {
+      if (musicEnabled) {
+        backgroundMusicRef.volume = musicVolume / 100;
+        if (backgroundMusicRef.paused) {
+          playBackgroundMusic();
+        }
+      } else {
+        backgroundMusicRef.pause();
+      }
+    }
+  };
+
+  const updateSoundEffectsVolume = () => {
+    // Update volume for all sound effect audio elements
+    const audioRefs = [
+      purrnandoAudioRef, dirtyhandsAudioRef, sinkAudioRef, wethandsAudioRef,
+      soapAudioRef, rubscrubAudioRef, rinseAudioRef, scrub1AudioRef, scrub2AudioRef,
+      scrub3AudioRef, scrub4AudioRef, scrub5AudioRef, scrub6AudioRef, scrub7AudioRef,
+      completeAudioRef, correctSoundRef, incorrectSoundRef, successSoundRef
+    ];
     
-    // Play purrnando audio immediately when character introduction appears
-    const playPurrnandoAudioOnMount = () => {
-      if (showCharacterIntroduction) {
-        purrnandoAudio.play().catch(error => {
-          console.log('Purrnando audio autoplay prevented:', error);
-          const playOnInteraction = () => {
-            purrnandoAudio.play();
-            document.removeEventListener('click', playOnInteraction);
-            document.removeEventListener('touchstart', playOnInteraction);
-          };
-          document.addEventListener('click', playOnInteraction);
-          document.addEventListener('touchstart', playOnInteraction);
-        });
+    audioRefs.forEach(ref => {
+      if (ref) {
+        ref.volume = soundEffectsVolume / 100;
       }
-    };
+    });
+  };
 
-    const timer = setTimeout(playPurrnandoAudioOnMount, 1000);
+  const playCorrectSound = () => {
+    if (correctSoundRef && soundEffectsEnabled) {
+      correctSoundRef.volume = soundEffectsVolume / 100;
+      correctSoundRef.currentTime = 0;
+      correctSoundRef.play().catch(error => {
+        console.log('Correct sound play prevented:', error);
+      });
+    }
+  };
 
-    return () => {
-      clearTimeout(timer);
-      if (purrnandoAudio) {
-        purrnandoAudio.pause();
-        purrnandoAudio.currentTime = 0;
+  const playIncorrectSound = () => {
+    if (incorrectSoundRef && soundEffectsEnabled) {
+      incorrectSoundRef.volume = soundEffectsVolume / 100;
+      incorrectSoundRef.currentTime = 0;
+      incorrectSoundRef.play().catch(error => {
+        console.log('Incorrect sound play prevented:', error);
+      });
+    }
+  };
+
+  const playSuccessSound = () => {
+    if (successSoundRef && soundEffectsEnabled) {
+      successSoundRef.volume = soundEffectsVolume / 100;
+      successSoundRef.currentTime = 0;
+      successSoundRef.play().catch(error => {
+        console.log('Success sound play prevented:', error);
+      });
+    }
+  };
+
+  // ADDED: Settings functions
+  const handleMusicToggle = (event) => {
+    const enabled = event.target.checked;
+    setMusicEnabled(enabled);
+    
+    if (backgroundMusicRef) {
+      if (enabled) {
+        backgroundMusicRef.volume = musicVolume / 100;
+        playBackgroundMusic();
+      } else {
+        backgroundMusicRef.pause();
       }
-    };
-  }, [showCharacterIntroduction]);
+    }
+  };
 
-  // Clean up audio when component unmounts
-  useEffect(() => {
-    return () => {
-      if (purrnandoAudioRef) {
-        purrnandoAudioRef.pause();
-        purrnandoAudioRef.currentTime = 0;
-      }
-    };
-  }, [purrnandoAudioRef]);
+  const handleSoundEffectsToggle = (event) => {
+    setSoundEffectsEnabled(event.target.checked);
+  };
 
+  const handleMusicVolumeChange = (event, newValue) => {
+    setMusicVolume(newValue);
+    if (backgroundMusicRef) {
+      backgroundMusicRef.volume = newValue / 100;
+    }
+  };
+
+  const handleSoundEffectsVolumeChange = (event, newValue) => {
+    setSoundEffectsVolume(newValue);
+    updateSoundEffectsVolume();
+  };
+
+  // Event handler functions
   const handleCharacterIntroductionComplete = () => {
     // Stop purrnando audio when introduction is complete
     stopPurrnandoAudio();
@@ -345,11 +970,15 @@ export default function PersonalHygieneLevel1() {
   };
 
   const handleHandIntroductionComplete = () => {
+    // Stop dirtyhands audio when hand introduction is complete
+    stopDirtyhandsAudio();
     setShowHandIntroduction(false);
     setShowSinkIntroduction(true);
   };
 
   const handleSinkIntroductionComplete = () => {
+    // Stop sink audio when sink introduction is complete
+    stopSinkAudio();
     setShowSinkIntroduction(false);
     setGameStep(1);
   };
@@ -360,20 +989,24 @@ export default function PersonalHygieneLevel1() {
     setSinkPulseScale(1);
     setTimeout(() => {
       setGameStep(2);
-      setShowStep2Introduction(true);
+      playWethandsAudio();
     }, 500);
   };
 
-  const handleStep2IntroductionComplete = () => {
-    setShowStep2Introduction(false);
-  };
-
   const handleStep3IntroductionComplete = () => {
+    // Stop soap audio when step3 introduction is complete
+    stopSoapAudio();
     setShowStep3Introduction(false);
   };
 
   const handleStep4IntroductionComplete = () => {
+    setTimeout(() => {
+      stopRubscrubAudio();
+    }, 1000);
+
     setShowStep4Introduction(false);
+    setGameStep(5);
+    playRinseAudio();
   };
 
   const handleStep5IntroductionComplete = () => {
@@ -391,19 +1024,362 @@ export default function PersonalHygieneLevel1() {
 
       if (isInSoapArea(relativeX, relativeY)) {
         setSoapPlaced(true);
+        // Play correct sound when soap is successfully applied
+        playCorrectSound();
         
         setTimeout(() => {
           setGameStep(4);
-          setShowStep4Introduction(true);
+          playRubscrubAudio();
         }, 1000);
+      } else {
+        // Play incorrect sound when clicking wrong area
+        playIncorrectSound();
       }
     }
   };
 
   const handleHandRub = () => {
     if (gameStep !== 4 || handsRubbed) return;
+    
+    // Stop rubscrub audio immediately when hand is clicked
+    stopRubscrubAudio();
+    
+    // Stop all scrub audio before starting new video
+    stopScrub1Audio();
+    stopScrub2Audio();
+    stopScrub3Audio();
+    stopScrub4Audio();
+    stopScrub5Audio();
+    stopScrub6Audio();
+    stopScrub7Audio();
+    
     setShowScrubVideo(true);
+    setCurrentScrubVideoIndex(0);
+    // Play correct sound when starting to rub hands
+    playCorrectSound();
   };
+
+  // Initialize audio when component mounts
+  useEffect(() => {
+    // Create all audio objects (now they should be preloaded)
+    const purrnandoAudio = new Audio(purrnandolvl1);
+    purrnandoAudio.volume = soundEffectsVolume / 100;
+    setPurrnandoAudioRef(purrnandoAudio);
+    
+    const dirtyhandsAudioObj = new Audio(dirtyhandsSound);
+    dirtyhandsAudioObj.volume = soundEffectsVolume / 100;
+    setDirtyhandsAudioRef(dirtyhandsAudioObj);
+    
+    const sinkAudioObj = new Audio(sinkSound);
+    sinkAudioObj.volume = soundEffectsVolume / 100;
+    setSinkAudioRef(sinkAudioObj);
+    
+    const wethandsAudioObj = new Audio(wethandsSound); // Added
+    wethandsAudioObj.volume = soundEffectsVolume / 100;
+    setWethandsAudioRef(wethandsAudioObj);
+    
+    const soapAudioObj = new Audio(soapSound); // Added
+    soapAudioObj.volume = soundEffectsVolume / 100;
+    setSoapAudioRef(soapAudioObj);
+    
+    const rubscrubAudioObj = new Audio(rubscrubSound); // Added
+    rubscrubAudioObj.volume = soundEffectsVolume / 100;
+    setRubscrubAudioRef(rubscrubAudioObj);
+
+    const rinseAudioObj = new Audio(rinseSound); // Add this
+    rinseAudioObj.volume = soundEffectsVolume / 100;
+    setRinseAudioRef(rinseAudioObj);
+
+    const scrub1AudioObj = new Audio(scrub1Sound);
+    scrub1AudioObj.volume = soundEffectsVolume / 100;
+    setScrub1AudioRef(scrub1AudioObj);
+    
+    const scrub2AudioObj = new Audio(scrub2Sound);
+    scrub2AudioObj.volume = soundEffectsVolume / 100;
+    setScrub2AudioRef(scrub2AudioObj);
+
+    const scrub3AudioObj = new Audio(scrub3Sound);
+    scrub3AudioObj.volume = soundEffectsVolume / 100;
+    setScrub3AudioRef(scrub3AudioObj);
+    
+    const scrub4AudioObj = new Audio(scrub4Sound);
+    scrub4AudioObj.volume = soundEffectsVolume / 100;
+    setScrub4AudioRef(scrub4AudioObj);
+
+    const scrub5AudioObj = new Audio(scrub5Sound);
+    scrub5AudioObj.volume = soundEffectsVolume / 100;
+    setScrub5AudioRef(scrub5AudioObj);
+    
+    const scrub6AudioObj = new Audio(scrub6Sound);
+    scrub6AudioObj.volume = soundEffectsVolume / 100;
+    setScrub6AudioRef(scrub6AudioObj);
+
+    const scrub7AudioObj = new Audio(scrub7Sound);
+    scrub7AudioObj.volume = soundEffectsVolume / 100;
+    setScrub7AudioRef(scrub7AudioObj);
+
+    const completeAudioObj = new Audio(completeSound);
+    completeAudioObj.volume = soundEffectsVolume / 100;
+    setCompleteAudioRef(completeAudioObj);
+
+    // NEW: Create audio objects for the new sounds
+    const backgroundMusicObj = new Audio(backgroundMusic);
+    backgroundMusicObj.volume = musicVolume / 100;
+    setBackgroundMusicRef(backgroundMusicObj);
+    
+    const correctSoundObj = new Audio(correctSound);
+    correctSoundObj.volume = soundEffectsVolume / 100;
+    setCorrectSoundRef(correctSoundObj);
+    
+    const incorrectSoundObj = new Audio(incorrectSound);
+    incorrectSoundObj.volume = soundEffectsVolume / 100;
+    setIncorrectSoundRef(incorrectSoundObj);
+    
+    const successSoundObj = new Audio(successSound);
+    successSoundObj.volume = soundEffectsVolume / 100;
+    setSuccessSoundRef(successSoundObj);
+        
+    // Play purrnando audio immediately when character introduction appears
+    const playPurrnandoAudioOnMount = () => {
+      if (showCharacterIntroduction && soundEffectsEnabled) {
+        purrnandoAudio.play().catch(error => {
+          console.log('Purrnando audio autoplay prevented:', error);
+          const playOnInteraction = () => {
+            purrnandoAudio.play();
+            document.removeEventListener('click', playOnInteraction);
+            document.removeEventListener('touchstart', playOnInteraction);
+          };
+          document.addEventListener('click', playOnInteraction);
+          document.addEventListener('touchstart', playOnInteraction);
+        });
+      }
+    };
+
+    // Start background music when game starts
+    const startBackgroundMusic = () => {
+      if (backgroundMusicObj && musicEnabled) {
+        backgroundMusicObj.loop = true;
+        backgroundMusicObj.play().catch(error => {
+          console.log('Background music autoplay prevented:', error);
+          const playOnInteraction = () => {
+            backgroundMusicObj.play();
+            document.removeEventListener('click', playOnInteraction);
+            document.removeEventListener('touchstart', playOnInteraction);
+          };
+          document.addEventListener('click', playOnInteraction);
+          document.addEventListener('touchstart', playOnInteraction);
+        });
+      }
+    };
+
+    const timer = setTimeout(() => {
+      playPurrnandoAudioOnMount();
+      startBackgroundMusic();
+    }, 1000);
+
+    return () => {
+      clearTimeout(timer);
+      if (purrnandoAudio) {
+        purrnandoAudio.pause();
+        purrnandoAudio.currentTime = 0;
+      }
+      if (dirtyhandsAudioObj) {
+        dirtyhandsAudioObj.pause();
+        dirtyhandsAudioObj.currentTime = 0;
+      }
+      if (sinkAudioObj) {
+        sinkAudioObj.pause();
+        sinkAudioObj.currentTime = 0;
+      }
+      if (wethandsAudioObj) { // Added
+        wethandsAudioObj.pause();
+        wethandsAudioObj.currentTime = 0;
+      }
+      if (soapAudioObj) { // Added
+        soapAudioObj.pause();
+        soapAudioObj.currentTime = 0;
+      }
+      if (rubscrubAudioObj) { // Added
+        rubscrubAudioObj.pause();
+        rubscrubAudioObj.currentTime = 0;
+      }
+      if (rinseAudioObj) {
+        rinseAudioObj.pause();
+        rinseAudioObj.currentTime = 0;
+      }
+      if (scrub1AudioObj) { // Add this
+        scrub1AudioObj.pause();
+        scrub1AudioObj.currentTime = 0;
+      }
+      if (scrub2AudioObj) { // Add this
+        scrub2AudioObj.pause();
+        scrub2AudioObj.currentTime = 0;
+      }
+      if (scrub3AudioObj) { // Add this
+        scrub3AudioObj.pause();
+        scrub3AudioObj.currentTime = 0;
+      }
+      if (scrub4AudioObj) { // Add this
+        scrub4AudioObj.pause();
+        scrub4AudioObj.currentTime = 0;
+      }
+      if (scrub5AudioObj) { // Add this
+        scrub5AudioObj.pause();
+        scrub5AudioObj.currentTime = 0;
+      }
+      if (scrub6AudioObj) { // Add this
+        scrub6AudioObj.pause();
+        scrub6AudioObj.currentTime = 0;
+      }
+      if (scrub7AudioObj) { // Add this
+        scrub7AudioObj.pause();
+        scrub7AudioObj.currentTime = 0;
+      }
+      if (completeAudioObj) {
+        completeAudioObj.pause();
+        completeAudioObj.currentTime = 0;
+      }
+      // NEW: Clean up new audio objects
+      if (backgroundMusicObj) {
+        backgroundMusicObj.pause();
+        backgroundMusicObj.currentTime = 0;
+      }
+      if (correctSoundObj) {
+        correctSoundObj.pause();
+        correctSoundObj.currentTime = 0;
+      }
+      if (incorrectSoundObj) {
+        incorrectSoundObj.pause();
+        incorrectSoundObj.currentTime = 0;
+      }
+      if (successSoundObj) {
+        successSoundObj.pause();
+        successSoundObj.currentTime = 0;
+      }
+    };
+  }, [showCharacterIntroduction]);
+
+  // Update music volume when settings change
+  useEffect(() => {
+    updateBackgroundMusicVolume();
+  }, [musicEnabled, musicVolume]);
+
+  // Update sound effects volume when settings change
+  useEffect(() => {
+    updateSoundEffectsVolume();
+  }, [soundEffectsVolume]);
+
+  // Play hand introduction audio when popup appears
+  useEffect(() => {
+    if (showHandIntroduction && dirtyhandsAudioRef) {
+      const playAudio = () => {
+        dirtyhandsAudioRef.currentTime = 0;
+        dirtyhandsAudioRef.play().catch(error => {
+          console.log('Dirtyhands audio play prevented:', error);
+          const playOnInteraction = () => {
+            dirtyhandsAudioRef.play();
+            document.removeEventListener('click', playOnInteraction);
+            document.removeEventListener('touchstart', playOnInteraction);
+          };
+          document.addEventListener('click', playOnInteraction);
+          document.addEventListener('touchstart', playOnInteraction);
+        });
+      };
+
+      const timer = setTimeout(playAudio, 500);
+      return () => {
+        clearTimeout(timer);
+        if (dirtyhandsAudioRef) {
+          dirtyhandsAudioRef.pause();
+          dirtyhandsAudioRef.currentTime = 0;
+        }
+      };
+    }
+  }, [showHandIntroduction]);
+
+  // Play sink introduction audio when popup appears
+  useEffect(() => {
+    if (showSinkIntroduction && sinkAudioRef) {
+      const playAudio = () => {
+        sinkAudioRef.currentTime = 0;
+        sinkAudioRef.play().catch(error => {
+          console.log('Sink audio play prevented:', error);
+          const playOnInteraction = () => {
+            sinkAudioRef.play();
+            document.removeEventListener('click', playOnInteraction);
+            document.removeEventListener('touchstart', playOnInteraction);
+          };
+          document.addEventListener('click', playOnInteraction);
+          document.addEventListener('touchstart', playOnInteraction);
+        });
+      };
+
+      const timer = setTimeout(playAudio, 500);
+      return () => {
+        clearTimeout(timer);
+        if (sinkAudioRef) {
+          sinkAudioRef.pause();
+          sinkAudioRef.currentTime = 0;
+        }
+      };
+    }
+  }, [showSinkIntroduction]);
+
+  // Play step3 introduction audio when popup appears
+  useEffect(() => {
+    if (showStep3Introduction && soapAudioRef) {
+      const playAudio = () => {
+        soapAudioRef.currentTime = 0;
+        soapAudioRef.play().catch(error => {
+          console.log('Soap audio play prevented:', error);
+          const playOnInteraction = () => {
+            soapAudioRef.play();
+            document.removeEventListener('click', playOnInteraction);
+            document.removeEventListener('touchstart', playOnInteraction);
+          };
+          document.addEventListener('click', playOnInteraction);
+          document.addEventListener('touchstart', playOnInteraction);
+        });
+      };
+
+      const timer = setTimeout(playAudio, 500);
+      return () => {
+        clearTimeout(timer);
+        if (soapAudioRef) {
+          soapAudioRef.pause();
+          soapAudioRef.currentTime = 0;
+        }
+      };
+    }
+  }, [showStep3Introduction]);
+
+  // Play step4 introduction audio when popup appears
+  useEffect(() => {
+    if (showStep4Introduction && rubscrubAudioRef) {
+      const playAudio = () => {
+        rubscrubAudioRef.currentTime = 0;
+        rubscrubAudioRef.play().catch(error => {
+          console.log('Rubscrub audio play prevented:', error);
+          const playOnInteraction = () => {
+            rubscrubAudioRef.play();
+            document.removeEventListener('click', playOnInteraction);
+            document.removeEventListener('touchstart', playOnInteraction);
+          };
+          document.addEventListener('click', playOnInteraction);
+          document.addEventListener('touchstart', playOnInteraction);
+        });
+      };
+
+      const timer = setTimeout(playAudio, 500);
+      return () => {
+        clearTimeout(timer);
+        if (rubscrubAudioRef) {
+          rubscrubAudioRef.pause();
+          rubscrubAudioRef.currentTime = 0;
+        }
+      };
+    }
+  }, [showStep4Introduction]);
 
   const saveProgress = async () => {
     try {
@@ -468,6 +1444,13 @@ export default function PersonalHygieneLevel1() {
             setRightHandWet(true);
             setHideAllImages(true);
             setShowWetHands(true);
+            // Play correct sound when hands are properly wetted
+            playCorrectSound();
+
+            setTimeout(() => {
+              stopWethandsAudio();
+            }, 1500);
+
             setTimeout(() => {
               setShowWetHands(false);
               setHideAllImages(false);
@@ -477,17 +1460,51 @@ export default function PersonalHygieneLevel1() {
           } else if (gameStep === 5) {
             setHideAllImages(true);
             setShowWetHands(true);
+            setShowBubbles(true); // Bubbles are shown initially
+            // Play correct sound when hands are properly rinsed
+            playCorrectSound();
+            
+            // Stop rinse audio and play complete audio
+            stopRinseAudio();
+            
             setTimeout(() => {
               setShowWetHands(false);
               setHideAllImages(false);
               setStep5Completed(true);
+              setShowBubbles(false);
+              setSoapPlaced(false);
               
-              setTimeout(() => {
-                setShowSuccess(true);
-                setGameCompleted(true);
-              }, 1000);
+              // Show clean hands and play complete audio
+              setShowCleanHands(true);
+              
+              // Play complete audio and wait for it to finish
+              playCompleteAudio();
+              
+              // Listen for when the audio finishes playing
+              if (completeAudioRef) {
+                completeAudioRef.onended = () => {
+                  // Audio has finished playing, now show success
+                  setShowCleanHands(false);
+                  setShowSuccess(true);
+                  setGameCompleted(true);
+                  // Play success sound when game is completed
+                  playSuccessSound();
+                };
+              } else {
+                // Fallback: if audio ref not available, wait 3 seconds
+                setTimeout(() => {
+                  setShowCleanHands(false);
+                  setShowSuccess(true);
+                  setGameCompleted(true);
+                  // Play success sound when game is completed
+                  playSuccessSound();
+                }, 3000);
+              }
             }, 2000);
           }
+        } else {
+          // Play incorrect sound if dropped in wrong area
+          playIncorrectSound();
         }
       }
     }
@@ -624,9 +1641,49 @@ export default function PersonalHygieneLevel1() {
     };
   }, [gameStep, faucetOn]);
 
+  useEffect(() => {
+    if (showScrubVideo) {
+      if (currentScrubVideoIndex === 0) {
+        // Play scrub1 audio for step 1
+        playScrub1Audio();
+      } else if (currentScrubVideoIndex === 1) {
+        // Play scrub2 audio for step 2
+        playScrub2Audio();
+      } else if (currentScrubVideoIndex === 2) {
+        // Play scrub3 audio for step 3
+        playScrub3Audio();
+      } else if (currentScrubVideoIndex === 3) {
+        // Play scrub4 audio for step 4
+        playScrub4Audio();
+      } else if (currentScrubVideoIndex === 4) {
+        // Play scrub5 audio for step 5
+        playScrub5Audio();
+      } else if (currentScrubVideoIndex === 5) {
+        // Play scrub6 audio for step 6
+        playScrub6Audio();
+      } else if (currentScrubVideoIndex === 6) {
+        // Play scrub7 audio for step 7
+        playScrub7Audio();
+      }
+    }
+  }, [currentScrubVideoIndex, showScrubVideo]);
+
   const resetGame = () => {
-    // Stop audio when resetting game
+    // Stop all audio when resetting game
     stopPurrnandoAudio();
+    stopDirtyhandsAudio();
+    stopSinkAudio();
+    stopWethandsAudio(); // Added
+    stopSoapAudio(); // Added
+    stopRubscrubAudio(); // Added
+    stopRinseAudio();
+    stopScrub1Audio(); // Add this
+    stopScrub2Audio();
+    stopScrub3Audio();
+    stopScrub4Audio();
+    stopScrub5Audio();
+    stopScrub6Audio();
+    stopScrub7Audio();
     
     setShowFeedback(false);
     setShowSuccess(false);
@@ -634,11 +1691,12 @@ export default function PersonalHygieneLevel1() {
     setProgressSaved(false);
     setProgressSaving(false);
     setHideAllImages(false);
+    setShowBubbles(false);
+    setShowCleanHands(false);
     
     setShowCharacterIntroduction(true);
     setShowHandIntroduction(false);
     setShowSinkIntroduction(false);
-    setShowStep2Introduction(false);
     setShowStep3Introduction(false);
     setShowStep4Introduction(false);
     setShowStep5Introduction(false);
@@ -686,8 +1744,15 @@ export default function PersonalHygieneLevel1() {
   };
 
   const handleGoHome = () => {
-    // Stop audio when going home
+    // Stop all audio when going home
     stopPurrnandoAudio();
+    stopDirtyhandsAudio();
+    stopSinkAudio();
+    stopWethandsAudio(); // Added
+    stopSoapAudio(); // Added
+    stopRubscrubAudio(); // Added
+    stopCompleteAudio();
+    stopBackgroundMusic();
     navigate(-1);
   };
 
@@ -737,6 +1802,256 @@ export default function PersonalHygieneLevel1() {
       return () => clearTimeout(timer);
     }
   }, [showSuccess]);
+
+  // Clean up audio when component unmounts
+  useEffect(() => {
+    return () => {
+      if (purrnandoAudioRef) {
+        purrnandoAudioRef.pause();
+        purrnandoAudioRef.currentTime = 0;
+      }
+      if (dirtyhandsAudioRef) {
+        dirtyhandsAudioRef.pause();
+        dirtyhandsAudioRef.currentTime = 0;
+      }
+      if (sinkAudioRef) {
+        sinkAudioRef.pause();
+        sinkAudioRef.currentTime = 0;
+      }
+      if (wethandsAudioRef) { // Added
+        wethandsAudioRef.pause();
+        wethandsAudioRef.currentTime = 0;
+      }
+      if (soapAudioRef) { // Added
+        soapAudioRef.pause();
+        soapAudioRef.currentTime = 0;
+      }
+      if (rubscrubAudioRef) { // Added
+        rubscrubAudioRef.pause();
+        rubscrubAudioRef.currentTime = 0;
+      }
+      if (rinseAudioRef) { // Add this
+        rinseAudioRef.pause();
+        rinseAudioRef.currentTime = 0;
+      }
+      if (scrub1AudioRef) { // Add this
+        scrub1AudioRef.pause();
+        scrub1AudioRef.currentTime = 0;
+      }
+      if (scrub2AudioRef) { // Add this
+        scrub2AudioRef.pause();
+        scrub2AudioRef.currentTime = 0;
+      }
+      if (scrub3AudioRef) { // Add this
+        scrub3AudioRef.pause();
+        scrub3AudioRef.currentTime = 0;
+      }
+      if (scrub4AudioRef) { // Add this
+        scrub4AudioRef.pause();
+        scrub4AudioRef.currentTime = 0;
+      }
+      if (scrub5AudioRef) { // Add this
+        scrub5AudioRef.pause();
+        scrub5AudioRef.currentTime = 0;
+      }
+      if (scrub6AudioRef) { // Add this
+        scrub6AudioRef.pause();
+        scrub6AudioRef.currentTime = 0;
+      }
+      if (scrub7AudioRef) { // Add this
+        scrub7AudioRef.pause();
+        scrub7AudioRef.currentTime = 0;
+      }
+      if (completeAudioRef) {
+        completeAudioRef.pause();
+        completeAudioRef.currentTime = 0;
+      }
+      // NEW: Clean up new audio objects
+      if (backgroundMusicRef) {
+        backgroundMusicRef.pause();
+        backgroundMusicRef.currentTime = 0;
+      }
+      if (correctSoundRef) {
+        correctSoundRef.pause();
+        correctSoundRef.currentTime = 0;
+      }
+      if (incorrectSoundRef) {
+        incorrectSoundRef.pause();
+        incorrectSoundRef.currentTime = 0;
+      }
+      if (successSoundRef) {
+        successSoundRef.pause();
+        successSoundRef.currentTime = 0;
+      }
+    };
+  }, [purrnandoAudioRef, dirtyhandsAudioRef, sinkAudioRef, wethandsAudioRef, soapAudioRef, rubscrubAudioRef, rinseAudioRef, scrub1AudioRef, scrub2AudioRef, scrub3AudioRef, scrub4AudioRef, scrub5AudioRef, scrub6AudioRef, scrub7AudioRef, backgroundMusicRef, correctSoundRef, incorrectSoundRef, successSoundRef]);
+
+  // Show loading screen until assets are loaded
+  if (!assetsLoaded) {
+    return <AssetLoader onComplete={() => setAssetsLoaded(true)} />;
+  }
+
+  // ADDED: Settings Panel Component
+// ADDED: Settings Panel Component
+const SettingsPanel = () => (
+  <Drawer
+    anchor="right"
+    open={showSettings}
+    onClose={() => setShowSettings(false)}
+    PaperProps={{
+      sx: {
+        width: 320,
+        backgroundColor: '#ffffff', // Solid white background
+        padding: 3,
+        borderTopLeftRadius: 20,
+        borderBottomLeftRadius: 20,
+        boxShadow: '0 0 40px rgba(0,0,0,0.4)',
+        border: '2px solid #1982C4',
+        // Remove backdropFilter entirely for solid background
+      }
+    }}
+  >
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+        <SettingsIcon sx={{ fontSize: 32, color: '#1982C4', mr: 2 }} />
+        <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#280B60', fontFamily: 'Poppins, sans-serif' }}>
+          Audio Settings
+        </Typography>
+      </Box>
+      
+      <Divider sx={{ mb: 3, borderColor: '#1982C4' }} />
+      
+      {/* Music Settings */}
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Typography variant="h6" sx={{ color: '#1982C4', fontFamily: 'Poppins, sans-serif' }}>
+            Background Music
+          </Typography>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={musicEnabled}
+                onChange={handleMusicToggle}
+                color="primary"
+              />
+            }
+            label={musicEnabled ? "ON" : "OFF"}
+            sx={{ color: '#333' }}
+          />
+        </Box>
+        
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <VolumeOffIcon sx={{ color: musicEnabled ? '#1982C4' : '#999' }} />
+          <Slider
+            value={musicVolume}
+            onChange={handleMusicVolumeChange}
+            aria-labelledby="music-volume-slider"
+            sx={{
+              flex: 1,
+              color: '#1982C4',
+              '& .MuiSlider-track': {
+                backgroundColor: musicEnabled ? '#1982C4' : '#999',
+              },
+              '& .MuiSlider-thumb': {
+                backgroundColor: musicEnabled ? '#1982C4' : '#999',
+                '&:hover, &.Mui-focusVisible': {
+                  boxShadow: musicEnabled ? '0 0 0 8px rgba(25, 130, 196, 0.16)' : 'none',
+                },
+              },
+              '& .MuiSlider-rail': {
+                backgroundColor: '#ddd',
+              }
+            }}
+            disabled={!musicEnabled}
+          />
+          <VolumeUpIcon sx={{ color: musicEnabled ? '#1982C4' : '#999' }} />
+        </Box>
+        
+        <Typography variant="body2" sx={{ textAlign: 'center', mt: 1, color: '#666' }}>
+          {musicVolume}%
+        </Typography>
+      </Box>
+      
+      {/* Sound Effects Settings */}
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Typography variant="h6" sx={{ color: '#FF595E', fontFamily: 'Poppins, sans-serif' }}>
+            Sound Effects
+          </Typography>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={soundEffectsEnabled}
+                onChange={handleSoundEffectsToggle}
+                color="primary"
+              />
+            }
+            label={soundEffectsEnabled ? "ON" : "OFF"}
+            sx={{ color: '#333' }}
+          />
+        </Box>
+        
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <VolumeMuteIcon sx={{ color: soundEffectsEnabled ? '#FF595E' : '#999' }} />
+          <Slider
+            value={soundEffectsVolume}
+            onChange={handleSoundEffectsVolumeChange}
+            aria-labelledby="sound-effects-volume-slider"
+            sx={{
+              flex: 1,
+              color: '#FF595E',
+              '& .MuiSlider-track': {
+                backgroundColor: soundEffectsEnabled ? '#FF595E' : '#999',
+              },
+              '& .MuiSlider-thumb': {
+                backgroundColor: soundEffectsEnabled ? '#FF595E' : '#999',
+                '&:hover, &.Mui-focusVisible': {
+                  boxShadow: soundEffectsEnabled ? '0 0 0 8px rgba(255, 89, 94, 0.16)' : 'none',
+                },
+              },
+              '& .MuiSlider-rail': {
+                backgroundColor: '#ddd',
+              }
+            }}
+            disabled={!soundEffectsEnabled}
+          />
+          <VolumeUpIcon sx={{ color: soundEffectsEnabled ? '#FF595E' : '#999' }} />
+        </Box>
+        
+        <Typography variant="body2" sx={{ textAlign: 'center', mt: 1, color: '#666' }}>
+          {soundEffectsVolume}%
+        </Typography>
+      </Box>
+      
+      <Divider sx={{ mb: 3, borderColor: '#1982C4' }} />
+      
+      <Box sx={{ flexGrow: 1 }} />
+      
+      {/* Close Button */}
+      <Button
+        variant="contained"
+        onClick={() => setShowSettings(false)}
+        sx={{
+          background: 'linear-gradient(135deg, #1982C4 0%, #1568A0 100%)',
+          color: 'white',
+          py: 1.5,
+          borderRadius: '10px',
+          fontFamily: 'Poppins, sans-serif',
+          fontWeight: '600',
+          border: '2px solid rgba(255, 255, 255, 0.3)',
+          boxShadow: '0 4px 15px rgba(25, 130, 196, 0.4)',
+          '&:hover': {
+            background: 'linear-gradient(135deg, #1E90FF 0%, #1982C4 100%)',
+            transform: 'translateY(-2px)',
+            boxShadow: '0 6px 20px rgba(25, 130, 196, 0.6)',
+          }
+        }}
+      >
+        Close Settings
+      </Button>
+    </Box>
+  </Drawer>
+);
 
   // Character Introduction Popup Component
   const CharacterIntroductionPopup = () => {
@@ -795,10 +2110,6 @@ export default function PersonalHygieneLevel1() {
               animation: 'bounceAndTilt 3s ease-in-out infinite',
               '@keyframes bounceAndTilt': keyframes.bounceAndTilt,
               cursor: 'pointer',
-              '&:hover': {
-                animation: 'bounceAndTilt 1s ease-in-out infinite',
-                transform: 'scale(1.05)',
-              },
               transition: 'transform 0.3s ease'
             }}
           />
@@ -829,52 +2140,50 @@ export default function PersonalHygieneLevel1() {
                 fontWeight: 'bold',
                 color: '#280B60',
                 mb: 1,
-                fontFamily: 'Poppins, sans-serif'
+                fontFamily: 'Poppins, sans-serif',
+                textAlign: 'center'
               }}
             >
               Hi! I'm Purrnando! 🐱
             </Typography>
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center',gap: 2, alignItems: 'center' }}>
               <Button
                 variant="contained"
                 onClick={handleCharacterIntroductionComplete}
                 sx={{
-                  background: 'linear-gradient(135deg, #FFD166 0%, #FFB700 100%)',
-                  color: '#280B60',
-                  px: 4,
-                  py: 3,
-                  borderRadius: '20px',
-                  fontFamily: 'Poppins, sans-serif',
-                  fontWeight: '700',
-                  fontSize: '1.1rem',
-                  textTransform: 'none',
-                  boxShadow: '0 4px 15px rgba(255, 209, 102, 0.4)',
-                  animation: (theme) => `
-                    pulse 2s infinite ${theme.transitions.easing.easeInOut}
-                  `,
-                  '@keyframes pulse': {
-                    '0%': {
-                      background: 'linear-gradient(135deg, #FFD166 0%, #FFB700 100%)',
-                      boxShadow: '0 4px 15px rgba(255, 209, 102, 0.4)',
-                    },
-                    '50%': {
-                      background: 'linear-gradient(135deg, #FFDC87 0%, #FFD166 100%)',
-                      boxShadow: '0 4px 20px rgba(255, 209, 102, 0.6)',
-                    },
-                    '100%': {
-                      background: 'linear-gradient(135deg, #FFD166 0%, #FFB700 100%)',
-                      boxShadow: '0 4px 15px rgba(255, 209, 102, 0.4)',
-                    },
-                  },
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #FFDC87 0%, #FFD166 100%)',
-                    transform: 'translateY(-2px)',
-                    animation: 'none',
-                  },
-                }}
-              >
-                YES, LET'S GO! 🐾
-              </Button>
+                background: 'linear-gradient(135deg, #1982C4 0%, #1568A0 100%)',
+                color: 'white',
+                px: 6,
+                py: 3,
+                borderRadius: '20px',
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: '700',
+                fontSize: '1.1rem',
+                textTransform: 'none',
+                boxShadow: '0 4px 20px rgba(25, 130, 196, 0.7)',
+                animation: 'breathe 2s infinite ease-in-out',
+                border: '2px solid rgba(255, 255, 255, 0.3)',
+                minWidth: '250px',
+                        
+                '&:hover': {
+                background: 'linear-gradient(135deg, #1E90FF 0%, #1982C4 100%)',
+                transform: 'translateY(-2px)',
+                boxShadow: '0 8px 25px rgba(25, 130, 196, 0.9)',
+                animation: 'none',
+                },
+                        
+                '@keyframes breathe': {
+                  '0%, 100%': {
+                    background: 'linear-gradient(135deg, #4AA8E8 0%, #1982C4 100%)',
+                          },
+                  '50%': {
+                    background: 'linear-gradient(135deg, #0A568C 0%, #0A3D62 100%)',
+                          }
+                        }
+                      }}
+                    >
+                      YES, LET'S GO! 🐾
+                    </Button>
             </Box>
           </Box>
         </Paper>
@@ -899,6 +2208,35 @@ export default function PersonalHygieneLevel1() {
         zIndex: 2000
       }}
     >
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        mb: 15,
+        position: 'relative'
+      }}>
+        <IconButton
+          onClick={playDirtyhandsAudio}
+          sx={{
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            backgroundColor: 'rgba(255, 89, 94, 0.9)',
+            color: 'white',
+            width: 50,
+            height: 50,
+            zIndex: 2001,
+            '&:hover': {
+              backgroundColor: 'rgba(255, 89, 94, 1)',
+              transform: 'scale(1.1)'
+            }
+          }}
+          title="Replay Dirty Hands Audio"
+        >
+          <VolumeUpIcon sx={{ fontSize: 25 }} />
+        </IconButton>
+      </Box>
+      
       {/* Centered Hands with Germs and Mud */}
       <Box sx={{ 
         display: 'flex', 
@@ -1158,29 +2496,43 @@ export default function PersonalHygieneLevel1() {
             Oh no! You need to clean your hands!
           </Typography>
           
-          
           <Button
-            variant="contained"
-            onClick={handleHandIntroductionComplete}
-            sx={{
-              background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
-              color: 'white',
-              px: 4,
-              py: 3,
-              borderRadius: '20px',
-              fontFamily: 'Poppins, sans-serif',
-              fontWeight: '700',
-              fontSize: '1rem',
-              textTransform: 'none',
-              boxShadow: '0 4px 15px rgba(255, 89, 94, 0.4)',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
-                transform: 'translateY(-2px)'
-              }
-            }}
-          >
-            LET'S CLEAN THEM!
-          </Button>
+                  variant="contained"
+                  onClick={handleHandIntroductionComplete}
+                  sx={{
+                    background: 'linear-gradient(135deg, #1982C4 0%, #1568A0 100%)',
+                    color: 'white',
+                    px: 6,
+                    py: 3,
+                    borderRadius: '20px',
+                    fontFamily: 'Poppins, sans-serif',
+                    fontWeight: '700',
+                    fontSize: '1.1rem',
+                    textTransform: 'none',
+                    boxShadow: '0 4px 20px rgba(25, 130, 196, 0.7)',
+                    animation: 'breathe 2s infinite ease-in-out',
+                    border: '2px solid rgba(255, 255, 255, 0.3)',
+                    minWidth: '250px',
+                    
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #1E90FF 0%, #1982C4 100%)',
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(25, 130, 196, 0.9)',
+                      animation: 'none',
+                    },
+                    
+                    '@keyframes breathe': {
+                      '0%, 100%': {
+                        background: 'linear-gradient(135deg, #4AA8E8 0%, #1982C4 100%)',
+                      },
+                      '50%': {
+                        background: 'linear-gradient(135deg, #0A568C 0%, #0A3D62 100%)',
+                      }
+                    }
+                  }}
+                >
+                  LET'S CLEAN THEM! 🐾
+                </Button>
         </Box>
       </Paper>
     </Box>
@@ -1203,6 +2555,35 @@ export default function PersonalHygieneLevel1() {
         zIndex: 2000
       }}
     >
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        mb: 15,
+        position: 'relative'
+      }}>
+        <IconButton
+          onClick={playSinkAudio}
+          sx={{
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            backgroundColor: 'rgba(25, 130, 196, 0.9)',
+            color: 'white',
+            width: 50,
+            height: 50,
+            zIndex: 2001,
+            '&:hover': {
+              backgroundColor: 'rgba(25, 130, 196, 1)',
+              transform: 'scale(1.1)'
+            }
+          }}
+          title="Replay Sink Audio"
+        >
+          <VolumeUpIcon sx={{ fontSize: 25 }} />
+        </IconButton>
+      </Box>
+      
       {/* Centered Sink */}
       <Box sx={{ 
         display: 'flex', 
@@ -1274,252 +2655,48 @@ export default function PersonalHygieneLevel1() {
               fontWeight: 'bold',
               color: '#280B60',
               mb: 1,
-              fontFamily: 'Poppins, sans-serif'
+              fontFamily: 'Poppins, sans-serif',
             }}
           >
             This is the Sink!
           </Typography>
-          
-          <Typography
-            variant="body1"
-            sx={{
-              color: '#333',
-              mb: 2,
-              fontSize: '1rem',
-              fontFamily: 'Inter, sans-serif',
-              lineHeight: 1.4
-            }}
-          >
-            This is where we'll wash our hands! Click on the sink to turn on the water 
-            and get ready to clean those dirty hands!
-          </Typography>
-          
           <Button
-            variant="contained"
-            onClick={handleSinkIntroductionComplete}
-            sx={{
-              background: 'linear-gradient(135deg, #1982C4 0%, #1568A0 100%)',
-              color: 'white',
-              px: 4,
-              py: 1,
-              borderRadius: '20px',
-              fontFamily: 'Poppins, sans-serif',
-              fontWeight: '700',
-              fontSize: '1rem',
-              textTransform: 'none',
-              boxShadow: '0 4px 15px rgba(25, 130, 196, 0.4)',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #42A5F5 0%, #1982C4 100%)',
-                transform: 'translateY(-2px)'
-              }
-            }}
-          >
-            GOT IT!
-          </Button>
-        </Box>
-      </Paper>
-    </Box>
-  );
-
-  // Step 2 Introduction Popup Component
-  const Step2IntroductionPopup = () => (
-    <Box
-      sx={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 2000
-      }}
-    >
-      {/* Centered Hands and Sink with Water */}
-      <Box sx={{ 
-        display: 'flex', 
-        gap: 8, 
-        justifyContent: 'center', 
-        alignItems: 'center',
-        mb: 15,
-        position: 'relative'
-      }}>
-        {/* Hands */}
-        <Box sx={{ display: 'flex', gap: 4, position: 'relative', zIndex: 2 }}>
-          <Box
-            component="img"
-            src={leftHandImg}
-            alt="Left Hand"
-            sx={{
-              width: 300,
-              height: 'auto',
-              filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3))'
-            }}
-          />
-          <Box
-            component="img"
-            src={rightHandImg}
-            alt="Right Hand"
-            sx={{
-              width: 300,
-              height: 'auto',
-              filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3))'
-            }}
-          />
-        </Box>
-        
-        {/* Sink with Water */}
-        <Box sx={{ position: 'relative', zIndex: 1 }}>
-          <Box
-            component="img"
-            src={faucetImg}
-            alt="Sink with Running Water"
-            sx={{
-              width: 400,
-              height: 400,
-              filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3))'
-            }}
-          />
-        </Box>
-      </Box>
-      
-      {/* Arrow animation pointing from hands to sink */}
-      <Box sx={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 200,
-        height: 50,
-        zIndex: 3
-      }}>
-        <Box
-          sx={{
-            width: '100%',
-            height: '4px',
-            backgroundColor: '#FFD700',
-            position: 'relative',
-            animation: 'arrowPulse 2s ease-in-out infinite',
-            '@keyframes arrowPulse': {
-              '0%': { 
-                transform: 'scaleX(0.8)',
-                opacity: 0.7
-              },
-              '50%': { 
-                transform: 'scaleX(1)',
-                opacity: 1
-              },
-              '100%': { 
-                transform: 'scaleX(0.8)',
-                opacity: 0.7
-              }
-            },
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              right: 0,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: 0,
-              height: 0,
-              borderLeft: '15px solid #FFD700',
-              borderTop: '10px solid transparent',
-              borderBottom: '10px solid transparent'
-            }
-          }}
-        />
-      </Box>
-      
-      {/* Popup at the bottom with Cat on left side */}
-      <Paper
-        sx={{
-          position: 'fixed',
-          bottom: 50,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          borderRadius: '20px',
-          padding: 3,
-          maxWidth: '600px',
-          width: '90%',
-          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
-          border: '3px solid #90BE6D',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 3
-        }}
-      >
-        {/* Cat on left side */}
-        <Box
-          component="img"
-          src={characterCatHelpful}
-          alt="Cute Cat Helper"
-          sx={{
-            width: 100,
-            height: 'auto',
-            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
-            animation: 'bounce 4s ease-in-out infinite',
-            '@keyframes bounce': {
-              '0%': { transform: 'translateY(0px)' },
-              '50%': { transform: 'translateY(-10px)' },
-              '100%': { transform: 'translateY(0px)' }
-            }
-          }}
-        />
-        
-        {/* Text content */}
-        <Box sx={{ flex: 1, textAlign: 'left' }}>
-          <Typography
-            variant="h5"
-            sx={{
-              fontWeight: 'bold',
-              color: '#280B60',
-              mb: 1,
-              fontFamily: 'Poppins, sans-serif'
-            }}
-          >
-            Now Wet Your Hands!
-          </Typography>
-          
-          <Typography
-            variant="body1"
-            sx={{
-              color: '#333',
-              mb: 2,
-              fontSize: '1rem',
-              fontFamily: 'Inter, sans-serif',
-              lineHeight: 1.4
-            }}
-          >
-            Great! The water is running. Now drag your hands to the sink to wet them under the water. 
-            This is the first step to getting them clean!
-          </Typography>
-          
-          <Button
-            variant="contained"
-            onClick={handleStep2IntroductionComplete}
-            sx={{
-              background: 'linear-gradient(135deg, #90BE6D 0%, #7BA05B 100%)',
-              color: 'white',
-              px: 4,
-              py: 1,
-              borderRadius: '20px',
-              fontFamily: 'Poppins, sans-serif',
-              fontWeight: '700',
-              fontSize: '1rem',
-              textTransform: 'none',
-              boxShadow: '0 4px 15px rgba(144, 190, 109, 0.4)',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #A8D08D 0%, #90BE6D 100%)',
-                transform: 'translateY(-2px)'
-              }
-            }}
-          >
-            LET'S WET THEM!
-          </Button>
+                variant="contained"
+                onClick={handleSinkIntroductionComplete}
+                sx={{
+                background: 'linear-gradient(135deg, #1982C4 0%, #1568A0 100%)',
+                color: 'white',
+                px: 6,
+                py: 3,
+                borderRadius: '20px',
+                fontFamily: 'Poppins, sans-serif',
+                fontWeight: '700',
+                fontSize: '1.1rem',
+                textTransform: 'none',
+                boxShadow: '0 4px 20px rgba(25, 130, 196, 0.7)',
+                animation: 'breathe 2s infinite ease-in-out',
+                border: '2px solid rgba(255, 255, 255, 0.3)',
+                minWidth: '250px',
+                        
+                '&:hover': {
+                background: 'linear-gradient(135deg, #1E90FF 0%, #1982C4 100%)',
+                transform: 'translateY(-2px)',
+                boxShadow: '0 8px 25px rgba(25, 130, 196, 0.9)',
+                animation: 'none',
+                },
+                        
+                '@keyframes breathe': {
+                  '0%, 100%': {
+                    background: 'linear-gradient(135deg, #4AA8E8 0%, #1982C4 100%)',
+                          },
+                  '50%': {
+                    background: 'linear-gradient(135deg, #0A568C 0%, #0A3D62 100%)',
+                          }
+                        }
+                      }}
+                    >
+                      GOT IT! 🐾
+                    </Button>
         </Box>
       </Paper>
     </Box>
@@ -1542,6 +2719,35 @@ export default function PersonalHygieneLevel1() {
         zIndex: 2000
       }}
     >
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        mb: 15,
+        position: 'relative'
+      }}>
+        <IconButton
+          onClick={playSoapAudio}
+          sx={{
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            backgroundColor: 'rgba(255, 152, 0, 0.9)',
+            color: 'white',
+            width: 50,
+            height: 50,
+            zIndex: 2001,
+            '&:hover': {
+              backgroundColor: 'rgba(255, 152, 0, 1)',
+              transform: 'scale(1.1)'
+            }
+          }}
+          title="Replay Soap Audio"
+        >
+          <VolumeUpIcon sx={{ fontSize: 25 }} />
+        </IconButton>
+      </Box>
+      
       {/* Centered Sink with Soap Area Highlighted */}
       <Box sx={{ 
         display: 'flex', 
@@ -1664,42 +2870,43 @@ export default function PersonalHygieneLevel1() {
           >
             Time for Soap!
           </Typography>
-          
-          <Typography
-            variant="body1"
-            sx={{
-              color: '#333',
-              mb: 2,
-              fontSize: '1rem',
-              fontFamily: 'Inter, sans-serif',
-              lineHeight: 1.4
-            }}
-          >
-            Great! Your hands are wet. Now we need soap to clean away the germs and dirt. 
-            Click on the soap dispenser in the upper right corner to get some soap on your hands!
-          </Typography>
-          
+
           <Button
             variant="contained"
             onClick={handleStep3IntroductionComplete}
             sx={{
-              background: 'linear-gradient(135deg, #FF9800 0%, #F57C00 100%)',
+              background: 'linear-gradient(135deg, #1982C4 0%, #1568A0 100%)',
               color: 'white',
-              px: 4,
-              py: 1,
+              px: 6,
+              py: 3,
               borderRadius: '20px',
               fontFamily: 'Poppins, sans-serif',
               fontWeight: '700',
-              fontSize: '1rem',
+              fontSize: '1.1rem',
               textTransform: 'none',
-              boxShadow: '0 4px 15px rgba(255, 152, 0, 0.4)',
+              boxShadow: '0 4px 20px rgba(25, 130, 196, 0.7)',
+              animation: 'breathe 2s infinite ease-in-out',
+              border: '2px solid rgba(255, 255, 255, 0.3)',
+              minWidth: '250px',
+                      
               '&:hover': {
-                background: 'linear-gradient(135deg, #FFB74D 0%, #FF9800 100%)',
-                transform: 'translateY(-2px)'
+                background: 'linear-gradient(135deg, #1E90FF 0%, #1982C4 100%)',
+                transform: 'translateY(-2px)',
+                boxShadow: '0 8px 25px rgba(25, 130, 196, 0.9)',
+                animation: 'none',
+              },
+                      
+              '@keyframes breathe': {
+                '0%, 100%': {
+                  background: 'linear-gradient(135deg, #4AA8E8 0%, #1982C4 100%)',
+                },
+                '50%': {
+                  background: 'linear-gradient(135deg, #0A568C 0%, #0A3D62 100%)',
+                }
               }
             }}
           >
-            GET SOAP!
+            GET SOAP! 🐾
           </Button>
         </Box>
       </Paper>
@@ -1723,6 +2930,35 @@ export default function PersonalHygieneLevel1() {
         zIndex: 2000
       }}
     >
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        mb: 15,
+        position: 'relative'
+      }}>
+        <IconButton
+          onClick={playRubscrubAudio}
+          sx={{
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            backgroundColor: 'rgba(76, 175, 80, 0.9)',
+            color: 'white',
+            width: 50,
+            height: 50,
+            zIndex: 2001,
+            '&:hover': {
+              backgroundColor: 'rgba(76, 175, 80, 1)',
+              transform: 'scale(1.1)'
+            }
+          }}
+          title="Replay Rub and Scrub Audio"
+        >
+          <VolumeUpIcon sx={{ fontSize: 25 }} />
+        </IconButton>
+      </Box>
+      
       {/* Centered Hands with Soap */}
       <Box sx={{ 
         display: 'flex', 
@@ -1923,31 +3159,46 @@ export default function PersonalHygieneLevel1() {
             variant="contained"
             onClick={handleStep4IntroductionComplete}
             sx={{
-              background: 'linear-gradient(135deg, #4CAF50 0%, #45A049 100%)',
+              background: 'linear-gradient(135deg, #1982C4 0%, #1568A0 100%)',
               color: 'white',
-              px: 4,
-              py: 1,
+              px: 6,
+              py: 3,
               borderRadius: '20px',
               fontFamily: 'Poppins, sans-serif',
               fontWeight: '700',
-              fontSize: '1rem',
+              fontSize: '1.1rem',
               textTransform: 'none',
-              boxShadow: '0 4px 15px rgba(76, 175, 80, 0.4)',
+              boxShadow: '0 4px 20px rgba(25, 130, 196, 0.7)',
+              animation: 'breathe 2s infinite ease-in-out',
+              border: '2px solid rgba(255, 255, 255, 0.3)',
+              minWidth: '250px',
+                      
               '&:hover': {
-                background: 'linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%)',
-                transform: 'translateY(-2px)'
+                background: 'linear-gradient(135deg, #1E90FF 0%, #1982C4 100%)',
+                transform: 'translateY(-2px)',
+                boxShadow: '0 8px 25px rgba(25, 130, 196, 0.9)',
+                animation: 'none',
+              },
+                      
+              '@keyframes breathe': {
+                '0%, 100%': {
+                  background: 'linear-gradient(135deg, #4AA8E8 0%, #1982C4 100%)',
+                },
+                '50%': {
+                  background: 'linear-gradient(135deg, #0A568C 0%, #0A3D62 100%)',
+                }
               }
             }}
           >
-            START SCRUBBING!
+            START SCRUBBING! 🐾
           </Button>
         </Box>
       </Paper>
     </Box>
   );
-
-  // Step 5 Introduction Popup Component - NEW POPUP
-  const Step5IntroductionPopup = () => (
+  
+  // Clean Hands Display Component
+  const CleanHandsDisplay = () => (
     <Box
       sx={{
         position: 'fixed',
@@ -1955,7 +3206,10 @@ export default function PersonalHygieneLevel1() {
         left: 0,
         width: '100%',
         height: '100%',
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        backgroundImage: `url(${pinkBg})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -1963,206 +3217,197 @@ export default function PersonalHygieneLevel1() {
         zIndex: 2000
       }}
     >
-      {/* Centered Clean Hands and Sink */}
+      {/* Added text above the main title */}
+      <Typography
+        variant="h2"
+        sx={{
+          fontWeight: 'bold',
+          color: '#FF4081',
+          fontFamily: 'Poppins, sans-serif',
+          textAlign: 'center',
+          mb: 4,
+          textShadow: '3px 3px 6px rgba(255, 255, 255, 0.8)',
+          animation: 'floatText 3s ease-in-out infinite',
+          '@keyframes floatText': {
+            '0%': { transform: 'translateY(0px)', opacity: 0.9 },
+            '50%': { transform: 'translateY(-10px)', opacity: 1 },
+            '100%': { transform: 'translateY(0px)', opacity: 0.9 }
+          }
+        }}
+      >
+        🌟 CONGRATULATIONS! 🌟
+      </Typography>
+      
       <Box sx={{ 
         display: 'flex', 
-        gap: 8, 
         justifyContent: 'center', 
         alignItems: 'center',
-        mb: 15,
+        mb: 10,
+        gap: 8,
         position: 'relative'
       }}>
-        {/* Clean Hands (no mud or germs) */}
-        <Box sx={{ display: 'flex', gap: 4, position: 'relative', zIndex: 2 }}>
+        {/* Sparkles around left hand */}
+        <Box sx={{ 
+          position: 'absolute', 
+          left: 'calc(50% - 450px)',
+          top: '50%',
+          transform: 'translateY(-50%)'
+        }}>
+          {/* Top-left sparkle */}
+          <Box sx={{
+            position: 'absolute',
+            top: -60,
+            left: 60,
+            fontSize: '40px',
+            animation: 'sparkleTwinkle 2s ease-in-out infinite',
+            '@keyframes sparkleTwinkle': {
+              '0%, 100%': { opacity: 0.3, transform: 'scale(0.8) rotate(0deg)' },
+              '50%': { opacity: 1, transform: 'scale(1.2) rotate(180deg)' }
+            }
+          }}>
+            ✨
+          </Box>
+          
+          {/* Bottom-left sparkle */}
+          <Box sx={{
+            position: 'absolute',
+            bottom: -60,
+            left: 100,
+            fontSize: '35px',
+            animation: 'sparkleTwinkle 2.5s ease-in-out infinite',
+            animationDelay: '0.3s',
+            '@keyframes sparkleTwinkle': {
+              '0%, 100%': { opacity: 0.3, transform: 'scale(0.8) rotate(0deg)' },
+              '50%': { opacity: 1, transform: 'scale(1.2) rotate(180deg)' }
+            }
+          }}>
+            ✨
+          </Box>
+          
+          {/* Middle-left sparkle */}
+          <Box sx={{
+            position: 'absolute',
+            top: '50%',
+            left: -40,
+            fontSize: '45px',
+            animation: 'sparkleTwinkle 3s ease-in-out infinite',
+            animationDelay: '0.6s',
+            '@keyframes sparkleTwinkle': {
+              '0%, 100%': { opacity: 0.3, transform: 'scale(0.8) rotate(0deg)' },
+              '50%': { opacity: 1, transform: 'scale(1.2) rotate(180deg)' }
+            }
+          }}>
+            ✨
+          </Box>
+        </Box>
+        
+        {/* Sparkles around right hand */}
+        <Box sx={{ 
+          position: 'absolute', 
+          right: 'calc(50% - 450px)',
+          top: '50%',
+          transform: 'translateY(-50%)'
+        }}>
+          {/* Top-right sparkle */}
+          <Box sx={{
+            position: 'absolute',
+            top: -60,
+            right: 60,
+            fontSize: '40px',
+            animation: 'sparkleTwinkle 2.2s ease-in-out infinite',
+            animationDelay: '0.4s',
+            '@keyframes sparkleTwinkle': {
+              '0%, 100%': { opacity: 0.3, transform: 'scale(0.8) rotate(0deg)' },
+              '50%': { opacity: 1, transform: 'scale(1.2) rotate(180deg)' }
+            }
+          }}>
+            ✨
+          </Box>
+          
+          {/* Bottom-right sparkle */}
+          <Box sx={{
+            position: 'absolute',
+            bottom: -60,
+            right: 100,
+            fontSize: '35px',
+            animation: 'sparkleTwinkle 2.7s ease-in-out infinite',
+            animationDelay: '0.7s',
+            '@keyframes sparkleTwinkle': {
+              '0%, 100%': { opacity: 0.3, transform: 'scale(0.8) rotate(0deg)' },
+              '50%': { opacity: 1, transform: 'scale(1.2) rotate(180deg)' }
+            }
+          }}>
+            ✨
+          </Box>
+          
+          {/* Middle-right sparkle */}
+          <Box sx={{
+            position: 'absolute',
+            top: '50%',
+            right: -40,
+            fontSize: '45px',
+            animation: 'sparkleTwinkle 3.2s ease-in-out infinite',
+            animationDelay: '1s',
+            '@keyframes sparkleTwinkle': {
+              '0%, 100%': { opacity: 0.3, transform: 'scale(0.8) rotate(0deg)' },
+              '50%': { opacity: 1, transform: 'scale(1.2) rotate(180deg)' }
+            }
+          }}>
+            ✨
+          </Box>
+        </Box>
+
+        {/* Left Hand - Clean */}
+        <Box sx={{ position: 'relative', width: 400, height: 'auto' }}>
           <Box
             component="img"
             src={leftHandImg}
             alt="Clean Left Hand"
             sx={{
-              width: 300,
-              height: 'auto',
-              filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3)) brightness(1.1)',
+              height: '500px',
+              filter: 'drop-shadow(0 10px 25px rgba(0, 0, 0, 0.5)) brightness(1.1)',
               animation: 'sparkle 2s ease-in-out infinite',
               '@keyframes sparkle': {
-                '0%': { filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3)) brightness(1.1)' },
-                '50%': { filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.6)) brightness(1.2)' },
-                '100%': { filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3)) brightness(1.1)' }
+                '0%': { 
+                  filter: 'drop-shadow(0 10px 25px rgba(0, 0, 0, 0.3)) brightness(1.1)' 
+                },
+                '50%': { 
+                  filter: 'drop-shadow(0 10px 25px rgba(0, 0, 0, 0.8)) brightness(1.2)' 
+                },
+                '100%': { 
+                  filter: 'drop-shadow(0 10px 25px rgba(0, 0, 0, 0.3)) brightness(1.1)' 
+                }
               }
             }}
           />
+        </Box>
+
+        {/* Right Hand - Clean */}
+        <Box sx={{ position: 'relative', width: 400, height: 'auto' }}>
           <Box
             component="img"
             src={rightHandImg}
             alt="Clean Right Hand"
             sx={{
-              width: 300,
-              height: 'auto',
-              filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3)) brightness(1.1)',
+              height: '500px',
+              filter: 'drop-shadow(0 10px 25px rgba(0, 0, 0, 0.5)) brightness(1.1)',
               animation: 'sparkle 2s ease-in-out infinite',
               animationDelay: '0.5s',
               '@keyframes sparkle': {
-                '0%': { filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3)) brightness(1.1)' },
-                '50%': { filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.6)) brightness(1.2)' },
-                '100%': { filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3)) brightness(1.1)' }
+                '0%': { 
+                  filter: 'drop-shadow(0 10px 25px rgba(0, 0, 0, 0.3)) brightness(1.1)' 
+                },
+                '50%': { 
+                  filter: 'drop-shadow(0 10px 25px rgba(0, 0, 0, 0.8)) brightness(1.2)' 
+                },
+                '100%': { 
+                  filter: 'drop-shadow(0 10px 25px rgba(0, 0, 0, 0.3)) brightness(1.1)' 
+                }
               }
             }}
           />
         </Box>
-        
-        {/* Sink with Water */}
-        <Box sx={{ position: 'relative', zIndex: 1 }}>
-          <Box
-            component="img"
-            src={faucetImg}
-            alt="Sink with Running Water"
-            sx={{
-              width: 400,
-              height: 400,
-              filter: 'drop-shadow(0 10px 25px rgba(255, 255, 255, 0.3))'
-            }}
-          />
-        </Box>
       </Box>
-      
-      {/* Arrow animation pointing from hands to sink */}
-      <Box sx={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 200,
-        height: 50,
-        zIndex: 3
-      }}>
-        <Box
-          sx={{
-            width: '100%',
-            height: '4px',
-            backgroundColor: '#2196F3',
-            position: 'relative',
-            animation: 'arrowPulse 2s ease-in-out infinite',
-            '@keyframes arrowPulse': {
-              '0%': { 
-                transform: 'scaleX(0.8)',
-                opacity: 0.7
-              },
-              '50%': { 
-                transform: 'scaleX(1)',
-                opacity: 1
-              },
-              '100%': { 
-                transform: 'scaleX(0.8)',
-                opacity: 0.7
-              }
-            },
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              right: 0,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: 0,
-              height: 0,
-              borderLeft: '15px solid #2196F3',
-              borderTop: '10px solid transparent',
-              borderBottom: '10px solid transparent'
-            }
-          }}
-        />
-      </Box>
-      
-      {/* Popup at the bottom with Cat on left side */}
-      <Paper
-        sx={{
-          position: 'fixed',
-          bottom: 50,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          borderRadius: '20px',
-          padding: 3,
-          maxWidth: '600px',
-          width: '90%',
-          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
-          border: '3px solid #2196F3',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 3
-        }}
-      >
-        {/* Cat on left side */}
-        <Box
-          component="img"
-          src={characterCatExcited}
-          alt="Excited Cat Helper"
-          sx={{
-            width: 100,
-            height: 'auto',
-            filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
-            animation: 'happyDance 3s ease-in-out infinite',
-            '@keyframes happyDance': {
-              '0%': { transform: 'translateY(0px) rotate(0deg)' },
-              '25%': { transform: 'translateY(-10px) rotate(5deg)' },
-              '50%': { transform: 'translateY(0px) rotate(0deg)' },
-              '75%': { transform: 'translateY(-5px) rotate(-5deg)' },
-              '100%': { transform: 'translateY(0px) rotate(0deg)' }
-            }
-          }}
-        />
-        
-        {/* Text content */}
-        <Box sx={{ flex: 1, textAlign: 'left' }}>
-          <Typography
-            variant="h5"
-            sx={{
-              fontWeight: 'bold',
-              color: '#280B60',
-              mb: 1,
-              fontFamily: 'Poppins, sans-serif'
-            }}
-          >
-            Final Rinse!
-          </Typography>
-          
-          <Typography
-            variant="body1"
-            sx={{
-              color: '#333',
-              mb: 2,
-              fontSize: '1rem',
-              fontFamily: 'Inter, sans-serif',
-              lineHeight: 1.4
-            }}
-          >
-            Excellent scrubbing! Your hands are now covered in soapy lather. 
-            The final step is to rinse off all the soap and dirt. 
-            Drag your clean hands to the sink to rinse them under the running water!
-          </Typography>
-          
-          <Button
-            variant="contained"
-            onClick={handleStep5IntroductionComplete}
-            sx={{
-              background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)',
-              color: 'white',
-              px: 4,
-              py: 1,
-              borderRadius: '20px',
-              fontFamily: 'Poppins, sans-serif',
-              fontWeight: '700',
-              fontSize: '1rem',
-              textTransform: 'none',
-              boxShadow: '0 4px 15px rgba(33, 150, 243, 0.4)',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #42A5F5 0%, #2196F3 100%)',
-                transform: 'translateY(-2px)'
-              }
-            }}
-          >
-            RINSE HANDS!
-          </Button>
-        </Box>
-      </Paper>
     </Box>
   );
 
@@ -2255,6 +3500,9 @@ export default function PersonalHygieneLevel1() {
     >
       
       <Container maxWidth="xl" sx={{ py: 1 }}>
+        {/* ADDED: Settings Panel */}
+        <SettingsPanel />
+        
         {/* Progress bar and instructions - positioned with higher z-index */}
         <Box 
           sx={{
@@ -2328,11 +3576,11 @@ export default function PersonalHygieneLevel1() {
             boxShadow: gameStep === 3 ? '0 4px 15px rgba(255, 152, 0, 0.4)' : gameStep === 4 ? '0 4px 15px rgba(76, 175, 80, 0.4)' : gameStep === 5 ? '0 4px 15px rgba(33, 150, 243, 0.4)' : '0 4px 15px rgba(25, 130, 196, 0.4)'
           }}>
             {gameStep === 0 ? 'Let\'s learn about handwashing!' : 
-             gameStep === 1 ? 'Click the sink to turn on water!' : 
-             gameStep === 2 ? 'Drag hands to sink to wet hands!' :
-             gameStep === 3 ? 'Click the soap dispenser (upper right) to get soap!' :
-             gameStep === 4 ? 'Click on hands to rub them together!' :
-             'Drag clean hands to sink to rinse!'}
+            gameStep === 1 ? 'Click the sink to turn on water!' : 
+            gameStep === 2 ? 'Drag hands to sink to wet hands!' :
+            gameStep === 3 ? 'Click the soap dispenser (upper right) to get soap!' :
+            gameStep === 4 ? 'Click on hands to rub them together!' :
+            'Drag clean hands to sink to rinse!'}
           </Typography>
         </Box>
 
@@ -2345,17 +3593,11 @@ export default function PersonalHygieneLevel1() {
         {/* Sink Introduction Popup */}
         {showSinkIntroduction && <SinkIntroductionPopup />}
 
-        {/* Step 2 Introduction Popup */}
-        {showStep2Introduction && <Step2IntroductionPopup />}
-
         {/* Step 3 Introduction Popup */}
         {showStep3Introduction && <Step3IntroductionPopup />}
 
         {/* Step 4 Introduction Popup - NEW POPUP */}
         {showStep4Introduction && <Step4IntroductionPopup />}
-
-        {/* Step 5 Introduction Popup - NEW POPUP */}
-        {showStep5Introduction && <Step5IntroductionPopup />}
 
         {/* Scrub Video Overlay */}
         {showScrubVideo && (
@@ -2381,7 +3623,7 @@ export default function PersonalHygieneLevel1() {
               maxHeight: '90%'
             }}>
               <video
-                key={scrubVideos[currentScrubVideoIndex]} // Use the current video URL as key
+                key={scrubVideos[currentScrubVideoIndex]}
                 autoPlay
                 muted
                 loop
@@ -2396,28 +3638,46 @@ export default function PersonalHygieneLevel1() {
                 Your browser does not support the video tag.
               </video>
               
-              {/* Video Description */}
-              <Typography variant="h6" sx={{ 
-                color: 'white', 
-                mt: 2, 
-                textAlign: 'center',
-                fontFamily: 'Poppins, sans-serif',
-                fontWeight: 'bold',
-                textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
-              }}>
-                {currentScrubVideoIndex === 0 && "Step 1: Rub palms together"}
-                {currentScrubVideoIndex === 1 && "Step 2: Back of hand and palm"}
-                {currentScrubVideoIndex === 2 && "Step 3: Between fingers"}
-                {currentScrubVideoIndex === 3 && "Step 4: Knuckle and palm"}
-                {currentScrubVideoIndex === 4 && "Step 5: Cleaning thumb"}
-                {currentScrubVideoIndex === 5 && "Step 6: Fingertips and palm"}
-                {currentScrubVideoIndex === 6 && "Step 7: Wrist"}
+              {/* ADDED CREDIT TEXT HERE */}
+              <Typography
+                variant="caption"
+                sx={{
+                  position: 'absolute',
+                  bottom: 10,
+                  right: 10,
+                  color: 'rgba(255, 255, 255, 0.9)',
+                  backgroundColor: 'rgba(128, 128, 128, 0.7)',
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  fontSize: '0.75rem',
+                  fontFamily: 'monospace',
+                  zIndex: 10
+                }}
+              >
+                video from Smile and Learn - English
               </Typography>
               
               {/* NEXT/FINISH Button */}
               <Button
                 variant="contained"
                 onClick={() => {
+                  // Stop current scrub audio before moving to next video
+                  if (currentScrubVideoIndex === 0) {
+                    stopScrub1Audio();
+                  } else if (currentScrubVideoIndex === 1) {
+                    stopScrub2Audio();
+                  } else if (currentScrubVideoIndex === 2) {
+                    stopScrub3Audio();
+                  } else if (currentScrubVideoIndex === 3) {
+                    stopScrub4Audio();
+                  } else if (currentScrubVideoIndex === 4) {
+                    stopScrub5Audio();
+                  } else if (currentScrubVideoIndex === 5) {
+                    stopScrub6Audio();
+                  } else if (currentScrubVideoIndex === 6) {
+                    stopScrub7Audio();
+                  }
+                  
                   if (currentScrubVideoIndex < scrubVideos.length - 1) {
                     // If not the last video, go to next video
                     setCurrentScrubVideoIndex(prev => prev + 1);
@@ -2425,30 +3685,44 @@ export default function PersonalHygieneLevel1() {
                     // If on the last video (scrub7.mp4), proceed to step 5
                     setShowScrubVideo(false);
                     setHandsRubbed(true);
-                    setGameStep(5); // Move to step 5
-                    // Show step 5 introduction after scrubbing
-                    setShowStep5Introduction(true);
+                    setGameStep(5);
+                    playRinseAudio();
                   }
                 }}
                 sx={{
-                  mt: 3,
-                  background: 'linear-gradient(135deg, #90BE6D 0%, #7BA05B 100%)',
+                  background: 'linear-gradient(135deg, #4CAF50 0%, #388E3C 100%)',
                   color: 'white',
-                  px: 6,
-                  py: 2,
-                  borderRadius: '25px',
+                  px: 8,
+                  py: 3,
+                  borderRadius: '20px',
                   fontFamily: 'Poppins, sans-serif',
                   fontWeight: '700',
-                  fontSize: '1.2rem',
+                  fontSize: '1.3rem',
                   textTransform: 'none',
-                  boxShadow: '0 8px 20px rgba(144, 190, 109, 0.5)',
+                  boxShadow: '0 4px 20px rgba(76, 175, 80, 0.7)',
+                  animation: 'breathe 2s infinite ease-in-out',
+                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                  minWidth: '280px',
+                  marginTop: 3,
+                  
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #A8D08D 0%, #90BE6D 100%)',
-                    transform: 'translateY(-2px)'
+                    background: 'linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%)',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 8px 25px rgba(76, 175, 80, 0.9)',
+                    animation: 'none',
+                  },
+                  
+                  '@keyframes breathe': {
+                    '0%, 100%': {
+                      background: 'linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%)',
+                    },
+                    '50%': {
+                      background: 'linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%)',
+                    }
                   }
                 }}
               >
-                {currentScrubVideoIndex < scrubVideos.length - 1 ? 'NEXT' : 'FINISH'}
+                {currentScrubVideoIndex < scrubVideos.length - 1 ? 'Next →' : 'Finish 🐾'}
               </Button>
             </Box>
           </Box>
@@ -2521,7 +3795,6 @@ export default function PersonalHygieneLevel1() {
                     }}
                   />
                 ) : null}
-                {/* render sink when faucet image not shown */}
                 {(faucetOn || gameStep > 1 || step2Completed || gameCompleted) ? null : (
                   <Box sx={{ position: 'relative' }}>
                     <Box
@@ -2542,6 +3815,22 @@ export default function PersonalHygieneLevel1() {
                         transform: showSinkPulse 
                           ? `scale(${sinkPulseScale})`
                           : (gameStep === 1 && !faucetOn ? 'scale(1.06)' : 'scale(1)'),
+                        // Add the pulseGlow animation when gameStep is 1 and sink is interactive
+                        animation: (gameStep === 1 && !faucetOn) ? 'pulseGlow 1.5s ease-in-out infinite' : 'none',
+                        '@keyframes pulseGlow': {
+                          '0%': { 
+                            transform: showSinkPulse ? `scale(${sinkPulseScale})` : 'scale(1.06)',
+                            filter: 'brightness(1) drop-shadow(0 0 10px rgba(25, 130, 196, 0.5))'
+                          },
+                          '50%': { 
+                            transform: showSinkPulse ? `scale(${sinkPulseScale * 1.1})` : 'scale(1.12)',
+                            filter: 'brightness(1.3) drop-shadow(0 0 20px rgba(25, 130, 196, 0.8))'
+                          },
+                          '100%': { 
+                            transform: showSinkPulse ? `scale(${sinkPulseScale})` : 'scale(1.06)',
+                            filter: 'brightness(1) drop-shadow(0 0 10px rgba(25, 130, 196, 0.5))'
+                          }
+                        },
                         ...(gameStep === 1 && !faucetOn ? {
                           '&:hover': {
                             transform: showSinkPulse ? `scale(${sinkPulseScale * 1.02})` : 'scale(1.06)'
@@ -2558,7 +3847,6 @@ export default function PersonalHygieneLevel1() {
                           top: '5%',
                           left: '50%',
                           transform: 'translateX(-50%)',
-                          //backgroundColor: 'rgba(255, 0, 0, 0.9)',
                           color: 'white',
                           padding: '10px 20px',
                           borderRadius: '15px',
@@ -2567,7 +3855,6 @@ export default function PersonalHygieneLevel1() {
                           fontFamily: 'Poppins, sans-serif',
                           zIndex: 4,
                           textAlign: 'center',
-                          //boxShadow: '0 0 20px rgba(255, 0, 0, 0.7)',
                           animation: 'fadeInOut 4s infinite',
                           '@keyframes fadeInOut': {
                             '0%': { opacity: 0.7 },
@@ -2580,7 +3867,7 @@ export default function PersonalHygieneLevel1() {
                     )}
                   </Box>
                 )}
- 
+                
                 {/* Render germ blobs over the container (use x/y percent and size px) */}
                 {!(isDragging && draggedItem === 'hands-group') && !showWetHands && gameStep < 5 &&
                   germBlobs.filter(b => !b.removed).map(b => (
@@ -2606,6 +3893,7 @@ export default function PersonalHygieneLevel1() {
                 }
 
                 {/* Left and right hands shown side-by-side during step 1 and step 2 */}
+                {/* Left and right hands shown side-by-side during step 1 and step 2 */}
                 {(gameStep === 1 || gameStep === 2 || gameStep === 3 || gameStep === 4 || gameStep === 5) && !(isDragging && draggedItem === 'hands-group') && !showWetHands && (
                   <Box
                     // interactive hands wrapper: enable pointer events and start dragging when in step 2 or 5
@@ -2623,34 +3911,225 @@ export default function PersonalHygieneLevel1() {
                       gap: 2,
                       alignItems: 'center',
                       pointerEvents: (gameStep === 2 || gameStep === 4 || gameStep === 5) ? 'auto' : 'none',
-                      cursor: (gameStep === 2 || gameStep === 5) ? 'grab' : (gameStep === 4 ? 'pointer' : 'default'),
+                      cursor: (gameStep === 2 || gameStep === 5) ? 'grab' : (gameStep === 4) ? 'pointer' : 'default',
                       userSelect: 'none',
                       transition: 'all 0.3s ease',
-                      transform: gameStep === 4 && isHandHovered ? 'translateX(-50%) scale(1.1)' : 'translateX(-50%) scale(1)'
+                      transform: gameStep === 4 && isHandHovered ? 'translateX(-50%) scale(1.1)' : 'translateX(-50%) scale(1)',
+                      // Add pulse glow effect for step 2, 4, and 5
+                      animation: gameStep === 2 ? 'handsPulseGlow 1.5s ease-in-out infinite' : 
+                                gameStep === 4 ? 'handsPulseGlowStep4 1.5s ease-in-out infinite' :
+                                gameStep === 5 ? 'handsPulseGlowStep5 1.5s ease-in-out infinite' : 'none',
+                      '@keyframes handsPulseGlow': {
+                        '0%': { 
+                          transform: 'translateX(-50%) scale(1)',
+                          filter: 'brightness(1) drop-shadow(0 0 8px rgba(25, 130, 196, 0.4))'
+                        },
+                        '50%': { 
+                          transform: 'translateX(-50%) scale(1.03)',
+                          filter: 'brightness(1.15) drop-shadow(0 0 15px rgba(25, 130, 196, 0.6))'
+                        },
+                        '100%': { 
+                          transform: 'translateX(-50%) scale(1)',
+                          filter: 'brightness(1) drop-shadow(0 0 8px rgba(25, 130, 196, 0.4))'
+                        }
+                      },
+                      '@keyframes handsPulseGlowStep4': {
+                        '0%': { 
+                          transform: 'translateX(-50%) scale(1)',
+                          filter: 'brightness(1) drop-shadow(0 0 8px rgba(76, 175, 80, 0.4))'
+                        },
+                        '50%': { 
+                          transform: 'translateX(-50%) scale(1.05)',
+                          filter: 'brightness(1.2) drop-shadow(0 0 15px rgba(76, 175, 80, 0.6))'
+                        },
+                        '100%': { 
+                          transform: 'translateX(-50%) scale(1)',
+                          filter: 'brightness(1) drop-shadow(0 0 8px rgba(76, 175, 80, 0.4))'
+                        }
+                      },
+                      '@keyframes handsPulseGlowStep5': {
+                        '0%': { 
+                          transform: 'translateX(-50%) scale(1)',
+                          filter: 'brightness(1) drop-shadow(0 0 8px rgba(33, 150, 243, 0.4))'
+                        },
+                        '50%': { 
+                          transform: 'translateX(-50%) scale(1.03)',
+                          filter: 'brightness(1.15) drop-shadow(0 0 15px rgba(33, 150, 243, 0.6))'
+                        },
+                        '100%': { 
+                          transform: 'translateX(-50%) scale(1)',
+                          filter: 'brightness(1) drop-shadow(0 0 8px rgba(33, 150, 243, 0.4))'
+                        }
+                      }
                     }}>
-                     {/* Left hand wrapper */}
-                     <Box sx={{ position: 'relative', width: 400, height: 'auto', display: 'inline-block' }}>
-                       <Box component="img" src={leftHandImg} alt="Left Hand" draggable={false}
-                         sx={{ width: '100%', height: 'auto', display: 'block' }} />
-                       {/* Only show mud in steps 1-4, not in step 5 */}
-                       {gameStep < 5 && (
-                         <Box component="img" src={mudImg} alt="Mud on left hand" draggable={false}
-                           sx={{
-                             position: 'absolute',
-                             left: '60%',
-                             bottom: '18%',
-                             transform: 'translate(-50%, 0)',
-                             width: 165,
-                             height: 'auto',
-                             zIndex: 7,
-                             pointerEvents: 'none'
-                           }}
-                         />
-                       )}
-                     </Box>
-   
+                    {/* Left hand wrapper */}
+                    <Box sx={{ 
+                      position: 'relative', 
+                      width: 400, 
+                      height: 'auto', 
+                      display: 'inline-block',
+                      // Add individual hand glow for step 2, 4, and 5
+                      animation: gameStep === 2 ? 'handPulseGlowLeft 1.5s ease-in-out infinite' :
+                                gameStep === 4 ? 'handPulseGlowStep4Left 1.5s ease-in-out infinite' :
+                                gameStep === 5 ? 'handPulseGlowStep5Left 1.5s ease-in-out infinite' : 'none',
+                      '@keyframes handPulseGlowLeft': {
+                        '0%': { 
+                          transform: 'scale(1)',
+                          filter: 'brightness(1) drop-shadow(0 0 6px rgba(25, 130, 196, 0.3))'
+                        },
+                        '50%': { 
+                          transform: 'scale(1.02)',
+                          filter: 'brightness(1.1) drop-shadow(0 0 12px rgba(25, 130, 196, 0.5))'
+                        },
+                        '100%': { 
+                          transform: 'scale(1)',
+                          filter: 'brightness(1) drop-shadow(0 0 6px rgba(25, 130, 196, 0.3))'
+                        }
+                      },
+                      '@keyframes handPulseGlowStep4Left': {
+                        '0%': { 
+                          transform: 'scale(1)',
+                          filter: 'brightness(1) drop-shadow(0 0 6px rgba(76, 175, 80, 0.3))'
+                        },
+                        '50%': { 
+                          transform: 'scale(1.03)',
+                          filter: 'brightness(1.15) drop-shadow(0 0 12px rgba(76, 175, 80, 0.5))'
+                        },
+                        '100%': { 
+                          transform: 'scale(1)',
+                          filter: 'brightness(1) drop-shadow(0 0 6px rgba(76, 175, 80, 0.3))'
+                        }
+                      },
+                      '@keyframes handPulseGlowStep5Left': {
+                        '0%': { 
+                          transform: 'scale(1)',
+                          filter: 'brightness(1) drop-shadow(0 0 6px rgba(33, 150, 243, 0.3))'
+                        },
+                        '50%': { 
+                          transform: 'scale(1.02)',
+                          filter: 'brightness(1.1) drop-shadow(0 0 12px rgba(33, 150, 243, 0.5))'
+                        },
+                        '100%': { 
+                          transform: 'scale(1)',
+                          filter: 'brightness(1) drop-shadow(0 0 6px rgba(33, 150, 243, 0.3))'
+                        }
+                      }
+                    }}>
+                      <Box component="img" src={leftHandImg} alt="Left Hand" draggable={false}
+                        sx={{ width: '100%', height: 'auto', display: 'block' }} />
+                        
+                      {/* Only show mud in steps 1-4, not in step 5 */}
+                      {gameStep < 5 && (
+                        <Box component="img" src={mudImg} alt="Mud on left hand" draggable={false}
+                          sx={{
+                            position: 'absolute',
+                            left: '60%',
+                            bottom: '18%',
+                            transform: 'translate(-50%, 0)',
+                            width: 165,
+                            height: 'auto',
+                            zIndex: 7,
+                            pointerEvents: 'none'
+                          }}
+                        />
+                      )}
+
+                      {/* Bubbles on left hand in step 5 */}
+                      {gameStep === 5 && (
+                        <>
+                          <Box component="img" src={bubbleImg} alt="Bubble"
+                            sx={{
+                              position: 'absolute',
+                              left: '40%',
+                              top: '30%',
+                              width: 40,
+                              height: 'auto',
+                              zIndex: 9,
+                              pointerEvents: 'none',
+                              animation: 'floatBubble 3s ease-in-out infinite',
+                              '@keyframes floatBubble': {
+                                '0%': { transform: 'translateY(0px) scale(1)' },
+                                '50%': { transform: 'translateY(-15px) scale(1.1)' },
+                                '100%': { transform: 'translateY(0px) scale(1)' }
+                              }
+                            }}
+                          />
+                          <Box component="img" src={bubbleImg} alt="Bubble"
+                            sx={{
+                              position: 'absolute',
+                              left: '60%',
+                              top: '50%',
+                              width: 35,
+                              height: 'auto',
+                              zIndex: 9,
+                              pointerEvents: 'none',
+                              animation: 'floatBubble 2.5s ease-in-out infinite',
+                              animationDelay: '0.5s',
+                              '@keyframes floatBubble': {
+                                '0%': { transform: 'translateY(0px) scale(1)' },
+                                '50%': { transform: 'translateY(-12px) scale(1.05)' },
+                                '100%': { transform: 'translateY(0px) scale(1)' }
+                              }
+                            }}
+                          />
+                        </>
+                      )}
+                    </Box>
+
                     {/* Right hand wrapper */}
-                    <Box sx={{ position: 'relative', width: 400, height: 'auto', display: 'inline-block' }}>
+                    <Box sx={{ 
+                      position: 'relative', 
+                      width: 400, 
+                      height: 'auto', 
+                      display: 'inline-block',
+                      // Add individual hand glow for step 2, 4, and 5
+                      animation: gameStep === 2 ? 'handPulseGlowRight 1.5s ease-in-out infinite' :
+                                gameStep === 4 ? 'handPulseGlowStep4Right 1.5s ease-in-out infinite' :
+                                gameStep === 5 ? 'handPulseGlowStep5Right 1.5s ease-in-out infinite' : 'none',
+                      animationDelay: (gameStep === 2 || gameStep === 4 || gameStep === 5) ? '0.3s' : '0s',
+                      '@keyframes handPulseGlowRight': {
+                        '0%': { 
+                          transform: 'scale(1)',
+                          filter: 'brightness(1) drop-shadow(0 0 6px rgba(25, 130, 196, 0.3))'
+                        },
+                        '50%': { 
+                          transform: 'scale(1.02)',
+                          filter: 'brightness(1.1) drop-shadow(0 0 12px rgba(25, 130, 196, 0.5))'
+                        },
+                        '100%': { 
+                          transform: 'scale(1)',
+                          filter: 'brightness(1) drop-shadow(0 0 6px rgba(25, 130, 196, 0.3))'
+                        }
+                      },
+                      '@keyframes handPulseGlowStep4Right': {
+                        '0%': { 
+                          transform: 'scale(1)',
+                          filter: 'brightness(1) drop-shadow(0 0 6px rgba(76, 175, 80, 0.3))'
+                        },
+                        '50%': { 
+                          transform: 'scale(1.03)',
+                          filter: 'brightness(1.15) drop-shadow(0 0 12px rgba(76, 175, 80, 0.5))'
+                        },
+                        '100%': { 
+                          transform: 'scale(1)',
+                          filter: 'brightness(1) drop-shadow(0 0 6px rgba(76, 175, 80, 0.3))'
+                        }
+                      },
+                      '@keyframes handPulseGlowStep5Right': {
+                        '0%': { 
+                          transform: 'scale(1)',
+                          filter: 'brightness(1) drop-shadow(0 0 6px rgba(33, 150, 243, 0.3))'
+                        },
+                        '50%': { 
+                          transform: 'scale(1.02)',
+                          filter: 'brightness(1.1) drop-shadow(0 0 12px rgba(33, 150, 243, 0.5))'
+                        },
+                        '100%': { 
+                          transform: 'scale(1)',
+                          filter: 'brightness(1) drop-shadow(0 0 6px rgba(33, 150, 243, 0.3))'
+                        }
+                      }
+                    }}>
                       <Box component="img" src={rightHandImg} alt="Right Hand" draggable={false}
                         sx={{ width: '100%', height: 'auto', display: 'block' }} />
                       {/* Only show mud in steps 1-4, not in step 5 */}
@@ -2698,13 +4177,72 @@ export default function PersonalHygieneLevel1() {
                           }} 
                         />
                       )}
+                      {/* Bubbles on right hand in step 5 */}
+                      {gameStep === 5 && (
+                        <>
+                          <Box component="img" src={bubbleImg} alt="Bubble"
+                            sx={{
+                              position: 'absolute',
+                              left: '35%',
+                              top: '35%',
+                              width: 45,
+                              height: 'auto',
+                              zIndex: 9,
+                              pointerEvents: 'none',
+                              animation: 'floatBubble 3.2s ease-in-out infinite',
+                              animationDelay: '0.3s',
+                              '@keyframes floatBubble': {
+                                '0%': { transform: 'translateY(0px) scale(1)' },
+                                '50%': { transform: 'translateY(-18px) scale(1.15)' },
+                                '100%': { transform: 'translateY(0px) scale(1)' }
+                              }
+                            }}
+                          />
+                          <Box component="img" src={bubbleImg} alt="Bubble"
+                            sx={{
+                              position: 'absolute',
+                              left: '55%',
+                              top: '45%',
+                              width: 30,
+                              height: 'auto',
+                              zIndex: 9,
+                              pointerEvents: 'none',
+                              animation: 'floatBubble 2.8s ease-in-out infinite',
+                              animationDelay: '0.8s',
+                              '@keyframes floatBubble': {
+                                '0%': { transform: 'translateY(0px) scale(1)' },
+                                '50%': { transform: 'translateY(-10px) scale(1.08)' },
+                                '100%': { transform: 'translateY(0px) scale(1)' }
+                              }
+                            }}
+                          />
+                          <Box component="img" src={bubbleImg} alt="Bubble"
+                            sx={{
+                              position: 'absolute',
+                              left: '70%',
+                              top: '25%',
+                              width: 38,
+                              height: 'auto',
+                              zIndex: 9,
+                              pointerEvents: 'none',
+                              animation: 'floatBubble 3.5s ease-in-out infinite',
+                              animationDelay: '1.2s',
+                              '@keyframes floatBubble': {
+                                '0%': { transform: 'translateY(0px) scale(1)' },
+                                '50%': { transform: 'translateY(-20px) scale(1.2)' },
+                                '100%': { transform: 'translateY(0px) scale(1)' }
+                              }
+                            }}
+                          />
+                        </>
+                      )}
                     </Box>
-                    </Box>
-                  )}
-               </Box>
-             </Box>
-           </Box>
-         )}
+                  </Box>
+                )}  
+              </Box>
+            </Box>
+          </Box>
+        )}
 
         <Box sx={{
                   position: 'fixed',
@@ -2715,6 +4253,38 @@ export default function PersonalHygieneLevel1() {
                   flexDirection: 'column',
                   gap: 2
                 }}>
+                  {/* ADDED: Settings Button */}
+                  <Box
+                    component="img"
+                    src={require("../../assets/hygieneLevel1/settingsbtn.png")} // You'll need to add this image or use a different icon
+                    alt="Settings"
+                    onClick={() => setShowSettings(true)}
+                    sx={{
+                      width: 70,
+                      height: 70,
+                      cursor: 'pointer',
+                      borderRadius: '50%',
+                      transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      '&:hover': {
+                        transform: 'translateY(-6px) scale(1.25)',
+                        width: 85,
+                        height: 85,
+                        zIndex: 1021,
+                        backgroundColor: musicEnabled ? '#1E90FF' : '#777'
+                      },
+                      '&:active': {
+                        transform: 'translateY(-3px) scale(1.1)',
+                        width: 78,
+                        height: 78
+                      }
+                    }}
+                  >
+                  </Box>
+                  
                   {/* Reset Button - Image with Larger Hover */}
                   <Box
                     component="img"
@@ -2784,6 +4354,7 @@ export default function PersonalHygieneLevel1() {
             }
           }}
         >
+          
           <Box sx={{
             position: 'fixed',
             top: 0,
@@ -2885,16 +4456,6 @@ export default function PersonalHygieneLevel1() {
                 );
               })}
             </Box>
-            <Typography variant="h6" sx={{ 
-              color: 'white',
-              fontFamily: 'Inter, sans-serif',
-              lineHeight: 1.6,
-              mb: 6,
-              maxWidth: '800px',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
-            }}>
-              Perfect handwashing technique! Your hands are now sparkling clean and healthy!
-            </Typography>
             
             {progressSaving && (
               <Box sx={{ 
@@ -2974,32 +4535,7 @@ export default function PersonalHygieneLevel1() {
                   }
                 }}
               >
-                {progressSaving ? 'Saving...' : 'Continue'}
-              </Button>
-              <Button 
-                onClick={async () => {
-                  navigate(`/lesson/hygiene/level-2/${moduleId || 1}/${parseInt(lessonId) + 1 || 2}`);
-                }} 
-                variant="outlined"
-                sx={{ 
-                  borderColor: 'white',
-                  color: 'white',
-                  px: 4,
-                  py: 2,
-                  borderRadius: '25px',
-                  fontFamily: 'Poppins, sans-serif',
-                  fontWeight: '600',
-                  fontSize: '1.2rem',
-                  borderWidth: '2px',
-                  textTransform: 'none',
-                  '&:hover': {
-                    borderColor: 'white',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    borderWidth: '2px'
-                  }
-                }}
-              >
-                Next Level
+                {progressSaving ? 'Saving...' : 'Go to Home'}
               </Button>
             </Box>
           </Box>
@@ -3044,6 +4580,7 @@ export default function PersonalHygieneLevel1() {
             />
           </Box>
         )}
+        {showCleanHands && <CleanHandsDisplay />}
 
         {/* Render dragged hand at cursor (floating) - only show when not hiding images */}
         {!hideAllImages && isDragging && draggedItem === 'hands-group' && (
@@ -3080,6 +4617,33 @@ export default function PersonalHygieneLevel1() {
                   }}
                 />
               )}
+              {/* Bubbles in step 5 */}
+              {gameStep === 5 && (
+                <>
+                  <Box component="img" src={bubbleImg} alt="Bubble"
+                    sx={{
+                      position: 'absolute',
+                      left: '40%',
+                      top: '30%',
+                      width: 40,
+                      height: 'auto',
+                      zIndex: 9,
+                      pointerEvents: 'none'
+                    }}
+                  />
+                  <Box component="img" src={bubbleImg} alt="Bubble"
+                    sx={{
+                      position: 'absolute',
+                      left: '60%',
+                      top: '50%',
+                      width: 35,
+                      height: 'auto',
+                      zIndex: 9,
+                      pointerEvents: 'none'
+                    }}
+                  />
+                </>
+              )}
             </Box>
             {/* Right hand with mud overlay */}
             <Box sx={{ position: 'relative', width: 350, height: 'auto', display: 'inline-block' }}>
@@ -3103,6 +4667,44 @@ export default function PersonalHygieneLevel1() {
               {soapPlaced && gameStep < 5 && (
                 <Box component="img" src={soapImg} alt="Soap on right hand" draggable={false}
                   sx={{ position: 'absolute', left: '40%', bottom: '28%', transform: 'translate(-50%, 0)', width: 130, height: 'auto', zIndex: 8, pointerEvents: 'none' }} />
+              )}
+              {/* Bubbles in step 5 */}
+              {gameStep === 5 && (
+                <>
+                  <Box component="img" src={bubbleImg} alt="Bubble"
+                    sx={{
+                      position: 'absolute',
+                      left: '35%',
+                      top: '35%',
+                      width: 45,
+                      height: 'auto',
+                      zIndex: 9,
+                      pointerEvents: 'none'
+                    }}
+                  />
+                  <Box component="img" src={bubbleImg} alt="Bubble"
+                    sx={{
+                      position: 'absolute',
+                      left: '55%',
+                      top: '45%',
+                      width: 30,
+                      height: 'auto',
+                      zIndex: 9,
+                      pointerEvents: 'none'
+                    }}
+                  />
+                  <Box component="img" src={bubbleImg} alt="Bubble"
+                    sx={{
+                      position: 'absolute',
+                      left: '70%',
+                      top: '25%',
+                      width: 38,
+                      height: 'auto',
+                      zIndex: 9,
+                      pointerEvents: 'none'
+                    }}
+                  />
+                </>
               )}
             </Box>
           </Box>
