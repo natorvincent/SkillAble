@@ -73,11 +73,51 @@ git clone -b backend https://github.com/natorvincent/SkillAble.git
 ## Set up & Running
 ### Prerequisites 
 - IDE
-- Database
 - Node
-  
-cd skillable
-
+#### Set up Steps
+##### 1. Navigate to root directory :
+```bash
+cd skillable 
+```
+##### 2. Install dependencies : 
+```bash
 npm install
-npm install material-ui
+npm install material-ui or npm install @mui/material @emotion/react @emotion/styled
 npm install node.js
+```
+### Running program
+```bash
+npm start
+```
+>Note: To run program to localhost, change the all of the API URL (https://skillable-pdv0.onrender.com) to http://localhost:8080.
+
+## Backend Set up & Running
+### Prerequisites
+- IDE
+- Java jdk (recommended version 17 + ) 
+- Apache Maven (recommended version 3.6+)
+- MySQL (recommended version 8.0+ )
+- Database imported
+### Application Properties Configuration
+```bash
+# Database Configuration
+spring.datasource.url=jdbc:mysql://localhost:3306/skillable_db
+spring.datasource.username= (your database username)
+spring.datasource.password= (your database password)
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA/Hibernate Settings
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+spring.jpa.properties.hibernate.format_sql=true
+
+# Server Configuration
+server.port=8080
+server.servlet.context-path=/api
+```
+### Common Issues and Resolutions
+- Database Connectivity: Verify MySQL service status and user credentials.
+- Port Conflict: Modify server.port or terminate existing process
+- Dependency Issues: Execute mvn clean install -u
+  
