@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useDarkMode } from '../DarkModeContext';
 import {
   Container,
   Box,
@@ -20,11 +21,11 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
+  IconButton,
   Card,
   Divider,
   Chip,
@@ -33,7 +34,14 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Tooltip,
+  alpha
 } from "@mui/material";
 import DeleteIcon from '@mui/icons-material/Delete';
 import EmailIcon from '@mui/icons-material/Email';
@@ -46,12 +54,17 @@ import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 import PeopleIcon from '@mui/icons-material/People';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
+import AnalyticsIcon from '@mui/icons-material/Analytics';
+import LogoutIcon from '@mui/icons-material/Logout';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import Navbar from "../Navbar";
-import Background from "../Background";
 
 function ManageStudents() {
   const [loading, setLoading] = useState(true);
+  const [teacherName, setTeacherName] = useState("");
   const [myStudents, setMyStudents] = useState([]);
   const [unassignedStudents, setUnassignedStudents] = useState([]);
   const [filteredStudents, setFilteredStudents] = useState([]);
@@ -65,7 +78,34 @@ function ManageStudents() {
   const [success, setSuccess] = useState("");
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [assigning, setAssigning] = useState(false);
+  
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Use dark mode context instead of local state
+  const { darkMode, toggleDarkMode, colors } = useDarkMode();
+
+  // Sidebar menu items
+  const menuItems = [
+    {
+      text: "Dashboard",
+      icon: <DashboardIcon />,
+      path: "/teacherdashboard",
+      active: location.pathname === "/teacherdashboard"
+    },
+    {
+      text: "Manage Students",
+      icon: <PeopleAltIcon />,
+      path: "/manageStudents",
+      active: location.pathname === "/manageStudents"
+    },
+    {
+      text: "View Analytics",
+      icon: <AnalyticsIcon />,
+      path: "/studentProgress",
+      active: location.pathname === "/studentProgress"
+    },
+  ];
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -223,6 +263,19 @@ function ManageStudents() {
     return myStudents.length + unassignedStudents.length;
   };
 
+  const getInitials = (name) => {
+    if (!name) return "T";
+    return name.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  const handleMenuItemClick = (item) => {
+    if (item.path) {
+      navigate(item.path);
+    }
+  };
+
+  const { fontColor, sidebarBgColor, offWhiteColors, gradientColors } = colors;
+
   if (loading) {
     return (
       <div style={{ 
@@ -230,160 +283,255 @@ function ManageStudents() {
         justifyContent: "center", 
         alignItems: "center", 
         height: "100vh",
-        background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)"
+        backgroundColor: offWhiteColors.background
       }}>
-        <CircularProgress sx={{ color: "#4a6cf7" }} />
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress sx={{ color: fontColor, mb: 2 }} size={48} />
+          <Typography variant="h6" sx={{ color: fontColor, fontWeight: 500 }}>
+            Loading students...
+          </Typography>
+        </Box>
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        position: "relative",
-        overflow: "hidden",
-        minHeight: "100vh",
-        width: "100%",
-      }}
-    >
-      <div
-        style={{
-          position: "fixed",
+    <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: offWhiteColors.background }}>
+      {/* Fixed Sidebar */}
+      <Box
+        sx={{
+          width: 280,
+          flexShrink: 0,
+          backgroundColor: sidebarBgColor,
+          color: fontColor,
+          borderRight: darkMode ? `1px solid ${alpha('#ffffff', 0.1)}` : 'none',
+          overflowX: 'hidden',
+          position: 'fixed',
+          height: '100vh',
           top: 0,
           left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 0,
+          zIndex: 1000,
+          display: 'flex',
+          flexDirection: 'column'
         }}
       >
-        <Background />
-      </div>
-      
-      <div style={{ position: "relative", zIndex: 1, minHeight: "100vh" }}>
-        <Navbar />
-        
-        <Container maxWidth="lg" sx={{ paddingTop: 5, paddingBottom: 5 }}>
-          <Box sx={{ mb: 3 }}>
-            <Button
-              variant="contained"
-              startIcon={<ArrowBackIcon />}
-              onClick={() => navigate(-1)}
-              sx={{
-                borderRadius: "12px",
-                backgroundColor: "#4a6cf7",
-                color: "white",
-                "&:hover": {
-                  backgroundColor: "#3a5ce5"
-                },
-                fontWeight: 600,
-                textTransform: 'none'
+        {/* Sidebar Header */}
+        <Box sx={{ 
+          p: 3, 
+          borderBottom: `1px solid ${alpha(fontColor, 0.1)}`,
+          backgroundColor: gradientColors.sidebarHeader,
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ 
+              width: 40, 
+              height: 40, 
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontWeight: 'bold',
+              fontSize: '18px'
+            }}>
+              {getInitials(teacherName)}
+            </Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, color: fontColor }}>
+                {teacherName}
+              </Typography>
+              <Typography variant="caption" sx={{ color: alpha(fontColor, 0.7) }}>
+                Teacher
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Main Menu */}
+        <List sx={{ p: 1, flex: 1 }}>
+          {menuItems.map((item) => (
+            <ListItem 
+              key={item.text} 
+              disablePadding 
+              sx={{ 
+                mb: 0.5,
+                borderRadius: '12px',
+                backgroundColor: item.active ? alpha(fontColor, 0.1) : 'transparent',
               }}
             >
-              Back
-            </Button>
-          </Box>
+              <ListItemButton
+                onClick={() => handleMenuItemClick(item)}
+                sx={{
+                  py: 1.5,
+                  px: 2,
+                  borderRadius: '12px',
+                  '&:hover': {
+                    backgroundColor: alpha(fontColor, 0.05),
+                  },
+                }}
+              >
+                <ListItemIcon sx={{ 
+                  color: item.active ? fontColor : alpha(fontColor, 0.7),
+                  minWidth: 40
+                }}>
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText 
+                  primary={item.text} 
+                  sx={{ 
+                    '& .MuiListItemText-primary': {
+                      fontWeight: item.active ? 600 : 300,
+                      color: item.active ? fontColor : alpha(fontColor, 0.9),
+                      fontSize: '0.9rem',
+                    }
+                  }}
+                />
+              </ListItemButton>
+            </ListItem>
+          ))}
           
+          {/* Dark Mode Toggle Button in Sidebar */}
+          <ListItem disablePadding sx={{ mt: 2 }}>
+            <ListItemButton
+              onClick={toggleDarkMode}
+              sx={{
+                py: 1.5,
+                px: 2,
+                borderRadius: '12px',
+                '&:hover': {
+                  backgroundColor: alpha(fontColor, 0.05),
+                },
+              }}
+            >
+              <ListItemIcon sx={{ 
+                color: alpha(fontColor, 0.7),
+                minWidth: 40
+              }}>
+                {darkMode ? <LightModeIcon /> : <DarkModeIcon />}
+              </ListItemIcon>
+              <ListItemText 
+                primary={darkMode ? "Light Mode" : "Dark Mode"} 
+                sx={{ 
+                  '& .MuiListItemText-primary': {
+                    color: fontColor,
+                    fontSize: '0.875rem',
+                    '--tw-text-opacity': 1,
+                  }
+                }}
+              />
+            </ListItemButton>
+          </ListItem>
+        </List>
+
+        {/* Sidebar Footer */}
+        <Box sx={{ p: 3, borderTop: `1px solid ${alpha(fontColor, 0.1)}` }}>
+          <Button
+            variant="contained"
+            startIcon={<LogoutIcon />}
+            fullWidth
+            onClick={() => {
+              localStorage.removeItem("token");
+              localStorage.removeItem("userEmail");
+              localStorage.removeItem("userRole");
+              localStorage.removeItem("isAdmin");
+              localStorage.removeItem("teacherId");
+              navigate("/login");
+              setSuccess("Logged out successfully!");
+              setOpenSnackbar(true);
+            }}
+            sx={{
+              borderRadius: '12px',
+              backgroundColor: darkMode ? '#667eea' : fontColor,
+              color: 'white',
+              textTransform: 'none',
+              fontWeight: 500,
+              '&:hover': {
+                backgroundColor: darkMode ? '#5a67d8' : '#1f0750',
+                transform: 'translateY(-2px)',
+                boxShadow: '0 4px 12px rgba(40, 11, 96, 0.3)',
+              },
+              transition: 'all 0.2s ease',
+            }}
+          >
+            Log out
+          </Button>
+        </Box>
+      </Box>
+
+      {/* Main Content */}
+      <Box 
+        component="main" 
+        sx={{ 
+          flexGrow: 1, 
+          ml: '280px',
+          width: 'calc(100% - 280px)',
+          minHeight: '100vh'
+        }}
+      >
+        <Container maxWidth="xl" sx={{ paddingTop: 4, paddingBottom: 5 }}>
+          {/* Main Content Card */}
           <Paper
             sx={{ 
               padding: 4, 
-              backgroundColor: "rgba(255, 255, 255, 0.95)",
-              borderRadius: "20px",
-              mb: 4,
-              boxShadow: "none",
-              border: '1px solid #e0e0e0'
+              backgroundColor: alpha(offWhiteColors.cardBg, 0.95),
+              borderRadius: "24px",
+              backdropFilter: 'blur(10px)',
+              border: darkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.5)',
+              background: `linear-gradient(135deg, ${gradientColors.cardGradient1} 0%, ${gradientColors.cardGradient2} 100%)`,
+              boxShadow: darkMode ? '0 4px 20px rgba(0, 0, 0, 0.2)' : '0 4px 20px rgba(0, 0, 0, 0.05)'
             }}
           >
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <GroupIcon sx={{ color: '#4a6cf7', mr: 2, fontSize: 36 }} />
+                <GroupIcon sx={{ color: fontColor, mr: 2, fontSize: 40 }} />
                 <Box>
-                  <Typography variant="h4" color="#2d3748" fontWeight={700}>
-                    Manage Students
+                  <Typography variant="h5" fontWeight={700} color={fontColor}>
+                    Student Management
                   </Typography>
-                  <Typography variant="body1" color="#4a5568" sx={{ mt: 0.5 }}>
-                    Assign students to your class
+                  <Typography variant="body1" sx={{ color: alpha(fontColor, 0.7), mt: 0.5 }}>
+                    Assign and manage students in your class
                   </Typography>
                 </Box>
               </Box>
-              <Button
-                variant="contained"
-                startIcon={<AssignmentIndIcon />}
-                onClick={() => setOpenAssignModal(true)}
-                disabled={unassignedStudents.length === 0}
-                sx={{
-                  borderRadius: "12px",
-                  backgroundColor: "#4a6cf7",
-                  py: 1.5,
-                  px: 3,
-                  "&:hover": {
-                    backgroundColor: "#3a5ce5"
-                  },
-                  "&:disabled": {
-                    backgroundColor: "#9ca3af"
-                  },
-                  fontWeight: 600,
-                  textTransform: 'none'
-                }}
-              >
-                Assign Student
-              </Button>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <Button
+  variant="contained"
+  startIcon={<AssignmentIndIcon />}
+  onClick={() => setOpenAssignModal(true)}
+  disabled={unassignedStudents.length === 0}
+  sx={{
+    borderRadius: "12px",
+    backgroundColor: darkMode ? '#667eea' : fontColor,
+    color: 'white',
+    py: 1.5,
+    px: 3,
+    fontWeight: 600,
+    textTransform: 'none',
+    boxShadow: darkMode 
+      ? '0 4px 15px rgba(102, 126, 234, 0.3)'
+      : `0 4px 15px ${alpha(fontColor, 0.3)}`,
+    '&:hover': {
+      backgroundColor: darkMode ? '#1f0750' : '#1f0750',
+      transform: 'translateY(-2px)',
+      boxShadow: darkMode 
+        ? '0 6px 20px rgba(102, 126, 234, 0.4)'
+        : `0 6px 20px ${alpha(fontColor, 0.4)}`,
+    },
+    '&:disabled': {
+      backgroundColor: darkMode ? '#4b5563' : '#cbd5e1',
+      color: darkMode ? '#9ca3af' : 'white',
+      boxShadow: 'none',
+    },
+    transition: 'all 0.2s ease',
+  }}
+>
+  Add a Student
+</Button>
+              </Box>
             </Box>
 
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card sx={{ 
-                  p: 3, 
-                  textAlign: 'center', 
-                  backgroundColor: '#f8f9ff',
-                  border: '1px solid #e3e8ff',
-                  boxShadow: "none"
-                }}>
-                  <GroupIcon sx={{ fontSize: 40, color: '#4a6cf7', mb: 1 }} />
-                  <Typography variant="h5" fontWeight={600} color="#2d3748">
-                    {myStudents.length}
-                  </Typography>
-                  <Typography variant="body2" color="#4a5568">
-                    My Students
-                  </Typography>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card sx={{ 
-                  p: 3, 
-                  textAlign: 'center', 
-                  backgroundColor: '#fff7ed',
-                  border: '1px solid #fed7aa',
-                  boxShadow: "none"
-                }}>
-                  <SchoolIcon sx={{ fontSize: 40, color: '#f97316', mb: 1 }} />
-                  <Typography variant="h5" fontWeight={600} color="#2d3748">
-                    {unassignedStudents.length}
-                  </Typography>
-                  <Typography variant="body2" color="#4a5568">
-                    Available to Assign
-                  </Typography>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card sx={{ 
-                  p: 3, 
-                  textAlign: 'center', 
-                  backgroundColor: '#f0fdf4',
-                  border: '1px solid #bbf7d0',
-                  boxShadow: "none"
-                }}>
-                  <PeopleIcon sx={{ fontSize: 40, color: '#22c55e', mb: 1 }} />
-                  <Typography variant="h5" fontWeight={600} color="#2d3748">
-                    {getTotalStudents()}
-                  </Typography>
-                  <Typography variant="body2" color="#4a5568">
-                    Total Students
-                  </Typography>
-                </Card>
-              </Grid>
-            </Grid>
-
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+            {/* Tabs */}
+            <Box sx={{ borderBottom: 1, borderColor: alpha(fontColor, 0.1), mb: 3 }}>
               <Tabs 
                 value={tabValue} 
                 onChange={(e, newValue) => setTabValue(newValue)}
@@ -391,7 +539,13 @@ function ManageStudents() {
                   '& .MuiTab-root': {
                     textTransform: 'none',
                     fontWeight: 600,
-                    fontSize: '1rem'
+                    fontSize: '1rem',
+                    py: 2,
+                    px: 3,
+                    color: alpha(fontColor, 0.7),
+                    '&.Mui-selected': {
+                      color: fontColor,
+                    }
                   }
                 }}
               >
@@ -400,14 +554,10 @@ function ManageStudents() {
                   icon={<GroupIcon />} 
                   iconPosition="start"
                 />
-                <Tab 
-                  label={`Available Students (${unassignedStudents.length})`} 
-                  icon={<SchoolIcon />} 
-                  iconPosition="start"
-                />
               </Tabs>
             </Box>
 
+            {/* Search Bar */}
             <Box sx={{ mb: 3 }}>
               <TextField
                 fullWidth
@@ -415,43 +565,79 @@ function ManageStudents() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 InputProps={{
-                  startAdornment: <SearchIcon sx={{ color: '#9ca3af', mr: 1 }} />
+                  startAdornment: <SearchIcon sx={{ color: alpha(fontColor, 0.5), mr: 1 }} />
                 }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    borderRadius: "12px",
-                    backgroundColor: "white"
+                    borderRadius: "16px",
+                    backgroundColor: offWhiteColors.surface,
+                    "& fieldset": {
+                      borderColor: alpha(fontColor, 0.1),
+                    },
+                    "&:hover fieldset": {
+                      borderColor: fontColor,
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: fontColor,
+                      borderWidth: 2,
+                    }
+                  },
+                  "& .MuiInputBase-input": {
+                    color: fontColor,
                   }
                 }}
               />
             </Box>
 
+            {/* Students Table */}
             {filteredStudents.length > 0 ? (
-              <TableContainer component={Paper} sx={{ borderRadius: '12px', boxShadow: 'none', border: '1px solid #e0e0e0' }}>
+              <TableContainer component={Paper} sx={{ 
+                borderRadius: '16px', 
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
+                border: `1px solid ${alpha(fontColor, 0.1)}`,
+                backgroundColor: offWhiteColors.surface
+              }}>
                 <Table>
                   <TableHead>
-                    <TableRow sx={{ backgroundColor: '#f8f9fa' }}>
-                      <TableCell sx={{ fontWeight: 600, color: '#2d3748' }}>Student</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: '#2d3748' }}>Email</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: '#2d3748' }}>Date of Birth</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: '#2d3748' }}>Status</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: '#2d3748', textAlign: 'center' }}>Actions</TableCell>
+                    <TableRow sx={{ backgroundColor: offWhiteColors.subtleBg }}>
+                      <TableCell sx={{ fontWeight: 700, color: fontColor, fontSize: '0.95rem' }}>Student</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: fontColor, fontSize: '0.95rem' }}>Email</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: fontColor, fontSize: '0.95rem' }}>Date of Birth</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: fontColor, fontSize: '0.95rem' }}>Status</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: fontColor, fontSize: '0.95rem', textAlign: 'center' }}>Actions</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {filteredStudents.map((student) => (
-                      <TableRow key={student.id} hover>
+                      <TableRow key={student.id} hover sx={{ 
+                        '&:hover': {
+                          backgroundColor: offWhiteColors.subtleBg
+                        }
+                      }}>
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <PersonIcon sx={{ color: '#4a6cf7', mr: 2 }} />
+                            <Box sx={{ 
+                              width: 36, 
+                              height: 36, 
+                              borderRadius: '50%',
+                              background: `linear-gradient(135deg, ${fontColor} 0%, ${alpha(fontColor, 0.7)} 100%)`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'white',
+                              fontWeight: 600,
+                              mr: 2
+                            }}>
+                              {student.firstName ? student.firstName.charAt(0).toUpperCase() : 'S'}
+                            </Box>
                             <Box>
-                              <Typography variant="body1" fontWeight={500}>
+                              <Typography variant="body1" fontWeight={600} color={fontColor}>
                                 {student.firstName && student.lastName 
                                   ? `${student.firstName} ${student.lastName}`
                                   : "Profile Incomplete"
                                 }
                               </Typography>
-                              <Typography variant="body2" color="text.secondary">
+                              <Typography variant="body2" sx={{ color: alpha(fontColor, 0.7) }}>
                                 ID: {student.id}
                               </Typography>
                             </Box>
@@ -459,16 +645,16 @@ function ManageStudents() {
                         </TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <EmailIcon sx={{ color: '#6b7280', mr: 1, fontSize: 18 }} />
-                            <Typography variant="body2">
+                            <EmailIcon sx={{ color: fontColor, mr: 1, fontSize: 18 }} />
+                            <Typography variant="body2" color={fontColor}>
                               {student.email}
                             </Typography>
                           </Box>
                         </TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <CalendarTodayIcon sx={{ color: '#6b7280', mr: 1, fontSize: 18 }} />
-                            <Typography variant="body2">
+                            <CalendarTodayIcon sx={{ color: fontColor, mr: 1, fontSize: 18 }} />
+                            <Typography variant="body2" color={fontColor}>
                               {formatDate(student.dateOfBirth)}
                             </Typography>
                           </Box>
@@ -476,9 +662,16 @@ function ManageStudents() {
                         <TableCell>
                           <Chip
                             label={student.firstName && student.lastName ? "Active" : "Incomplete"}
-                            color={student.firstName && student.lastName ? "success" : "warning"}
+                            sx={{ 
+                              fontWeight: 600,
+                              backgroundColor: student.firstName && student.lastName 
+                                ? alpha('#22c55e', 0.1)
+                                : alpha('#f59e0b', 0.1),
+                              color: student.firstName && student.lastName 
+                                ? '#22c55e'
+                                : '#f59e0b'
+                            }}
                             size="small"
-                            sx={{ fontWeight: 500 }}
                           />
                         </TableCell>
                         <TableCell sx={{ textAlign: 'center' }}>
@@ -489,8 +682,13 @@ function ManageStudents() {
                                 setOpenAssignModal(true);
                               }}
                               sx={{ 
-                                color: '#4a6cf7', 
-                                '&:hover': { backgroundColor: 'rgba(74, 108, 247, 0.1)' }
+                                color: fontColor, 
+                                backgroundColor: alpha(fontColor, 0.1),
+                                '&:hover': { 
+                                  backgroundColor: alpha(fontColor, 0.2),
+                                  transform: 'scale(1.1)'
+                                },
+                                transition: 'all 0.2s ease'
                               }}
                               title="Assign to me"
                             >
@@ -504,7 +702,12 @@ function ManageStudents() {
                               }}
                               sx={{ 
                                 color: '#ef4444', 
-                                '&:hover': { backgroundColor: 'rgba(239, 68, 68, 0.1)' }
+                                backgroundColor: alpha('#ef4444', 0.1),
+                                '&:hover': { 
+                                  backgroundColor: alpha('#ef4444', 0.2),
+                                  transform: 'scale(1.1)'
+                                },
+                                transition: 'all 0.2s ease'
                               }}
                               title="Unassign student"
                             >
@@ -519,21 +722,24 @@ function ManageStudents() {
               </TableContainer>
             ) : (
               <Box sx={{ 
-                p: 5, 
+                p: 6, 
                 textAlign: 'center', 
-                backgroundColor: '#f8f9fa',
-                borderRadius: '15px',
-                border: '1px dashed #dee2e6'
+                backgroundColor: offWhiteColors.subtleBg,
+                borderRadius: '20px',
+                border: `2px dashed ${alpha(fontColor, 0.2)}`
               }}>
-                {tabValue === 0 ? <GroupIcon sx={{ fontSize: 48, color: '#9ca3af', mb: 2 }} /> : <SchoolIcon sx={{ fontSize: 48, color: '#9ca3af', mb: 2 }} />}
-                <Typography variant="h6" color="#4a5568" gutterBottom>
+                {tabValue === 0 ? 
+                  <GroupIcon sx={{ fontSize: 60, color: alpha(fontColor, 0.3), mb: 2 }} /> : 
+                  <SchoolIcon sx={{ fontSize: 60, color: alpha(fontColor, 0.3), mb: 2 }} />
+                }
+                <Typography variant="h5" sx={{ color: fontColor, gutterBottom: true, fontWeight: 600, mb: 2 }}>
                   {tabValue === 0 ? "No Students Assigned" : "No Available Students"}
                 </Typography>
-                <Typography variant="body1" color="#4a5568" sx={{ mb: 3 }}>
+                <Typography variant="body1" sx={{ color: alpha(fontColor, 0.7), mb: 3, maxWidth: '400px', mx: 'auto' }}>
                   {searchTerm 
                     ? "No students match your search criteria." 
                     : tabValue === 0 
-                      ? "You haven't assigned any students yet."
+                      ? "You haven't assigned any students yet. Assign students from the available list."
                       : "All students have been assigned to teachers."
                   }
                 </Typography>
@@ -543,10 +749,14 @@ function ManageStudents() {
                     startIcon={<AssignmentIndIcon />}
                     onClick={() => setOpenAssignModal(true)}
                     sx={{
-                      borderRadius: "8px",
-                      backgroundColor: "#4a6cf7",
-                      "&:hover": {
-                        backgroundColor: "#3a5ce5"
+                      borderRadius: "12px",
+                      backgroundColor: fontColor,
+                      fontWeight: 600,
+                      textTransform: 'none',
+                      boxShadow: `0 4px 15px ${alpha(fontColor, 0.3)}`,
+                      '&:hover': {
+                        backgroundColor: darkMode ? '#5a67d8' : '#1f0750',
+                        boxShadow: `0 6px 20px ${alpha(fontColor, 0.4)}`,
                       }
                     }}
                   >
@@ -557,167 +767,203 @@ function ManageStudents() {
             )}
           </Paper>
         </Container>
-      </div>
+      </Box>
 
-      <Modal
-        open={openAssignModal}
-        onClose={() => setOpenAssignModal(false)}
-        closeAfterTransition
-        BackdropComponent={Backdrop}
-        BackdropProps={{
-          timeout: 500,
-        }}
-      >
-        <Fade in={openAssignModal}>
-          <Paper
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: { xs: '90%', sm: '500px' },
-              p: 4,
-              outline: 'none',
-              borderRadius: '20px',
-              boxShadow: "none",
-              border: '2px solid #e0e0e0'
-            }}
-          >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography variant="h5" fontWeight={600} color="#2d3748">
-                Assign Student
-              </Typography>
-              <IconButton
-                onClick={() => setOpenAssignModal(false)}
-                sx={{ color: '#6b7280' }}
-              >
-                <CloseIcon />
-              </IconButton>
-            </Box>
+      {/* Assign Student Modal */}
+<Modal
+  open={openAssignModal}
+  onClose={() => setOpenAssignModal(false)}
+  closeAfterTransition
+  // Removed BackdropComponent and BackdropProps
+  sx={{
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  }}
+>
+  <Fade in={openAssignModal}>
+    <Paper
+      sx={{
+        width: { xs: '90%', sm: '500px' },
+        p: 4,
+        outline: 'none',
+        borderRadius: '24px',
+        backgroundColor: offWhiteColors.modalBg,
+        background: `linear-gradient(135deg, ${gradientColors.modalGradient1} 0%, ${gradientColors.modalGradient2} 100%)`,
+        boxShadow: darkMode ? '0 20px 60px rgba(0, 0, 0, 0.3)' : '0 20px 60px rgba(0, 0, 0, 0.15)',
+        border: darkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.5)',
+      }}
+    >
+      {/* Rest of your modal content remains the same */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h5" fontWeight={700} sx={{ color: fontColor }}>
+          Assign Student
+        </Typography>
+        <IconButton
+          onClick={() => setOpenAssignModal(false)}
+          sx={{ 
+            color: fontColor,
+            backgroundColor: alpha(fontColor, 0.1),
+            '&:hover': {
+              backgroundColor: alpha(fontColor, 0.2),
+            }
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </Box>
 
-            <Divider sx={{ mb: 3 }} />
+      <Divider sx={{ mb: 3, height: 2, backgroundColor: fontColor }} />
 
-            <FormControl fullWidth sx={{ mb: 3 }}>
-              <InputLabel>Select Student</InputLabel>
-              <Select
-                value={selectedStudent?.id || ''}
-                label="Select Student"
-                onChange={(e) => {
-                  const student = unassignedStudents.find(s => s.id === e.target.value);
-                  setSelectedStudent(student);
-                }}
-                sx={{
-                  borderRadius: "10px",
-                }}
-              >
-                {unassignedStudents.map((student) => (
-                  <MenuItem key={student.id} value={student.id}>
-                    <Box>
-                      <Typography variant="body1">
-                        {student.firstName && student.lastName 
-                          ? `${student.firstName} ${student.lastName}`
-                          : "Profile Incomplete"
-                        }
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {student.email}
-                      </Typography>
-                    </Box>
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            {selectedStudent && (
-              <Box sx={{ 
-                p: 2, 
-                backgroundColor: '#f8f9fa', 
-                borderRadius: '8px', 
-                mb: 3,
-                border: '1px solid #e9ecef'
-              }}>
-                <Typography variant="subtitle2" color="#2d3748" gutterBottom>
-                  Selected Student:
-                </Typography>
-                <Typography variant="body1" fontWeight={500}>
-                  {selectedStudent.firstName && selectedStudent.lastName 
-                    ? `${selectedStudent.firstName} ${selectedStudent.lastName}`
+      <FormControl fullWidth sx={{ mb: 3 }}>
+        <InputLabel sx={{ color: fontColor, fontWeight: 500 }}>Select Student</InputLabel>
+        <Select
+          value={selectedStudent?.id || ''}
+          label="Select Student"
+          onChange={(e) => {
+            const student = unassignedStudents.find(s => s.id === e.target.value);
+            setSelectedStudent(student);
+          }}
+          sx={{
+            borderRadius: "16px",
+            backgroundColor: alpha(fontColor, 0.05),
+            "& .MuiOutlinedInput-notchedOutline": {
+              borderColor: alpha(fontColor, 0.3),
+            },
+            "&:hover .MuiOutlinedInput-notchedOutline": {
+              borderColor: fontColor,
+            },
+            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+              borderColor: fontColor,
+              borderWidth: 2,
+            }
+          }}
+        >
+          {unassignedStudents.map((student) => (
+            <MenuItem key={student.id} value={student.id}>
+              <Box>
+                <Typography variant="body1" fontWeight={500} color={fontColor}>
+                  {student.firstName && student.lastName 
+                    ? `${student.firstName} ${student.lastName}`
                     : "Profile Incomplete"
                   }
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {selectedStudent.email}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  DOB: {formatDate(selectedStudent.dateOfBirth)}
+                <Typography variant="body2" sx={{ color: alpha(fontColor, 0.7) }}>
+                  {student.email}
                 </Typography>
               </Box>
-            )}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
 
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Button
-                variant="outlined"
-                fullWidth
-                onClick={() => {
-                  setOpenAssignModal(false);
-                  setSelectedStudent(null);
-                }}
-                sx={{
-                  borderRadius: "10px",
-                  borderColor: "#e5e7eb",
-                  color: "#6b7280",
-                  "&:hover": {
-                    borderColor: "#d1d5db",
-                    backgroundColor: "#f9fafb"
-                  }
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="contained"
-                fullWidth
-                disabled={!selectedStudent || assigning}
-                onClick={handleAssignStudent}
-                sx={{ 
-                  borderRadius: "10px",
-                  backgroundColor: "#4a6cf7",
-                  "&:hover": {
-                    backgroundColor: "#3a5ce5"
-                  }
-                }}
-              >
-                {assigning ? <CircularProgress size={24} color="inherit" /> : "Assign Student"}
-              </Button>
-            </Box>
-          </Paper>
-        </Fade>
-      </Modal>
+      {selectedStudent && (
+        <Box sx={{ 
+          p: 3, 
+          backgroundColor: offWhiteColors.subtleBg, 
+          borderRadius: '16px', 
+          mb: 3,
+          border: `1px solid ${alpha(fontColor, 0.1)}`
+        }}>
+          <Typography variant="subtitle2" fontWeight={600} color={fontColor} gutterBottom>
+            Selected Student:
+          </Typography>
+          <Typography variant="body1" fontWeight={500} color={fontColor}>
+            {selectedStudent.firstName && selectedStudent.lastName 
+              ? `${selectedStudent.firstName} ${selectedStudent.lastName}`
+              : "Profile Incomplete"
+            }
+          </Typography>
+        </Box>
+      )}
 
+      <Box sx={{ display: 'flex', gap: 2 }}>
+        <Button
+          variant="outlined"
+          fullWidth
+          onClick={() => {
+            setOpenAssignModal(false);
+            setSelectedStudent(null);
+          }}
+          sx={{
+            borderRadius: "16px",
+            borderColor: alpha(fontColor, 0.3),
+            color: fontColor,
+            fontWeight: 500,
+            textTransform: 'none',
+            py: 1.5,
+            '&:hover': {
+              borderColor: fontColor,
+              backgroundColor: alpha(fontColor, 0.05)
+            }
+          }}
+        >
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          fullWidth
+          disabled={!selectedStudent || assigning}
+          onClick={handleAssignStudent}
+          sx={{ 
+            borderRadius: "16px",
+            backgroundColor: fontColor,
+            fontWeight: 600,
+            textTransform: 'none',
+            py: 1.5,
+            boxShadow: `0 4px 15px ${alpha(fontColor, 0.3)}`,
+            '&:hover': {
+              backgroundColor: darkMode ? '#5a67d8' : '#1f0750',
+              boxShadow: `0 6px 20px ${alpha(fontColor, 0.4)}`,
+            },
+            '&:disabled': {
+              backgroundColor: '#cbd5e1',
+              boxShadow: 'none',
+            }
+          }}
+        >
+          {assigning ? <CircularProgress size={24} color="inherit" /> : "Assign Student"}
+        </Button>
+      </Box>
+    </Paper>
+  </Fade>
+</Modal>
+
+      {/* Unassign Student Dialog */}
       <Dialog
         open={openDeleteDialog}
         onClose={() => setOpenDeleteDialog(false)}
         PaperProps={{
           sx: {
-            borderRadius: '16px',
-            padding: 2
+            borderRadius: '24px',
+            p: 2,
+            backgroundColor: offWhiteColors.modalBg,
+            background: `linear-gradient(135deg, ${gradientColors.modalGradient1} 0%, ${gradientColors.modalGradient2} 100%)`,
+            boxShadow: darkMode ? '0 20px 60px rgba(0, 0, 0, 0.3)' : '0 20px 60px rgba(0, 0, 0, 0.15)',
+            border: darkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.5)',
           }
         }}
       >
-        <DialogTitle sx={{ fontWeight: 600, color: '#2d3748' }}>
+        <DialogTitle sx={{ fontWeight: 700, color: fontColor, fontSize: '1.25rem' }}>
           Unassign Student
         </DialogTitle>
         <DialogContent>
-          <Typography>
-            Are you sure you want to unassign {studentToDelete?.firstName} {studentToDelete?.lastName} from your class? The student will become available for other teachers to assign.
+          <Typography sx={{ color: alpha(fontColor, 0.7) }}>
+            Are you sure you want to unassign {studentToDelete?.firstName} {studentToDelete?.lastName} from your class? 
+            The student will become available for other teachers to assign.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ p: 3, pt: 1 }}>
           <Button 
             onClick={() => setOpenDeleteDialog(false)}
             sx={{ 
-              borderRadius: "8px",
-              color: "#6b7280"
+              borderRadius: "12px",
+              color: fontColor,
+              fontWeight: 500,
+              textTransform: 'none',
+              '&:hover': {
+                backgroundColor: offWhiteColors.subtleBg
+              }
             }}
           >
             Cancel
@@ -725,12 +971,15 @@ function ManageStudents() {
           <Button 
             onClick={handleUnassignStudent}
             variant="contained"
-            color="warning"
             sx={{ 
-              borderRadius: "8px",
-              backgroundColor: "#f97316",
-              "&:hover": {
-                backgroundColor: "#ea580c"
+              borderRadius: "12px",
+              backgroundColor: '#ef4444',
+              fontWeight: 600,
+              textTransform: 'none',
+              boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)',
+              '&:hover': {
+                backgroundColor: '#dc2626',
+                boxShadow: '0 6px 20px rgba(239, 68, 68, 0.4)',
               }
             }}
           >
@@ -739,6 +988,7 @@ function ManageStudents() {
         </DialogActions>
       </Dialog>
 
+      {/* Snackbar */}
       <Snackbar
         open={openSnackbar}
         autoHideDuration={6000}
@@ -748,12 +998,26 @@ function ManageStudents() {
         <Alert
           onClose={handleCloseSnackbar}
           severity={success ? "success" : "error"}
-          sx={{ width: "100%", borderRadius: "10px" }}
+          sx={{ 
+            width: "100%", 
+            borderRadius: "16px",
+            fontWeight: 500,
+            fontSize: '1rem',
+            boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
+            backgroundColor: offWhiteColors.cardBg,
+            color: fontColor,
+            '& .MuiAlert-icon': {
+              fontSize: '1.5rem'
+            },
+            '& .MuiAlert-message': {
+              color: fontColor,
+            }
+          }}
         >
           {success || error}
         </Alert>
       </Snackbar>
-    </div>
+    </Box>
   );
 }
 

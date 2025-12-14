@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useDarkMode } from '../DarkModeContext';
 import {
   Container,
   Box,
@@ -31,18 +32,17 @@ import {
   InputAdornment,
   Tabs,
   Tab,
-  useTheme,
   alpha,
   Tooltip,
   Divider,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Alert,
-  Snackbar
+  Snackbar,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText
 } from "@mui/material";
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import PersonIcon from '@mui/icons-material/Person';
 import SchoolIcon from '@mui/icons-material/School';
@@ -59,20 +59,21 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import TimerIcon from '@mui/icons-material/Timer';
 import CheckIcon from '@mui/icons-material/Check';
 import PendingIcon from '@mui/icons-material/Pending';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import TuneIcon from '@mui/icons-material/Tune';
-import SaveIcon from '@mui/icons-material/Save';
-import Navbar from "../Navbar";
-import Background from "../Background";
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
+import AnalyticsIcon from '@mui/icons-material/Analytics';
+import LogoutIcon from '@mui/icons-material/Logout';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
 
 function StudentProgress() {
   const [loading, setLoading] = useState(true);
+  const [teacherName, setTeacherName] = useState("");
   const [studentsProgress, setStudentsProgress] = useState([]);
   const [filteredStudents, setFilteredStudents] = useState([]);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [detailedProgress, setDetailedProgress] = useState(null);
   const [openDetailModal, setOpenDetailModal] = useState(false);
-  const [openDifficultyModal, setOpenDifficultyModal] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [tabValue, setTabValue] = useState(0);
@@ -83,16 +84,35 @@ function StudentProgress() {
     completedModules: 0
   });
 
-  // Difficulty management state
-  const [lessons, setLessons] = useState([]);
-  const [studentDifficulties, setStudentDifficulties] = useState({});
-  const [loadingDifficulties, setLoadingDifficulties] = useState(false);
-  const [savingDifficulties, setSavingDifficulties] = useState(false);
-  const [difficultyChanges, setDifficultyChanges] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
-
+  
   const navigate = useNavigate();
-  const theme = useTheme();
+  const location = useLocation();
+
+  // Use dark mode context instead of local state
+  const { darkMode, toggleDarkMode, colors } = useDarkMode();
+
+  // Sidebar menu items
+  const menuItems = [
+    {
+      text: "Dashboard",
+      icon: <DashboardIcon />,
+      path: "/teacherdashboard",
+      active: location.pathname === "/teacherdashboard"
+    },
+    {
+      text: "Manage Students",
+      icon: <PeopleAltIcon />,
+      path: "/manageStudents",
+      active: location.pathname === "/manageStudents"
+    },
+    {
+      text: "View Analytics",
+      icon: <AnalyticsIcon />,
+      path: "/studentProgress",
+      active: location.pathname === "/studentProgress"
+    },
+  ];
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -104,7 +124,6 @@ function StudentProgress() {
     }
 
     fetchStudentsProgress();
-    fetchLessons();
   }, [navigate]);
 
   useEffect(() => {
@@ -133,64 +152,6 @@ function StudentProgress() {
       console.error("Error fetching students progress:", err);
       setStudentsProgress([]);
       setLoading(false);
-    }
-  };
-
-  const fetchLessons = async () => {
-    try {
-      const response = await fetch('https://skillable-pdv0.onrender.com/api/lessons', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const lessonsData = await response.json();
-        setLessons(lessonsData);
-      }
-    } catch (error) {
-      console.error('Error fetching lessons:', error);
-    }
-  };
-
-  const fetchStudentDifficulties = async (studentId) => {
-    setLoadingDifficulties(true);
-    try {
-      const response = await fetch(`https://skillable-pdv0.onrender.com/api/difficulty/student-difficulties/${studentId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const difficultiesData = await response.json();
-        const difficultyMap = {};
-        
-        // Create a map of existing difficulties
-        difficultiesData.difficulties.forEach(item => {
-          difficultyMap[item.lessonId] = item.difficulty;
-        });
-        
-        // Set default 'easy' for lessons without assigned difficulty
-        lessons.forEach(lesson => {
-          if (!difficultyMap[lesson.id]) {
-            difficultyMap[lesson.id] = 'easy';
-          }
-        });
-        
-        setStudentDifficulties(difficultyMap);
-      }
-    } catch (error) {
-      console.error('Error fetching student difficulties:', error);
-      setSnackbar({
-        open: true,
-        message: 'Error loading difficulty data',
-        severity: 'error'
-      });
-    } finally {
-      setLoadingDifficulties(false);
     }
   };
 
@@ -304,62 +265,6 @@ function StudentProgress() {
     fetchDetailedProgress(student.id);
   };
 
-  const handleManageDifficulty = (student) => {
-    setSelectedStudent(student);
-    setOpenDifficultyModal(true);
-    fetchStudentDifficulties(student.id);
-  };
-
-  const handleDifficultyChange = (lessonId, difficulty) => {
-    setStudentDifficulties(prev => ({
-      ...prev,
-      [lessonId]: difficulty
-    }));
-    setDifficultyChanges(true);
-  };
-
-  const handleSaveDifficulties = async () => {
-    setSavingDifficulties(true);
-    try {
-      const promises = Object.entries(studentDifficulties).map(([lessonId, difficulty]) => {
-        return fetch('https://skillable-pdv0.onrender.com/api/difficulty/set-student-difficulty', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            studentId: selectedStudent.id,
-            lessonId: parseInt(lessonId),
-            difficulty: difficulty
-          })
-        });
-      });
-
-      const results = await Promise.all(promises);
-      const allSuccessful = results.every(response => response.ok);
-
-      if (allSuccessful) {
-        setSnackbar({
-          open: true,
-          message: 'Difficulty levels saved successfully!',
-          severity: 'success'
-        });
-        setDifficultyChanges(false);
-      } else {
-        throw new Error('Some updates failed');
-      }
-    } catch (error) {
-      console.error('Error saving difficulties:', error);
-      setSnackbar({
-        open: true,
-        message: 'Error saving difficulty levels',
-        severity: 'error'
-      });
-    } finally {
-      setSavingDifficulties(false);
-    }
-  };
-
   const getOverallProgress = (moduleProgresses) => {
     if (!moduleProgresses || moduleProgresses.length === 0) return 0;
     const totalCompleted = moduleProgresses.reduce((sum, mp) => sum + mp.completedLessons, 0);
@@ -388,159 +293,248 @@ function StudentProgress() {
     return { label: 'Not Started', color: '#6b7280', bg: '#f9fafb' };
   };
 
-  const getDifficultyColor = (difficulty) => {
-    switch (difficulty) {
-      case 'easy': return { color: '#16a34a', bg: '#f0fdf4' };
-      case 'intermediate': return { color: '#d97706', bg: '#fffbeb' };
-      case 'difficult': return { color: '#dc2626', bg: '#fef2f2' };
-      default: return { color: '#6b7280', bg: '#f9fafb' };
-    }
-  };
-
-  const getDifficultyIcon = (difficulty) => {
-    switch (difficulty) {
-      case 'easy': return '🌟';
-      case 'intermediate': return '⭐';
-      case 'difficult': return '🏆';
-      default: return '❓';
-    }
-  };
-
   const formatDate = (dateString) => {
     if (!dateString) return "Not started";
     return new Date(dateString).toLocaleDateString();
   };
 
+  const getInitials = (name) => {
+    if (!name) return "T";
+    return name.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  const handleMenuItemClick = (item) => {
+    if (item.path) {
+      navigate(item.path);
+    }
+  };
+
+  const { fontColor, sidebarBgColor, offWhiteColors, gradientColors } = colors;
+
   if (loading) {
     return (
-      <div
-        style={{
-          position: "relative",
-          overflow: "hidden",
-          minHeight: "100vh",
-          width: "100%",
-        }}
-      >
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 0,
-          }}
-        >
-          <Background />
-        </div>
-        <div style={{ 
-          position: "relative", 
-          zIndex: 1,
-          display: "flex", 
-          justifyContent: "center", 
-          alignItems: "center", 
-          height: "100vh"
-        }}>
-          <Box sx={{ textAlign: 'center' }}>
-            <CircularProgress sx={{ color: "#6366f1", mb: 2 }} size={48} />
-            <Typography variant="h6" sx={{ color: "#ffffff", fontWeight: 500 }}>
-              Loading student progress...
-            </Typography>
-          </Box>
-        </div>
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "center", 
+        alignItems: "center", 
+        height: "100vh",
+        backgroundColor: offWhiteColors.background
+      }}>
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress sx={{ color: fontColor, mb: 2 }} size={48} />
+          <Typography variant="h6" sx={{ color: fontColor, fontWeight: 500 }}>
+            Loading student progress...
+          </Typography>
+        </Box>
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        position: "relative",
-        overflow: "hidden",
-        minHeight: "100vh",
-        width: "100%",
-      }}
-    >
-      <div
-        style={{
-          position: "fixed",
+    <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: offWhiteColors.background }}>
+      {/* Fixed Sidebar */}
+      <Box
+        sx={{
+          width: 280,
+          flexShrink: 0,
+          backgroundColor: sidebarBgColor,
+          color: fontColor,
+          borderRight: darkMode ? `1px solid ${alpha('#ffffff', 0.1)}` : 'none',
+          overflowX: 'hidden',
+          position: 'fixed',
+          height: '100vh',
           top: 0,
           left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 0,
+          zIndex: 1000,
+          display: 'flex',
+          flexDirection: 'column'
         }}
       >
-        <Background />
-      </div>
-      
-      <div style={{ position: "relative", zIndex: 1, minHeight: "100vh" }}>
-        <Navbar />
-        
-        <Container maxWidth="xl" sx={{ paddingTop: 4, paddingBottom: 6 }}>
-          {/* Header */}
-          <Box sx={{ mb: 4 }}>
-            <Button
-              variant="outlined"
-              startIcon={<ArrowBackIcon />}
-              onClick={() => navigate(-1)}
-              sx={{
-                mb: 3,
-                borderColor: alpha("#ffffff", 0.3),
-                color: "#ffffff",
-                backgroundColor: alpha("#ffffff", 0.1),
-                backdropFilter: 'blur(10px)',
-                "&:hover": {
-                  borderColor: alpha("#ffffff", 0.5),
-                  backgroundColor: alpha("#ffffff", 0.2)
-                }
+        {/* Sidebar Header */}
+        <Box sx={{ 
+          p: 3, 
+          borderBottom: `1px solid ${alpha(fontColor, 0.1)}`,
+          backgroundColor: gradientColors.sidebarHeader,
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ 
+              width: 40, 
+              height: 40, 
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontWeight: 'bold',
+              fontSize: '18px'
+            }}>
+              {getInitials(teacherName)}
+            </Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, color: fontColor }}>
+                {teacherName}
+              </Typography>
+              <Typography variant="caption" sx={{ color: alpha(fontColor, 0.7) }}>
+                Teacher
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Main Menu */}
+        {/* Main Menu */}
+        <List sx={{ p: 1, flex: 1 }}>
+          {menuItems.map((item) => (
+            <ListItem 
+              key={item.text} 
+              disablePadding 
+              sx={{ 
+                mb: 0.5,
+                borderRadius: '12px',
+                backgroundColor: item.active ? alpha(fontColor, 0.1) : 'transparent',
               }}
             >
-              Back to Dashboard
-            </Button>
-            
-            <Typography variant="h3" sx={{ 
-              fontWeight: 800,
-              color: "#ffffff",
-              mb: 1,
-              textShadow: '0 2px 4px rgba(0,0,0,0.1)'
-            }}>
-              Student Progress
-            </Typography>
-            <Typography variant="h6" sx={{ 
-              color: alpha("#413b3bff", 0.9),
-              fontWeight: 400
-            }}>
-              Track performance and customize difficulty levels for each student
-            </Typography>
-          </Box>
+              <ListItemButton
+                onClick={() => handleMenuItemClick(item)}
+                sx={{
+                  py: 1.5,
+                  px: 2,
+                  borderRadius: '12px',
+                  '&:hover': {
+                    backgroundColor: alpha(fontColor, 0.05),
+                  },
+                }}
+              >
+                <ListItemIcon sx={{ 
+                  color: item.active ? fontColor : alpha(fontColor, 0.7),
+                  minWidth: 40
+                }}>
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText 
+                  primary={item.text} 
+                  sx={{ 
+                    '& .MuiListItemText-primary': {
+                      fontWeight: item.active ? 600 : 300,
+                      color: item.active ? fontColor : alpha(fontColor, 0.9),
+                      fontSize: '0.9rem',
+                    }
+                  }}
+                />
+              </ListItemButton>
+            </ListItem>
+          ))}
+          
+          {/* Dark Mode Toggle Button in Sidebar */}
+          <ListItem disablePadding sx={{ mt: 2 }}>
+            <ListItemButton
+              onClick={toggleDarkMode}
+              sx={{
+                py: 1.5,
+                px: 2,
+                borderRadius: '12px',
+                '&:hover': {
+                  backgroundColor: alpha(fontColor, 0.05),
+                },
+              }}
+            >
+              <ListItemIcon sx={{ 
+                color: alpha(fontColor, 0.7),
+                minWidth: 40
+              }}>
+                {darkMode ? <LightModeIcon /> : <DarkModeIcon />}
+              </ListItemIcon>
+              <ListItemText 
+                primary={darkMode ? "Light Mode" : "Dark Mode"} 
+                sx={{ 
+                  '& .MuiListItemText-primary': {
+                    color: fontColor,
+                    fontSize: '0.875rem',
+                    '--tw-text-opacity': 1,
+                  }
+                }}
+              />
+            </ListItemButton>
+          </ListItem>
+        </List>
+
+        {/* Sidebar Footer */}
+        <Box sx={{ p: 3, borderTop: `1px solid ${alpha(fontColor, 0.1)}` }}>
+          <Button
+            variant="contained"
+            startIcon={<LogoutIcon />}
+            fullWidth
+            onClick={() => {
+              localStorage.removeItem("token");
+              localStorage.removeItem("userEmail");
+              localStorage.removeItem("userRole");
+              localStorage.removeItem("isAdmin");
+              localStorage.removeItem("teacherId");
+              navigate("/login");
+              setSnackbar({
+                open: true,
+                message: 'Logged out successfully!',
+                severity: 'success'
+              });
+            }}
+            sx={{
+              borderRadius: '12px',
+              backgroundColor: darkMode ? '#667eea' : fontColor,
+              color: 'white',
+              textTransform: 'none',
+              fontWeight: 500,
+              '&:hover': {
+                backgroundColor: darkMode ? '#5a67d8' : '#1f0750',
+                transform: 'translateY(-2px)',
+                boxShadow: '0 4px 12px rgba(40, 11, 96, 0.3)',
+              },
+              transition: 'all 0.2s ease',
+            }}
+          >
+            Log out
+          </Button>
+        </Box>
+      </Box>
+
+      {/* Main Content */}
+      <Box 
+        component="main" 
+        sx={{ 
+          flexGrow: 1, 
+          ml: '280px',
+          width: 'calc(100% - 280px)',
+          minHeight: '100vh'
+        }}
+      >
+        <Container maxWidth="xl" sx={{ paddingTop: 4, paddingBottom: 6 }}>
 
           {/* Overview Stats */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
             <Grid item xs={12} sm={6} md={3}>
               <Card sx={{ 
                 p: 3, 
-                backgroundColor: alpha("#ffffff", 0.95),
-                borderRadius: 3,
-                boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                backdropFilter: 'blur(10px)'
+                backgroundColor: offWhiteColors.surface,
+                borderRadius: "16px",
+                boxShadow: darkMode ? '0 4px 20px rgba(0, 0, 0, 0.2)' : '0 4px 20px rgba(0, 0, 0, 0.05)',
+                border: darkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.5)',
+                background: `linear-gradient(135deg, ${gradientColors.cardGradient1} 0%, ${gradientColors.cardGradient2} 100%)`,
               }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Box>
-                    <Typography variant="h3" sx={{ fontWeight: 700, color: "#1e293b", mb: 0.5 }}>
+                    <Typography variant="h3" sx={{ fontWeight: 700, color: fontColor, mb: 0.5 }}>
                       {completionStats.averageCompletion}%
                     </Typography>
-                    <Typography variant="body2" sx={{ color: "#64748b", fontWeight: 500 }}>
+                    <Typography variant="body2" sx={{ color: alpha(fontColor, 0.7), fontWeight: 500 }}>
                       Average Completion
                     </Typography>
                   </Box>
                   <Box sx={{ 
                     p: 2, 
                     borderRadius: 2, 
-                    backgroundColor: alpha('#6366f1', 0.1) 
+                    backgroundColor: alpha(fontColor, 0.1) 
                   }}>
-                    <TrendingUpIcon sx={{ color: '#6366f1', fontSize: 32 }} />
+                    <TrendingUpIcon sx={{ color: fontColor, fontSize: 32 }} />
                   </Box>
                 </Box>
               </Card>
@@ -549,27 +543,27 @@ function StudentProgress() {
             <Grid item xs={12} sm={6} md={3}>
               <Card sx={{ 
                 p: 3, 
-                backgroundColor: alpha("#ffffff", 0.95),
-                borderRadius: 3,
-                boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                backdropFilter: 'blur(10px)'
+                backgroundColor: offWhiteColors.surface,
+                borderRadius: "16px",
+                boxShadow: darkMode ? '0 4px 20px rgba(0, 0, 0, 0.2)' : '0 4px 20px rgba(0, 0, 0, 0.05)',
+                border: darkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.5)',
+                background: `linear-gradient(135deg, ${gradientColors.cardGradient1} 0%, ${gradientColors.cardGradient2} 100%)`,
               }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Box>
-                    <Typography variant="h3" sx={{ fontWeight: 700, color: "#1e293b", mb: 0.5 }}>
+                    <Typography variant="h3" sx={{ fontWeight: 700, color: fontColor, mb: 0.5 }}>
                       {completionStats.activeStudents}
                     </Typography>
-                    <Typography variant="body2" sx={{ color: "#64748b", fontWeight: 500 }}>
+                    <Typography variant="body2" sx={{ color: alpha(fontColor, 0.7), fontWeight: 500 }}>
                       Active Students
                     </Typography>
                   </Box>
                   <Box sx={{ 
                     p: 2, 
                     borderRadius: 2, 
-                    backgroundColor: alpha('#10b981', 0.1) 
+                    backgroundColor: alpha(fontColor, 0.1) 
                   }}>
-                    <PersonIcon sx={{ color: '#10b981', fontSize: 32 }} />
+                    <PersonIcon sx={{ color: fontColor, fontSize: 32 }} />
                   </Box>
                 </Box>
               </Card>
@@ -578,27 +572,27 @@ function StudentProgress() {
             <Grid item xs={12} sm={6} md={3}>
               <Card sx={{ 
                 p: 3, 
-                backgroundColor: alpha("#ffffff", 0.95),
-                borderRadius: 3,
-                boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                backdropFilter: 'blur(10px)'
+                backgroundColor: offWhiteColors.surface,
+                borderRadius: "16px",
+                boxShadow: darkMode ? '0 4px 20px rgba(0, 0, 0, 0.2)' : '0 4px 20px rgba(0, 0, 0, 0.05)',
+                border: darkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.5)',
+                background: `linear-gradient(135deg, ${gradientColors.cardGradient1} 0%, ${gradientColors.cardGradient2} 100%)`,
               }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Box>
-                    <Typography variant="h3" sx={{ fontWeight: 700, color: "#1e293b", mb: 0.5 }}>
+                    <Typography variant="h3" sx={{ fontWeight: 700, color: fontColor, mb: 0.5 }}>
                       {completionStats.completedModules}
                     </Typography>
-                    <Typography variant="body2" sx={{ color: "#64748b", fontWeight: 500 }}>
+                    <Typography variant="body2" sx={{ color: alpha(fontColor, 0.7), fontWeight: 500 }}>
                       Completed Modules
                     </Typography>
                   </Box>
                   <Box sx={{ 
                     p: 2, 
                     borderRadius: 2, 
-                    backgroundColor: alpha('#f59e0b', 0.1) 
+                    backgroundColor: alpha(fontColor, 0.1) 
                   }}>
-                    <EmojiEventsIcon sx={{ color: '#f59e0b', fontSize: 32 }} />
+                    <EmojiEventsIcon sx={{ color: fontColor, fontSize: 32 }} />
                   </Box>
                 </Box>
               </Card>
@@ -607,27 +601,27 @@ function StudentProgress() {
             <Grid item xs={12} sm={6} md={3}>
               <Card sx={{ 
                 p: 3, 
-                backgroundColor: alpha("#ffffff", 0.95),
-                borderRadius: 3,
-                boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                backdropFilter: 'blur(10px)'
+                backgroundColor: offWhiteColors.surface,
+                borderRadius: "16px",
+                boxShadow: darkMode ? '0 4px 20px rgba(0, 0, 0, 0.2)' : '0 4px 20px rgba(0, 0, 0, 0.05)',
+                border: darkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.5)',
+                background: `linear-gradient(135deg, ${gradientColors.cardGradient1} 0%, ${gradientColors.cardGradient2} 100%)`,
               }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Box>
-                    <Typography variant="h3" sx={{ fontWeight: 700, color: "#1e293b", mb: 0.5 }}>
+                    <Typography variant="h3" sx={{ fontWeight: 700, color: fontColor, mb: 0.5 }}>
                       {completionStats.totalStudents}
                     </Typography>
-                    <Typography variant="body2" sx={{ color: "#64748b", fontWeight: 500 }}>
+                    <Typography variant="body2" sx={{ color: alpha(fontColor, 0.7), fontWeight: 500 }}>
                       Total Students
                     </Typography>
                   </Box>
                   <Box sx={{ 
                     p: 2, 
                     borderRadius: 2, 
-                    backgroundColor: alpha('#8b5cf6', 0.1) 
+                    backgroundColor: alpha(fontColor, 0.1) 
                   }}>
-                    <SchoolIcon sx={{ color: '#8b5cf6', fontSize: 32 }} />
+                    <SchoolIcon sx={{ color: fontColor, fontSize: 32 }} />
                   </Box>
                 </Box>
               </Card>
@@ -637,26 +631,26 @@ function StudentProgress() {
           {/* Main Content */}
           <Paper
             sx={{ 
-              backgroundColor: alpha("#ffffff", 0.95),
+              backgroundColor: offWhiteColors.cardBg,
               borderRadius: "24px",
               mb: 4,
-              boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
-              border: "1px solid rgba(255,255,255,0.2)",
-              backdropFilter: 'blur(10px)',
+              boxShadow: darkMode ? '0 4px 20px rgba(0, 0, 0, 0.2)' : '0 4px 20px rgba(0, 0, 0, 0.05)',
+              border: darkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.5)',
+              background: `linear-gradient(135deg, ${gradientColors.cardGradient1} 0%, ${gradientColors.cardGradient2} 100%)`,
               overflow: 'hidden'
             }}
           >
             {/* Header with Search and Filters */}
-            <Box sx={{ p: 4, borderBottom: "1px solid #e2e8f0" }}>
+            <Box sx={{ p: 4, borderBottom: `1px solid ${alpha(fontColor, 0.1)}` }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <AssessmentIcon sx={{ color: '#6366f1', mr: 2, fontSize: 32 }} />
+                  <AssessmentIcon sx={{ color: fontColor, mr: 2, fontSize: 32 }} />
                   <Box>
-                    <Typography variant="h5" sx={{ fontWeight: 700, color: "#1e293b", mb: 0.5 }}>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: fontColor, mb: 0.5 }}>
                       Student Performance Overview
                     </Typography>
-                    <Typography variant="body2" sx={{ color: "#64748b" }}>
-                      Monitor progress and adjust learning difficulty
+                    <Typography variant="body2" sx={{ color: alpha(fontColor, 0.7) }}>
+                      Monitor and track student learning progress
                     </Typography>
                   </Box>
                 </Box>
@@ -668,7 +662,7 @@ function StudentProgress() {
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <SearchIcon sx={{ color: "#64748b" }} />
+                        <SearchIcon sx={{ color: alpha(fontColor, 0.7) }} />
                       </InputAdornment>
                     ),
                   }}
@@ -676,14 +670,14 @@ function StudentProgress() {
                     width: 320,
                     "& .MuiOutlinedInput-root": {
                       borderRadius: 3,
-                      backgroundColor: "#f8fafc",
-                      border: "1px solid #e2e8f0",
+                      backgroundColor: offWhiteColors.subtleBg,
+                      border: `1px solid ${alpha(fontColor, 0.1)}`,
                       "&:hover": {
-                        borderColor: "#6366f1"
+                        borderColor: fontColor
                       },
                       "&.Mui-focused": {
-                        borderColor: "#6366f1",
-                        boxShadow: "0 0 0 3px rgba(99, 102, 241, 0.1)"
+                        borderColor: fontColor,
+                        boxShadow: `0 0 0 3px ${alpha(fontColor, 0.1)}`
                       }
                     }
                   }}
@@ -701,18 +695,19 @@ function StudentProgress() {
                     fontSize: '0.95rem'
                   },
                   '& .MuiTabs-indicator': {
-                    backgroundColor: '#6366f1',
+                    backgroundColor: fontColor,
                     height: 3,
                     borderRadius: '2px 2px 0 0'
                   }
                 }}
               >
-                <Tab label={`All Students (${studentsProgress.length})`} />
-                <Tab label={`Active (${studentsProgress.filter(s => s.moduleProgresses?.length > 0).length})`} />
+                <Tab label={`All Students (${studentsProgress.length})`} sx={{ color: fontColor }} />
+                <Tab label={`Active (${studentsProgress.filter(s => s.moduleProgresses?.length > 0).length})`} sx={{ color: fontColor }} />
                 <Tab 
                   icon={<LeaderboardIcon />}
                   iconPosition="start"
                   label={`Leaderboard (${studentsProgress.filter(s => s.moduleProgresses?.length > 0).length})`} 
+                  sx={{ color: fontColor }}
                 />
               </Tabs>
             </Box>
@@ -731,15 +726,15 @@ function StudentProgress() {
                         <Card sx={{ 
                           height: '100%',
                           borderRadius: '20px',
-                          border: isLeaderboard && index < 3 ? '2px solid #fbbf24' : '1px solid #e2e8f0',
-                          boxShadow: isLeaderboard && index < 3 ? "0 8px 32px rgba(251, 191, 36, 0.3)" : "0 4px 20px rgba(0,0,0,0.05)",
-                          background: isLeaderboard && index < 3 ? 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)' : 'white',
+                          border: isLeaderboard && index < 3 ? `2px solid ${alpha(fontColor, 0.5)}` : `1px solid ${alpha(fontColor, 0.1)}`,
+                          boxShadow: isLeaderboard && index < 3 ? `0 8px 32px ${alpha(fontColor, 0.3)}` : darkMode ? '0 4px 20px rgba(0,0,0,0.2)' : '0 4px 20px rgba(0,0,0,0.05)',
+                          background: isLeaderboard && index < 3 ? `linear-gradient(135deg, ${alpha(fontColor, 0.05)} 0%, ${alpha(fontColor, 0.1)} 100%)` : offWhiteColors.surface,
                           transition: 'all 0.3s ease',
                           position: 'relative',
                           '&:hover': {
                             transform: 'translateY(-8px)',
-                            boxShadow: isLeaderboard && index < 3 ? '0 16px 48px rgba(251, 191, 36, 0.4)' : '0 12px 40px rgba(0,0,0,0.15)',
-                            borderColor: isLeaderboard && index < 3 ? '#f59e0b' : '#6366f1'
+                            boxShadow: isLeaderboard && index < 3 ? `0 16px 48px ${alpha(fontColor, 0.4)}` : darkMode ? '0 12px 40px rgba(0,0,0,0.3)' : '0 12px 40px rgba(0,0,0,0.15)',
+                            borderColor: alpha(fontColor, 0.3)
                           }
                         }}>
                           {isLeaderboard && (
@@ -747,7 +742,7 @@ function StudentProgress() {
                               position: 'absolute', 
                               top: -8, 
                               right: 16, 
-                              backgroundColor: index === 0 ? '#fbbf24' : index === 1 ? '#94a3b8' : index === 2 ? '#fb7185' : '#6366f1',
+                              backgroundColor: fontColor,
                               color: 'white',
                               borderRadius: '50%',
                               width: 32,
@@ -772,25 +767,23 @@ function StudentProgress() {
                                   height: 56, 
                                   mr: 2, 
                                   background: isLeaderboard && index < 3 ? 
-                                    (index === 0 ? 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)' :
-                                     index === 1 ? 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)' :
-                                     'linear-gradient(135deg, #fb7185 0%, #f43f5e 100%)') :
-                                    'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                                    `linear-gradient(135deg, ${alpha(fontColor, 0.8)} 0%, ${alpha(fontColor, 0.6)} 100%)` :
+                                    `linear-gradient(135deg, ${alpha(fontColor, 0.8)} 0%, ${alpha(fontColor, 0.6)} 100%)`,
                                   fontSize: '1.25rem',
                                   fontWeight: 700,
-                                  boxShadow: isLeaderboard && index < 3 ? '0 6px 24px rgba(251, 191, 36, 0.4)' : '0 4px 20px rgba(99, 102, 241, 0.3)'
+                                  color: 'white'
                                 }}
                               >
                                 {student.firstName ? student.firstName[0].toUpperCase() : 'S'}
                               </Avatar>
                               <Box sx={{ flexGrow: 1 }}>
-                                <Typography variant="h6" sx={{ fontWeight: 700, color: "#1e293b", mb: 0.5 }}>
+                                <Typography variant="h6" sx={{ fontWeight: 700, color: fontColor, mb: 0.5 }}>
                                   {student.firstName && student.lastName 
                                     ? `${student.firstName} ${student.lastName}`
                                     : "Profile Incomplete"
                                   }
                                 </Typography>
-                                <Typography variant="body2" sx={{ color: "#64748b" }}>
+                                <Typography variant="body2" sx={{ color: alpha(fontColor, 0.7) }}>
                                   {student.email}
                                 </Typography>
                               </Box>
@@ -807,7 +800,7 @@ function StudentProgress() {
                                 />
                                 {isLeaderboard && index < 3 && (
                                   <EmojiEventsIcon sx={{ 
-                                    color: index === 0 ? '#fbbf24' : index === 1 ? '#94a3b8' : '#fb7185',
+                                    color: fontColor,
                                     fontSize: 20
                                   }} />
                                 )}
@@ -817,10 +810,10 @@ function StudentProgress() {
                             {/* Progress Bar */}
                             <Box sx={{ mb: 3 }}>
                               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                                <Typography variant="body2" sx={{ color: "#64748b", fontWeight: 500 }}>
+                                <Typography variant="body2" sx={{ color: alpha(fontColor, 0.7), fontWeight: 500 }}>
                                   Overall Progress
                                 </Typography>
-                                <Typography variant="body2" sx={{ color: "#6366f1", fontWeight: 700 }}>
+                                <Typography variant="body2" sx={{ color: fontColor, fontWeight: 700 }}>
                                   {progress}%
                                 </Typography>
                               </Box>
@@ -830,7 +823,7 @@ function StudentProgress() {
                                 sx={{
                                   height: 8,
                                   borderRadius: 4,
-                                  backgroundColor: '#f1f5f9',
+                                  backgroundColor: offWhiteColors.subtleBg,
                                   '& .MuiLinearProgress-bar': {
                                     background: progress >= 70 ? 'linear-gradient(90deg, #10b981 0%, #22c55e 100%)' : 
                                                progress >= 50 ? 'linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%)' : 
@@ -844,90 +837,66 @@ function StudentProgress() {
                             {/* Stats Grid */}
                             <Grid container spacing={2} sx={{ mb: 3 }}>
                               <Grid item xs={4}>
-                                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#f8fafc', borderRadius: 2 }}>
+                                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: offWhiteColors.subtleBg, borderRadius: 2 }}>
                                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 1 }}>
-                                    <MenuBookIcon sx={{ color: '#6366f1', fontSize: 20, mr: 0.5 }} />
-                                    <Typography variant="h6" sx={{ fontWeight: 700, color: "#1e293b" }}>
+                                    <MenuBookIcon sx={{ color: fontColor, fontSize: 20, mr: 0.5 }} />
+                                    <Typography variant="h6" sx={{ fontWeight: 700, color: fontColor }}>
                                       {student.moduleProgresses?.length || 0}
                                     </Typography>
                                   </Box>
-                                  <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 500 }}>
+                                  <Typography variant="caption" sx={{ color: alpha(fontColor, 0.7), fontWeight: 500 }}>
                                     Modules
                                   </Typography>
                                 </Box>
                               </Grid>
                               <Grid item xs={4}>
-                                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#fef3c7', borderRadius: 2 }}>
+                                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: alpha(fontColor, 0.05), borderRadius: 2 }}>
                                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 1 }}>
-                                    <StarIcon sx={{ color: '#f59e0b', fontSize: 20, mr: 0.5 }} />
-                                    <Typography variant="h6" sx={{ fontWeight: 700, color: "#1e293b" }}>
+                                    <StarIcon sx={{ color: fontColor, fontSize: 20, mr: 0.5 }} />
+                                    <Typography variant="h6" sx={{ fontWeight: 700, color: fontColor }}>
                                       {getTotalStars(student.moduleProgresses)}
                                     </Typography>
                                   </Box>
-                                  <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 500 }}>
+                                  <Typography variant="caption" sx={{ color: alpha(fontColor, 0.7), fontWeight: 500 }}>
                                     Stars
                                   </Typography>
                                 </Box>
                               </Grid>
                               <Grid item xs={4}>
-                                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: '#f0fdf4', borderRadius: 2 }}>
-                                  <Typography variant="h6" sx={{ fontWeight: 700, color: "#1e293b", mb: 1 }}>
+                                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: alpha('#10b981', 0.1), borderRadius: 2 }}>
+                                  <Typography variant="h6" sx={{ fontWeight: 700, color: fontColor, mb: 1 }}>
                                     {getAverageScore(student.moduleProgresses)}%
                                   </Typography>
-                                  <Typography variant="caption" sx={{ color: "#64748b", fontWeight: 500 }}>
+                                  <Typography variant="caption" sx={{ color: alpha(fontColor, 0.7), fontWeight: 500 }}>
                                     Avg Score
                                   </Typography>
                                 </Box>
                               </Grid>
                             </Grid>
 
-                            {/* Action Buttons */}
-                            <Box sx={{ display: 'flex', gap: 1 }}>
-                              <Button
-                                fullWidth
-                                variant="outlined"
-                                startIcon={<TuneIcon />}
-                                onClick={() => handleManageDifficulty(student)}
-                                sx={{
-                                  borderRadius: "12px",
-                                  py: 1.5,
-                                  fontWeight: 600,
-                                  textTransform: 'none',
-                                  borderColor: '#f59e0b',
-                                  color: '#d97706',
-                                  backgroundColor: '#fffbeb',
-                                  "&:hover": {
-                                    borderColor: '#d97706',
-                                    backgroundColor: '#fef3c7',
-                                    transform: 'translateY(-1px)'
-                                  },
-                                  transition: 'all 0.2s ease'
-                                }}
-                              >
-                                Difficulty
-                              </Button>
-                              <Button
-                                fullWidth
-                                variant="contained"
-                                startIcon={<VisibilityIcon />}
-                                onClick={() => handleViewDetails(student)}
-                                sx={{
-                                  borderRadius: "12px",
-                                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                                  py: 1.5,
-                                  fontWeight: 600,
-                                  textTransform: 'none',
-                                  boxShadow: '0 4px 20px rgba(99, 102, 241, 0.3)',
-                                  "&:hover": {
-                                    boxShadow: '0 6px 25px rgba(99, 102, 241, 0.4)',
-                                    transform: 'translateY(-1px)'
-                                  },
-                                  transition: 'all 0.2s ease'
-                                }}
-                              >
-                                Details
-                              </Button>
-                            </Box>
+                            {/* Action Button - Details Only */}
+                            <Button
+                              fullWidth
+                              variant="contained"
+                              startIcon={<VisibilityIcon />}
+                              onClick={() => handleViewDetails(student)}
+                              sx={{
+                                borderRadius: "12px",
+                                backgroundColor: fontColor,
+                                py: 1.5,
+                                fontWeight: 600,
+                                textTransform: 'none',
+                                boxShadow: `0 4px 20px ${alpha(fontColor, 0.3)}`,
+                                "&:hover": {
+                                  backgroundColor: darkMode ? '#5a67d8' : '#1f0750',
+                                  boxShadow: `0 6px 25px ${alpha(fontColor, 0.4)}`,
+                                  transform: 'translateY(-1px)'
+                                },
+                                transition: 'all 0.2s ease'
+                              }}
+                            >
+                              View Details
+                            </Button>
                           </CardContent>
                         </Card>
                       </Grid>
@@ -939,11 +908,11 @@ function StudentProgress() {
                   p: 8, 
                   textAlign: 'center'
                 }}>
-                  <PersonIcon sx={{ fontSize: 64, color: '#cbd5e1', mb: 2 }} />
-                  <Typography variant="h5" sx={{ color: "#64748b", mb: 1, fontWeight: 600 }}>
+                  <PersonIcon sx={{ fontSize: 64, color: alpha(fontColor, 0.3), mb: 2 }} />
+                  <Typography variant="h5" sx={{ color: alpha(fontColor, 0.7), mb: 1, fontWeight: 600 }}>
                     {searchTerm ? "No students found" : "No students to display"}
                   </Typography>
-                  <Typography variant="body1" sx={{ color: "#64748b" }}>
+                  <Typography variant="body1" sx={{ color: alpha(fontColor, 0.7) }}>
                     {searchTerm 
                       ? "Try adjusting your search criteria or filters"
                       : "Students will appear here once they start learning modules"
@@ -954,250 +923,7 @@ function StudentProgress() {
             </Box>
           </Paper>
         </Container>
-      </div>
-
-      {/* Difficulty Management Modal */}
-      <Dialog
-        open={openDifficultyModal}
-        onClose={() => setOpenDifficultyModal(false)}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 4,
-            maxHeight: '90vh'
-          }
-        }}
-      >
-        <DialogTitle sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          fontWeight: 700,
-          color: '#1e293b',
-          borderBottom: '1px solid #e2e8f0',
-          pb: 2
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <TuneIcon sx={{ color: '#6366f1', mr: 2, fontSize: 28 }} />
-            <Box>
-              <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
-                Manage Difficulty Levels
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#64748b' }}>
-                Set personalized difficulty for {selectedStudent?.firstName} {selectedStudent?.lastName}
-              </Typography>
-            </Box>
-          </Box>
-          <IconButton
-            onClick={() => setOpenDifficultyModal(false)}
-            sx={{ 
-              color: '#64748b',
-              backgroundColor: 'rgba(99, 102, 241, 0.1)',
-              '&:hover': {
-                backgroundColor: 'rgba(99, 102, 241, 0.2)',
-                transform: 'scale(1.1)'
-              },
-              transition: 'all 0.2s ease'
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-
-        <DialogContent sx={{ p: 4 }}>
-          {/* Student Header */}
-          {selectedStudent && (
-            <Card sx={{ 
-              mb: 4,
-              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-              color: 'white',
-              borderRadius: 3
-            }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <PersonIcon sx={{ fontSize: 48, mr: 2, opacity: 0.9 }} />
-                  <Box>
-                    <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
-                      {selectedStudent.firstName} {selectedStudent.lastName}
-                    </Typography>
-                    <Typography variant="body1" sx={{ opacity: 0.9, mb: 1 }}>
-                      {selectedStudent.email}
-                    </Typography>
-                    <Chip
-                      label={`Student ID: ${selectedStudent.id}`}
-                      size="small"
-                      sx={{ 
-                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                        color: 'white',
-                        fontWeight: 500
-                      }}
-                    />
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          )}
-
-          {loadingDifficulties ? (
-            <Box sx={{ p: 4, textAlign: 'center' }}>
-              <CircularProgress sx={{ color: "#6366f1", mb: 2 }} />
-              <Typography variant="h6" sx={{ color: '#64748b' }}>
-                Loading lesson difficulties...
-              </Typography>
-            </Box>
-          ) : (
-            <>
-              <Typography variant="h6" sx={{ fontWeight: 700, color: '#1e293b', mb: 3 }}>
-                Lesson Difficulty Settings
-              </Typography>
-
-              <Grid container spacing={3}>
-                {lessons.map((lesson) => (
-                  <Grid item xs={12} sm={6} key={lesson.id}>
-                    <Card sx={{ 
-                      height: '100%',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: 3,
-                      '&:hover': {
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-                        transform: 'translateY(-2px)'
-                      },
-                      transition: 'all 0.2s ease'
-                    }}>
-                      <CardContent sx={{ p: 3 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                          <SchoolIcon sx={{ color: '#6366f1', mr: 2, fontSize: 24 }} />
-                          <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                            {lesson.title}
-                          </Typography>
-                        </Box>
-
-                        <Typography variant="body2" sx={{ color: '#64748b', mb: 3 }}>
-                          {lesson.description}
-                        </Typography>
-
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <Typography variant="body2" sx={{ mr: 1, fontWeight: 500 }}>
-                              Current:
-                            </Typography>
-                            <Chip
-                              label={`${getDifficultyIcon(studentDifficulties[lesson.id] || 'easy')} ${(studentDifficulties[lesson.id] || 'easy').charAt(0).toUpperCase() + (studentDifficulties[lesson.id] || 'easy').slice(1)}`}
-                              size="small"
-                              sx={{
-                                backgroundColor: getDifficultyColor(studentDifficulties[lesson.id] || 'easy').bg,
-                                color: getDifficultyColor(studentDifficulties[lesson.id] || 'easy').color,
-                                fontWeight: 600
-                              }}
-                            />
-                          </Box>
-                        </Box>
-
-                        <Divider sx={{ my: 2 }} />
-
-                        <FormControl fullWidth size="small">
-                          <InputLabel>Set Difficulty</InputLabel>
-                          <Select
-                            value={studentDifficulties[lesson.id] || 'easy'}
-                            label="Set Difficulty"
-                            onChange={(e) => handleDifficultyChange(lesson.id, e.target.value)}
-                            sx={{
-                              '& .MuiOutlinedInput-root': {
-                                borderRadius: 2
-                              }
-                            }}
-                          >
-                            <MenuItem value="easy">
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <span style={{ marginRight: '8px' }}>🌟</span>
-                                Easy
-                              </Box>
-                            </MenuItem>
-                            <MenuItem value="intermediate">
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <span style={{ marginRight: '8px' }}>⭐</span>
-                                Intermediate
-                              </Box>
-                            </MenuItem>
-                            <MenuItem value="difficult">
-                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                <span style={{ marginRight: '8px' }}>🏆</span>
-                                Difficult
-                              </Box>
-                            </MenuItem>
-                          </Select>
-                        </FormControl>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
-
-              {difficultyChanges && (
-                <Alert 
-                  severity="info" 
-                  sx={{ mt: 3, borderRadius: 2 }}
-                  action={
-                    <Button
-                      variant="contained"
-                      startIcon={<SaveIcon />}
-                      onClick={handleSaveDifficulties}
-                      disabled={savingDifficulties}
-                      sx={{
-                        borderRadius: 2,
-                        textTransform: 'none',
-                        fontWeight: 600
-                      }}
-                    >
-                      {savingDifficulties ? 'Saving...' : 'Save Changes'}
-                    </Button>
-                  }
-                >
-                  You have unsaved changes. Click "Save Changes" to apply them.
-                </Alert>
-              )}
-            </>
-          )}
-        </DialogContent>
-
-        <DialogActions sx={{ p: 3, borderTop: '1px solid #e2e8f0' }}>
-          <Button
-            onClick={() => setOpenDifficultyModal(false)}
-            variant="outlined"
-            sx={{
-              borderRadius: 2,
-              textTransform: 'none',
-              fontWeight: 600,
-              color: '#64748b',
-              borderColor: '#d1d5db',
-              '&:hover': {
-                borderColor: '#6366f1',
-                color: '#6366f1'
-              }
-            }}
-          >
-            Close
-          </Button>
-          <Button
-            onClick={handleSaveDifficulties}
-            variant="contained"
-            disabled={!difficultyChanges || savingDifficulties}
-            startIcon={<SaveIcon />}
-            sx={{
-              borderRadius: 2,
-              textTransform: 'none',
-              fontWeight: 600,
-              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #5b5bd6 0%, #7c3aed 100%)'
-              }
-            }}
-          >
-            {savingDifficulties ? 'Saving...' : 'Save All Changes'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      </Box>
 
       {/* Enhanced Detailed Progress Modal */}
       <Dialog
@@ -1209,7 +935,10 @@ function StudentProgress() {
           sx: {
             borderRadius: 4,
             maxHeight: '90vh',
-            background: 'linear-gradient(135deg, #ffffff 0%, #f8faff 100%)'
+            backgroundColor: offWhiteColors.modalBg,
+            background: `linear-gradient(135deg, ${gradientColors.modalGradient1} 0%, ${gradientColors.modalGradient2} 100%)`,
+            boxShadow: darkMode ? '0 20px 60px rgba(0, 0, 0, 0.3)' : '0 20px 60px rgba(0, 0, 0, 0.15)',
+            border: darkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.5)',
           }
         }}
       >
@@ -1218,23 +947,23 @@ function StudentProgress() {
           justifyContent: 'space-between', 
           alignItems: 'center',
           fontWeight: 700,
-          color: '#1e293b',
-          borderBottom: '1px solid #e2e8f0',
+          color: fontColor,
+          borderBottom: `1px solid ${alpha(fontColor, 0.1)}`,
           pb: 2
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <PersonIcon sx={{ color: '#6366f1', mr: 2, fontSize: 28 }} />
-            <Typography variant="h5" sx={{ fontWeight: 700 }}>
+            <PersonIcon sx={{ color: fontColor, mr: 2, fontSize: 28 }} />
+            <Typography variant="h5" sx={{ fontWeight: 700, color: fontColor }}>
               Detailed Student Progress
             </Typography>
           </Box>
           <IconButton
             onClick={() => setOpenDetailModal(false)}
             sx={{ 
-              color: '#64748b',
-              backgroundColor: alpha('#6366f1', 0.1),
+              color: alpha(fontColor, 0.7),
+              backgroundColor: alpha(fontColor, 0.1),
               '&:hover': {
-                backgroundColor: alpha('#6366f1', 0.2),
+                backgroundColor: alpha(fontColor, 0.2),
                 transform: 'scale(1.1)'
               },
               transition: 'all 0.2s ease'
@@ -1246,7 +975,7 @@ function StudentProgress() {
         <DialogContent sx={{ p: 0 }}>
           {loadingDetail ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-              <CircularProgress sx={{ color: "#6366f1" }} />
+              <CircularProgress sx={{ color: fontColor }} />
             </Box>
           ) : detailedProgress ? (
             <Box sx={{ p: 4 }}>
@@ -1254,7 +983,7 @@ function StudentProgress() {
               <Paper sx={{ 
                 p: 4, 
                 mb: 4, 
-                background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                backgroundColor: fontColor,
                 borderRadius: 3,
                 color: 'white'
               }}>
@@ -1332,18 +1061,18 @@ function StudentProgress() {
               </Paper>
 
               {/* Module Progress Details */}
-              <Typography variant="h5" sx={{ fontWeight: 700, color: "#1e293b", mb: 3 }}>
+              <Typography variant="h5" sx={{ fontWeight: 700, color: fontColor, mb: 3 }}>
                 Module Progress Details
               </Typography>
 
               {detailedProgress.moduleProgresses?.length > 0 ? (
                 <Box sx={{ mb: 4 }}>
                   {detailedProgress.moduleProgresses.map((moduleProgress) => (
-                    <Accordion key={moduleProgress.id} sx={{ mb: 3, borderRadius: '16px !important', border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+                    <Accordion key={moduleProgress.id} sx={{ mb: 3, borderRadius: '16px !important', border: `1px solid ${alpha(fontColor, 0.1)}`, backgroundColor: offWhiteColors.surface }}>
                       <AccordionSummary
-                        expandIcon={<ExpandMoreIcon />}
+                        expandIcon={<ExpandMoreIcon sx={{ color: fontColor }} />}
                         sx={{ 
-                          backgroundColor: '#f8fafc',
+                          backgroundColor: offWhiteColors.subtleBg,
                           borderRadius: '16px',
                           p: 2,
                           '&.Mui-expanded': {
@@ -1357,7 +1086,7 @@ function StudentProgress() {
                             <Box sx={{ 
                               p: 2, 
                               borderRadius: 2, 
-                              background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+                              backgroundColor: fontColor,
                               mr: 3,
                               display: 'flex',
                               alignItems: 'center',
@@ -1366,32 +1095,32 @@ function StudentProgress() {
                               <SchoolIcon sx={{ color: 'white', fontSize: 24 }} />
                             </Box>
                             <Box>
-                              <Typography variant="h6" sx={{ fontWeight: 700, color: "#1e293b", mb: 0.5 }}>
+                              <Typography variant="h6" sx={{ fontWeight: 700, color: fontColor, mb: 0.5 }}>
                                 {moduleProgress.moduleName}
                               </Typography>
-                              <Typography variant="body2" sx={{ color: "#64748b" }}>
+                              <Typography variant="body2" sx={{ color: alpha(fontColor, 0.7) }}>
                                 {moduleProgress.completedLessons} of {moduleProgress.totalLessons} lessons completed
                               </Typography>
                             </Box>
                           </Box>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                             <Box sx={{ textAlign: 'center' }}>
-                              <Typography variant="h6" sx={{ fontWeight: 700, color: "#1e293b" }}>
+                              <Typography variant="h6" sx={{ fontWeight: 700, color: fontColor }}>
                                 {Math.round((moduleProgress.completedLessons / moduleProgress.totalLessons) * 100)}%
                               </Typography>
-                              <Typography variant="caption" sx={{ color: "#64748b" }}>
+                              <Typography variant="caption" sx={{ color: alpha(fontColor, 0.7) }}>
                                 Complete
                               </Typography>
                             </Box>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, backgroundColor: '#fef3c7', px: 2, py: 1, borderRadius: 2 }}>
-                              <StarIcon sx={{ color: '#f59e0b', fontSize: 16 }} />
-                              <Typography variant="body2" sx={{ fontWeight: 600, color: '#d97706' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, backgroundColor: alpha(fontColor, 0.05), px: 2, py: 1, borderRadius: 2 }}>
+                              <StarIcon sx={{ color: fontColor, fontSize: 16 }} />
+                              <Typography variant="body2" sx={{ fontWeight: 600, color: fontColor }}>
                                 {moduleProgress.totalStars}
                               </Typography>
                             </Box>
                             {moduleProgress.completed && (
                               <Chip
-                                icon={<CheckCircleIcon />}
+                                icon={<CheckCircleIcon sx={{ color: '#16a34a' }} />}
                                 label="Completed"
                                 size="small"
                                 sx={{ 
@@ -1404,11 +1133,11 @@ function StudentProgress() {
                           </Box>
                         </Box>
                       </AccordionSummary>
-                      <AccordionDetails sx={{ p: 4, backgroundColor: 'white' }}>
+                      <AccordionDetails sx={{ p: 4, backgroundColor: offWhiteColors.surface }}>
                         <Grid container spacing={4}>
                           <Grid item xs={12} md={8}>
                             <Box sx={{ mb: 3 }}>
-                              <Typography variant="h6" sx={{ color: "#1e293b", mb: 2, fontWeight: 600 }}>
+                              <Typography variant="h6" sx={{ color: fontColor, mb: 2, fontWeight: 600 }}>
                                 Progress Overview
                               </Typography>
                               <LinearProgress 
@@ -1417,45 +1146,45 @@ function StudentProgress() {
                                 sx={{
                                   height: 12,
                                   borderRadius: 6,
-                                  backgroundColor: '#f1f5f9',
+                                  backgroundColor: offWhiteColors.subtleBg,
                                   mb: 2,
                                   '& .MuiLinearProgress-bar': {
-                                    background: moduleProgress.completed ? 'linear-gradient(90deg, #10b981 0%, #22c55e 100%)' : 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%)',
+                                    background: moduleProgress.completed ? 'linear-gradient(90deg, #10b981 0%, #22c55e 100%)' : `linear-gradient(90deg, ${fontColor} 0%, ${alpha(fontColor, 0.7)} 100%)`,
                                     borderRadius: 6
                                   }
                                 }}
                               />
                               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <Typography variant="body2" sx={{ color: "#64748b", fontWeight: 500 }}>
+                                <Typography variant="body2" sx={{ color: alpha(fontColor, 0.7), fontWeight: 500 }}>
                                   {moduleProgress.completedLessons} completed
                                 </Typography>
-                                <Typography variant="body2" sx={{ color: "#64748b", fontWeight: 500 }}>
+                                <Typography variant="body2" sx={{ color: alpha(fontColor, 0.7), fontWeight: 500 }}>
                                   {moduleProgress.totalLessons - moduleProgress.completedLessons} remaining
                                 </Typography>
                               </Box>
                             </Box>
                           </Grid>
                           <Grid item xs={12} md={4}>
-                            <Typography variant="h6" sx={{ color: "#1e293b", mb: 2, fontWeight: 600 }}>
+                            <Typography variant="h6" sx={{ color: fontColor, mb: 2, fontWeight: 600 }}>
                               Performance Metrics
                             </Typography>
                             <Grid container spacing={2}>
                               <Grid item xs={12}>
-                                <Paper sx={{ p: 3, textAlign: 'center', backgroundColor: '#fef3c7', border: '1px solid #fcd34d' }}>
-                                  <Typography variant="h5" sx={{ fontWeight: 700, color: "#d97706", mb: 1 }}>
+                                <Paper sx={{ p: 3, textAlign: 'center', backgroundColor: alpha(fontColor, 0.05), border: `1px solid ${alpha(fontColor, 0.1)}` }}>
+                                  <Typography variant="h5" sx={{ fontWeight: 700, color: fontColor, mb: 1 }}>
                                     {moduleProgress.totalStars}
                                   </Typography>
-                                  <Typography variant="body2" sx={{ color: "#92400e", fontWeight: 500 }}>
+                                  <Typography variant="body2" sx={{ color: alpha(fontColor, 0.7), fontWeight: 500 }}>
                                     Stars Earned
                                   </Typography>
                                 </Paper>
                               </Grid>
                               <Grid item xs={12}>
-                                <Paper sx={{ p: 3, textAlign: 'center', backgroundColor: '#dbeafe', border: '1px solid #93c5fd' }}>
-                                  <Typography variant="h5" sx={{ fontWeight: 700, color: "#2563eb", mb: 1 }}>
+                                <Paper sx={{ p: 3, textAlign: 'center', backgroundColor: alpha('#2563eb', 0.05), border: '1px solid rgba(37, 99, 235, 0.1)' }}>
+                                  <Typography variant="h5" sx={{ fontWeight: 700, color: '#2563eb', mb: 1 }}>
                                     {Math.round(moduleProgress.averageScore)}%
                                   </Typography>
-                                  <Typography variant="body2" sx={{ color: "#1d4ed8", fontWeight: 500 }}>
+                                  <Typography variant="body2" sx={{ color: '#1d4ed8', fontWeight: 500 }}>
                                     Average Score
                                   </Typography>
                                 </Paper>
@@ -1464,15 +1193,15 @@ function StudentProgress() {
                           </Grid>
                           <Grid item xs={12}>
                             <Divider sx={{ my: 2 }} />
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, p: 3, backgroundColor: '#f8fafc', borderRadius: 3 }}>
-                              <TimerIcon sx={{ color: '#64748b', fontSize: 24 }} />
-                              <Typography variant="body1" sx={{ color: "#64748b", fontWeight: 500 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, p: 3, backgroundColor: offWhiteColors.subtleBg, borderRadius: 3 }}>
+                              <TimerIcon sx={{ color: alpha(fontColor, 0.7), fontSize: 24 }} />
+                              <Typography variant="body1" sx={{ color: alpha(fontColor, 0.7), fontWeight: 500 }}>
                                 <strong>Started:</strong> {formatDate(moduleProgress.createdAt)}
                               </Typography>
                               {moduleProgress.completedAt && (
                                 <>
                                   <CheckIcon sx={{ color: '#10b981', fontSize: 24 }} />
-                                  <Typography variant="body1" sx={{ color: "#64748b", fontWeight: 500 }}>
+                                  <Typography variant="body1" sx={{ color: alpha(fontColor, 0.7), fontWeight: 500 }}>
                                     <strong>Completed:</strong> {formatDate(moduleProgress.completedAt)}
                                   </Typography>
                                 </>
@@ -1488,15 +1217,15 @@ function StudentProgress() {
                 <Paper sx={{ 
                   p: 6, 
                   textAlign: 'center', 
-                  backgroundColor: '#f8fafc',
-                  border: '2px dashed #cbd5e1',
+                  backgroundColor: offWhiteColors.subtleBg,
+                  border: `2px dashed ${alpha(fontColor, 0.2)}`,
                   borderRadius: 4
                 }}>
-                  <SchoolIcon sx={{ fontSize: 64, color: '#cbd5e1', mb: 2 }} />
-                  <Typography variant="h5" sx={{ color: "#64748b", mb: 1, fontWeight: 600 }}>
+                  <SchoolIcon sx={{ fontSize: 64, color: alpha(fontColor, 0.3), mb: 2 }} />
+                  <Typography variant="h5" sx={{ color: alpha(fontColor, 0.7), mb: 1, fontWeight: 600 }}>
                     No Module Progress
                   </Typography>
-                  <Typography variant="body1" sx={{ color: "#64748b" }}>
+                  <Typography variant="body1" sx={{ color: alpha(fontColor, 0.7) }}>
                     This student hasn't started any learning modules yet.
                   </Typography>
                 </Paper>
@@ -1505,42 +1234,42 @@ function StudentProgress() {
               {/* Lesson Progress Summary */}
               {detailedProgress.lessonProgresses?.length > 0 && (
                 <Box>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: "#1e293b", mb: 3 }}>
+                  <Typography variant="h5" sx={{ fontWeight: 700, color: fontColor, mb: 3 }}>
                     Recent Lesson Activity
                   </Typography>
-                  <TableContainer component={Paper} sx={{ borderRadius: 3, border: '1px solid #e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+                  <TableContainer component={Paper} sx={{ borderRadius: 3, border: `1px solid ${alpha(fontColor, 0.1)}`, backgroundColor: offWhiteColors.surface }}>
                     <Table>
                       <TableHead>
-                        <TableRow sx={{ backgroundColor: '#f8fafc' }}>
-                          <TableCell sx={{ fontWeight: 700, color: "#1e293b", py: 2 }}>Lesson</TableCell>
-                          <TableCell sx={{ fontWeight: 700, color: "#1e293b", py: 2 }}>Score</TableCell>
-                          <TableCell sx={{ fontWeight: 700, color: "#1e293b", py: 2 }}>Stars</TableCell>
-                          <TableCell sx={{ fontWeight: 700, color: "#1e293b", py: 2 }}>Status</TableCell>
-                          <TableCell sx={{ fontWeight: 700, color: "#1e293b", py: 2 }}>Date</TableCell>
+                        <TableRow sx={{ backgroundColor: offWhiteColors.subtleBg }}>
+                          <TableCell sx={{ fontWeight: 700, color: fontColor, py: 2 }}>Lesson</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: fontColor, py: 2 }}>Score</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: fontColor, py: 2 }}>Stars</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: fontColor, py: 2 }}>Status</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: fontColor, py: 2 }}>Date</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {detailedProgress.lessonProgresses.slice(0, 10).map((lessonProgress) => (
-                          <TableRow key={lessonProgress.id} hover sx={{ '&:hover': { backgroundColor: '#f8fafc' } }}>
+                          <TableRow key={lessonProgress.id} hover sx={{ '&:hover': { backgroundColor: offWhiteColors.subtleBg } }}>
                             <TableCell sx={{ py: 2 }}>
-                              <Typography variant="body1" sx={{ fontWeight: 600, color: "#1e293b" }}>
+                              <Typography variant="body1" sx={{ fontWeight: 600, color: fontColor }}>
                                 {lessonProgress.lessonTitle}
                               </Typography>
                             </TableCell>
                             <TableCell sx={{ py: 2 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                                <Typography variant="body1" sx={{ fontWeight: 600, color: fontColor }}>
                                   {lessonProgress.score}
                                 </Typography>
-                                <Typography variant="body2" sx={{ color: "#64748b" }}>
+                                <Typography variant="body2" sx={{ color: alpha(fontColor, 0.7) }}>
                                   / {lessonProgress.maxScore}
                                 </Typography>
                               </Box>
                             </TableCell>
                             <TableCell sx={{ py: 2 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <StarIcon sx={{ color: '#f59e0b', fontSize: 18 }} />
-                                <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                                <StarIcon sx={{ color: fontColor, fontSize: 18 }} />
+                                <Typography variant="body1" sx={{ fontWeight: 600, color: fontColor }}>
                                   {lessonProgress.starsEarned}
                                 </Typography>
                               </Box>
@@ -1558,7 +1287,7 @@ function StudentProgress() {
                               />
                             </TableCell>
                             <TableCell sx={{ py: 2 }}>
-                              <Typography variant="body2" sx={{ color: "#64748b", fontWeight: 500 }}>
+                              <Typography variant="body2" sx={{ color: alpha(fontColor, 0.7), fontWeight: 500 }}>
                                 {formatDate(lessonProgress.completedAt || lessonProgress.createdAt)}
                               </Typography>
                             </TableCell>
@@ -1572,7 +1301,7 @@ function StudentProgress() {
             </Box>
           ) : (
             <Box sx={{ p: 6, textAlign: 'center' }}>
-              <Typography variant="h6" sx={{ color: "#64748b" }}>
+              <Typography variant="h6" sx={{ color: alpha(fontColor, 0.7) }}>
                 No detailed progress data available
               </Typography>
             </Box>
@@ -1593,13 +1322,18 @@ function StudentProgress() {
           sx={{ 
             width: '100%',
             borderRadius: 2,
-            fontWeight: 500
+            fontWeight: 500,
+            backgroundColor: offWhiteColors.cardBg,
+            color: fontColor,
+            '& .MuiAlert-message': {
+              color: fontColor,
+            }
           }}
         >
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </div>
+    </Box>
   );
 }
 

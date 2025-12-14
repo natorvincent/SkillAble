@@ -1,6 +1,7 @@
 // src/App.js
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
+import { DarkModeProvider } from './components/DarkModeContext';
 import './App.css';
 import Login from './components/login-register/Login';
 import Register from './components/login-register/Register';
@@ -120,250 +121,252 @@ function App() {
   }
 
   return (
-    <Router>
-      <Routes>
-        {/* Public routes (accessible without login) */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/about" element={<AboutUsPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        
-        {/* Auth routes */}
-        <Route path="/login" element={
-          <RouteHandler>
-            <Login />
-          </RouteHandler>
-        } />
-        
-        <Route path="/register" element={
-          <RouteHandler>
-            <Register />
-          </RouteHandler>
-        } />
-        
-        {/* Dashboard routes - NO authentication checks to prevent loops */}
-        <Route path="/studentdashboard" element={<StudentDashboard />} />
-        <Route path="/teacherdashboard" element={<TeacherDashboard />} />
-        
-        {/* Protected routes */}
-        <Route path="/account" element={
-          <RouteHandler requireAuth>
-            <AccountPage />
-          </RouteHandler>
-        } />
-        
-        <Route path="/badges" element={
-          <RouteHandler requireAuth>
-            <BadgesPage />
-          </RouteHandler>
-        } />
-
-        <Route path="/module/:moduleId" element={
-          <RouteHandler requireAuth>
-            <ModuleDetails />
-          </RouteHandler>
-        } />
-
-        <Route path="/manageStudents" element={
-          <RouteHandler requireAuth requireRole="TEACHER">
-            <ManageStudents />
-          </RouteHandler>
-        } />
-        
-        <Route path="/studentProgress" element={
-          <RouteHandler requireAuth requireRole="TEACHER">
-            <StudentProgress />
-          </RouteHandler>
-        } />
-
-        {/* Cooking Routes */}
-        <Route path="/lesson/cooking/level-1/:moduleId/:lessonId" element={
-          <RouteHandler requireAuth>
-            <CookingLevel1 />
-          </RouteHandler>
-        } />
-
-        <Route path="/lesson/cooking/level-2/:moduleId/:lessonId" element={
-          <RouteHandler requireAuth>
-            <CookingLevel2 />
-          </RouteHandler>
-        } />
-
-        <Route path="/lesson/cooking/level-3/:moduleId/:lessonId" element={
-          <RouteHandler requireAuth>
-            <CookingLevel3 />
-          </RouteHandler>
-        } />
-
-        <Route path="/lesson/cooking/level-4/:moduleId/:lessonId" element={
-          <RouteHandler requireAuth>
-            <CookingLevel4 />
-          </RouteHandler>
-        } />
-
-        <Route path="/lesson/cooking/level-5/:moduleId/:lessonId" element={
-          <RouteHandler requireAuth>
-            <CookingLevel5 />
-          </RouteHandler>
-        } />
-
-        {/* Cooking Routes - without moduleId */}
-        <Route path="/lesson/cooking/level-1/:lessonId" element={
-          <RouteHandler requireAuth>
-            <CookingLevel1 />
-          </RouteHandler>
-        } />
-
-        <Route path="/lesson/cooking/level-2/:lessonId" element={
-          <RouteHandler requireAuth>
-            <CookingLevel2 />
-          </RouteHandler>
-        } />
-
-        <Route path="/lesson/cooking/level-3/:lessonId" element={
-          <RouteHandler requireAuth>
-            <CookingLevel3 />
-          </RouteHandler>
-        } />
-
-        <Route path="/lesson/cooking/level-4/:lessonId" element={
-          <RouteHandler requireAuth>
-            <CookingLevel4 />
-          </RouteHandler>
-        } />
-
-        <Route path="/lesson/cooking/level-5/:lessonId" element={
-          <RouteHandler requireAuth>
-            <CookingLevel5 />
-          </RouteHandler>
-        } />
-
-        {/* Cooking Routes - Fallback */}
-        <Route path="/lesson/cooking/level-1" element={
-          <RouteHandler requireAuth>
-            <Navigate to="/lesson/cooking/level-1/1/1" replace />
-          </RouteHandler>
-        } />
-
-        <Route path="/lesson/cooking/level-2" element={
-          <RouteHandler requireAuth>
-            <Navigate to="/lesson/cooking/level-2/1/2" replace />
-          </RouteHandler>
-        } />
+    <DarkModeProvider> {/* Wrap entire app with DarkModeProvider */}
+      <Router>
+        <Routes>
+          {/* Public routes (accessible without login) */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/about" element={<AboutUsPage />} />
+          <Route path="/contact" element={<ContactPage />} />
           
-        <Route path="/lesson/cooking/level-3" element={
-          <RouteHandler requireAuth>
-            <Navigate to="/lesson/cooking/level-3/1/3" replace />
-          </RouteHandler>
-        } />
-
-        <Route path="/lesson/cooking/level-4" element={
-          <RouteHandler requireAuth>
-            <Navigate to="/lesson/cooking/level-4/1/4" replace />
-          </RouteHandler>
-        } />
+          {/* Auth routes */}
+          <Route path="/login" element={
+            <RouteHandler>
+              <Login />
+            </RouteHandler>
+          } />
           
-        <Route path="/lesson/cooking/level-5" element={
-          <RouteHandler requireAuth>
-            <Navigate to="/lesson/cooking/level-5/1/5" replace />
-          </RouteHandler>
-        } />
-
-        {/* Original cooking route */}
-        <Route path="/lesson/cooking/:lessonId" element={
-          <RouteHandler requireAuth>
-            <CookingLevel1 />
-          </RouteHandler>
-        } />
-
-        {/* Household Chores Routes */}
-        <Route path="/lesson/household-chores/level-1/:lessonId" element={
-          <RouteHandler requireAuth>
-            <HouseholdLevel1 />
-          </RouteHandler>
-        } />
+          <Route path="/register" element={
+            <RouteHandler>
+              <Register />
+            </RouteHandler>
+          } />
           
-        <Route path="/lesson/household-chores/level-2/:lessonId" element={
-          <RouteHandler requireAuth>
-            <HouseholdLevel2 />
-          </RouteHandler>
-        } />
+          {/* Dashboard routes - NO authentication checks to prevent loops */}
+          <Route path="/studentdashboard" element={<StudentDashboard />} />
+          <Route path="/teacherdashboard" element={<TeacherDashboard />} />
+          
+          {/* Protected routes */}
+          <Route path="/account" element={
+            <RouteHandler requireAuth>
+              <AccountPage />
+            </RouteHandler>
+          } />
+          
+          <Route path="/badges" element={
+            <RouteHandler requireAuth>
+              <BadgesPage />
+            </RouteHandler>
+          } />
 
-        <Route path="/lesson/household-chores/level-3/:lessonId" element={
-          <RouteHandler requireAuth>
-            <HouseholdLevel3 />
-          </RouteHandler>
-        } />
+          <Route path="/module/:moduleId" element={
+            <RouteHandler requireAuth>
+              <ModuleDetails />
+            </RouteHandler>
+          } />
 
-        <Route path="/lesson/household-chores/level-4/:lessonId" element={
-          <RouteHandler requireAuth>
-            <HouseholdLevel4 />
-          </RouteHandler>
-        } />
+          <Route path="/manageStudents" element={
+            <RouteHandler requireAuth requireRole="TEACHER">
+              <ManageStudents />
+            </RouteHandler>
+          } />
+          
+          <Route path="/studentProgress" element={
+            <RouteHandler requireAuth requireRole="TEACHER">
+              <StudentProgress />
+            </RouteHandler>
+          } />
 
-        <Route path="/lesson/household-chores/:lessonId" element={
-          <RouteHandler requireAuth>
-            <HouseholdLevel1 />
-          </RouteHandler>
-        } />
+          {/* Cooking Routes */}
+          <Route path="/lesson/cooking/level-1/:moduleId/:lessonId" element={
+            <RouteHandler requireAuth>
+              <CookingLevel1 />
+            </RouteHandler>
+          } />
 
-        {/* Personal Hygiene Level Routes */}
-        <Route path="/lesson/hygiene/level-1/:lessonId" element={
-          <RouteHandler requireAuth>
-            <PersonalHygieneLevel1 />
-          </RouteHandler>
-        } />
+          <Route path="/lesson/cooking/level-2/:moduleId/:lessonId" element={
+            <RouteHandler requireAuth>
+              <CookingLevel2 />
+            </RouteHandler>
+          } />
 
-        <Route path="/lesson/hygiene/level-2/:moduleId/:lessonId" element={
-          <RouteHandler requireAuth>
-            <PersonalHygieneLevel2 />
-          </RouteHandler>
-        } />
+          <Route path="/lesson/cooking/level-3/:moduleId/:lessonId" element={
+            <RouteHandler requireAuth>
+              <CookingLevel3 />
+            </RouteHandler>
+          } />
 
-        <Route path="/lesson/hygiene/level-3/:moduleId/:lessonId" element={
-          <RouteHandler requireAuth>
-            <PersonalHygieneLevel3 />
-          </RouteHandler>
-        } />
+          <Route path="/lesson/cooking/level-4/:moduleId/:lessonId" element={
+            <RouteHandler requireAuth>
+              <CookingLevel4 />
+            </RouteHandler>
+          } />
 
-        <Route path="/lesson/hygiene/level-4/:lessonId" element={
-          <RouteHandler requireAuth>
-            <PersonalHygieneLevel4 />
-          </RouteHandler>
-        } />
+          <Route path="/lesson/cooking/level-5/:moduleId/:lessonId" element={
+            <RouteHandler requireAuth>
+              <CookingLevel5 />
+            </RouteHandler>
+          } />
 
-        
+          {/* Cooking Routes - without moduleId */}
+          <Route path="/lesson/cooking/level-1/:lessonId" element={
+            <RouteHandler requireAuth>
+              <CookingLevel1 />
+            </RouteHandler>
+          } />
 
-        <Route path="/lesson/hygiene/level-5/:lessonId" element={
-          <RouteHandler requireAuth>
-            <PersonalHygieneLevel5 />
-          </RouteHandler>
-        } />
+          <Route path="/lesson/cooking/level-2/:lessonId" element={
+            <RouteHandler requireAuth>
+              <CookingLevel2 />
+            </RouteHandler>
+          } />
 
-        {/* Generic hygiene route */}
-        <Route path="/lesson/hygiene/:lessonId" element={
-          <RouteHandler requireAuth>
-            <PersonalHygieneLevel1 />
-          </RouteHandler>
-        } />
+          <Route path="/lesson/cooking/level-3/:lessonId" element={
+            <RouteHandler requireAuth>
+              <CookingLevel3 />
+            </RouteHandler>
+          } />
 
-        
-        {/* Admin Routes */}
-        <Route 
-          path="/admin/*" 
-          element={
-            <AdminRoute>
-              <AdminDashboard />
-            </AdminRoute>
-          } 
-        /> 
-        
-        {/* Legacy homepage route */}
-        <Route path="/homepage" element={<Navigate to="/" replace />} />
-        
-        {/* Catch-all route */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Router>
+          <Route path="/lesson/cooking/level-4/:lessonId" element={
+            <RouteHandler requireAuth>
+              <CookingLevel4 />
+            </RouteHandler>
+          } />
+
+          <Route path="/lesson/cooking/level-5/:lessonId" element={
+            <RouteHandler requireAuth>
+              <CookingLevel5 />
+            </RouteHandler>
+          } />
+
+          {/* Cooking Routes - Fallback */}
+          <Route path="/lesson/cooking/level-1" element={
+            <RouteHandler requireAuth>
+              <Navigate to="/lesson/cooking/level-1/1/1" replace />
+            </RouteHandler>
+          } />
+
+          <Route path="/lesson/cooking/level-2" element={
+            <RouteHandler requireAuth>
+              <Navigate to="/lesson/cooking/level-2/1/2" replace />
+            </RouteHandler>
+          } />
+            
+          <Route path="/lesson/cooking/level-3" element={
+            <RouteHandler requireAuth>
+              <Navigate to="/lesson/cooking/level-3/1/3" replace />
+            </RouteHandler>
+          } />
+
+          <Route path="/lesson/cooking/level-4" element={
+            <RouteHandler requireAuth>
+              <Navigate to="/lesson/cooking/level-4/1/4" replace />
+            </RouteHandler>
+          } />
+            
+          <Route path="/lesson/cooking/level-5" element={
+            <RouteHandler requireAuth>
+              <Navigate to="/lesson/cooking/level-5/1/5" replace />
+            </RouteHandler>
+          } />
+
+          {/* Original cooking route */}
+          <Route path="/lesson/cooking/:lessonId" element={
+            <RouteHandler requireAuth>
+              <CookingLevel1 />
+            </RouteHandler>
+          } />
+
+          {/* Household Chores Routes */}
+          <Route path="/lesson/household-chores/level-1/:lessonId" element={
+            <RouteHandler requireAuth>
+              <HouseholdLevel1 />
+            </RouteHandler>
+          } />
+            
+          <Route path="/lesson/household-chores/level-2/:lessonId" element={
+            <RouteHandler requireAuth>
+              <HouseholdLevel2 />
+            </RouteHandler>
+          } />
+
+          <Route path="/lesson/household-chores/level-3/:lessonId" element={
+            <RouteHandler requireAuth>
+              <HouseholdLevel3 />
+            </RouteHandler>
+          } />
+
+          <Route path="/lesson/household-chores/level-4/:lessonId" element={
+            <RouteHandler requireAuth>
+              <HouseholdLevel4 />
+            </RouteHandler>
+          } />
+
+          <Route path="/lesson/household-chores/:lessonId" element={
+            <RouteHandler requireAuth>
+              <HouseholdLevel1 />
+            </RouteHandler>
+          } />
+
+          {/* Personal Hygiene Level Routes */}
+          <Route path="/lesson/hygiene/level-1/:lessonId" element={
+            <RouteHandler requireAuth>
+              <PersonalHygieneLevel1 />
+            </RouteHandler>
+          } />
+
+          <Route path="/lesson/hygiene/level-2/:moduleId/:lessonId" element={
+            <RouteHandler requireAuth>
+              <PersonalHygieneLevel2 />
+            </RouteHandler>
+          } />
+
+          <Route path="/lesson/hygiene/level-3/:moduleId/:lessonId" element={
+            <RouteHandler requireAuth>
+              <PersonalHygieneLevel3 />
+            </RouteHandler>
+          } />
+
+          <Route path="/lesson/hygiene/level-4/:lessonId" element={
+            <RouteHandler requireAuth>
+              <PersonalHygieneLevel4 />
+            </RouteHandler>
+          } />
+
+          
+
+          <Route path="/lesson/hygiene/level-5/:lessonId" element={
+            <RouteHandler requireAuth>
+              <PersonalHygieneLevel5 />
+            </RouteHandler>
+          } />
+
+          {/* Generic hygiene route */}
+          <Route path="/lesson/hygiene/:lessonId" element={
+            <RouteHandler requireAuth>
+              <PersonalHygieneLevel1 />
+            </RouteHandler>
+          } />
+
+          
+          {/* Admin Routes */}
+          <Route 
+            path="/admin/*" 
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            } 
+          /> 
+          
+          {/* Legacy homepage route */}
+          <Route path="/homepage" element={<Navigate to="/" replace />} />
+          
+          {/* Catch-all route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </DarkModeProvider>
   );
 }
 
