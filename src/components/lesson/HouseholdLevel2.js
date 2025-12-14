@@ -88,6 +88,8 @@ const HouseholdLevel2 = () => {
   const [collectedTrash, setCollectedTrash] = useState([]);
   const [bubbles, setBubbles] = useState([]);
   const [taskStars, setTaskStars] = useState([]);
+  const [draggingPosition, setDraggingPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
   const navigate = useNavigate();
   const { lessonId } = useParams();
 
@@ -151,6 +153,11 @@ const HouseholdLevel2 = () => {
     { id: 5, name: 'Duster', image: dusterImg, step: 5, collected: false, used: false }
   ]);
 
+  // Refs for game area
+  const gameAreaRef = useRef(null);
+  const basinRef = useRef(null);
+  const trashCanRef = useRef(null);
+
   // Add twinkling stars effect for task completion
   const triggerTaskStars = (x, y, count = 3) => {
     const newStars = Array.from({ length: count }, (_, index) => ({
@@ -186,10 +193,6 @@ const HouseholdLevel2 = () => {
     const bubbleInterval = setInterval(createBubbles, 3000);
     return () => clearInterval(bubbleInterval);
   }, []);
-
-  // Refs for drop zones
-  const basinRef = useRef(null);
-  const trashCanRef = useRef(null);
 
   // Filter items for current step
   const currentStepItems = allItems.filter(item => item.step === currentStep && !item.collected);
@@ -243,6 +246,7 @@ const HouseholdLevel2 = () => {
           setCurrentStep(nextStep);
           setScore(prev => prev + 20);
           setSelectedTool(null);
+          setShowDropZone(false);
         }, 1500);
       } else {
         setTimeout(() => {
@@ -271,35 +275,95 @@ const HouseholdLevel2 = () => {
       setSelectedTool(tool);
       if (tool.step === 1 || tool.step === 2) {
         setShowDropZone(true);
+      } else {
+        setShowDropZone(false);
       }
     }
   };
 
-  // Drag and drop handlers
-  const handleDragStart = (e, item) => {
-    e.dataTransfer.setData('text/plain', JSON.stringify(item));
-    setDraggedItem(item);
+  // Mouse drag handlers
+  const handleMouseDown = (e, item) => {
+    if (selectedTool?.step === item.step) {
+      e.preventDefault();
+      setIsDragging(true);
+      setDraggedItem(item);
+      updateDraggingPosition(e);
+    }
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
+  const handleMouseMove = (e) => {
+    if (isDragging && draggedItem) {
+      updateDraggingPosition(e);
+    }
   };
 
-  // Drop handler for laundry and trash
-  const handleDrop = (e, target) => {
-    e.preventDefault();
-    if (!draggedItem || !selectedTool) return;
+  const handleMouseUp = (e) => {
+    if (isDragging && draggedItem) {
+      // Check if dropped over drop zone
+      const rect = gameAreaRef.current?.getBoundingClientRect();
+      if (rect) {
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        
+        // Check for basin drop zone (Step 1)
+        if (currentStep === 1 && selectedTool?.step === 1 && basinRef.current) {
+          const basinRect = basinRef.current.getBoundingClientRect();
+          const basinCenterX = basinRect.left + basinRect.width / 2;
+          const basinCenterY = basinRect.top + basinRect.height / 2;
+          
+          if (
+            e.clientX >= basinRect.left &&
+            e.clientX <= basinRect.right &&
+            e.clientY >= basinRect.top &&
+            e.clientY <= basinRect.bottom &&
+            draggedItem.type === 'laundry'
+          ) {
+            handleDropSuccess(draggedItem, 'basin');
+          }
+        }
+        
+        // Check for trash can drop zone (Step 2)
+        if (currentStep === 2 && selectedTool?.step === 2 && trashCanRef.current) {
+          const trashRect = trashCanRef.current.getBoundingClientRect();
+          
+          if (
+            e.clientX >= trashRect.left &&
+            e.clientX <= trashRect.right &&
+            e.clientY >= trashRect.top &&
+            e.clientY <= trashRect.bottom &&
+            draggedItem.type === 'trash'
+          ) {
+            handleDropSuccess(draggedItem, 'trash');
+          }
+        }
+      }
+      
+      setIsDragging(false);
+      setDraggedItem(null);
+    }
+  };
 
-    if (currentStep === 1 && target === 'basin' && draggedItem.type === 'laundry' && selectedTool.step === 1) {
+  const updateDraggingPosition = (e) => {
+    const rect = gameAreaRef.current?.getBoundingClientRect();
+    if (rect) {
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      setDraggingPosition({ x, y });
+    }
+  };
+
+  // Handle successful drop
+  const handleDropSuccess = (item, target) => {
+    if (currentStep === 1 && target === 'basin' && item.type === 'laundry' && selectedTool?.step === 1) {
       setAllItems(prev => 
-        prev.map(item => 
-          item.id === draggedItem.id ? { ...item, collected: true } : item
+        prev.map(i => 
+          i.id === item.id ? { ...i, collected: true } : i
         )
       );
       setCollectedLaundry(prev => [
         ...prev,
         {
-          ...draggedItem,
+          ...item,
           containerPosition: {
             x: Math.random() * 60 + 20,
             y: Math.random() * 30 + 50
@@ -308,18 +372,18 @@ const HouseholdLevel2 = () => {
         }
       ]);
       setScore(prev => prev + 8);
-      triggerTaskStars(draggedItem.x, draggedItem.y, 6);
+      triggerTaskStars(item.x, item.y, 6);
       
-    } else if (currentStep === 2 && target === 'trash' && draggedItem.type === 'trash' && selectedTool.step === 2) {
+    } else if (currentStep === 2 && target === 'trash' && item.type === 'trash' && selectedTool?.step === 2) {
       setAllItems(prev => 
-        prev.map(item => 
-          item.id === draggedItem.id ? { ...item, collected: true } : item
+        prev.map(i => 
+          i.id === item.id ? { ...i, collected: true } : i
         )
       );
       setCollectedTrash(prev => [
         ...prev,
         {
-          ...draggedItem,
+          ...item,
           containerPosition: {
             x: Math.random() * 50 + 25,
             y: Math.random() * 30 + 35
@@ -328,9 +392,11 @@ const HouseholdLevel2 = () => {
         }
       ]);
       setScore(prev => prev + 8);
-      triggerTaskStars(draggedItem.x, draggedItem.y, 6);
+      triggerTaskStars(item.x, item.y, 6);
     }
 
+    // Reset dragging state
+    setIsDragging(false);
     setDraggedItem(null);
   };
 
@@ -338,7 +404,9 @@ const HouseholdLevel2 = () => {
   const handleStep3Clean = (e) => {
     if (currentStep !== 3 || !selectedTool || selectedTool?.step !== 3) return;
 
-    const rect = e.currentTarget.getBoundingClientRect();
+    const rect = gameAreaRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
@@ -394,7 +462,9 @@ const HouseholdLevel2 = () => {
   const handleStep4Clean = (e) => {
     if (currentStep !== 4 || !selectedTool || selectedTool?.step !== 4) return;
 
-    const rect = e.currentTarget.getBoundingClientRect();
+    const rect = gameAreaRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
@@ -450,7 +520,9 @@ const HouseholdLevel2 = () => {
   const handleStep5Clean = (e) => {
     if (currentStep !== 5 || !selectedTool || selectedTool?.step !== 5) return;
 
-    const rect = e.currentTarget.getBoundingClientRect();
+    const rect = gameAreaRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
@@ -508,6 +580,8 @@ const HouseholdLevel2 = () => {
     setGameCompleted(false);
     setScore(0);
     setSelectedTool(null);
+    setIsDragging(false);
+    setDraggedItem(null);
     setAllItems(prev => prev.map(item => ({ ...item, collected: false })));
     setDirtSpots(prev => prev.map(spot => ({ ...spot, cleaned: false, cleaning: false })));
     setCobwebs(prev => prev.map(web => ({ ...web, cleaned: false, cleaning: false })));
@@ -519,6 +593,7 @@ const HouseholdLevel2 = () => {
     setCollectedLaundry([]);
     setCollectedTrash([]);
     setTaskStars([]);
+    setShowDropZone(false);
   };
 
   const handleGoHome = () => {
@@ -640,19 +715,29 @@ const HouseholdLevel2 = () => {
   // Main game screen
   return (
     <ThemeProvider theme={theme}>
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh',
-        backgroundImage: `url(${mainGameBackground})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
-        backgroundColor: '#d0eaff',
-        overflow: 'hidden'
-      }}>
+      <div 
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundImage: `url(${mainGameBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          backgroundColor: '#d0eaff',
+          overflow: 'hidden'
+        }}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={() => {
+          if (isDragging) {
+            setIsDragging(false);
+            setDraggedItem(null);
+          }
+        }}
+      >
         
         {/* Task Completion Stars */}
         {taskStars.map(star => (
@@ -904,22 +989,24 @@ const HouseholdLevel2 = () => {
             </Box>
 
             {/* Interactive Game Area */}
-            <div style={{
-              position: 'absolute',
-              top: '100px',
-              left: 0,
-              right: 0,
-              bottom: '10px', 
-              top: '10px',
-              cursor: (currentStep >= 3 && currentStep <= 5) && selectedTool ? 'crosshair' : 'default',
-              overflow: 'hidden'
-            }}
-            onMouseMove={
-              currentStep === 3 ? handleStep3Clean : 
-              currentStep === 4 ? handleStep4Clean : 
-              currentStep === 5 ? handleStep5Clean : 
-              undefined
-            }
+            <div 
+              ref={gameAreaRef}
+              style={{
+                position: 'absolute',
+                top: '100px',
+                left: 0,
+                right: 0,
+                bottom: '10px', 
+                top: '10px',
+                cursor: (currentStep >= 3 && currentStep <= 5) && selectedTool ? 'crosshair' : (isDragging ? 'grabbing' : 'default'),
+                overflow: 'hidden'
+              }}
+              onMouseMove={
+                currentStep === 3 ? handleStep3Clean : 
+                currentStep === 4 ? handleStep4Clean : 
+                currentStep === 5 ? handleStep5Clean : 
+                undefined
+              }
             >
               {/* BathTub Image with Bubbles */}
               <div
@@ -976,8 +1063,7 @@ const HouseholdLevel2 = () => {
               {allItems.map(item => !item.collected && (
                 <div
                   key={item.id}
-                  draggable={selectedTool?.step === item.step}
-                  onDragStart={(e) => handleDragStart(e, item)}
+                  onMouseDown={(e) => handleMouseDown(e, item)}
                   style={{
                     position: 'absolute',
                     left: `${item.x}%`,
@@ -985,10 +1071,11 @@ const HouseholdLevel2 = () => {
                     width: `${item.size || 80}px`,
                     height: `${item.size || 80}px`,
                     cursor: selectedTool?.step === item.step ? 'grab' : 'not-allowed',
-                    transition: 'all 0.3s ease',
-                    zIndex: 10,
+                    transition: isDragging && draggedItem?.id === item.id ? 'none' : 'all 0.3s ease',
+                    zIndex: isDragging && draggedItem?.id === item.id ? 30 : 10,
                     opacity: selectedTool?.step === item.step ? 1 : 0.7,
-                    transform: `rotate(${item.rotation || 0}deg)`
+                    transform: `rotate(${item.rotation || 0}deg) ${isDragging && draggedItem?.id === item.id ? 'scale(1.1)' : ''}`,
+                    filter: isDragging && draggedItem?.id === item.id ? 'drop-shadow(0 8px 16px rgba(0,0,0,0.6)) brightness(1.2)' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))'
                   }}
                 >
                   {/* Hint Circle */}
@@ -1014,11 +1101,55 @@ const HouseholdLevel2 = () => {
                       width: '100%',
                       height: '100%',
                       objectFit: 'contain',
-                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))'
+                      pointerEvents: 'none'
                     }}
                   />
                 </div>
               ))}
+
+              {/* Dragging Item Visual */}
+              {isDragging && draggedItem && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: `${draggingPosition.x}%`,
+                    top: `${draggingPosition.y}%`,
+                    width: `${draggedItem.size || 80}px`,
+                    height: `${draggedItem.size || 80}px`,
+                    transform: 'translate(-50%, -50%)',
+                    zIndex: 40,
+                    pointerEvents: 'none',
+                    filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.6)) brightness(1.2)',
+                    opacity: 0.9
+                  }}
+                >
+                  <img 
+                    src={draggedItem.image} 
+                    alt={draggedItem.name}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain'
+                    }}
+                  />
+                  {/* Dragging indicator */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '-30px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: 'rgba(255, 215, 0, 0.9)',
+                    color: '#333',
+                    padding: '4px 8px',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    whiteSpace: 'nowrap'
+                  }}>
+                    Drag to {draggedItem.type === 'laundry' ? 'Basin' : 'Trash Can'}
+                  </div>
+                </div>
+              )}
 
               {/* Dirt Spots - Show ALL un-cleaned spots */}
               {dirtSpots.map(spot => !spot.cleaned && (
@@ -1035,7 +1166,6 @@ const HouseholdLevel2 = () => {
                     transform: spot.cleaning ? `scale(${1 - ((spot.cleaningProgress || 0) * 0.5)})` : 'scale(1)',
                     transition: spot.cleaning ? 'all 0.1s ease-out' : 'none',
                     pointerEvents: (spot.step === currentStep && selectedTool?.step === currentStep) ? 'auto' : 'none',
-                    // Remove the dimming filter - keep all spots fully visible
                   }}
                 >
                   {/* Hint Circle - only show for current step with correct tool */}
@@ -1081,7 +1211,6 @@ const HouseholdLevel2 = () => {
                     transform: web.cleaning ? `scale(${1 - ((web.cleaningProgress || 0) * 0.5)})` : 'scale(1)',
                     transition: web.cleaning ? 'all 0.1s ease-out' : 'none',
                     pointerEvents: (currentStep === 5 && selectedTool?.step === 5) ? 'auto' : 'none',
-                    // Remove the dimming filter - keep all cobwebs fully visible
                   }}
                 > 
                   {/* Glowing Pulse Hint - only show for step 5 with correct tool */}
@@ -1140,11 +1269,9 @@ const HouseholdLevel2 = () => {
               )}
 
               {/* Drop Zones for Steps 1 and 2 */}
-              {currentStep === 1 && selectedTool?.step === 1 && (
+              {(showDropZone && currentStep === 1 && selectedTool?.step === 1) && (
                 <Box
                   ref={basinRef}
-                  onDragOver={handleDragOver}
-                  onDrop={(e) => handleDrop(e, 'basin')}
                   sx={{
                     position: 'absolute',
                     bottom: '20px',
@@ -1152,18 +1279,10 @@ const HouseholdLevel2 = () => {
                     width: '200px',
                     height: '200px',
                     zIndex: 20,
-                    opacity: 0,
-                    animation: 'fadeInFromRight 0.8s ease-out forwards',
-                    '@keyframes fadeInFromRight': {
-                      '0%': {
-                        opacity: 0,
-                        transform: 'translateX(50px) scale(0.9)',
-                      },
-                      '100%': {
-                        opacity: 1,
-                        transform: 'translateX(0) scale(1)',
-                      }
-                    }
+                    animation: 'dropZonePulse 1.5s infinite alternate',
+                    cursor: 'pointer',
+                    backgroundColor: isDragging && draggedItem?.type === 'laundry' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(33, 150, 243, 0.1)',
+                    transition: 'all 0.3s ease'
                   }}
                 >
                   <img 
@@ -1179,14 +1298,13 @@ const HouseholdLevel2 = () => {
                       left: 0
                     }}
                   />
+                  
                 </Box>
               )}
 
-              {currentStep === 2 && selectedTool?.step === 2 && (
+              {(showDropZone && currentStep === 2 && selectedTool?.step === 2) && (
                 <Box
                   ref={trashCanRef}
-                  onDragOver={handleDragOver}
-                  onDrop={(e) => handleDrop(e, 'trash')}
                   sx={{
                     position: 'absolute',
                     bottom: '20px',
@@ -1194,18 +1312,9 @@ const HouseholdLevel2 = () => {
                     width: '200px',
                     height: '200px',
                     zIndex: 20,
-                    opacity: 0,
-                    animation: 'fadeInFromRight 0.8s ease-out forwards',
-                    '@keyframes fadeInFromRight': {
-                      '0%': {
-                        opacity: 0,
-                        transform: 'translateX(50px) scale(0.9)',
-                      },
-                      '100%': {
-                        opacity: 1,
-                        transform: 'translateX(0) scale(1)',
-                      }
-                    }
+                    animation: 'dropZonePulse 1.5s infinite alternate',
+                    cursor: 'pointer',
+                    
                   }}
                 >
                   <img 
@@ -1221,6 +1330,7 @@ const HouseholdLevel2 = () => {
                       left: 0
                     }}
                   />
+                  
                 </Box>
               )}
             </div>
@@ -1387,26 +1497,14 @@ const HouseholdLevel2 = () => {
               50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.7; }
               100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
             }
-            @keyframes slideInFromLeft {
-              0% {
-                transform: translateX(-100px);
-                opacity: 0;
-              }
-              100% {
-                transform: translateX(0);
-                opacity: 1;
-              }
-            }
-            .drop-zone-animation {
-              animation: slideInFromLeft 0.6s ease-out forwards;
+            @keyframes dropZonePulse {
+              0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.4); }
+              70% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(33, 150, 243, 0); }
+              100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(33, 150, 243, 0); }
             }
             @keyframes glowPulse {
               0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
               50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
-            }
-            @keyframes dashPulse {
-              0%, 100% { opacity: 0.7; border-color: #4ECDC4; }
-              50% { opacity: 1; border-color: #26C6DA; }
             }
             @keyframes sparkle {
               0%, 100% { opacity: 0; transform: scale(0); }

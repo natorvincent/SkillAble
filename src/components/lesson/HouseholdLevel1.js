@@ -1,7 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Box, Button, Stack, LinearProgress, Chip, Typography, Dialog } from '@mui/material';
+import { 
+  Box, 
+  Button, 
+  Stack, 
+  LinearProgress, 
+  Chip, 
+  Typography, 
+  Dialog, 
+  IconButton
+} from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 // Import all images
 import whiteShirtImg from '../../assets/householdLevel1/BlueWhiteShirt.png';
@@ -16,7 +26,7 @@ import pantsDirtImg from '../../assets/householdLevel1/PantsDirt.png';
 import greenClothesImg from '../../assets/householdLevel1/GreenClothes.png';
 import whitRedTshirtImg from '../../assets/householdLevel1/WhiteRedShirt.png';
 import blackPantsImg from '../../assets/householdLevel1/BlackPants.png';
-import whiteShortsImg from '../../assets/householdLevel1/WhiteShort.png';
+import whitePoloImg from '../../assets/householdLevel1/whitepolo.png';
 import washingMachine1Img from '../../assets/householdLevel1/WashingMachine1.png';
 import washingMachine2Img from '../../assets/householdLevel1/WashingMachine2.png';
 import wonderingImg from '../../assets/householdLevel1/Wondering.png';
@@ -32,6 +42,9 @@ import Navbar from '../Navbar';
 import yaySoundEffect from '../../assets/householdLevel1/correct-sound.mp3';
 import laundryBackgroundMusic from '../../assets/householdLevel1/LaundryBackgroungMusic.mp3';
 import wrongSoundEffect from '../../assets/householdLevel1/WrongSoundEffect .mp3';
+import tryagainSoundEffect from '../../assets/householdLevel1/try_again.mp3';
+import instructionSoundEffect from '../../assets/householdLevel1/instruction.mp3';
+import correctSoundEffect from '../../assets/householdLevel1/correct.mp3';
 
 // Import services for progress tracking
 import { 
@@ -40,17 +53,114 @@ import {
   updateModuleProgress
 } from '../../services/progressService';
 
+// Audio Manager Class
+class AudioManager {
+  constructor() {
+    this.audioElements = {};
+    this.currentlyPlaying = new Set();
+    this.audioContext = null;
+  }
+
+  async initAudioContext() {
+    if (this.audioContext) return this.audioContext;
+    
+    try {
+      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      
+      const resumeAudio = async () => {
+        if (this.audioContext && this.audioContext.state === 'suspended') {
+          await this.audioContext.resume();
+        }
+      };
+
+      document.addEventListener('click', resumeAudio, { once: true });
+      document.addEventListener('touchstart', resumeAudio, { once: true });
+      document.addEventListener('keydown', resumeAudio, { once: true });
+
+      return this.audioContext;
+    } catch (error) {
+      console.error('Failed to initialize audio context:', error);
+      return null;
+    }
+  }
+
+  registerAudio(id, audioElement) {
+    this.audioElements[id] = audioElement;
+  }
+
+  async playAudio(id, volume = 1.0, interrupt = false) {
+    await this.initAudioContext();
+    
+    if (this.currentlyPlaying.has(id) && !interrupt) {
+      return;
+    }
+    
+    const audio = this.audioElements[id];
+    if (!audio) {
+      console.warn(`Audio not found: ${id}`);
+      return;
+    }
+
+    try {
+      if (interrupt && this.currentlyPlaying.has(id)) {
+        audio.pause();
+        audio.currentTime = 0;
+        this.currentlyPlaying.delete(id);
+      }
+
+      audio.currentTime = 0;
+      audio.volume = volume;
+      
+      const playPromise = audio.play();
+      
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          this.currentlyPlaying.add(id);
+          
+          audio.onended = () => {
+            this.currentlyPlaying.delete(id);
+          };
+        }).catch(error => {
+          console.log(`Audio play failed for ${id}:`, error);
+        });
+      }
+    } catch (error) {
+      console.error(`Error playing audio ${id}:`, error);
+    }
+  }
+
+  stopAudio(id) {
+    const audio = this.audioElements[id];
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+      this.currentlyPlaying.delete(id);
+    }
+  }
+
+  stopAllAudio() {
+    Object.values(this.audioElements).forEach(audio => {
+      audio.pause();
+      audio.currentTime = 0;
+    });
+    this.currentlyPlaying.clear();
+  }
+
+  isPlaying(id) {
+    return this.currentlyPlaying.has(id);
+  }
+}
+
+const audioManager = new AudioManager();
+
 // BUBBLES INSTANTLY VISIBLE THROUGHOUT SCREEN
 const BubblesBackground = () => {
   const bubbles = Array.from({ length: 30 }, (_, i) => {
-    const size = 50 + Math.random() * 100; // 50px to 150px
+    const size = 50 + Math.random() * 100;
     const left = Math.random() * 100;
-    
-    // Start at random positions throughout the screen height
-    const startY = Math.random() * 120; // -20% to 100% (some above, some below)
-    const endY = -20 - Math.random() * 30; // End above screen
-    
-    const duration = 15 + Math.random() * 20; // 15-35 seconds
+    const startY = Math.random() * 120;
+    const endY = -20 - Math.random() * 30;
+    const duration = 15 + Math.random() * 20;
     
     return (
       <motion.div
@@ -74,7 +184,7 @@ const BubblesBackground = () => {
         }}
         transition={{ 
           duration: duration,
-          delay: 0, // No delay
+          delay: 0,
           repeat: Infinity,
           ease: "easeInOut"
         }}
@@ -169,58 +279,33 @@ const HouseholdLevel1 = () => {
   const [bubbleBursts, setBubbleBursts] = useState([]);
   const [correctItems, setCorrectItems] = useState(0);
   const [isTablet, setIsTablet] = useState(false);
-  
 
-  // Detect tablet size
-  useEffect(() => {
-    const checkScreenSize = () => {
-      setIsTablet(window.innerWidth <= 1024 && window.innerWidth > 768);
-    };
-    
-    checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    
-    return () => window.removeEventListener('resize', checkScreenSize);
-  }, []);
+  // NEW STATES FOR HINT SYSTEM
+  const [showHint, setShowHint] = useState(true);
+  const [hintActive, setHintActive] = useState(true);
+  const [hintPosition, setHintPosition] = useState({ x: 0, y: 0 });
+  const [hintTargetPosition, setHintTargetPosition] = useState({ x: 0, y: 0 });
+  const [hintType, setHintType] = useState('');
+  const [userHasInteracted, setUserHasInteracted] = useState(false);
 
+  // Progress states
+  const [progressSaving, setProgressSaving] = useState(false);
+  const [progressSaved, setProgressSaved] = useState(false);
+  const [starAnimationStage, setStarAnimationStage] = useState(0);
+  const [confettiPieces, setConfettiPieces] = useState([]);
 
-  const handleNextLevel = () => {
-    try {
-      // Try to save progress (with error handling)
-      try {
-        saveStudentLessonProgress('household', 'level2', 100);
-      } catch (error) {
-        console.log('Progress saving not available in demo');
-      }
-      
-      try {
-        updateModuleProgress('household', 'level2');
-      } catch (error) {
-        console.log('Module progress update not available in demo');
-      }
-      
-      // Navigate to next level
-      if (lessonId) {
-        navigate(`/lesson/household-chores/level-2/${lessonId}`);
-      } else {
-        navigate('/lesson/household-chores/level-2');
-      }
-      
-    } catch (error) {
-      console.log('Next level functionality:', error);
-      // Fallback navigation
-      navigate('/lesson/household-chores/level-2');
-    }
-  };
-  
-  // Audio states
-  const [audioPlaying, setAudioPlaying] = useState(false);
-  const [backgroundAudioRef, setBackgroundAudioRef] = useState(null);
-
-  // Create audio ref for sound effects
+  // Audio refs
+  const instructionAudioRef = useRef(null);
   const correctAudioRef = useRef(null);
   const wrongAudioRef = useRef(null);
+  const tryAgainAudioRef = useRef(null);
+  const yayAudioRef = useRef(null);
+  const backgroundAudioRef = useRef(null);
+  const [audioPlaying, setAudioPlaying] = useState(false);
+  const [instructionPlayed, setInstructionPlayed] = useState(false);
 
+
+  // Clothing items
   const clothingItems = [
     { id: 1, name: 'White T-Shirt', type: 'whites', image: whiteShirtImg },
     { id: 2, name: 'Blue Pajamas', type: 'colors', image: bluePajamasImg },
@@ -234,36 +319,124 @@ const HouseholdLevel1 = () => {
     { id: 10, name: 'Red White Clothes', type: 'whites', image: whitRedTshirtImg},
     { id: 11, name: 'Light Blue Shirt', type: 'colors', image: lightBlueShirtImg},
     { id: 12, name: 'Black Pants', type: 'colors', image: blackPantsImg },
-    { id: 13, name: 'White Shorts', type: 'whites', image: whiteShortsImg },
+    { id: 13, name: 'White Polo', type: 'whites', image: whitePoloImg },
   ];
 
   const currentItem = clothingItems[currentItemIndex];
 
-  // Background music setup
+  // Detect tablet size
   useEffect(() => {
-    const audio = new Audio(laundryBackgroundMusic);
-    audio.loop = true;
-    audio.volume = 0.3;
-    setBackgroundAudioRef(audio);
+    const checkScreenSize = () => {
+      setIsTablet(window.innerWidth <= 1024 && window.innerWidth > 768);
+    };
+    
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
-    const playAudio = () => {
-      audio.play().then(() => {
-        setAudioPlaying(true);
-      }).catch(error => {
-        console.log('Audio autoplay prevented:', error);
-      });
+  // Initialize audio manager
+  useEffect(() => {
+    // Register all audio elements
+    const registerAudio = () => {
+      if (instructionAudioRef.current) {
+        audioManager.registerAudio('instruction', instructionAudioRef.current);
+      }
+      if (correctAudioRef.current) {
+        audioManager.registerAudio('correct', correctAudioRef.current);
+      }
+      if (wrongAudioRef.current) {
+        audioManager.registerAudio('wrong', wrongAudioRef.current);
+      }
+      if (tryAgainAudioRef.current) {
+        audioManager.registerAudio('tryAgain', tryAgainAudioRef.current);
+      }
+      if (yayAudioRef.current) {
+        audioManager.registerAudio('yay', yayAudioRef.current);
+      }
     };
 
-    const timer = setTimeout(playAudio, 1000);
+    // Small delay to ensure refs are set
+    const timer = setTimeout(registerAudio, 100);
+    
+    return () => {
+      clearTimeout(timer);
+      audioManager.stopAllAudio();
+    };
+  }, []);
+
+  // NEW EFFECT: Reset hint state for each new item and play instruction sound
+  useEffect(() => {
+    if (currentItem && showHint && !gameWon) {
+      setUserHasInteracted(false);
+      setHintActive(true);
+      
+      
+      const updateHintPositions = () => {
+        const clothingElement = document.querySelector(`[data-item-id="${currentItem.id}"]`);
+        let clothingItemX, clothingItemY;
+        
+        if (clothingElement) {
+          const rect = clothingElement.getBoundingClientRect();
+          clothingItemX = rect.left + rect.width / 2;
+          clothingItemY = rect.top + rect.height / 2;
+        } else {
+          clothingItemX = window.innerWidth * (isTablet ? 0.25 : 0.2);
+          clothingItemY = window.innerHeight * 0.6;
+        }
+        
+        let targetX, targetY;
+        
+        if (currentItem.type === 'whites') {
+          targetX = window.innerWidth * (isTablet ? 0.65 : 0.7);
+          targetY = window.innerHeight * 0.5;
+        } else {
+          targetX = window.innerWidth * (isTablet ? 0.85 : 0.85);
+          targetY = window.innerHeight * 0.5;
+        }
+        
+        setHintPosition({ x: clothingItemX, y: clothingItemY });
+        setHintTargetPosition({ x: targetX, y: targetY });
+        setHintType(currentItem.type);
+      };
+
+      const timer = setTimeout(() => {
+        requestAnimationFrame(updateHintPositions);
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [currentItemIndex, gameWon, showHint, isTablet]);
+
+  // Background music setup
+  useEffect(() => {
+    if (!backgroundAudioRef.current) {
+      backgroundAudioRef.current = new Audio(laundryBackgroundMusic);
+      backgroundAudioRef.current.loop = true;
+      backgroundAudioRef.current.volume = 0.3;
+    }
+
+    const playBackgroundMusic = () => {
+      if (backgroundAudioRef.current && !audioPlaying) {
+        backgroundAudioRef.current.play().then(() => {
+          setAudioPlaying(true);
+        }).catch(error => {
+          console.log('Background audio autoplay prevented:', error);
+        });
+      }
+    };
+
+    const timer = setTimeout(playBackgroundMusic, 1500);
 
     return () => {
       clearTimeout(timer);
-      if (audio) {
-        audio.pause();
-        audio.currentTime = 0;
+      if (backgroundAudioRef.current) {
+        backgroundAudioRef.current.pause();
+        backgroundAudioRef.current.currentTime = 0;
       }
     };
-  }, []);
+  }, [audioPlaying]);
 
   useEffect(() => {
     if (currentItemIndex >= clothingItems.length) {
@@ -272,7 +445,7 @@ const HouseholdLevel1 = () => {
     }
   }, [currentItemIndex, clothingItems.length]);
 
-  // Hide pre-game confetti after animation
+  // Hide pre-game confetti
   useEffect(() => {
     if (showPreGameConfetti) {
       const timer = setTimeout(() => {
@@ -282,46 +455,153 @@ const HouseholdLevel1 = () => {
     }
   }, [showPreGameConfetti]);
 
-  // Function to play sound effect
-  const playSuccessSound = () => {
-    if (correctAudioRef.current) {
-      correctAudioRef.current.currentTime = 0;
-      correctAudioRef.current.play().catch(error => {
-        console.log('Audio play failed:', error);
-      });
-    }
+  // Sound functions
+  const playCorrectSound = () => {
+    audioManager.playAudio('correct', 0.8, true);
   };
 
-  // Function to play wrong sound
   const playWrongSound = () => {
-    if (wrongAudioRef.current) {
-      wrongAudioRef.current.currentTime = 0;
-      wrongAudioRef.current.play().catch(error => {
-        console.log('Wrong audio play failed:', error);
-      });
+    audioManager.playAudio('wrong', 0.8, true);
+    
+    
+  };
+
+  const playYaySound = () => {
+    audioManager.playAudio('yay', 0.8, true);
+  };
+
+  const playInstructionSound = () => {
+    audioManager.playAudio('instruction', 0.7, true);
+  };
+
+  const toggleBackgroundMusic = () => {
+    if (backgroundAudioRef.current) {
+      if (audioPlaying) {
+        backgroundAudioRef.current.pause();
+        setAudioPlaying(false);
+      } else {
+        backgroundAudioRef.current.play().then(() => {
+          setAudioPlaying(true);
+        }).catch(error => {
+          console.log('Background audio play failed:', error);
+        });
+      }
     }
   };
 
-  // Function to create bubble burst
   const createBubbleBurst = (position) => {
     const id = Date.now() + Math.random();
     setBubbleBursts(prev => [...prev, { id, position }]);
     
-    // Remove bubble burst after animation
     setTimeout(() => {
       setBubbleBursts(prev => prev.filter(bubble => bubble.id !== id));
     }, 600);
   };
 
-  const handleStartGame = () => {
-    setShowStartScreen(false);
-    setShowPreGameConfetti(true);
+  // Progress saving
+  const handleSaveProgress = async () => {
+    if (!lessonId) return;
+    
+    setProgressSaving(true);
+    setProgressSaved(false);
+    
+    try {
+      const score = calculateScore();
+      
+      const savedProgress = await saveStudentLessonProgress({
+        moduleId: 'household',
+        lessonId: lessonId || 'level1',
+        progress: 100,
+        score: score,
+        completed: true,
+        lastPlayed: new Date().toISOString()
+      });
+      
+      await updateModuleProgress('household', lessonId || 'level1');
+      
+      setProgressSaving(false);
+      setProgressSaved(true);
+      
+      console.log('Progress saved successfully:', savedProgress);
+      
+    } catch (error) {
+      console.error('Error saving progress:', error);
+      setProgressSaving(false);
+    }
   };
 
+  const calculateScore = () => {
+    return Math.round((correctItems / clothingItems.length) * 100);
+  };
+
+  const generateConfetti = () => {
+    const pieces = [];
+    const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DFE6E9', '#FF7979', '#6C5CE7', '#A29BFE'];
+    
+    for (let i = 0; i < 50; i++) {
+      pieces.push({
+        id: i,
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        width: 8 + Math.random() * 12,
+        height: 8 + Math.random() * 12,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rotation: Math.random() * 360,
+        drift: Math.random() - 0.5
+      });
+    }
+    
+    setConfettiPieces(pieces);
+  };
+
+  const animateStars = () => {
+    let stage = 0;
+    const interval = setInterval(() => {
+      setStarAnimationStage(stage + 1);
+      stage++;
+      
+      if (stage >= 3) {
+        clearInterval(interval);
+      }
+    }, 300);
+  };
+
+  const handleNextLevel = () => {
+    try {
+      saveStudentLessonProgress('household', 'level2', 100);
+      updateModuleProgress('household', 'level2');
+      
+      if (lessonId) {
+        navigate(`/lesson/household-chores/level-2/${lessonId}`);
+      } else {
+        navigate('/lesson/household-chores/level-2');
+      }
+      
+    } catch (error) {
+      console.log('Next level functionality:', error);
+      navigate('/lesson/household-chores/level-2');
+    }
+  };
+
+  // In your handleStartGame function:
+const handleStartGame = () => {
+  audioManager.initAudioContext();
+  setShowStartScreen(false);
+  setShowPreGameConfetti(true);
+  
+  // Play instruction sound ONCE when game starts (not in start screen)
+  setTimeout(() => {
+    if (!instructionPlayed) {
+      audioManager.playAudio('instruction', 0.7, true);
+      setInstructionPlayed(true);
+    }
+  }, 1000);
+};
   const handleDragStart = (item) => {
     setDraggedItem(item);
+    setUserHasInteracted(true);
+    setHintActive(false);
     
-    // Create bubble burst at drag start position
     const startX = window.innerWidth / 2;
     const startY = window.innerHeight / 2 - 100;
     createBubbleBurst({ x: startX, y: startY });
@@ -348,10 +628,8 @@ const HouseholdLevel1 = () => {
       setAvatar('happy');
       setCorrectItems(prev => prev + 1);
       
-      // Play success sound effect
-      playSuccessSound();
+      playCorrectSound();
       
-      // Get the position of the clothing item for confetti
       const clothingItemRect = e.currentTarget.getBoundingClientRect();
       setConfettiPosition({
         x: clothingItemRect.left + clothingItemRect.width / 2,
@@ -360,29 +638,23 @@ const HouseholdLevel1 = () => {
       
       setShowConfetti(true);
       
-      // Create bubble burst at drop position
       createBubbleBurst({
         x: clothingItemRect.left + clothingItemRect.width / 2,
         y: clothingItemRect.top + clothingItemRect.height / 2
       });
       
-      // Hide confetti after animation
       setTimeout(() => setShowConfetti(false), 2000);
       
-      // Move to next item after animation
       setTimeout(() => {
         setCurrentItemIndex(prev => prev + 1);
         setAvatar('wonder');
       }, 1000);
       
     } else {
-      // Wrong drop - shake animation and show wrong image
       setWrongDrop(true);
-      
-      // Play wrong sound effect
       playWrongSound();
       
-      // Show wrong image effect
+      
       const machineRect = e.currentTarget.getBoundingClientRect();
       createBubbleBurst({
         x: machineRect.left + machineRect.width / 2,
@@ -400,9 +672,16 @@ const HouseholdLevel1 = () => {
     setCorrectItems(0);
     setGameWon(false);
     setAvatar('wonder');
+    setProgressSaved(false);
+    setStarAnimationStage(0);
+    setConfettiPieces([]);
   };
 
   const handleGoHome = () => {
+    navigate('/studentdashboard');
+  };
+
+  const handleContinue = () => {
     navigate('/studentdashboard');
   };
 
@@ -426,15 +705,23 @@ const HouseholdLevel1 = () => {
         position: "relative",
         overflow: "hidden"
       }}>
-        {/* Navbar - Only in Start Screen */}
         <Navbar />
         
         {/* Hidden audio elements */}
+        <audio ref={instructionAudioRef} preload="auto">
+          <source src={instructionSoundEffect} type="audio/mpeg" />
+        </audio>
         <audio ref={correctAudioRef} preload="auto">
-          <source src={yaySoundEffect} type="audio/mpeg" />
+          <source src={correctSoundEffect} type="audio/mpeg" />
         </audio>
         <audio ref={wrongAudioRef} preload="auto">
           <source src={wrongSoundEffect} type="audio/mpeg" />
+        </audio>
+        <audio ref={tryAgainAudioRef} preload="auto">
+          <source src={tryagainSoundEffect} type="audio/mpeg" />
+        </audio>
+        <audio ref={yayAudioRef} preload="auto">
+          <source src={yaySoundEffect} type="audio/mpeg" />
         </audio>
         
         {/* Pre-game Clothing Confetti */}
@@ -575,9 +862,76 @@ const HouseholdLevel1 = () => {
       display: "flex",
       flexDirection: "column",
       overflow: "hidden",
-      backgroundColor: "#f0f0f0" // Added fallback background color
+      backgroundColor: "#f0f0f0"
     }}>
-      {/* Progress Indicator - Only show when game is not won */}
+      {/* Hidden audio elements */}
+      <audio ref={instructionAudioRef} preload="auto">
+        <source src={instructionSoundEffect} type="audio/mpeg" />
+      </audio>
+      <audio ref={correctAudioRef} preload="auto">
+        <source src={correctSoundEffect} type="audio/mpeg" />
+      </audio>
+      <audio ref={wrongAudioRef} preload="auto">
+        <source src={wrongSoundEffect} type="audio/mpeg" />
+      </audio>
+      <audio ref={tryAgainAudioRef} preload="auto">
+        <source src={tryagainSoundEffect} type="audio/mpeg" />
+      </audio>
+      <audio ref={yayAudioRef} preload="auto">
+        <source src={yaySoundEffect} type="audio/mpeg" />
+      </audio>
+
+      {/* Simplified Pointing Finger Hint */}
+        {/*<AnimatePresence>
+          {showHint && hintActive && currentItem && !gameWon && !userHasInteracted && (
+            <motion.div
+              key={`hint-${currentItem.id}`}
+              initial={{ 
+                opacity: 0,
+                x: hintPosition.x,
+                y: hintPosition.y,
+                scale: 0.8
+              }}
+              animate={{ 
+                opacity: [0, 1, 1],
+                x: hintTargetPosition.x,
+                y: hintTargetPosition.y,
+                scale: 1
+              }}
+              exit={{ 
+                opacity: 0,
+                scale: 0.8
+              }}
+              transition={{ 
+                duration: 0.8,
+                repeat: 4,
+                repeatDelay: 1.5,
+                ease: "easeOut"
+              }}
+              style={{
+                position: "fixed",
+                width: isTablet ? "150px" : "200px",
+                height: isTablet ? "150px" : "200px",
+                zIndex: 999,
+                pointerEvents: "none",
+                transform: "translate(-50%, -50%)",
+                filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.3))"
+              }}
+            >
+              <img 
+                src={pointFingerImg} 
+                alt="Pointing Hint"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain"
+                }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>*/}
+
+      {/* Progress Indicator */}
       {!gameWon && (
         <Box sx={{ 
           position: 'fixed',
@@ -588,68 +942,91 @@ const HouseholdLevel1 = () => {
           px: isTablet ? 1 : 2,
           pt: isTablet ? 0.5 : 1
         }}>
-          {/* Progress Bar Section */}
-            <Box sx={{ 
-              position: 'absolute',
-              top: '20px',
-              left: '20px',
-              right: '20px',
-              zIndex: 1000
-            }}>
-              <Typography variant="h6" sx={{ 
-                color: 'white', 
-                fontWeight: 'bold',
-                fontFamily: 'Poppins, sans-serif',
-                backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                px: 2,
-                py: 1,
-                borderRadius: '10px',
-                boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
-                mb: 1,
-                display: 'inline-block'
-              }}>
-                Step {currentItemIndex + 1}/{clothingItems.length}: Sort Laundry
-              </Typography>
-
-              <LinearProgress 
-                variant="determinate" 
-                value={(correctItems / clothingItems.length) * 100} 
-                sx={{ 
-                  height: 12, 
-                  borderRadius: '10px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                  boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-                  '& .MuiLinearProgress-bar': {
-                    borderRadius: '10px',
-                    backgroundColor: '#4CAF50'
-                  }
-                }} 
-              />
-            </Box>
-
-          {/* Instructions Section */}
           <Box sx={{ 
-            textAlign: 'center',
-            position: 'relative',
-            zIndex: 1010,
-            mt: 1,
+            position: 'absolute',
+            top: '20px',
+            left: '20px',
+            right: '20px',
+            zIndex: 1000
           }}>
-            <Typography variant="body1" sx={{ 
+            <Typography variant="h6" sx={{ 
               color: 'white', 
               fontWeight: 'bold',
               fontFamily: 'Poppins, sans-serif',
-              backgroundColor: 'rgba(25, 130, 196, 0.9)',
-              display: 'inline-block',
-              px: isTablet ? 2 : 3,
-              py: isTablet ? 0.75 : 1,
-              borderRadius: '15px',
-              fontSize: isTablet ? '0.9rem' : '1rem',
-              boxShadow: '0 4px 15px rgba(25, 130, 196, 0.4)'
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              px: 2,
+              py: 1,
+              borderRadius: '10px',
+              boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+              mb: 1,
+              display: 'inline-block'
             }}>
-              {currentItem && `Drag the ${currentItem.name.toLowerCase()} to the correct washing machine!`}
-              {!currentItem && 'Sort all the clothes into the correct washing machines!'}
+              Step {currentItemIndex + 1}/{clothingItems.length}: Sort Laundry
             </Typography>
+
+            <LinearProgress 
+              variant="determinate" 
+              value={(correctItems / clothingItems.length) * 100} 
+              sx={{ 
+                height: 12, 
+                borderRadius: '10px',
+                backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                '& .MuiLinearProgress-bar': {
+                  borderRadius: '10px',
+                  backgroundColor: '#4CAF50'
+                }
+              }} 
+            />
           </Box>
+
+          {/* Instructions Section with STRONG Blinking Background */}
+            <Box sx={{ 
+              textAlign: 'center',
+              position: 'relative',
+              zIndex: 1010,
+              mt: 1,
+            }}>
+              <Typography variant="body1" sx={{ 
+                color: 'white', 
+                fontWeight: 'bold',
+                fontFamily: 'Poppins, sans-serif',
+                backgroundColor: 'rgba(25, 130, 196, 0.95)',
+                animation: 'strongBlink 1.5s infinite',
+                display: 'inline-block',
+                px: isTablet ? 2 : 3,
+                py: isTablet ? 0.75 : 1,
+                borderRadius: '15px',
+                fontSize: isTablet ? '0.9rem' : '1rem',
+                boxShadow: '0 4px 15px rgba(25, 130, 196, 0.4)',
+                transform: 'scale(1)',
+                '@keyframes strongBlink': {
+                  '0%, 100%': {
+                    backgroundColor: 'rgba(25, 130, 196, 0.95)',
+                    boxShadow: '0 4px 15px rgba(25, 130, 196, 0.4)',
+                    transform: 'scale(1)'
+                  },
+                  '25%': {
+                    backgroundColor: 'rgba(0, 80, 150, 1)',
+                    boxShadow: '0 0 25px rgba(0, 100, 255, 0.8)',
+                    transform: 'scale(1.02)'
+                  },
+                  '50%': {
+                    backgroundColor: 'rgba(40, 170, 255, 1)',
+                    boxShadow: '0 0 30px rgba(100, 180, 255, 0.9)',
+                    transform: 'scale(1.05)'
+                  },
+                  '75%': {
+                    backgroundColor: 'rgba(0, 100, 180, 1)',
+                    boxShadow: '0 0 20px rgba(50, 150, 255, 0.7)',
+                    transform: 'scale(1.03)'
+                  }
+                }
+              }}>
+                {currentItem && `Drag the ${currentItem.name.toLowerCase()} to the correct washing machine!`}
+                {!currentItem && 'Sort all the clothes into the correct washing machines!'}
+              </Typography>
+            </Box>
         </Box>
       )}
 
@@ -661,20 +1038,7 @@ const HouseholdLevel1 = () => {
         zIndex: 1000
       }}>
         <Button
-          onClick={() => {
-            if (backgroundAudioRef) {
-              if (audioPlaying) {
-                backgroundAudioRef.pause();
-                setAudioPlaying(false);
-              } else {
-                backgroundAudioRef.play().then(() => {
-                  setAudioPlaying(true);
-                }).catch(error => {
-                  console.log('Audio play failed:', error);
-                });
-              }
-            }
-          }}
+          onClick={toggleBackgroundMusic}
           sx={{
             minWidth: isTablet ? '50px' : '60px',
             width: isTablet ? '50px' : '60px',
@@ -740,7 +1104,13 @@ const HouseholdLevel1 = () => {
             flexDirection: 'column'
           }
         }}
+        onEnter={() => {
+          generateConfetti();
+          animateStars();
+          handleSaveProgress();
+        }}
       >
+        {/* Confetti Effect */}
         <Box sx={{
           position: 'fixed',
           top: 0,
@@ -751,46 +1121,41 @@ const HouseholdLevel1 = () => {
           zIndex: 1000,
           overflow: 'hidden'
         }}>
-          {[...Array(50)].map((_, i) => {
-            const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DFE6E9', '#FF7979', '#6C5CE7', '#A29BFE'];
-            const randomColor = colors[Math.floor(Math.random() * colors.length)];
-            
-            return (
-              <Box
-                key={i}
-                sx={{
-                  position: 'absolute',
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                  width: `${8 + Math.random() * 12}px`,
-                  height: `${8 + Math.random() * 12}px`,
-                  backgroundColor: randomColor,
-                  transform: `rotate(${Math.random() * 360}deg)`,
-                  boxShadow: `0 0 10px ${randomColor}`,
-                  animation: `confettiFall 4s linear infinite`,
-                  animationDelay: `${Math.random() * 3}s`,
-                  '@keyframes confettiFall': {
-                    '0%': {
-                      transform: `translateY(-100vh) rotate(${Math.random() * 360}deg) scale(0.8)`,
-                      opacity: 1
-                    },
-                    '10%': {
-                      opacity: 1,
-                      transform: `translateY(-90vh) rotate(${Math.random() * 360}deg) scale(1)`
-                    },
-                    '90%': {
-                      opacity: 0.8,
-                      transform: `translateY(90vh) translateX(${(Math.random() - 0.5) * 60}px) rotate(${Math.random() * 360}deg) scale(0.6)`
-                    },
-                    '100%': {
-                      transform: `translateY(100vh) translateX(${(Math.random() - 0.5) * 70}px) rotate(${Math.random() * 360}deg) scale(0)`,
-                      opacity: 0
-                    }
+          {confettiPieces.map(piece => (
+            <Box
+              key={piece.id}
+              sx={{
+                position: 'absolute',
+                left: `${piece.x}%`,
+                top: `${piece.y}%`,
+                width: `${piece.width}px`,
+                height: `${piece.height}px`,
+                backgroundColor: piece.color,
+                transform: `rotate(${piece.rotation}deg)`,
+                boxShadow: `0 0 10px ${piece.color}`,
+                animation: `confettiFall 4s linear infinite`,
+                animationDelay: `${Math.random() * 3}s`,
+                '@keyframes confettiFall': {
+                  '0%': {
+                    transform: `translateY(-100vh) rotate(${piece.rotation}deg) scale(0.8)`,
+                    opacity: 1
+                  },
+                  '10%': {
+                    opacity: 1,
+                    transform: `translateY(-90vh) rotate(${piece.rotation + 36}deg) scale(1)`
+                  },
+                  '90%': {
+                    opacity: 0.8,
+                    transform: `translateY(90vh) translateX(${piece.drift * 60}px) rotate(${piece.rotation + 324}deg) scale(0.6)`
+                  },
+                  '100%': {
+                    transform: `translateY(100vh) translateX(${piece.drift * 70}px) rotate(${piece.rotation + 360}deg) scale(0)`,
+                    opacity: 0
                   }
-                }}
-              />
-            );
-          })}
+                }
+              }}
+            />
+          ))}
         </Box>
         
         <Box sx={{
@@ -814,11 +1179,11 @@ const HouseholdLevel1 = () => {
             textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
             mb: 2
           }}>
-            Perfectly Cleaned Bathroom!
+            Perfectly Sorted Laundry!
           </Typography>
           
           <Chip 
-            label="Bathroom Cleaning Level Completed!"
+            label="Laundry Sorting Level Completed!"
             sx={{
               backgroundColor: 'rgba(255, 255, 255, 0.3)',
               color: 'white',
@@ -831,36 +1196,87 @@ const HouseholdLevel1 = () => {
             }}
           />
           
+          {/* Star Rating */}
           <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
-            {[...Array(3)].map((_, i) => (
-              <Box 
-                key={i}
-                sx={{ 
-                  color: 'white',
-                  fontSize: isTablet ? 60 : 80,
-                  mx: 1,
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-                  animation: `starPop 0.6s ease-out ${i * 0.2}s both`,
-                  '@keyframes starPop': {
-                    '0%': {
-                      transform: 'scale(0)',
-                      opacity: 0
-                    },
-                    '50%': {
-                      transform: 'scale(1.5)',
-                      opacity: 1
-                    },
-                    '100%': {
-                      transform: 'scale(1)',
-                      opacity: 1
+            {[...Array(3)].map((_, i) => {
+              const shouldAnimate = i < starAnimationStage;
+              
+              return (
+                <Box 
+                  key={i}
+                  sx={{ 
+                    color: 'white',
+                    fontSize: isTablet ? 60 : 80,
+                    mx: 1,
+                    textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+                    animation: shouldAnimate ? `starPop 0.6s ease-out ${i * 0.2}s both` : 'none',
+                    '@keyframes starPop': {
+                      '0%': {
+                        transform: 'scale(0)',
+                        opacity: 0
+                      },
+                      '50%': {
+                        transform: 'scale(1.5)',
+                        opacity: 1
+                      },
+                      '100%': {
+                        transform: 'scale(1)',
+                        opacity: 1
+                      }
                     }
-                  }
-                }}
-              >
-                ⭐
-              </Box>
-            ))}
+                  }}
+                >
+                  ⭐
+                </Box>
+              );
+            })}
           </Box>
+          
+          {/* Progress Saving Indicators */}
+          {progressSaving && (
+            <Box sx={{ 
+              mb: 4, 
+              p: 3, 
+              backgroundColor: 'rgba(25, 130, 196, 0.8)', 
+              borderRadius: '15px',
+              color: 'white'
+            }}>
+              <Box sx={{ 
+                mr: 2, 
+                width: 30, 
+                height: 30, 
+                borderRadius: '50%',
+                border: '3px solid rgba(255,255,255,0.3)',
+                borderTop: '3px solid white',
+                animation: 'spin 1s linear infinite',
+                display: 'inline-block',
+                '@keyframes spin': {
+                  '0%': { transform: 'rotate(0deg)' },
+                  '100%': { transform: 'rotate(360deg)' }
+                }
+              }} />
+              <Typography variant="h5" sx={{ fontFamily: 'Poppins, sans-serif', display: 'inline' }}>
+                Saving your progress...
+              </Typography>
+            </Box>
+          )}
+          
+          {progressSaved && (
+            <Box sx={{ 
+              mb: 4, 
+              p: 3, 
+              backgroundColor: 'rgba(144, 190, 109, 0.8)', 
+              borderRadius: '15px',
+              color: 'white'
+            }}>
+              <Box sx={{ mr: 2, fontSize: 30, verticalAlign: 'middle', display: 'inline-flex' }}>
+                ✓
+              </Box>
+              <Typography variant="h6" sx={{ fontFamily: 'Poppins, sans-serif', display: 'inline' }}>
+                Progress saved successfully!
+              </Typography>
+            </Box>
+          )}
           
           <Typography variant="h6" sx={{ 
             color: 'white',
@@ -871,7 +1287,7 @@ const HouseholdLevel1 = () => {
             textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
             fontSize: isTablet ? '1rem' : '1.25rem'
           }}>
-            Excellent work! You've successfully completed all 4 cleaning steps - laundry, trash disposal, floor sweeping, and wall wiping!
+            Excellent work! You've successfully sorted all the clothes into the correct washing machines - whites and colors separated perfectly!
           </Typography>
           
           <Box sx={{ display: 'flex', gap: 3, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -898,14 +1314,15 @@ const HouseholdLevel1 = () => {
                 }
               }}
             >
-              Play Again
+              Sort Again
             </Button>
             
             <Button 
               variant="contained"
-              onClick={handleGoHome}
+              onClick={handleContinue}
+              disabled={progressSaving}
               sx={{ 
-                background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)',
+                background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
                 color: 'white',
                 px: isTablet ? 4 : 6,
                 py: isTablet ? 1.5 : 2,
@@ -914,14 +1331,14 @@ const HouseholdLevel1 = () => {
                 fontWeight: '700',
                 fontSize: isTablet ? '1rem' : '1.2rem',
                 textTransform: 'none',
-                boxShadow: '0 10px 25px rgba(76, 175, 80, 0.5)',
+                boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
                 '&:hover': { 
-                  background: 'linear-gradient(135deg, #66BB6A 0%, #4CAF50 100%)',
+                  background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
                   transform: 'translateY(-2px)'
                 }
               }}
             >
-              Continue
+              {progressSaving ? 'Saving...' : 'Continue'}
             </Button>
             
             <Button 
@@ -970,14 +1387,6 @@ const HouseholdLevel1 = () => {
 
       {/* 2. INSTANT VISIBLE Bubbles - High z-index */}
       <BubblesBackground />
-
-      {/* Hidden audio elements */}
-      <audio ref={correctAudioRef} preload="auto">
-        <source src={yaySoundEffect} type="audio/mpeg" />
-      </audio>
-      <audio ref={wrongAudioRef} preload="auto">
-        <source src={wrongSoundEffect} type="audio/mpeg" />
-      </audio>
 
       {/* 3. Bubble Burst Effects - Very high z-index */}
       <AnimatePresence>
@@ -1106,6 +1515,7 @@ const HouseholdLevel1 = () => {
                     {currentItem && (
                       <motion.div
                         key={currentItem.id}
+                        data-item-id={currentItem.id}
                         initial={{ 
                           opacity: 0, 
                           scale: 0.3, 
@@ -1141,7 +1551,6 @@ const HouseholdLevel1 = () => {
                             repeatType: "loop"
                           }
                         }}
-                        // Stop floating and zoom in on hover
                         whileHover={{
                           y: 20,
                           scale: 1.2,
@@ -1191,7 +1600,7 @@ const HouseholdLevel1 = () => {
                     objectFit: "contain",
                     filter: "drop-shadow(0 8px 20px rgba(0,0,0,0.3))",
                     zIndex: 200,
-                    top: isTablet ? "-20px" : "-30px" // Negative values move up
+                    top: isTablet ? "-20px" : "-30px"
                   }}
                 />
               </div>
@@ -1210,8 +1619,8 @@ const HouseholdLevel1 = () => {
                   position: "absolute",
                   left: isTablet ? "-80px" : "-100px",
                   transform: isTablet
-                    ? "scale(1.0) translateY(-15px)"   // Full scale
-                    : "scale(1.2) translateY(-25px)",  // Larger scale
+                    ? "scale(1.0) translateY(-15px)"
+                    : "scale(1.2) translateY(-25px)",
                   zIndex: 150,
                   pointerEvents: "none"
                 }}
@@ -1229,7 +1638,6 @@ const HouseholdLevel1 = () => {
                   gap: isTablet ? "1rem" : "2rem",
                   marginTop: isTablet ? "-30px" : "-60px",
                   width: "100%",
-                  
                 }}
               >
                 {/* WHITE MACHINE */}
@@ -1248,32 +1656,31 @@ const HouseholdLevel1 = () => {
                       dragOverMachine === "whites"
                         ? "drop-shadow(0 0 30px rgba(255,255,255,1))"
                         : "drop-shadow(0 6px 15px rgba(0,0,0,0.25))",
-                    marginRight: isTablet ? "-0.5rem" : "-5rem",  // PULL RIGHT MACHINE CLOSER
-                    marginLeft: isTablet ? "-20px" : "-40px"  // Negative margin = move left
+                    marginRight: isTablet ? "-0.5rem" : "-5rem",
+                    marginLeft: isTablet ? "-20px" : "-40px"
                   }}
                 >
                   <img
                     src={washingMachine2Img}
                     alt="White Washing Machine"
                     style={{
-                      width: isTablet ? "320px" : "500px",   // EVEN BIGGER
-                      height: isTablet ? "320px" : "500px",  // EVEN BIGGER
+                      width: isTablet ? "320px" : "500px",
+                      height: isTablet ? "320px" : "500px",
                       objectFit: "contain",
                       marginBottom: "-10px",
-                      // CRUCIAL: Override the global CSS rule
-                      maxWidth: "none !important",     // Removes max-width: 100%
-                      minWidth: isTablet ? "300px" : "500px", // Prevents shrinking
+                      maxWidth: "none !important",
+                      minWidth: isTablet ? "300px" : "500px",
                     }}
                   />
                   <h2
                     style={{
-                      fontSize: isTablet ? "2.2rem" : "3.2rem",  // Bigger text
+                      fontSize: isTablet ? "2.2rem" : "3.2rem",
                       fontWeight: "bold",
                       margin: "0",
                       color: "#fff",
                       fontFamily: "Poppins, sans-serif",
-                      textShadow: "3px 3px 8px rgba(0,0,0,0.4)", // Better shadow
-                      letterSpacing: "3px",  // More spacing
+                      textShadow: "3px 3px 8px rgba(0,0,0,0.4)",
+                      letterSpacing: "3px",
                       marginTop: "-80px",
                     }}
                   >
@@ -1297,30 +1704,29 @@ const HouseholdLevel1 = () => {
                       dragOverMachine === "colors"
                         ? "drop-shadow(0 0 30px rgba(156, 39, 176, 1))"
                         : "drop-shadow(0 6px 15px rgba(0,0,0,0.25))",
-                     marginLeft: isTablet ? "-0.5rem" : "-5rem",  // PULL LEFT MACHINE CLOSER
+                     marginLeft: isTablet ? "-0.5rem" : "-5rem",
                   }}
                 >
                   <img
                     src={washingMachine1Img}
                     alt="Colour Washing Machine"
                     style={{
-                      width: isTablet ? "320px" : "500px",   // EVEN BIGGER
-                      height: isTablet ? "320px" : "500px",  // EVEN BIGGER
+                      width: isTablet ? "320px" : "500px",
+                      height: isTablet ? "320px" : "500px",
                       objectFit: "contain",
                       marginBottom: "-10px",
-                      // CRUCIAL: Override the global CSS rule
-                      maxWidth: "none !important",     // Removes max-width: 100%
-                      minWidth: isTablet ? "300px" : "500px", // Prevents shrinking
+                      maxWidth: "none !important",
+                      minWidth: isTablet ? "300px" : "500px",
                     }}
                   />
                   <h2
                     style={{
-                      fontSize: isTablet ? "2.2rem" : "3.2rem",  // Bigger text
+                      fontSize: isTablet ? "2.2rem" : "3.2rem",
                       fontWeight: "bold",
                       margin: "0",
                       fontFamily: "Poppins, sans-serif",
-                      textShadow: "3px 3px 8px rgba(0,0,0,0.4)", // Better shadow
-                      letterSpacing: "3px",  // More spacing
+                      textShadow: "3px 3px 8px rgba(0,0,0,0.4)",
+                      letterSpacing: "3px",
                       background:
                         "linear-gradient(90deg, #E74C3C, #F39C12, #27AE60, #3498DB, #9B59B6)",
                       WebkitBackgroundClip: "text",
