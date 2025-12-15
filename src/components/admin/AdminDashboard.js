@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Button, Paper, Tabs, Tab, Container } from '@mui/material';
 import ShieldIcon from '@mui/icons-material/Shield';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import PersonRemoveIcon from '@mui/icons-material/PersonRemove';
 import GroupIcon from '@mui/icons-material/Group';
 import PeopleIcon from '@mui/icons-material/People';
 import HomeIcon from '@mui/icons-material/Home';
@@ -12,8 +10,6 @@ import TeachersList from './TeachersList';
 import ModuleManagement from './ModuleManagement';
 import LessonManagement from './LessonManagement';
 import StudentsList from './StudentsList';
-import PromoteUsers from './PromoteUsers';
-import DemoteUsers from './DemoteUsers';
 import Background from '../Background';
 import Navbar from '../Navbar';
 
@@ -127,16 +123,6 @@ const AdminDashboard = () => {
                 iconPosition="start" 
                 label="Lessons"
               />
-              <Tab 
-                icon={<PersonAddIcon sx={{ fontSize: { xs: 18, sm: 20, md: 24 } }} />} 
-                iconPosition="start" 
-                label="Promote"
-              />
-              <Tab 
-                icon={<PersonRemoveIcon sx={{ fontSize: { xs: 18, sm: 20, md: 24 } }} />} 
-                iconPosition="start" 
-                label="Demote"
-              />
             </Tabs>
             
             <Box sx={{ p: { xs: 2, sm: 2.5, md: 3 }, overflowX: 'auto' }}>
@@ -145,8 +131,6 @@ const AdminDashboard = () => {
               {activeTab === 1 && <TeachersList />}
               {activeTab === 2 && <ModuleManagement />}
               {activeTab === 3 && <LessonManagement />}
-              {activeTab === 4 && <PromoteUsers />}
-              {activeTab === 5 && <DemoteUsers />}
             </Box>
           </Paper>
         </Container>

@@ -203,7 +203,7 @@ function StudentProgress() {
         break;
       case 2: // Leaderboard - sorted by performance
         filtered = filtered.filter(s => s.moduleProgresses?.length > 0);
-        // Sort by overall progress, then by total stars, then by average score
+        // Sort by overall progress, then by total stars
         filtered = filtered.sort((a, b) => {
           const progressA = getOverallProgress(a.moduleProgresses);
           const progressB = getOverallProgress(b.moduleProgresses);
@@ -215,14 +215,7 @@ function StudentProgress() {
           const starsA = getTotalStars(a.moduleProgresses);
           const starsB = getTotalStars(b.moduleProgresses);
           
-          if (starsA !== starsB) {
-            return starsB - starsA; // More stars first
-          }
-          
-          const scoreA = getAverageScore(a.moduleProgresses);
-          const scoreB = getAverageScore(b.moduleProgresses);
-          
-          return scoreB - scoreA; // Higher score first
+          return starsB - starsA; // More stars first
         });
         break;
       default:
@@ -272,14 +265,6 @@ function StudentProgress() {
   const getTotalStars = (moduleProgresses) => {
     if (!moduleProgresses || moduleProgresses.length === 0) return 0;
     return moduleProgresses.reduce((sum, mp) => sum + mp.totalStars, 0);
-  };
-
-  const getAverageScore = (moduleProgresses) => {
-    if (!moduleProgresses || moduleProgresses.length === 0) return 0;
-    const validScores = moduleProgresses.filter(mp => mp.averageScore > 0);
-    if (validScores.length === 0) return 0;
-    const total = validScores.reduce((sum, mp) => sum + mp.averageScore, 0);
-    return Math.round(total / validScores.length);
   };
 
   const getProgressStatus = (progress) => {
@@ -402,7 +387,7 @@ function StudentProgress() {
                 sx={{
                   py: 1.5,
                   px: 2,
-                  borderRadius: '12px',
+                  borderRadius: '12box',
                   '&:hover': {
                     backgroundColor: alpha(fontColor, 0.05),
                   },
@@ -541,36 +526,7 @@ function StudentProgress() {
                 </Box>
               </Card>
             </Grid>
-            
-            {/* <Grid item xs={12} sm={6} md={3}>
-              <Card sx={{ 
-                p: 3, 
-                backgroundColor: offWhiteColors.surface,
-                borderRadius: "16px",
-                boxShadow: darkMode ? '0 4px 20px rgba(0, 0, 0, 0.2)' : '0 4px 20px rgba(0, 0, 0, 0.05)',
-                border: darkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(255, 255, 255, 0.5)',
-                background: `linear-gradient(135deg, ${gradientColors.cardGradient1} 0%, ${gradientColors.cardGradient2} 100%)`,
-              }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography variant="h3" sx={{ fontWeight: 700, color: fontColor, mb: 0.5 }}>
-                      {completionStats.activeStudents}
-                    </Typography>
-                    <Typography variant="body2" sx={{ color: alpha(fontColor, 0.7), fontWeight: 500 }}>
-                      Active Students
-                    </Typography>
-                  </Box>
-                  <Box sx={{ 
-                    p: 2, 
-                    borderRadius: 2, 
-                    backgroundColor: alpha(fontColor, 0.1) 
-                  }}>
-                    <PersonIcon sx={{ color: fontColor, fontSize: 32 }} />
-                  </Box>
-                </Box>
-              </Card>
-            </Grid> */}
-            
+        
             <Grid item xs={12} sm={6} md={3}>
               <Card sx={{ 
                 p: 3, 
@@ -837,7 +793,7 @@ function StudentProgress() {
 
                             {/* Stats Grid */}
                             <Grid container spacing={2} sx={{ mb: 3 }}>
-                              <Grid item xs={4}>
+                              <Grid item xs={6}>
                                 <Box sx={{ textAlign: 'center', p: 2, backgroundColor: offWhiteColors.subtleBg, borderRadius: 2 }}>
                                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 1 }}>
                                     <MenuBookIcon sx={{ color: fontColor, fontSize: 20, mr: 0.5 }} />
@@ -850,26 +806,16 @@ function StudentProgress() {
                                   </Typography>
                                 </Box>
                               </Grid>
-                              <Grid item xs={4}>
-                                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: alpha(fontColor, 0.05), borderRadius: 2 }}>
+                              <Grid item xs={6}>
+                                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: alpha('#f59e0b', 0.1), borderRadius: 2 }}>
                                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 1 }}>
-                                    <StarIcon sx={{ color: fontColor, fontSize: 20, mr: 0.5 }} />
+                                    <StarIcon sx={{ color: '#f59e0b', fontSize: 20, mr: 0.5 }} />
                                     <Typography variant="h6" sx={{ fontWeight: 700, color: fontColor }}>
                                       {getTotalStars(student.moduleProgresses)}
                                     </Typography>
                                   </Box>
                                   <Typography variant="caption" sx={{ color: alpha(fontColor, 0.7), fontWeight: 500 }}>
                                     Stars
-                                  </Typography>
-                                </Box>
-                              </Grid>
-                              <Grid item xs={4}>
-                                <Box sx={{ textAlign: 'center', p: 2, backgroundColor: alpha('#10b981', 0.1), borderRadius: 2 }}>
-                                  <Typography variant="h6" sx={{ fontWeight: 700, color: fontColor, mb: 1 }}>
-                                    {getAverageScore(student.moduleProgresses)}%
-                                  </Typography>
-                                  <Typography variant="caption" sx={{ color: alpha(fontColor, 0.7), fontWeight: 500 }}>
-                                    Avg Score
                                   </Typography>
                                 </Box>
                               </Grid>
@@ -1028,7 +974,7 @@ function StudentProgress() {
                     
                     {/* Quick Stats */}
                     <Grid container spacing={2}>
-                      <Grid item xs={3}>
+                      <Grid item xs={4}>
                         <Box sx={{ textAlign: 'center', p: 2, backgroundColor: alpha(whiteColor, 0.15), borderRadius: 2 }}>
                           <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
                             {getOverallProgress(detailedProgress.moduleProgresses)}%
@@ -1038,7 +984,7 @@ function StudentProgress() {
                           </Typography>
                         </Box>
                       </Grid>
-                      <Grid item xs={3}>
+                      <Grid item xs={4}>
                         <Box sx={{ textAlign: 'center', p: 2, backgroundColor: alpha(whiteColor, 0.15), borderRadius: 2 }}>
                           <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
                             {detailedProgress.moduleProgresses?.length || 0}
@@ -1048,23 +994,13 @@ function StudentProgress() {
                           </Typography>
                         </Box>
                       </Grid>
-                      <Grid item xs={3}>
+                      <Grid item xs={4}>
                         <Box sx={{ textAlign: 'center', p: 2, backgroundColor: alpha(whiteColor, 0.15), borderRadius: 2 }}>
                           <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
                             {getTotalStars(detailedProgress.moduleProgresses)}
                           </Typography>
                           <Typography variant="caption" sx={{ opacity: 0.9 }}>
                             Total Stars
-                          </Typography>
-                        </Box>
-                      </Grid>
-                      <Grid item xs={3}>
-                        <Box sx={{ textAlign: 'center', p: 2, backgroundColor: alpha(whiteColor, 0.15), borderRadius: 2 }}>
-                          <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
-                            {getAverageScore(detailedProgress.moduleProgresses)}%
-                          </Typography>
-                          <Typography variant="caption" sx={{ opacity: 0.9 }}>
-                            Avg Score
                           </Typography>
                         </Box>
                       </Grid>
@@ -1247,28 +1183,6 @@ function StudentProgress() {
                                   </Typography>
                                 </Paper>
                               </Grid>
-                              <Grid item xs={12}>
-                                <Paper sx={{ 
-                                  p: 3, 
-                                  textAlign: 'center', 
-                                  backgroundColor: alpha('#2563eb', 0.05), 
-                                  border: '1px solid rgba(37, 99, 235, 0.1)' 
-                                }}>
-                                  <Typography variant="h5" sx={{ 
-                                    fontWeight: 700, 
-                                    color: '#2563eb', 
-                                    mb: 1 
-                                  }}>
-                                    {Math.round(moduleProgress.averageScore)}%
-                                  </Typography>
-                                  <Typography variant="body2" sx={{ 
-                                    color: '#1d4ed8', 
-                                    fontWeight: 500 
-                                  }}>
-                                    Average Score
-                                  </Typography>
-                                </Paper>
-                              </Grid>
                             </Grid>
                           </Grid>
                           <Grid item xs={12}>
@@ -1363,13 +1277,6 @@ function StudentProgress() {
                             color: darkMode ? whiteColor : darkTextColor, 
                             py: 2 
                           }}>
-                            Score
-                          </TableCell>
-                          <TableCell sx={{ 
-                            fontWeight: 700, 
-                            color: darkMode ? whiteColor : darkTextColor, 
-                            py: 2 
-                          }}>
                             Stars
                           </TableCell>
                           <TableCell sx={{ 
@@ -1402,21 +1309,6 @@ function StudentProgress() {
                               }}>
                                 {lessonProgress.lessonTitle}
                               </Typography>
-                            </TableCell>
-                            <TableCell sx={{ py: 2 }}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Typography variant="body1" sx={{ 
-                                  fontWeight: 600, 
-                                  color: darkMode ? whiteColor : darkTextColor 
-                                }}>
-                                  {lessonProgress.score}
-                                </Typography>
-                                <Typography variant="body2" sx={{ 
-                                  color: alpha(darkMode ? whiteColor : darkTextColor, 0.7) 
-                                }}>
-                                  / {lessonProgress.maxScore}
-                                </Typography>
-                              </Box>
                             </TableCell>
                             <TableCell sx={{ py: 2 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

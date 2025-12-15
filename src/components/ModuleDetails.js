@@ -6,36 +6,22 @@ import {
   Typography,
   Button,
   Paper,
-  Grid,
   CircularProgress,
-  Divider,
-  IconButton,
-  Chip,
-  Card, 
-  CardContent,
-  CardMedia,
-  CardActions,
-  Breadcrumbs,
-  Link,
   Alert,
   Snackbar,
   Stack,
-  LinearProgress
+  Card,
+  CardContent,
+  CardActions
 } from '@mui/material';
 import {
   BookOutlined,
   PlayArrow,
   CheckCircle,
-  AccessTime,
-  ArrowBack,
   QuizOutlined,
   DragIndicatorOutlined,
   VideoLibraryOutlined,
-  TextSnippetOutlined,
-  Lock,
-  LockOpen,
-  Star as StarIcon,
-  Score as ScoreIcon
+  TextSnippetOutlined
 } from '@mui/icons-material';
 import Navbar from './Navbar';
 import Background from './Background';
@@ -50,9 +36,7 @@ import module3 from "../assets/chores.jpg";
 import { useGlobalBackgroundMusic } from "./background music/useGlobalBackgroundMusic";
 import AudioToggleButton from "../components/background music/AudioToggleButton";
 import backgroundMusic from '../assets/background-music.mp3';
-import exitbtn from '../assets/exitbtn.png'; // ADD THIS IMPORT
-
-
+import exitbtn from '../assets/exitbtn.png';
 
 function ModuleDetails() {
   const { moduleId } = useParams();
@@ -69,11 +53,10 @@ function ModuleDetails() {
   const { audioPlaying, toggleAudio } = useGlobalBackgroundMusic(backgroundMusic);
 
   const moduleImages = [
-  module1,
-  module2,
-  module3
-];
-
+    module1,
+    module2,
+    module3
+  ];
 
   useEffect(() => {
     Promise.all([
@@ -198,38 +181,37 @@ function ModuleDetails() {
     }
   };
 
-
-
   const handleStartLesson = (lesson, index) => {
-  console.log("🚀 Starting lesson:", lesson);
-  console.log("📍 Module ID:", moduleId);
-  
-  // Check if the lesson has a custom activity path
-  if (lesson.activityPath) {
-    // Special handling for hygiene Level 2 that needs moduleId
-    if (lesson.activityPath === '/lesson/hygiene/level-2') {
-      const navigationPath = `${lesson.activityPath}/${moduleId}/${lesson.id}`;
-      console.log("📍 Navigating to hygiene level 2:", navigationPath);
-      navigate(navigationPath);
-    } 
-    // ADD THIS: Special handling for hygiene Level 3 that also needs moduleId
-    else if (lesson.activityPath === '/lesson/hygiene/level-3') {
-      const navigationPath = `${lesson.activityPath}/${moduleId}/${lesson.id}`;
-      console.log("📍 Navigating to hygiene level 3:", navigationPath);
-      navigate(navigationPath);
+    console.log("🚀 Starting lesson:", lesson);
+    console.log("📍 Module ID:", moduleId);
+    
+    // Check if the lesson has a custom activity path
+    if (lesson.activityPath) {
+      // Special handling for hygiene Level 2 that needs moduleId
+      if (lesson.activityPath === '/lesson/hygiene/level-2') {
+        const navigationPath = `${lesson.activityPath}/${moduleId}/${lesson.id}`;
+        console.log("📍 Navigating to hygiene level 2:", navigationPath);
+        navigate(navigationPath);
+      } 
+      // ADD THIS: Special handling for hygiene Level 3 that also needs moduleId
+      else if (lesson.activityPath === '/lesson/hygiene/level-3') {
+        const navigationPath = `${lesson.activityPath}/${moduleId}/${lesson.id}`;
+        console.log("📍 Navigating to hygiene level 3:", navigationPath);
+        navigate(navigationPath);
+      }
+      else {
+        // All other lessons (including hygiene level 1) use original format
+        const navigationPath = `${lesson.activityPath}/${lesson.id}`;
+        console.log("📍 Navigating to other lesson:", navigationPath);
+        navigate(navigationPath);
+      }
+    } else {
+      // Default lesson route
+      console.log("📍 Navigating to default lesson route");
+      navigate(`/lessons/${lesson.id}`);
     }
-    else {
-      // All other lessons (including hygiene level 1) use original format
-      const navigationPath = `${lesson.activityPath}/${lesson.id}`;
-      console.log("📍 Navigating to other lesson:", navigationPath);
-      navigate(navigationPath);
-    }
-  } else {
-    // Default lesson route
-    console.log("📍 Navigating to default lesson route");
-    navigate(`/lessons/${lesson.id}`);
-  }
-};
+  };
+
   const getLessonIcon = (activityType) => {
     switch (activityType) {
       case 'MULTIPLE_CHOICE':
@@ -246,23 +228,6 @@ function ModuleDetails() {
     }
   };
 
-  const formatTime = (minutes) => {
-    if (!minutes) return 'N/A';
-    
-    if (minutes < 60) {
-      return `${minutes} min`;
-    }
-    
-    const hours = Math.floor(minutes / 60);
-    const remainingMins = minutes % 60;
-    
-    if (remainingMins === 0) {
-      return `${hours} hr`;
-    }
-    
-    return `${hours} hr ${remainingMins} min`;
-  };
-
   const isLessonCompleted = (lesson) => {
     return lessonProgress[lesson.id]?.completed === true;
   };
@@ -270,13 +235,6 @@ function ModuleDetails() {
   // MODIFIED: Always return false to unlock all lessons
   const isLessonLocked = (lesson, index) => {
     return false; // All lessons are unlocked
-  };
-
-  const getLessonProgressPercentage = () => {
-    if (!lessons || lessons.length === 0) return 0;
-    
-    const completedCount = lessons.filter(lesson => isLessonCompleted(lesson)).length;
-    return (completedCount / lessons.length) * 100;
   };
 
   if (loading) {
@@ -314,36 +272,36 @@ function ModuleDetails() {
         <Container maxWidth="lg" sx={{ py: { xs: 3, sm: 4, md: 5 }, px: { xs: 2, sm: 3 } }}>
           
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: { xs: 2, sm: 3 }, flexWrap: 'wrap', gap: 2 }}>
-          <Button
-            onClick={() => navigate('/studentdashboard')}
-            sx={{ 
-              padding: '1px',
-              minWidth: 'auto',
-              backgroundColor: 'transparent',
-              boxShadow: 'none',
-              marginLeft: { xs: 0, sm: '-60px', md: '-120px' },
-              '&:hover': {
+            <Button
+              onClick={() => navigate('/studentdashboard')}
+              sx={{ 
+                padding: '1px',
+                minWidth: 'auto',
                 backgroundColor: 'transparent',
                 boxShadow: 'none',
-                transform: 'scale(1.1)',
-                transition: 'transform 0.2s ease-in-out'
-              }
-            }}
-          >
-            <img 
-              src={exitbtn} 
-              alt="Exit" 
-              style={{ 
-                width: '100%',
-                maxWidth: '85px',
-                height: 'auto',
-                maxHeight: '85px'
-              }} 
-            />
-          </Button>
-          
-          <AudioToggleButton audioPlaying={audioPlaying} toggleAudio={toggleAudio} />
-        </Box>
+                marginLeft: { xs: 0, sm: '-60px', md: '-120px' },
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                  boxShadow: 'none',
+                  transform: 'scale(1.1)',
+                  transition: 'transform 0.2s ease-in-out'
+                }
+              }}
+            >
+              <img 
+                src={exitbtn} 
+                alt="Exit" 
+                style={{ 
+                  width: '100%',
+                  maxWidth: '85px',
+                  height: 'auto',
+                  maxHeight: '85px'
+                }} 
+              />
+            </Button>
+            
+            <AudioToggleButton audioPlaying={audioPlaying} toggleAudio={toggleAudio} />
+          </Box>
           
           <Paper
             sx={{
@@ -392,6 +350,8 @@ function ModuleDetails() {
                           backgroundColor: completed ? 'rgba(76, 175, 80, 0.05)' : 'white',
                           transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                           position: 'relative',
+                          display: 'flex',
+                          flexDirection: 'column',
                           '&:hover': {
                             boxShadow: '0px 10px 20px rgba(0,0,0,0.1)'
                           }
@@ -470,33 +430,45 @@ function ModuleDetails() {
                             {index + 1}
                           </Typography>
                         </Box>
-                        <CardContent sx={{ pt: { xs: 1.5, sm: 2 } }}>
-                          <Typography variant="h5" component="div" gutterBottom title={lessonTitle}
+                        
+                        <CardContent sx={{ 
+                          pt: { xs: 1.5, sm: 2 },
+                          flexGrow: 1,
+                          display: 'flex',
+                          flexDirection: 'column'
+                        }}>
+                          <Typography 
+                            variant="h5" 
+                            component="div" 
+                            gutterBottom 
+                            title={lessonTitle}
                             sx={{ 
                               fontSize: { xs: '1rem', sm: '1.25rem', md: '1.5rem' },
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
                               display: '-webkit-box',
                               WebkitLineClamp: 2,
-                              WebkitBoxOrient: 'vertical'
+                              WebkitBoxOrient: 'vertical',
+                              flexGrow: 1
                             }}
                           >
                             {lessonTitle}
                           </Typography>
-  
                         </CardContent>
+                        
                         <CardActions sx={{ 
-                          pt: 10, 
-                          pb: 0, 
-                          px: 0, 
+                          pt: 0,
+                          pb: 2,
+                          px: 2,
                           display: 'flex', 
                           alignItems: 'center', 
-                          justifyContent: 'flex-end' // Changed from 'flex-start' to 'flex-end'
+                          justifyContent: 'flex-end',
+                          minHeight: '70px'
                         }}>
                           <Button
                             variant="contained"
                             onClick={() => handleStartLesson(lesson, index)}
-                            disabled={false} 
+                            disabled={false}
                             sx={{
                               backgroundColor: 'transparent',
                               boxShadow: 'none',
