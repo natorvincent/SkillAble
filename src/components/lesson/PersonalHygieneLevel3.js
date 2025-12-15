@@ -56,7 +56,282 @@ import backgroundMusic from '../../assets/background-music.mp3';
 import correctSound from "../../assets/hygieneLevel1/correct-sound.mp3"
 import incorrectSound from "../../assets/hygieneLevel1/incorrect-sound.mp3"
 import successSound from "../../assets/hygieneLevel1/success-sound.mp3"
+import purrnandoAudio from "../../assets/hygienelevel3/purrnandolvl3.mp3";
 
+// ==================== ASSET LOADER COMPONENT ====================
+const AssetLoader = ({ onComplete }) => {
+  const [progress, setProgress] = useState(0);
+  const [loadedAssets, setLoadedAssets] = useState(0);
+  const [totalAssets, setTotalAssets] = useState(0);
+  
+  useEffect(() => {
+    // List of all assets to preload
+    const imageAssets = [
+      backgroundImg,
+      beforeLeftHand, beforeRightHand, afterLeftHand, afterRightHand,
+      beforeLeftFoot, beforeRightFoot, afterLeftFoot, afterRightFoot,
+      nailClipperImg, nailClippingsImg, trashCanImg,
+      characterCatDefault, characterCatExcited, characterCatCurious,
+      characterCatHelpful, characterCatProud, characterCatWorried,
+      require("../../assets/hygienelevel3/resetbtn.png"),
+      require("../../assets/hygienelevel3/homebtn.png")
+    ];
+    
+    const videoAssets = [
+      nailClippingVideo
+    ];
+    
+    const audioAssets = [
+      backgroundMusic, correctSound, incorrectSound, successSound, purrnandoAudio
+    ];
+    
+    const allAssets = [...imageAssets, ...videoAssets, ...audioAssets];
+    setTotalAssets(allAssets.length);
+    
+    let completed = 0;
+    
+    const updateProgress = () => {
+      completed++;
+      setLoadedAssets(completed);
+      const newProgress = Math.round((completed / allAssets.length) * 100);
+      setProgress(newProgress);
+      
+      if (completed === allAssets.length) {
+        // All assets loaded
+        setTimeout(() => {
+          onComplete();
+        }, 500); // Small delay to show 100%
+      }
+    };
+    
+    // Preload images
+    imageAssets.forEach(src => {
+      const img = new Image();
+      img.src = src;
+      img.onload = updateProgress;
+      img.onerror = updateProgress; // Continue even if some assets fail
+    });
+    
+    // Preload videos
+    videoAssets.forEach(src => {
+      const video = document.createElement('video');
+      video.src = src;
+      video.preload = 'auto';
+      video.onloadeddata = updateProgress;
+      video.onerror = updateProgress;
+      // Force load
+      video.load();
+    });
+    
+    // Preload audio
+    audioAssets.forEach(src => {
+      const audio = new Audio();
+      audio.src = src;
+      audio.preload = 'auto';
+      audio.oncanplaythrough = updateProgress;
+      audio.onerror = updateProgress;
+      // Force load
+      audio.load();
+    });
+  }, [onComplete]);
+  
+  return (
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#FFD166',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999
+      }}
+    >
+      {/* Main loading container */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 3,
+          width: '100%',
+          maxWidth: 500,
+          px: 3
+        }}
+      >
+        {/* Loader Component */}
+        <Loader />
+        
+        {/* Loading text */}
+        <Typography
+          variant="h5"
+          sx={{
+            color: 'white',
+            fontWeight: 'bold',
+            fontFamily: 'Poppins, sans-serif',
+            textAlign: 'center',
+            mb: 2,
+            textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+          }}
+        >
+          Loading game assets...
+        </Typography>
+        
+        {/* Progress bar */}
+        <Box sx={{ width: '100%', maxWidth: 300, mt: 2 }}>
+          <LinearProgress 
+            variant="determinate" 
+            value={progress} 
+            sx={{ 
+              height: 10, 
+              borderRadius: '5px',
+              backgroundColor: 'rgba(255, 255, 255, 0.3)',
+              '& .MuiLinearProgress-bar': {
+                borderRadius: '5px',
+                backgroundColor: '#FF595E',
+                transition: 'transform 0.3s ease'
+              }
+            }} 
+          />
+          <Typography
+            variant="body2"
+            sx={{
+              color: 'white',
+              textAlign: 'center',
+              mt: 1,
+              fontFamily: 'Inter, sans-serif'
+            }}
+          >
+            {progress}% ({loadedAssets}/{totalAssets} assets)
+          </Typography>
+        </Box>
+        
+        {/* Loading animation dots */}
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 1.5,
+            mt: 2
+          }}
+        >
+          {[1, 2, 3].map((dot) => (
+            <Box
+              key={dot}
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: '50%',
+                backgroundColor: progress >= (dot * 33) ? '#4AA8E8' : 'rgba(255, 255, 255, 0.2)',
+                animation: progress >= (dot * 33) ? 'pulseDot 1.5s infinite' : 'none',
+                animationDelay: `${dot * 0.2}s`,
+                '@keyframes pulseDot': {
+                  '0%, 100%': { transform: 'scale(1)', opacity: 1 },
+                  '50%': { transform: 'scale(1.2)', opacity: 0.7 }
+                }
+              }}
+            />
+          ))}
+        </Box>
+      </Box>
+      
+      {/* Bottom tip text */}
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 40,
+          width: '100%',
+          textAlign: 'center',
+          px: 2
+        }}
+      >
+        <Typography
+          variant="caption"
+          sx={{
+            color: 'white',
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '0.8rem'
+          }}
+        >
+          Loading all assets for smooth gameplay...
+        </Typography>
+      </Box>
+      
+      {/* Decorative elements */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+          zIndex: -1,
+          overflow: 'hidden'
+        }}
+      >
+        {/* Animated background circles */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '20%',
+            left: '10%',
+            width: 100,
+            height: 100,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255, 89, 94, 0.1) 0%, transparent 70%)',
+            animation: 'float 8s ease-in-out infinite',
+            '@keyframes float': {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-20px)' }
+            }
+          }}
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: '30%',
+            right: '15%',
+            width: 80,
+            height: 80,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255, 209, 102, 0.1) 0%, transparent 70%)',
+            animation: 'float 10s ease-in-out infinite',
+            animationDelay: '1s',
+            '@keyframes float': {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-15px)' }
+            }
+          }}
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '60%',
+            left: '20%',
+            width: 60,
+            height: 60,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(74, 168, 232, 0.1) 0%, transparent 70%)',
+            animation: 'float 12s ease-in-out infinite',
+            animationDelay: '2s',
+            '@keyframes float': {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-25px)' }
+            }
+          }}
+        />
+      </Box>
+    </Box>
+  );
+};
+
+// ==================== SPARKLE ANIMATION ====================
 const SparkleAnimation = ({ position }) => {
   const [sparkles, setSparkles] = useState([]);
 
@@ -119,6 +394,7 @@ const SparkleAnimation = ({ position }) => {
   );
 };
 
+// ==================== CHARACTER INTRODUCTION ====================
 const CharacterIntroductionPopup = ({ onComplete }) => (
   <Box
     sx={{
@@ -190,7 +466,7 @@ const CharacterIntroductionPopup = ({ onComplete }) => (
             fontFamily: 'Poppins, sans-serif'
           }}
         >
-          Hey! It's me again, Purrnando! 🐱
+          Hey! It's me again, Purrnando!
         </Typography>
         
         <Typography
@@ -207,32 +483,48 @@ const CharacterIntroductionPopup = ({ onComplete }) => (
         </Typography>
         
         <Button
-          variant="contained"
-          onClick={onComplete}
-          sx={{
-            background: 'linear-gradient(135deg, #FFD166 0%, #FFB700 100%)',
-            color: '#280B60',
-            px: 4,
-            py: 1,
-            borderRadius: '20px',
-            fontFamily: 'Poppins, sans-serif',
-            fontWeight: '700',
-            fontSize: '1.1rem',
-            textTransform: 'none',
-            boxShadow: '0 4px 15px rgba(255, 209, 102, 0.4)',
-            '&:hover': {
-              background: 'linear-gradient(135deg, #FFDC87 0%, #FFD166 100%)',
-              transform: 'translateY(-2px)'
-            }
-          }}
-        >
-          YES, LET'S GO! 🐾
-        </Button>
+                variant="contained"
+                onClick={onComplete}
+                sx={{
+                  background: 'linear-gradient(135deg, #1982C4 0%, #1568A0 100%)',
+                  color: 'white',
+                  px: 6,
+                  py: 3,
+                  borderRadius: '20px',
+                  fontFamily: 'Poppins, sans-serif',
+                  fontWeight: '700',
+                  fontSize: '1.1rem',
+                  textTransform: 'none',
+                  boxShadow: '0 4px 20px rgba(25, 130, 196, 0.7)',
+                  animation: 'breathe 2s infinite ease-in-out',
+                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                  minWidth: '250px',
+                  
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #1E90FF 0%, #1982C4 100%)',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 8px 25px rgba(25, 130, 196, 0.9)',
+                    animation: 'none',
+                  },
+                  
+                  '@keyframes breathe': {
+                    '0%, 100%': {
+                      background: 'linear-gradient(135deg, #4AA8E8 0%, #1982C4 100%)',
+                    },
+                    '50%': {
+                      background: 'linear-gradient(135deg, #0A568C 0%, #0A3D62 100%)',
+                    }
+                  }
+                }}
+              >
+                YES, LET'S GO! 🐾
+              </Button>
       </Box>
     </Paper>
   </Box>
 );
 
+// ==================== HAND INTRODUCTION ====================
 const HandIntroductionPopup = ({ onComplete }) => (
   <Box
     sx={{
@@ -423,6 +715,7 @@ const HandIntroductionPopup = ({ onComplete }) => (
   </Box>
 );
 
+// ==================== CHARACTER CAT ====================
 const CharacterCat = ({ gameState, message, showVideoCat = false }) => {
   const getCatImage = () => {
     if (showVideoCat) return characterCatHelpful;
@@ -437,6 +730,8 @@ const CharacterCat = ({ gameState, message, showVideoCat = false }) => {
       case 'second-hand':
       case 'first-foot':
       case 'second-foot':
+        return characterCatHelpful;
+      case 'cleanup':
         return characterCatHelpful;
       case 'complete':
         return characterCatProud;
@@ -458,6 +753,8 @@ const CharacterCat = ({ gameState, message, showVideoCat = false }) => {
       case 'second-hand':
       case 'first-foot':
       case 'second-foot':
+        return 'float 3s ease-in-out infinite';
+      case 'cleanup':
         return 'float 3s ease-in-out infinite';
       case 'complete':
         return 'celebrate 2s ease-in-out infinite';
@@ -549,6 +846,7 @@ const CharacterCat = ({ gameState, message, showVideoCat = false }) => {
   );
 };
 
+// ==================== DROP ZONE ====================
 const DropZone = ({ position, size, isActive = true, isHovered = false, nailNumber = null, showNumber = false }) => {
   return (
     <Box
@@ -588,6 +886,7 @@ const DropZone = ({ position, size, isActive = true, isHovered = false, nailNumb
   );
 };
 
+// ==================== TOOL INTRODUCTION ====================
 const ToolIntroductionPopup = ({ onComplete }) => (
   <Box
     sx={{
@@ -713,6 +1012,7 @@ const ToolIntroductionPopup = ({ onComplete }) => (
   </Box>
 );
 
+// ==================== VIDEO POPUP ====================
 const VideoPopup = ({ onContinue, currentStep, firstHandDragCompleted, firstFootDragCompleted }) => {
   const getVideoMessage = () => {
     if (currentStep === 'first-hand' && !firstHandDragCompleted) {
@@ -855,6 +1155,7 @@ const VideoPopup = ({ onContinue, currentStep, firstHandDragCompleted, firstFoot
   );
 };
 
+// ==================== MAIN GAME COMPONENT ====================
 export default function NailCareGame() {
   const navigate = useNavigate();
   const { moduleId, lessonId } = useParams();
@@ -872,7 +1173,8 @@ export default function NailCareGame() {
   const [correctSoundRef, setCorrectSoundRef] = useState(null);
   const [incorrectSoundRef, setIncorrectSoundRef] = useState(null);
   const [successSoundRef, setSuccessSoundRef] = useState(null);
-  const [showStartScreen, setShowStartScreen] = useState(true);
+  const [purrnandoAudioRef, setPurrnandoAudioRef] = useState(null);
+  const [assetsLoaded, setAssetsLoaded] = useState(false); // NEW: Track asset loading
   const [starAnimationStage, setStarAnimationStage] = useState(0);
   const [confettiPieces, setConfettiPieces] = useState([]);
 
@@ -909,6 +1211,13 @@ export default function NailCareGame() {
   const [nailClipperPosition, setNailClipperPosition] = useState({ x: 0, y: 0 });
   const [originalClipperPosition, setOriginalClipperPosition] = useState({ x: 0, y: 0 });
 
+  const [firstDragPerStep, setFirstDragPerStep] = useState({
+    'first-hand': false,
+    'second-hand': false,
+    'first-foot': false,
+    'second-foot': false
+  });
+
   const gameAreaRef = useRef(null);
   const videoRef = useRef(null);
 
@@ -943,33 +1252,72 @@ export default function NailCareGame() {
     ]
   };
 
-  const getCharacterMessage = () => {
-  switch (currentStep) {
-    case 'hand-selection':
-      return 'Choose a hand to start! 🐾';
-    case 'first-hand':
-      return `Drag to each nail! ${clippingCount}/5 done!`;
-    case 'second-hand':
-      return `Almost there! ${clippingCount}/5 done!`;
-    case 'foot-selection':
-      return 'Now choose a foot! 🦶';
-    case 'first-foot':
-      return `Foot nails! ${clippingCount}/5 done!`;
-    case 'second-foot':
-      return `Last foot! ${clippingCount}/5 done!`;
-    case 'complete':
-      return 'Perfect hygiene! You trimmed all nails! 🎉';
-    default:
-      return 'Let\'s trim those nails!';
-  }
-};
+  // Function to remove nail clippings for a specific step
+  const removeNailClippingsForStep = (step) => {
+    // Filter out nail clippings for the completed step
+    const updatedPositions = {};
+    Object.entries(nailClippingsPositions).forEach(([key, position]) => {
+      if (!key.startsWith(step)) {
+        updatedPositions[key] = position;
+      }
+    });
+    setNailClippingsPositions(updatedPositions);
+  };
 
-  const handleStartGame = () => {
-    setShowStartScreen(false);
+  const getCharacterMessage = () => {
+    switch (currentStep) {
+      case 'hand-selection':
+        return 'Choose a hand to start! 🐾';
+      case 'first-hand':
+        return `Drag to each nail! ${clippingCount}/5 done!`;
+      case 'second-hand':
+        return `Almost there! ${clippingCount}/5 done!`;
+      case 'foot-selection':
+        return 'Now choose a foot! 🦶';
+      case 'first-foot':
+        return `Foot nails! ${clippingCount}/5 done!`;
+      case 'second-foot':
+        return `Last foot! ${clippingCount}/5 done!`;
+      case 'cleanup':
+        return 'All nail clippings have been cleaned up! Great job! 🧹';
+      case 'complete':
+        return 'Perfect hygiene! You trimmed all nails and cleaned up! 🎉';
+      default:
+        return 'Let\'s trim those nails!';
+    }
+  };
+
+  // NEW: Handle asset loading completion
+  const handleAssetsLoaded = () => {
+    setAssetsLoaded(true);
     setShowCharacterIntroduction(true);
+    
+    // Create audio references after assets are loaded
+    const audio = new Audio(backgroundMusic);
+    audio.loop = true;
+    audio.volume = 0.3;
+    setAudioRef(audio);
+
+    const correctAudio = new Audio(correctSound);
+    const incorrectAudio = new Audio(incorrectSound);
+    const successAudio = new Audio(successSound);
+    
+    correctAudio.volume = 0.7;
+    incorrectAudio.volume = 0.7;
+    successAudio.volume = 0.7;
+    
+    setCorrectSoundRef(correctAudio);
+    setIncorrectSoundRef(incorrectAudio);
+    setSuccessSoundRef(successAudio);
   };
 
   const handleCharacterIntroductionComplete = () => {
+    // Stop the purrnando audio when button is clicked
+    if (purrnandoAudioRef) {
+      purrnandoAudioRef.pause();
+      purrnandoAudioRef.currentTime = 0;
+    }
+    
     setShowCharacterIntroduction(false);
     setShowHandIntroduction(true);
   };
@@ -1011,6 +1359,85 @@ export default function NailCareGame() {
     } else {
       const footRotations = [10, -5, 20, -10, 25];
       return footRotations[index] || (Math.random() * 50 - 25);
+    }
+  };
+
+  const handleAutoCutNail = (nailKey, nailIndex) => {
+    // Automatically cut the nail without showing video
+    setClippingCount(prev => prev + 1);
+    setScore(prev => Math.min(100, prev + 5));
+    
+    // Check if all nails are done for this step
+    if (clippingCount + 1 >= 5) {
+      completeStep();
+    }
+  };
+
+  const completeStep = () => {
+    if (currentStep === 'first-hand') {
+      // Remove clippings for first-hand before transitioning
+      removeNailClippingsForStep('first-hand');
+      
+      setShowAfterFirstHand(true);
+      setTimeout(() => {
+        setShowAfterFirstHand(false);
+        setCompletedFirstHand(true);
+        setCurrentStep('second-hand');
+        setClippingCount(0);
+        setNailClipperPosition(originalClipperPosition);
+        
+        // Also clear any remaining clippings from memory
+        setNailClippingsPositions({});
+        setCompletedNails([]);
+      }, 2000);
+    } else if (currentStep === 'second-hand') {
+      // Remove clippings for second-hand before transitioning
+      removeNailClippingsForStep('second-hand');
+      
+      setShowAfterFirstHand(true);
+      setTimeout(() => {
+        setShowAfterFirstHand(false);
+        setCurrentStep('foot-selection');
+        setClippingCount(0);
+        
+        // Clear all hand nail clippings
+        setNailClippingsPositions({});
+        setCompletedNails([]);
+      }, 2000);
+    } else if (currentStep === 'first-foot') {
+      // Remove clippings for first-foot before transitioning
+      removeNailClippingsForStep('first-foot');
+      
+      setShowAfterFirstFoot(true);
+      setTimeout(() => {
+        setShowAfterFirstFoot(false);
+        setCompletedFirstFoot(true);
+        setCurrentStep('second-foot');
+        setClippingCount(0);
+        setNailClipperPosition(originalClipperPosition);
+        
+        // Also clear any remaining clippings from memory
+        setNailClippingsPositions({});
+        setCompletedNails([]);
+      }, 2000);
+    } else if (currentStep === 'second-foot') {
+      // Remove clippings for second-foot before transitioning
+      removeNailClippingsForStep('second-foot');
+      
+      setShowAfterFirstFoot(true);
+      setTimeout(() => {
+        setShowAfterFirstFoot(false);
+        
+        // Clear all foot nail clippings
+        setNailClippingsPositions({});
+        setCompletedNails([]);
+        
+        // Auto-proceed to cleanup
+        setCurrentStep('cleanup');
+        setTimeout(() => {
+          completeGame();
+        }, 2000);
+      }, 2000);
     }
   };
 
@@ -1064,6 +1491,27 @@ export default function NailCareGame() {
             hoverY >= nailZone.y && 
             hoverY <= nailZone.y + nailZone.height) {
           hoveredIndex = i;
+          
+          // If this is NOT the first drag for this step, auto-cut on hover
+          if (firstDragPerStep[currentStep] && !isCompleted) {
+            playSoundEffect('correct');
+            
+            // Add to completed nails
+            setCompletedNails(prev => [...prev, nailKey]);
+            
+            // Handle automatic cutting
+            handleAutoCutNail(nailKey, i);
+            
+            // Create nail clippings
+            const clippingsPosition = {
+              x: nailZone.x + nailZone.width / 2,
+              y: nailZone.y - 5
+            };
+            setNailClippingsPositions(prev => ({
+              ...prev,
+              [nailKey]: clippingsPosition
+            }));
+          }
           break;
         }
       }
@@ -1098,6 +1546,7 @@ export default function NailCareGame() {
       const dropX = ((e.clientX - rect.left) / rect.width) * 100;
       const dropY = ((e.clientY - rect.top) / rect.height) * 100;
       
+      // Get current nail zones based on step
       let currentNailZones;
       if (currentStep === 'first-hand') {
         currentNailZones = selectedHand === 'left' ? nailDropZones.leftHand : nailDropZones.rightHand;
@@ -1114,7 +1563,12 @@ export default function NailCareGame() {
       
       for (let i = 0; i < currentNailZones.length; i++) {
         const nailZone = currentNailZones[i];
+        const nailKey = `${currentStep}-${i}`;
+        const isCompleted = completedNails.includes(nailKey);
+        
+        // Check if dropped on this nail AND nail is not completed
         const isDroppedOnThisNail = 
+          !isCompleted &&
           dropX >= nailZone.x && 
           dropX <= nailZone.x + nailZone.width &&
           dropY >= nailZone.y && 
@@ -1129,19 +1583,28 @@ export default function NailCareGame() {
       
       if (isOnNail && nailIndex !== -1) {
         const nailKey = `${currentStep}-${nailIndex}`;
+        
+        // Check if this is the first drag for this hand/foot
+        const isFirstDragForStep = !firstDragPerStep[currentStep];
+        
         if (!completedNails.includes(nailKey)) {
-          setShowVideo(true);
           playSoundEffect('correct');
           
-          if (currentStep === 'first-hand' && !firstHandDragCompleted) {
-            setFirstHandDragCompleted(true);
-          } else if (currentStep === 'first-foot' && !firstFootDragCompleted) {
-            setFirstFootDragCompleted(true);
+          // For first drag in each step, show video
+          if (isFirstDragForStep) {
+            setShowVideo(true);
+            setFirstDragPerStep(prev => ({
+              ...prev,
+              [currentStep]: true
+            }));
+          } else {
+            // For subsequent nails, automatically cut without video
+            handleAutoCutNail(nailKey, nailIndex);
           }
           
           setCompletedNails(prev => [...prev, nailKey]);
           
-          const currentNailZones = getCurrentNailZones();
+          // Create nail clippings for this nail
           if (currentNailZones && currentNailZones[nailIndex]) {
             const nailZone = currentNailZones[nailIndex];
             const clippingsPosition = {
@@ -1237,63 +1700,15 @@ export default function NailCareGame() {
   };
 
   const handleVideoNext = () => {
-  setShowVideo(false);
-  setClippingCount(prev => prev + 1);
-  setScore(prev => Math.min(100, prev + 5));
-  
-  if (clippingCount + 1 >= 5) {
-    if (currentStep === 'first-hand') {
-      setShowAfterFirstHand(true);
-      
-      setTimeout(() => {
-        setShowAfterFirstHand(false);
-        setCompletedFirstHand(true);
-        setCurrentStep('second-hand');
-        setClippingCount(0);
-        
-        removeCompletedClippings('first-hand');
-        
-        const clipperPosition = { x: 25, y: 50 };
-        setNailClipperPosition(clipperPosition);
-        setOriginalClipperPosition(clipperPosition);
-      }, 3000);
-    } else if (currentStep === 'second-hand') {
-      setShowAfterFirstHand(true);
-      
-      setTimeout(() => {
-        setShowAfterFirstHand(false);
-        setCurrentStep('foot-selection');
-        setClippingCount(0);
-        
-        removeCompletedClippings('second-hand');
-      }, 3000);
-    } else if (currentStep === 'first-foot') {
-      setShowAfterFirstFoot(true);
-      
-      setTimeout(() => {
-        setShowAfterFirstFoot(false);
-        setCompletedFirstFoot(true);
-        setCurrentStep('second-foot');
-        setClippingCount(0);
-        
-        removeCompletedClippings('first-foot');
-        
-        const clipperPosition = { x: 25, y: 50 };
-        setNailClipperPosition(clipperPosition);
-        setOriginalClipperPosition(clipperPosition);
-      }, 3000);
-    } else if (currentStep === 'second-foot') {
-      setShowAfterFirstFoot(true);
-      
-      setTimeout(() => {
-        setShowAfterFirstFoot(false);
-        completeGame();
-        
-        removeCompletedClippings('second-foot');
-      }, 3000);
+    setShowVideo(false);
+    setClippingCount(prev => prev + 1);
+    setScore(prev => Math.min(100, prev + 5));
+    
+    // Check if all nails are done for this step
+    if (clippingCount + 1 >= 5) {
+      completeStep();
     }
-  }
-};
+  };
 
   const completeGame = () => {
     setScore(100);
@@ -1322,8 +1737,10 @@ export default function NailCareGame() {
         return `Drag the nail clipper to each dashed box to trim foot nails (${clippingCount}/5)`;
       case 'second-foot':
         return `Drag the nail clipper to each dashed box to trim foot nails (${clippingCount}/5)`;
+      case 'cleanup':
+        return 'Nail clippings have been automatically cleaned up!';
       case 'complete':
-        return 'Great job! All nails are trimmed.';
+        return 'Great job! All nails are trimmed and cleaned.';
       default:
         return 'Complete the nail care activity';
     }
@@ -1335,244 +1752,6 @@ export default function NailCareGame() {
     
     return (completedSteps / totalSteps) * 100;
   };
-
-  const saveProgress = async () => {
-    if (progressSaving || progressSaved) {
-      console.log('Progress already saving or saved, skipping');
-      return;
-    }
-
-    try {
-      setProgressSaving(true);
-      
-      const studentId = getStudentId();
-      
-      console.log('Authentication check:', { 
-        studentId, 
-        userType: localStorage.getItem('userType'),
-        studentIdFromStorage: localStorage.getItem('studentId')
-      });
-      
-      if (!studentId) {
-        console.error('Cannot save progress: No valid student ID found');
-        
-        let errorMessage = 'Please log in to save your progress.\n\n';
-        errorMessage += `Debug Info:\n`;
-        errorMessage += `- User type: ${localStorage.getItem('userType') || 'Not set'}\n`;
-        errorMessage += `- Student ID: ${localStorage.getItem('studentId') || 'Not found'}`;
-        
-        alert(errorMessage);
-        setProgressSaving(false);
-        return;
-      }
-      
-      if (!lessonId) {
-        console.error('Cannot save progress: No lesson ID available');
-        alert('Lesson ID is missing. Cannot save progress.');
-        setProgressSaving(false);
-        return;
-      }
-
-      const progressData = {
-        score: 100,
-        maxScore: 100,  
-        completed: true,
-        starsEarned: 3,
-        moduleId: moduleId ? parseInt(moduleId, 10) : null
-      };
-      
-      console.log('Saving progress data:', progressData);
-      
-      const result = await saveStudentLessonProgress(
-        studentId, 
-        parseInt(lessonId, 10), 
-        progressData
-      );
-      
-      console.log('Progress save result:', result);
-      setProgressSaved(true);
-      
-    } catch (error) {
-      console.error('Error saving progress:', error);
-      
-      if (error.message.includes('No student ID available')) {
-        alert('Please log in to save your progress.');
-      } else {
-        alert('Failed to save progress. Please try again.');
-      }
-    } finally {
-      setProgressSaving(false);
-    }
-  };
-
-  const getStarRating = () => {
-    if (score >= 90) return 3;
-    if (score >= 70) return 2;
-    if (score >= 50) return 1;
-    return 0;
-  };
-
-  const handleContinue = async () => {
-    console.log('Continue clicked, progress state:', { progressSaved, progressSaving });
-    
-    if (!progressSaved && !progressSaving) {
-      console.log('Saving progress before continue...');
-      await saveProgress();
-    } else if (progressSaving) {
-      console.log('Progress is currently saving, please wait...');
-      return;
-    }
-    
-    if (audioRef.current) {
-      audioRef.current.pause();
-      setAudioPlaying(false);
-    }
-    
-    console.log('Navigating back...');
-    setTimeout(() => {
-      navigate(-1);
-    }, 300);
-  };
-
-  useEffect(() => {
-    const fetchUserProgress = async () => {
-      try {
-        const studentId = getStudentId();
-        if (!studentId || !lessonId) {
-          console.log('Missing studentId or lessonId:', { studentId, lessonId });
-          return;
-        }
-        
-        console.log('Fetching progress for student:', studentId, 'lesson:', lessonId);
-        const progressResponse = await getStudentLessonProgress(studentId, lessonId);
-        if (progressResponse && progressResponse.data) {
-          const progressData = progressResponse.data;
-          setScore(progressData.score || 0);
-          console.log('Loaded existing progress:', progressData);
-          
-          if (progressData.completed) {
-            setGameCompleted(true);
-            setShowSuccess(true);
-          }
-        } else {
-          console.log('No existing progress found - starting fresh');
-        }
-      } catch (error) {
-        console.log('Error fetching progress, starting fresh:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchUserProgress();
-  }, [lessonId]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        
-        setLesson({
-          id: lessonId || 1,
-          title: "Complete Nail Care",
-          description: "Learn proper nail care for hands and feet!",
-          level: 3
-        });
-        
-      } catch (err) {
-        console.error('Error in fetchData:', err);
-        setError('Something went wrong');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchData();
-  }, [lessonId, moduleId]);
-
-  useEffect(() => {
-    if (showSuccess) {
-      const animateStars = async () => {
-        setStarAnimationStage(0);
-        const totalStars = getStarRating();
-        
-        for (let i = 0; i < totalStars; i++) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-          setStarAnimationStage(i + 1);
-        }
-      };
-      
-      const timer = setTimeout(animateStars, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [showSuccess, score]);
-
-  useEffect(() => {
-    const audio = new Audio(backgroundMusic);
-    audio.loop = true;
-    audio.volume = 0.3;
-    setAudioRef(audio);
-
-    const correctAudio = new Audio(correctSound);
-    const incorrectAudio = new Audio(incorrectSound);
-    const successAudio = new Audio(successSound);
-    
-    correctAudio.volume = 0.7;
-    incorrectAudio.volume = 0.7;
-    successAudio.volume = 0.7;
-    
-    setCorrectSoundRef(correctAudio);
-    setIncorrectSoundRef(incorrectAudio);
-    setSuccessSoundRef(successAudio);
-
-    const playAudio = () => {
-      audio.play().then(() => {
-        setAudioPlaying(true);
-      }).catch(error => {
-        console.log('Audio autoplay prevented:', error);
-      });
-    };
-
-    const timer = setTimeout(playAudio, 1000);
-
-    return () => {
-      clearTimeout(timer);
-      if (audio) {
-        audio.pause();
-        audio.currentTime = 0;
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (showSuccess) {
-      const createConfetti = () => {
-        const pieces = [];
-        for (let i = 0; i < 150; i++) {
-          pieces.push({
-            id: i,
-            x: Math.random() * 100,
-            y: -10,
-            rotation: Math.random() * 360,
-            color: [
-              '#FF0080', '#00FFFF', '#FF4500', '#9400D3', '#32CD32', '#FFD700', 
-              '#FF1493', '#00FF7F', '#1E90FF', '#FF6347', '#ADFF2F', '#FF69B4', 
-              '#00CED1', '#FFA500', '#DA70D6'
-            ][Math.floor(Math.random() * 15)],
-            size: Math.random() * 12 + 6,
-            speed: Math.random() * 4 + 2,
-            drift: (Math.random() - 0.5) * 3,
-            width: Math.random() * 8 + 4,
-            height: Math.random() * 12 + 6
-          });
-        }
-        setConfettiPieces(pieces);
-      };
-      
-      const timer = setTimeout(createConfetti, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [showSuccess]);
 
   const renderNailDropZones = () => {
     if ((currentStep !== 'first-hand' && currentStep !== 'second-hand' && 
@@ -1610,57 +1789,52 @@ export default function NailCareGame() {
   };
 
   const renderNailClippings = () => {
-  if (currentStep !== 'first-hand' && currentStep !== 'second-hand' && 
-      currentStep !== 'first-foot' && currentStep !== 'second-foot') {
-    return null;
-  }
+    // Don't show clippings if we've moved on from hand/foot steps
+    if ((currentStep === 'foot-selection' || currentStep === 'second-hand' || 
+         currentStep === 'second-foot' || currentStep === 'cleanup' || 
+         currentStep === 'complete') && 
+        Object.keys(nailClippingsPositions).length === 0) {
+      return null;
+    }
 
-  return completedNails.map(nailKey => {
-    const position = nailClippingsPositions[nailKey];
-    if (!position) return null;
+    // Only show clippings for the current active step
+    return completedNails.map(nailKey => {
+      const position = nailClippingsPositions[nailKey];
+      if (!position) return null;
 
-    // Generate a random but consistent rotation for each nail based on its key
-    const rotation = (nailKey.split('').reduce((a, b) => a + b.charCodeAt(0), 0) % 360);
-
-    return (
-      <Box
-        key={nailKey}
-        component="img"
-        src={nailClippingsImg}
-        alt="Nail Clippings"
-        sx={{
-          position: 'absolute',
-          left: `${position.x}%`,
-          top: `${position.y}%`,
-          transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
-          width: 60,
-          height: 60,
-          zIndex: 60,
-          filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
-          animation: 'floatClippings 2s ease-in-out infinite',
-          '@keyframes floatClippings': {
-            '0%': { transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(1)` },
-            '50%': { transform: `translate(-50%, -55%) rotate(${rotation}deg) scale(1.05)` },
-            '100%': { transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(1)` }
-          }
-        }}
-      />
-    );
-  });
-};
-
-  const removeCompletedClippings = (completedStep) => {
-    console.log(`Removing clippings for: ${completedStep}`);
-    
-    const updatedPositions = {...nailClippingsPositions};
-    Object.keys(updatedPositions).forEach(key => {
-      if (key.startsWith(completedStep)) {
-        delete updatedPositions[key];
+      // Only show if it belongs to current step
+      if (!nailKey.startsWith(currentStep)) {
+        return null;
       }
+
+      // Generate a random but consistent rotation for each nail based on its key
+      const rotation = (nailKey.split('').reduce((a, b) => a + b.charCodeAt(0), 0) % 360);
+
+      return (
+        <Box
+          key={nailKey}
+          component="img"
+          src={nailClippingsImg}
+          alt="Nail Clippings"
+          sx={{
+            position: 'absolute',
+            left: `${position.x}%`,
+            top: `${position.y}%`,
+            transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+            width: 60,
+            height: 60,
+            zIndex: 60,
+            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+            animation: 'floatClippings 2s ease-in-out infinite',
+            '@keyframes floatClippings': {
+              '0%': { transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(1)` },
+              '50%': { transform: `translate(-50%, -55%) rotate(${rotation}deg) scale(1.05)` },
+              '100%': { transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(1)` }
+            }
+          }}
+        />
+      );
     });
-    
-    setNailClippingsPositions(updatedPositions);
-    console.log(`Remaining clippings:`, Object.keys(updatedPositions).length);
   };
 
   const renderCleanupClippings = () => {
@@ -1822,8 +1996,8 @@ export default function NailCareGame() {
             }}
           >
             {currentStep === 'first-hand'
-              ? 'First Hand Completed!'
-              : 'Both Hands Completed!'}
+              ? 'First Hand Completed! Nail clippings cleaned up!'
+              : 'Both Hands Completed! All clippings cleaned!'}
           </Typography>
         </Box>
       );
@@ -1864,7 +2038,7 @@ export default function NailCareGame() {
               fontFamily: 'Poppins, sans-serif'
             }}
           >
-            {currentStep === 'first-foot' ? 'First Foot Completed!' : 'Both Feet Completed!'}
+            {currentStep === 'first-foot' ? 'First Foot Completed! Nail clippings cleaned up!' : 'Both Feet Completed! All clippings cleaned!'}
           </Typography>
         </Box>
       );
@@ -2057,6 +2231,44 @@ export default function NailCareGame() {
           </Box>
         );
 
+      case 'cleanup':
+        return (
+          <Box sx={{ position: 'relative', width: '100%', height: 600, mt: 7 }}>
+            <Typography
+              variant="h4"
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                color: 'white',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+                fontFamily: 'Poppins, sans-serif',
+                width: '80%'
+              }}
+            >
+              All nails trimmed! Nail clippings have been automatically cleaned up. Great job! 🧹
+            </Typography>
+            
+            <Box sx={{ display: 'flex', gap: 4, justifyContent: 'center', mt: 10 }}>
+              <Box
+                component="img"
+                src={afterLeftHand}
+                alt="Clean Left Hand"
+                sx={{ width: 300, height: 300, opacity: 0.7 }}
+              />
+              <Box
+                component="img"
+                src={afterRightFoot}
+                alt="Clean Right Foot"
+                sx={{ width: 300, height: 300, opacity: 0.7 }}
+              />
+            </Box>
+          </Box>
+        );
+
       case 'complete':
         return (
           <Box sx={{ textAlign: 'center', mt: 4 }}>
@@ -2101,6 +2313,104 @@ export default function NailCareGame() {
     }
   };
 
+  const saveProgress = async () => {
+    if (progressSaving || progressSaved) {
+      console.log('Progress already saving or saved, skipping');
+      return;
+    }
+
+    try {
+      setProgressSaving(true);
+      
+      const studentId = getStudentId();
+      
+      console.log('Authentication check:', { 
+        studentId, 
+        userType: localStorage.getItem('userType'),
+        studentIdFromStorage: localStorage.getItem('studentId')
+      });
+      
+      if (!studentId) {
+        console.error('Cannot save progress: No valid student ID found');
+        
+        let errorMessage = 'Please log in to save your progress.\n\n';
+        errorMessage += `Debug Info:\n`;
+        errorMessage += `- User type: ${localStorage.getItem('userType') || 'Not set'}\n`;
+        errorMessage += `- Student ID: ${localStorage.getItem('studentId') || 'Not found'}`;
+        
+        alert(errorMessage);
+        setProgressSaving(false);
+        return;
+      }
+      
+      if (!lessonId) {
+        console.error('Cannot save progress: No lesson ID available');
+        alert('Lesson ID is missing. Cannot save progress.');
+        setProgressSaving(false);
+        return;
+      }
+
+      const progressData = {
+        score: 100,
+        maxScore: 100,  
+        completed: true,
+        starsEarned: 3,
+        moduleId: moduleId ? parseInt(moduleId, 10) : null
+      };
+      
+      console.log('Saving progress data:', progressData);
+      
+      const result = await saveStudentLessonProgress(
+        studentId, 
+        parseInt(lessonId, 10), 
+        progressData
+      );
+      
+      console.log('Progress save result:', result);
+      setProgressSaved(true);
+      
+    } catch (error) {
+      console.error('Error saving progress:', error);
+      
+      if (error.message.includes('No student ID available')) {
+        alert('Please log in to save your progress.');
+      } else {
+        alert('Failed to save progress. Please try again.');
+      }
+    } finally {
+      setProgressSaving(false);
+    }
+  };
+
+  const getStarRating = () => {
+    if (score >= 90) return 3;
+    if (score >= 70) return 2;
+    if (score >= 50) return 1;
+    return 0;
+  };
+
+  const handleContinue = async () => {
+    console.log('Continue clicked, progress state:', { progressSaved, progressSaving });
+    
+    if (!progressSaved && !progressSaving) {
+      console.log('Saving progress before continue...');
+      await saveProgress();
+    } else if (progressSaving) {
+      console.log('Progress is currently saving, please wait...');
+      return;
+    }
+    
+    if (audioRef.current) {
+      audioRef.current.pause();
+      setAudioPlaying(false);
+    }
+    
+    console.log('Navigating back...');
+    setTimeout(() => {
+      navigate(-1);
+    }, 300);
+  };
+
   const resetGame = () => {
     setShowFeedback(false);
     setShowSuccess(false);
@@ -2130,6 +2440,13 @@ export default function NailCareGame() {
     
     setFirstHandDragCompleted(false);
     setFirstFootDragCompleted(false);
+    
+    setFirstDragPerStep({
+      'first-hand': false,
+      'second-hand': false,
+      'first-foot': false,
+      'second-foot': false
+    });
     
     setShowCharacterIntroduction(true);
     setShowHandIntroduction(false);
@@ -2195,84 +2512,158 @@ export default function NailCareGame() {
     }
   };
 
-  if (showStartScreen) {
-    return (
-      <div style={{
-        minHeight: "100vh",
-        width: "100%",
-        backgroundImage: `url(${backgroundImg})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        display: "flex",
-        flexDirection: "column"
-      }}>
-        <Navbar />
-        <Box sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'linear-gradient(135deg, rgba(144, 190, 109, 0.8) 0%, rgba(25, 130, 196, 0.8) 100%)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'column',
-          zIndex: 1
-        }}>
-          <Typography variant="h1" sx={{ 
-            color: 'white', 
-            fontWeight: 'bold', 
-            mb: 2,
-            fontFamily: 'Poppins, sans-serif',
-            fontSize: { xs: '3rem', md: '5rem' },
-            textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
-            textAlign: 'center'
-          }}>
-            Complete Nail Care
-          </Typography>
+  useEffect(() => {
+    // Create purrnando audio ref
+    const purrnandoSound = new Audio(purrnandoAudio);
+    setPurrnandoAudioRef(purrnandoSound);
+    
+    return () => {
+      if (purrnandoSound) {
+        purrnandoSound.pause();
+        purrnandoSound.currentTime = 0;
+      }
+    };
+  }, []);
+
+  // Play purrnando audio when character introduction appears
+  useEffect(() => {
+    if (showCharacterIntroduction && purrnandoAudioRef) {
+      purrnandoAudioRef.currentTime = 0; // Reset to beginning
+      purrnandoAudioRef.play().catch(error => {
+        console.log('Purrnando audio play failed:', error);
+      });
+    }
+    
+    return () => {
+      if (purrnandoAudioRef && showCharacterIntroduction) {
+        purrnandoAudioRef.pause();
+        purrnandoAudioRef.currentTime = 0;
+      }
+    };
+  }, [showCharacterIntroduction, purrnandoAudioRef]);
+
+  useEffect(() => {
+    const fetchUserProgress = async () => {
+      try {
+        const studentId = getStudentId();
+        if (!studentId || !lessonId) {
+          console.log('Missing studentId or lessonId:', { studentId, lessonId });
+          return;
+        }
+        
+        console.log('Fetching progress for student:', studentId, 'lesson:', lessonId);
+        const progressResponse = await getStudentLessonProgress(studentId, lessonId);
+        if (progressResponse && progressResponse.data) {
+          const progressData = progressResponse.data;
+          setScore(progressData.score || 0);
+          console.log('Loaded existing progress:', progressData);
           
-          <Typography variant="h4" sx={{ 
-            color: 'rgba(255, 255, 255, 0.95)', 
-            mb: 6,
-            fontFamily: 'Inter, sans-serif',
-            lineHeight: 1.5,
-            textAlign: 'center',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-            maxWidth: '600px',
-            px: 2
-          }}>
-            Learn how to take care of your hand nails AND foot nails properly!
-          </Typography>
-          
-          <Stack direction="row" spacing={3}>
-            <Button 
-              variant="contained"
-              onClick={handleStartGame}
-              sx={{ 
-                background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
-                color: 'white',
-                px: 8,
-                py: 2,
-                borderRadius: '25px',
-                fontFamily: 'Poppins, sans-serif',
-                fontWeight: '700',
-                fontSize: '1.5rem',
-                textTransform: 'none',
-                boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
-                  transform: 'translateY(-2px)'
-                }
-              }}
-            >
-              Start Game!
-            </Button>
-          </Stack>
-        </Box>
-      </div>
-    );
+          if (progressData.completed) {
+            setGameCompleted(true);
+            setShowSuccess(true);
+          }
+        } else {
+          console.log('No existing progress found - starting fresh');
+        }
+      } catch (error) {
+        console.log('Error fetching progress, starting fresh:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchUserProgress();
+  }, [lessonId]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        setLesson({
+          id: lessonId || 1,
+          title: "Complete Nail Care",
+          description: "Learn proper nail care for hands and feet!",
+          level: 3
+        });
+        
+      } catch (err) {
+        console.error('Error in fetchData:', err);
+        setError('Something went wrong');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [lessonId, moduleId]);
+
+  useEffect(() => {
+    if (showSuccess) {
+      const animateStars = async () => {
+        setStarAnimationStage(0);
+        const totalStars = getStarRating();
+        
+        for (let i = 0; i < totalStars; i++) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+          setStarAnimationStage(i + 1);
+        }
+      };
+      
+      const timer = setTimeout(animateStars, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccess, score]);
+
+  useEffect(() => {
+    // Play background music when assets are loaded and not in character introduction
+    if (assetsLoaded && !showCharacterIntroduction && audioRef && !audioPlaying) {
+      const playAudio = () => {
+        audioRef.play().then(() => {
+          setAudioPlaying(true);
+        }).catch(error => {
+          console.log('Audio autoplay prevented:', error);
+        });
+      };
+
+      const timer = setTimeout(playAudio, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [assetsLoaded, showCharacterIntroduction, audioRef, audioPlaying]);
+
+  useEffect(() => {
+    if (showSuccess) {
+      const createConfetti = () => {
+        const pieces = [];
+        for (let i = 0; i < 150; i++) {
+          pieces.push({
+            id: i,
+            x: Math.random() * 100,
+            y: -10,
+            rotation: Math.random() * 360,
+            color: [
+              '#FF0080', '#00FFFF', '#FF4500', '#9400D3', '#32CD32', '#FFD700', 
+              '#FF1493', '#00FF7F', '#1E90FF', '#FF6347', '#ADFF2F', '#FF69B4', 
+              '#00CED1', '#FFA500', '#DA70D6'
+            ][Math.floor(Math.random() * 15)],
+            size: Math.random() * 12 + 6,
+            speed: Math.random() * 4 + 2,
+            drift: (Math.random() - 0.5) * 3,
+            width: Math.random() * 8 + 4,
+            height: Math.random() * 12 + 6
+          });
+        }
+        setConfettiPieces(pieces);
+      };
+      
+      const timer = setTimeout(createConfetti, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccess]);
+
+  // NEW: Show AssetLoader if assets are not loaded yet
+  if (!assetsLoaded) {
+    return <AssetLoader onComplete={handleAssetsLoaded} />;
   }
 
   if (loading) {
@@ -2409,7 +2800,7 @@ export default function NailCareGame() {
           </Box>
         </Box>
 
-        {!showStartScreen && !showCharacterIntroduction && !showHandIntroduction && !showToolIntroduction && !showVideo && !showAfterFirstHand && !showAfterFirstFoot && (
+        {!showCharacterIntroduction && !showHandIntroduction && !showToolIntroduction && !showVideo && !showAfterFirstHand && !showAfterFirstFoot && (
           <CharacterCat 
             gameState={currentStep}
             message={getCharacterMessage()}
@@ -2713,6 +3104,7 @@ export default function NailCareGame() {
               textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
             }}>
               Amazing job! Your hand nails AND foot nails look perfectly groomed and healthy!
+              All nail clippings have been properly cleaned up!
             </Typography>
             
             {progressSaving && (

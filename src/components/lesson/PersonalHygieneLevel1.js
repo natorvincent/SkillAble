@@ -1259,6 +1259,13 @@ export default function PersonalHygieneLevel1() {
     };
   }, [showCharacterIntroduction]);
 
+  useEffect(() => {
+  // Stop background music when success dialog appears
+  if (showSuccess && backgroundMusicRef) {
+    stopBackgroundMusic();
+  }
+}, [showSuccess]);
+
   // Update music volume when settings change
   useEffect(() => {
     updateBackgroundMusicVolume();
@@ -1669,79 +1676,84 @@ export default function PersonalHygieneLevel1() {
   }, [currentScrubVideoIndex, showScrubVideo]);
 
   const resetGame = () => {
-    // Stop all audio when resetting game
-    stopPurrnandoAudio();
-    stopDirtyhandsAudio();
-    stopSinkAudio();
-    stopWethandsAudio(); // Added
-    stopSoapAudio(); // Added
-    stopRubscrubAudio(); // Added
-    stopRinseAudio();
-    stopScrub1Audio(); // Add this
-    stopScrub2Audio();
-    stopScrub3Audio();
-    stopScrub4Audio();
-    stopScrub5Audio();
-    stopScrub6Audio();
-    stopScrub7Audio();
-    
-    setShowFeedback(false);
-    setShowSuccess(false);
-    setGameCompleted(false);
-    setProgressSaved(false);
-    setProgressSaving(false);
-    setHideAllImages(false);
-    setShowBubbles(false);
-    setShowCleanHands(false);
-    
-    setShowCharacterIntroduction(true);
-    setShowHandIntroduction(false);
-    setShowSinkIntroduction(false);
-    setShowStep3Introduction(false);
-    setShowStep4Introduction(false);
-    setShowStep5Introduction(false);
-    
-    setGameStep(0);
-    setFaucetOn(false);
-    setStep2Completed(false);
-    setIsDragging(false);
-    setDraggedItem(null);
-    setSoapPlaced(false);
-    setLeftHandWet(false);
-    setRightHandWet(false);
-    setShowScrubVideo(false);
-    setIsHandHovered(false);
-    setHandsRubbed(false);
-    setCurrentScrubVideoIndex(0);
-    setStep5Completed(false);
+  // Stop all audio when resetting game
+  stopPurrnandoAudio();
+  stopDirtyhandsAudio();
+  stopSinkAudio();
+  stopWethandsAudio();
+  stopSoapAudio();
+  stopRubscrubAudio();
+  stopRinseAudio();
+  stopScrub1Audio();
+  stopScrub2Audio();
+  stopScrub3Audio();
+  stopScrub4Audio();
+  stopScrub5Audio();
+  stopScrub6Audio();
+  stopScrub7Audio();
+  
+  // Restart background music when game resets
+  if (musicEnabled && backgroundMusicRef) {
+    playBackgroundMusic();
+  }
+  
+  setShowFeedback(false);
+  setShowSuccess(false);
+  setGameCompleted(false);
+  setProgressSaved(false);
+  setProgressSaving(false);
+  setHideAllImages(false);
+  setShowBubbles(false);
+  setShowCleanHands(false);
+  
+  setShowCharacterIntroduction(true);
+  setShowHandIntroduction(false);
+  setShowSinkIntroduction(false);
+  setShowStep3Introduction(false);
+  setShowStep4Introduction(false);
+  setShowStep5Introduction(false);
+  
+  setGameStep(0);
+  setFaucetOn(false);
+  setStep2Completed(false);
+  setIsDragging(false);
+  setDraggedItem(null);
+  setSoapPlaced(false);
+  setLeftHandWet(false);
+  setRightHandWet(false);
+  setShowScrubVideo(false);
+  setIsHandHovered(false);
+  setHandsRubbed(false);
+  setCurrentScrubVideoIndex(0);
+  setStep5Completed(false);
 
-    setSinkTimer(10);
-    setShowSinkPulse(false);
-    setSinkPulseScale(1);
+  setSinkTimer(10);
+  setShowSinkPulse(false);
+  setSinkPulseScale(1);
 
-    setGermBlobs(initializeGerms());
-  };
+  setGermBlobs(initializeGerms());
+};
 
   const getStarRating = () => {
     return gameCompleted ? 3 : 0;
   };
 
   const handleContinue = async () => {
-    console.log('Continue clicked, progress state:', { progressSaved, progressSaving });
-    
-    if (!progressSaved && !progressSaving) {
-      console.log('Saving progress before continue...');
-      await saveProgress();
-    } else if (progressSaving) {
-      console.log('Progress is currently saving, please wait...');
-      return;
-    }
-    
-    console.log('Navigating back...');
-    setTimeout(() => {
-      navigate(-1);
-    }, 300);
-  };
+  console.log('Continue clicked, progress state:', { progressSaved, progressSaving });
+  
+  if (!progressSaved && !progressSaving) {
+    console.log('Saving progress before continue...');
+    await saveProgress();
+  } else if (progressSaving) {
+    console.log('Progress is currently saving, please wait...');
+    return;
+  }
+  
+  console.log('Navigating back...');
+  setTimeout(() => {
+    navigate(-1);
+  }, 300);
+};
 
   const handleGoHome = () => {
     // Stop all audio when going home
@@ -1890,6 +1902,8 @@ export default function PersonalHygieneLevel1() {
   if (!assetsLoaded) {
     return <AssetLoader onComplete={() => setAssetsLoaded(true)} />;
   }
+
+  
 
   // ADDED: Settings Panel Component
 // ADDED: Settings Panel Component
@@ -4489,31 +4503,35 @@ const SettingsPanel = () => (
             
             <Box sx={{ display: 'flex', gap: 3, justifyContent: 'center', flexWrap: 'wrap' }}>
               <Button 
-                onClick={() => {
-                  setShowSuccess(false);
-                  resetGame();
-                }} 
-                variant="outlined"
-                sx={{ 
-                  borderColor: 'white',
-                  color: 'white',
-                  px: 4,
-                  py: 2,
-                  borderRadius: '25px',
-                  fontFamily: 'Poppins, sans-serif',
-                  fontWeight: '600',
-                  fontSize: '1.2rem',
-                  borderWidth: '2px',
-                  textTransform: 'none',
-                  '&:hover': {
-                    borderColor: 'white',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    borderWidth: '2px'
-                  }
-                }}
-              >
-                Wash Again
-              </Button>
+  onClick={() => {
+    setShowSuccess(false);
+    resetGame();
+    // Restart background music if enabled
+    if (musicEnabled && backgroundMusicRef) {
+      playBackgroundMusic();
+    }
+  }} 
+  variant="outlined"
+  sx={{ 
+    borderColor: 'white',
+    color: 'white',
+    px: 4,
+    py: 2,
+    borderRadius: '25px',
+    fontFamily: 'Poppins, sans-serif',
+    fontWeight: '600',
+    fontSize: '1.2rem',
+    borderWidth: '2px',
+    textTransform: 'none',
+    '&:hover': {
+      borderColor: 'white',
+      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+      borderWidth: '2px'
+    }
+  }}
+>
+  Wash Again
+</Button>
               <Button 
                 variant="contained"
                 onClick={handleContinue}

@@ -24,6 +24,7 @@ import {
   saveStudentLessonProgress
 } from '../../services/progressService';
 
+// Import all assets
 import Bg from "../../assets/hygienelevel2/lvl2bg.png"
 import bathroomBg from "../../assets/hygienelevel2/bathroom.png"
 import teethImg from "../../assets/hygienelevel2/before_teeth.png"
@@ -53,6 +54,248 @@ import toothpasteAudio from "../../assets/hygienelevel2/toothpaste.mp3"
 import step1Audio from "../../assets/hygienelevel2/step1.mp3"
 import step2Audio from "../../assets/hygienelevel2/step2.mp3"
 import step3Audio from "../../assets/hygienelevel2/step3.mp3"
+
+// AssetLoader Component
+const AssetLoader = ({ onComplete }) => {
+  const [progress, setProgress] = useState(0);
+  const [loadedAssets, setLoadedAssets] = useState(0);
+  const [totalAssets, setTotalAssets] = useState(0);
+  
+  useEffect(() => {
+    // List of all assets to preload
+    const imageAssets = [
+      Bg, bathroomBg, teethImg, afterTeethImg, blob1Img, blob2Img,
+      toothbrushImg, toothpasteImg, toothbrushWithPasteImg, waterCupImg, containerImg,
+      characterCatDefault, characterCatExcited, characterCatCurious, 
+      characterCatHelpful, characterCatProud, characterCatWorried,
+      require("../../assets/hygienelevel3/resetbtn.png"),
+      require("../../assets/hygienelevel3/homebtn.png")
+    ];
+    
+    // No video assets for this level
+    const videoAssets = [];
+    
+    const audioAssets = [
+      backgroundMusic, correctSound, incorrectSound, successSound,
+      purrnandolvl2, toothbrushAudio, toothpasteAudio, step1Audio, step2Audio, step3Audio
+    ];
+    
+    const allAssets = [...imageAssets, ...videoAssets, ...audioAssets];
+    setTotalAssets(allAssets.length);
+    
+    let completed = 0;
+    
+    const updateProgress = () => {
+      completed++;
+      setLoadedAssets(completed);
+      const newProgress = Math.round((completed / allAssets.length) * 100);
+      setProgress(newProgress);
+      
+      if (completed === allAssets.length) {
+        // All assets loaded
+        setTimeout(() => {
+          onComplete();
+        }, 500); // Small delay to show 100%
+      }
+    };
+    
+    // Preload images
+    imageAssets.forEach(src => {
+      const img = new Image();
+      img.src = src;
+      img.onload = updateProgress;
+      img.onerror = updateProgress; // Continue even if some assets fail
+    });
+    
+    // Preload videos
+    videoAssets.forEach(src => {
+      const video = document.createElement('video');
+      video.src = src;
+      video.preload = 'auto';
+      video.onloadeddata = updateProgress;
+      video.onerror = updateProgress;
+      // Force load
+      video.load();
+    });
+    
+    // Preload audio
+    audioAssets.forEach(src => {
+      const audio = new Audio();
+      audio.src = src;
+      audio.preload = 'auto';
+      audio.oncanplaythrough = updateProgress;
+      audio.onerror = updateProgress;
+      // Force load
+      audio.load();
+    });
+  }, [onComplete]);
+  
+  return (
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#FFD166',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999
+      }}
+    >
+      {/* Main loading container */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 3,
+          width: '100%',
+          maxWidth: 500,
+          px: 3
+        }}
+      >
+        {/* Loader Component */}
+        <Loader />
+        
+        {/* Loading text */}
+        <Typography
+          variant="h5"
+          sx={{
+            color: 'white',
+            fontWeight: 'bold',
+            fontFamily: 'Poppins, sans-serif',
+            textAlign: 'center',
+            mb: 2,
+            textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+          }}
+        >
+          Loading game assets...
+        </Typography>
+        
+        {/* Loading animation dots */}
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 1.5,
+            mt: 2
+          }}
+        >
+          {[1, 2, 3].map((dot) => (
+            <Box
+              key={dot}
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: '50%',
+                backgroundColor: progress >= (dot * 33) ? '#4AA8E8' : 'rgba(255, 255, 255, 0.2)',
+                animation: progress >= (dot * 33) ? 'pulseDot 1.5s infinite' : 'none',
+                animationDelay: `${dot * 0.2}s`,
+                '@keyframes pulseDot': {
+                  '0%, 100%': { transform: 'scale(1)', opacity: 1 },
+                  '50%': { transform: 'scale(1.2)', opacity: 0.7 }
+                }
+              }}
+            />
+          ))}
+        </Box>
+      </Box>
+      
+      {/* Bottom tip text */}
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 40,
+          width: '100%',
+          textAlign: 'center',
+          px: 2
+        }}
+      >
+        <Typography
+          variant="caption"
+          sx={{
+            color: 'white',
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '0.8rem'
+          }}
+        >
+          Loading all assets for smooth gameplay...
+        </Typography>
+      </Box>
+      
+      {/* Decorative elements */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+          zIndex: -1,
+          overflow: 'hidden'
+        }}
+      >
+        {/* Animated background circles */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '20%',
+            left: '10%',
+            width: 100,
+            height: 100,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255, 89, 94, 0.1) 0%, transparent 70%)',
+            animation: 'float 8s ease-in-out infinite',
+            '@keyframes float': {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-20px)' }
+            }
+          }}
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: '30%',
+            right: '15%',
+            width: 80,
+            height: 80,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255, 209, 102, 0.1) 0%, transparent 70%)',
+            animation: 'float 10s ease-in-out infinite',
+            animationDelay: '1s',
+            '@keyframes float': {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-15px)' }
+            }
+          }}
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '60%',
+            left: '20%',
+            width: 60,
+            height: 60,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(74, 168, 232, 0.1) 0%, transparent 70%)',
+            animation: 'float 12s ease-in-out infinite',
+            animationDelay: '2s',
+            '@keyframes float': {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-25px)' }
+            }
+          }}
+        />
+      </Box>
+    </Box>
+  );
+};
 
 const CharacterIntroductionPopup = ({ onComplete, onReplayAudio }) => (
   <Box
@@ -485,6 +728,10 @@ const CharacterCat = ({ gameState, message }) => {
 export default function PersonalHygieneLevel2() {
   const navigate = useNavigate();
   const { moduleId, lessonId } = useParams();
+  
+  // Asset loading state
+  const [assetsLoaded, setAssetsLoaded] = useState(false);
+  
   const [lesson, setLesson] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -545,104 +792,12 @@ export default function PersonalHygieneLevel2() {
   const [isOverToothbrush, setIsOverToothbrush] = useState(false);
   const [showDropZone, setShowDropZone] = useState(false);
 
-  // Audio play functions
-  const playPurrnandoAudio = () => {
-    if (purrnandoAudioRef) {
-      purrnandoAudioRef.currentTime = 0;
-      purrnandoAudioRef.play().catch(error => {
-        console.log('Purrnando audio play prevented:', error);
-      });
-    }
-  };
+  // ========== ALL HOOKS MUST BE AT THE TOP LEVEL ==========
 
-  const playToolAudio = (toolName) => {
-    if (toolName === 'toothbrush' && toothbrushAudioRef) {
-      toothbrushAudioRef.currentTime = 0;
-      toothbrushAudioRef.play().catch(error => {
-        console.log('Toothbrush audio play prevented:', error);
-      });
-    } else if (toolName === 'toothpaste' && toothpasteAudioRef) {
-      toothpasteAudioRef.currentTime = 0;
-      toothpasteAudioRef.play().catch(error => {
-        console.log('Toothpaste audio play prevented:', error);
-      });
-    }
-  };
-
-  const playStepAudio = (stepNumber) => {
-  if (stepNumber === 1 && step1AudioRef) {
-    step1AudioRef.currentTime = 0;
-    step1AudioRef.play().catch(error => {
-      console.log('Step 1 audio play prevented:', error);
-    });
-  } else if (stepNumber === 2 && step2AudioRef) {
-    step2AudioRef.currentTime = 0;
-    step2AudioRef.play().catch(error => {
-      console.log('Step 2 audio play prevented:', error);
-    });
-  } else if (stepNumber === 3 && step3AudioRef) {
-    step3AudioRef.currentTime = 0;
-    step3AudioRef.play().catch(error => {
-      console.log('Step 3 audio play prevented:', error);
-    });
-  }
-};
-
-  // Audio stop functions
-  const stopPurrnandoAudio = () => {
-    if (purrnandoAudioRef) {
-      purrnandoAudioRef.pause();
-      purrnandoAudioRef.currentTime = 0;
-    }
-  };
-
-  const stopToolAudio = (toolName) => {
-    if (toolName === 'toothbrush' && toothbrushAudioRef) {
-      toothbrushAudioRef.pause();
-      toothbrushAudioRef.currentTime = 0;
-    } else if (toolName === 'toothpaste' && toothpasteAudioRef) {
-      toothpasteAudioRef.pause();
-      toothpasteAudioRef.currentTime = 0;
-    }
-  };
-
-  const stopStepAudio = (stepNumber) => {
-  if (stepNumber === 1 && step1AudioRef) {
-    step1AudioRef.pause();
-    step1AudioRef.currentTime = 0;
-  } else if (stepNumber === 2 && step2AudioRef) {
-    step2AudioRef.pause();
-    step2AudioRef.currentTime = 0;
-  } else if (stepNumber === 3 && step3AudioRef) {
-    step3AudioRef.pause();
-    step3AudioRef.currentTime = 0;
-  }
-};
-
-  const stopAllStepAudio = () => {
-  if (step1AudioRef) {
-    step1AudioRef.pause();
-    step1AudioRef.currentTime = 0;
-  }
-  if (step2AudioRef) {
-    step2AudioRef.pause();
-    step2AudioRef.currentTime = 0;
-  }
-  if (step3AudioRef) {
-    step3AudioRef.pause();
-    step3AudioRef.currentTime = 0;
-  }
-};
-
-  const getCurrentBackground = () => {
-    if (gamePhase === 'findTools' || (gamePhase === 'brushSequence' && gameStep === 1)) {
-      return bathroomBg;
-    } else {
-      return Bg;
-    }
-  };
-
+  // Effect to initialize audio and play purrnando audio
   useEffect(() => {
+    if (!assetsLoaded) return; // Don't run until assets are loaded
+    
     // Create and play purrnando audio immediately
     const purrnandoAudio = new Audio(purrnandolvl2);
     purrnandoAudio.volume = 0.7;
@@ -673,16 +828,18 @@ export default function PersonalHygieneLevel2() {
     
     // Play purrnando audio immediately when component mounts
     const playPurrnandoAudioOnMount = () => {
-      purrnandoAudio.play().catch(error => {
-        console.log('Purrnando audio autoplay prevented:', error);
-        const playOnInteraction = () => {
-          purrnandoAudio.play();
-          document.removeEventListener('click', playOnInteraction);
-          document.removeEventListener('touchstart', playOnInteraction);
-        };
-        document.addEventListener('click', playOnInteraction);
-        document.addEventListener('touchstart', playOnInteraction);
-      });
+      if (showCharacterIntroduction) {
+        purrnandoAudio.play().catch(error => {
+          console.log('Purrnando audio autoplay prevented:', error);
+          const playOnInteraction = () => {
+            purrnandoAudio.play();
+            document.removeEventListener('click', playOnInteraction);
+            document.removeEventListener('touchstart', playOnInteraction);
+          };
+          document.addEventListener('click', playOnInteraction);
+          document.addEventListener('touchstart', playOnInteraction);
+        });
+      }
     };
 
     const timer = setTimeout(playPurrnandoAudioOnMount, 1000);
@@ -710,24 +867,29 @@ export default function PersonalHygieneLevel2() {
         step2AudioObj.currentTime = 0;
       }
     };
-  }, []);
+  }, [assetsLoaded, showCharacterIntroduction]);
 
   // Play step audio when game step changes
   useEffect(() => {
-  if (gamePhase === 'brushSequence' && gameStep === 3) {
-    // Stop step 2 audio
-    stopStepAudio(2);
+    if (!assetsLoaded) return;
     
-    // Play step 3 audio after a short delay
-    const timer = setTimeout(() => {
-      playStepAudio(3);
-    }, 500);
-    
-    return () => clearTimeout(timer);
-  }
-}, [gameStep, gamePhase]);
+    if (gamePhase === 'brushSequence' && gameStep === 3) {
+      // Stop step 2 audio
+      stopStepAudio(2);
+      
+      // Play step 3 audio after a short delay
+      const timer = setTimeout(() => {
+        playStepAudio(3);
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [gameStep, gamePhase, assetsLoaded]);
 
+  // Play tool audio when tool introduction appears
   useEffect(() => {
+    if (!assetsLoaded) return;
+    
     if (showToolIntroduction && currentToolName) {
       const timer = setTimeout(() => {
         playToolAudio(currentToolName);
@@ -735,9 +897,12 @@ export default function PersonalHygieneLevel2() {
       
       return () => clearTimeout(timer);
     }
-  }, [showToolIntroduction, currentToolName]);
+  }, [showToolIntroduction, currentToolName, assetsLoaded]);
 
+  // Cleanup audio on unmount
   useEffect(() => {
+    if (!assetsLoaded) return;
+    
     return () => {
       if (purrnandoAudioRef) {
         purrnandoAudioRef.pause();
@@ -760,7 +925,278 @@ export default function PersonalHygieneLevel2() {
         step2AudioRef.currentTime = 0;
       }
     };
-  }, [purrnandoAudioRef, toothbrushAudioRef, toothpasteAudioRef, step1AudioRef, step2AudioRef]);
+  }, [assetsLoaded, purrnandoAudioRef, toothbrushAudioRef, toothpasteAudioRef, step1AudioRef, step2AudioRef]);
+
+  // Clean scratch marks
+  useEffect(() => {
+    const cleanup = setInterval(() => {
+      if (gamePhase === 'brushSequence' && gameStep !== 2) {
+        const now = Date.now();
+        setScratchMarks(prev => prev.filter(mark => now - mark.timestamp < 60000));
+      }
+    }, 10000);
+
+    return () => clearInterval(cleanup);
+  }, [gamePhase, gameStep]);
+
+  // Fetch user progress
+  useEffect(() => {
+    if (!assetsLoaded) return;
+    
+    const fetchUserProgress = async () => {
+      try {
+        const studentId = getStudentId();
+        if (!studentId || !lessonId) {
+          console.log('Missing studentId or lessonId:', { studentId, lessonId });
+          return;
+        }
+        
+        console.log('Fetching progress for student:', studentId, 'lesson:', lessonId);
+        const progressResponse = await getStudentLessonProgress(studentId, lessonId);
+        if (progressResponse) {
+          setScore(progressResponse.score || 0);
+          console.log('Loaded existing progress:', progressResponse);
+        } else {
+          console.log('No existing progress found - starting fresh');
+        }
+      } catch (error) {
+        console.log('Error fetching progress, starting fresh:', error);
+      }
+    };
+    
+    fetchUserProgress();
+  }, [lessonId, assetsLoaded]);
+
+  // Fetch lesson data
+  useEffect(() => {
+    if (!assetsLoaded) return;
+    
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        setLesson({
+          id: lessonId || 1,
+          title: "Brushing Teeth",
+          description: "Learn proper tooth brushing technique!",
+          level: 1
+        });
+        
+        setLoading(false);
+      } catch (err) {
+        console.error('Error in fetchData:', err);
+        setError('Something went wrong');
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [lessonId, moduleId, assetsLoaded]);
+
+  // Initialize background music
+  useEffect(() => {
+    if (!assetsLoaded) return;
+    
+    const audio = new Audio(backgroundMusic);
+    audio.loop = true;
+    audio.volume = 0.3;
+    setAudioRef(audio);
+
+    const correctAudio = new Audio(correctSound);
+    const incorrectAudio = new Audio(incorrectSound);
+    const successAudio = new Audio(successSound);
+    
+    correctAudio.volume = 0.7;
+    incorrectAudio.volume = 0.7;
+    successAudio.volume = 0.7;
+    
+    setCorrectSoundRef(correctAudio);
+    setIncorrectSoundRef(incorrectAudio);
+    setSuccessSoundRef(successAudio);
+
+    const playAudio = () => {
+      audio.play().then(() => {
+        setAudioPlaying(true);
+      }).catch(error => {
+        console.log('Audio autoplay prevented:', error);
+      });
+    };
+
+    const timer = setTimeout(playAudio, 1000);
+
+    return () => {
+      clearTimeout(timer);
+      if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    };
+  }, [assetsLoaded]);
+
+  // Confetti effect for success
+  useEffect(() => {
+    if (!assetsLoaded) return;
+    
+    if (showSuccess) {
+      const createConfetti = () => {
+        const pieces = [];
+        for (let i = 0; i < 150; i++) {
+          pieces.push({
+            id: i,
+            x: Math.random() * 100,
+            y: -10,
+            rotation: Math.random() * 360,
+            color: [
+              '#FF0080', '#00FFFF', '#FF4500', '#9400D3', '#32CD32', '#FFD700', 
+              '#FF1493', '#00FF7F', '#1E90FF', '#FF6347', '#ADFF2F', '#FF69B4', 
+              '#00CED1', '#FFA500', '#DA70D6'
+            ][Math.floor(Math.random() * 15)],
+            size: Math.random() * 12 + 6,
+            speed: Math.random() * 4 + 2,
+            drift: (Math.random() - 0.5) * 3,
+            width: Math.random() * 8 + 4,
+            height: Math.random() * 12 + 6
+          });
+        }
+        setConfettiPieces(pieces);
+      };
+      
+      const timer = setTimeout(createConfetti, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccess, assetsLoaded]);
+
+  // Star animation for success
+  useEffect(() => {
+    if (!assetsLoaded) return;
+    
+    if (showSuccess) {
+      const animateStars = async () => {
+        setStarAnimationStage(0);
+        const totalStars = getStarRating();
+        
+        for (let i = 0; i < totalStars; i++) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+          setStarAnimationStage(i + 1);
+        }
+      };
+      
+      const timer = setTimeout(animateStars, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccess, score, assetsLoaded]);
+
+  // Mouse event listeners
+  useEffect(() => {
+    if (!assetsLoaded) return;
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, draggedItem, isOverToothbrush, assetsLoaded]);
+
+  // ========== END OF HOOKS ==========
+
+  // Audio play functions
+  const playPurrnandoAudio = () => {
+    if (purrnandoAudioRef) {
+      purrnandoAudioRef.currentTime = 0;
+      purrnandoAudioRef.play().catch(error => {
+        console.log('Purrnando audio play prevented:', error);
+      });
+    }
+  };
+
+  const playToolAudio = (toolName) => {
+    if (toolName === 'toothbrush' && toothbrushAudioRef) {
+      toothbrushAudioRef.currentTime = 0;
+      toothbrushAudioRef.play().catch(error => {
+        console.log('Toothbrush audio play prevented:', error);
+      });
+    } else if (toolName === 'toothpaste' && toothpasteAudioRef) {
+      toothpasteAudioRef.currentTime = 0;
+      toothpasteAudioRef.play().catch(error => {
+        console.log('Toothpaste audio play prevented:', error);
+      });
+    }
+  };
+
+  const playStepAudio = (stepNumber) => {
+    if (stepNumber === 1 && step1AudioRef) {
+      step1AudioRef.currentTime = 0;
+      step1AudioRef.play().catch(error => {
+        console.log('Step 1 audio play prevented:', error);
+      });
+    } else if (stepNumber === 2 && step2AudioRef) {
+      step2AudioRef.currentTime = 0;
+      step2AudioRef.play().catch(error => {
+        console.log('Step 2 audio play prevented:', error);
+      });
+    } else if (stepNumber === 3 && step3AudioRef) {
+      step3AudioRef.currentTime = 0;
+      step3AudioRef.play().catch(error => {
+        console.log('Step 3 audio play prevented:', error);
+      });
+    }
+  };
+
+  // Audio stop functions
+  const stopPurrnandoAudio = () => {
+    if (purrnandoAudioRef) {
+      purrnandoAudioRef.pause();
+      purrnandoAudioRef.currentTime = 0;
+    }
+  };
+
+  const stopToolAudio = (toolName) => {
+    if (toolName === 'toothbrush' && toothbrushAudioRef) {
+      toothbrushAudioRef.pause();
+      toothbrushAudioRef.currentTime = 0;
+    } else if (toolName === 'toothpaste' && toothpasteAudioRef) {
+      toothpasteAudioRef.pause();
+      toothpasteAudioRef.currentTime = 0;
+    }
+  };
+
+  const stopStepAudio = (stepNumber) => {
+    if (stepNumber === 1 && step1AudioRef) {
+      step1AudioRef.pause();
+      step1AudioRef.currentTime = 0;
+    } else if (stepNumber === 2 && step2AudioRef) {
+      step2AudioRef.pause();
+      step2AudioRef.currentTime = 0;
+    } else if (stepNumber === 3 && step3AudioRef) {
+      step3AudioRef.pause();
+      step3AudioRef.currentTime = 0;
+    }
+  };
+
+  const stopAllStepAudio = () => {
+    if (step1AudioRef) {
+      step1AudioRef.pause();
+      step1AudioRef.currentTime = 0;
+    }
+    if (step2AudioRef) {
+      step2AudioRef.pause();
+      step2AudioRef.currentTime = 0;
+    }
+    if (step3AudioRef) {
+      step3AudioRef.pause();
+      step3AudioRef.currentTime = 0;
+    }
+  };
+
+  const getCurrentBackground = () => {
+    if (gamePhase === 'findTools' || (gamePhase === 'brushSequence' && gameStep === 1)) {
+      return bathroomBg;
+    } else {
+      return Bg;
+    }
+  };
 
   const handleCharacterIntroductionComplete = () => {
     // Stop purrnando audio when introduction is complete
@@ -843,16 +1279,16 @@ export default function PersonalHygieneLevel2() {
       },
       {
         id: 'blob1_2',
-        x: 60,
-        y: 78,
+        x: 64,
+        y: 63,
         image: blob1Img,
         size: 60,
         removed: false
       },
       {
         id: 'blob2_2',
-        x: 20,
-        y: 75,
+        x: 30,
+        y: 60,
         image: blob2Img,
         size: 90,
         removed: false
@@ -1176,65 +1612,6 @@ export default function PersonalHygieneLevel2() {
     }
   };
 
-  useEffect(() => {
-    const cleanup = setInterval(() => {
-      if (gamePhase === 'brushSequence' && gameStep !== 2) {
-        const now = Date.now();
-        setScratchMarks(prev => prev.filter(mark => now - mark.timestamp < 60000));
-      }
-    }, 10000);
-
-    return () => clearInterval(cleanup);
-  }, [gamePhase, gameStep]);
-
-  useEffect(() => {
-    const fetchUserProgress = async () => {
-      try {
-        const studentId = getStudentId();
-        if (!studentId || !lessonId) {
-          console.log('Missing studentId or lessonId:', { studentId, lessonId });
-          return;
-        }
-        
-        console.log('Fetching progress for student:', studentId, 'lesson:', lessonId);
-        const progressResponse = await getStudentLessonProgress(studentId, lessonId);
-        if (progressResponse) {
-          setScore(progressResponse.score || 0);
-          console.log('Loaded existing progress:', progressResponse);
-        } else {
-          console.log('No existing progress found - starting fresh');
-        }
-      } catch (error) {
-        console.log('Error fetching progress, starting fresh:', error);
-      }
-    };
-    
-    fetchUserProgress();
-  }, [lessonId]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        
-        setLesson({
-          id: lessonId || 1,
-          title: "Brushing Teeth",
-          description: "Learn proper tooth brushing technique!",
-          level: 1
-        });
-        
-        setLoading(false);
-      } catch (err) {
-        console.error('Error in fetchData:', err);
-        setError('Something went wrong');
-        setLoading(false);
-      }
-    };
-    
-    fetchData();
-  }, [lessonId, moduleId]);
-
   const saveProgress = async () => {
     if (progressSaving || progressSaved) {
       console.log('Progress already saving or saved, skipping');
@@ -1403,99 +1780,10 @@ export default function PersonalHygieneLevel2() {
     navigate(-1);
   };
 
-  useEffect(() => {
-    if (showSuccess) {
-      const animateStars = async () => {
-        setStarAnimationStage(0);
-        const totalStars = getStarRating();
-        
-        for (let i = 0; i < totalStars; i++) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-          setStarAnimationStage(i + 1);
-        }
-      };
-      
-      const timer = setTimeout(animateStars, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [showSuccess, score]);
-
-  useEffect(() => {
-    const audio = new Audio(backgroundMusic);
-    audio.loop = true;
-    audio.volume = 0.3;
-    setAudioRef(audio);
-
-    const correctAudio = new Audio(correctSound);
-    const incorrectAudio = new Audio(incorrectSound);
-    const successAudio = new Audio(successSound);
-    
-    correctAudio.volume = 0.7;
-    incorrectAudio.volume = 0.7;
-    successAudio.volume = 0.7;
-    
-    setCorrectSoundRef(correctAudio);
-    setIncorrectSoundRef(incorrectAudio);
-    setSuccessSoundRef(successAudio);
-
-    const playAudio = () => {
-      audio.play().then(() => {
-        setAudioPlaying(true);
-      }).catch(error => {
-        console.log('Audio autoplay prevented:', error);
-      });
-    };
-
-    const timer = setTimeout(playAudio, 1000);
-
-    return () => {
-      clearTimeout(timer);
-      if (audio) {
-        audio.pause();
-        audio.currentTime = 0;
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (showSuccess) {
-      const createConfetti = () => {
-        const pieces = [];
-        for (let i = 0; i < 150; i++) {
-          pieces.push({
-            id: i,
-            x: Math.random() * 100,
-            y: -10,
-            rotation: Math.random() * 360,
-            color: [
-              '#FF0080', '#00FFFF', '#FF4500', '#9400D3', '#32CD32', '#FFD700', 
-              '#FF1493', '#00FF7F', '#1E90FF', '#FF6347', '#ADFF2F', '#FF69B4', 
-              '#00CED1', '#FFA500', '#DA70D6'
-            ][Math.floor(Math.random() * 15)],
-            size: Math.random() * 12 + 6,
-            speed: Math.random() * 4 + 2,
-            drift: (Math.random() - 0.5) * 3,
-            width: Math.random() * 8 + 4,
-            height: Math.random() * 12 + 6
-          });
-        }
-        setConfettiPieces(pieces);
-      };
-      
-      const timer = setTimeout(createConfetti, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [showSuccess]);
-
-  useEffect(() => {
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, draggedItem, isOverToothbrush]);
+  // Show loading screen until assets are loaded
+  if (!assetsLoaded) {
+    return <AssetLoader onComplete={() => setAssetsLoaded(true)} />;
+  }
 
   if (showCharacterIntroduction) {
     return <CharacterIntroductionPopup 
