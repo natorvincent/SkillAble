@@ -650,7 +650,7 @@ function StudentDashboard() {
         </Container>
       </div>
 
-      {/* Updated Profile Modal */}
+      {/* Updated Profile Modal - Clean Design */}
       <Modal
         open={openProfileModal}
         onClose={handleCloseProfileModal}
@@ -663,357 +663,202 @@ function StudentDashboard() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backdropFilter: 'blur(8px)',
+          backdropFilter: 'blur(4px)',
         }}
       >
         <Fade in={openProfileModal}>
           <Paper
             sx={{
-              width: { xs: '90%', sm: '480px', md: '520px' },
-              p: 0,
+              width: { xs: '90%', sm: '450px', md: '500px' },
+              p: 4,
               outline: 'none',
-              borderRadius: '24px',
-              boxShadow: '0 20px 60px rgba(74, 108, 247, 0.25)',
-              border: 'none',
-              background: 'linear-gradient(135deg, #ffffff 0%, #f8faff 100%)',
-              overflow: 'hidden',
+              borderRadius: '16px',
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
+              border: '1px solid #e5e7eb',
+              background: 'white',
               position: 'relative',
             }}
           >
-            {/* Decorative header with gradient */}
-            <Box
-              sx={{
-                background: 'linear-gradient(135deg, #4a6cf7 0%, #3a5ce5 100%)',
-                py: { xs: 2.5, sm: 3 },
-                px: { xs: 2.5, sm: 3 },
-                position: 'relative',
-                overflow: 'hidden',
-              }}
-            >
-              {/* Floating shapes in background */}
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: -20,
-                  right: -20,
-                  width: 80,
-                  height: 80,
-                  borderRadius: '50%',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                }}
-              />
-              <Box
-                sx={{
-                  position: 'absolute',
-                  bottom: -30,
-                  left: -30,
-                  width: 100,
-                  height: 100,
-                  borderRadius: '50%',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                }}
-              />
-              
-              <Box sx={{ position: 'relative', zIndex: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography 
-                      variant="h4" 
-                      fontWeight={700} 
-                      color="white" 
-                      sx={{ 
-                        fontSize: { xs: '1.5rem', sm: '1.75rem' },
-                        textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                      }}
-                    >
-                      👋 Welcome to Skillable!
-                    </Typography>
-                    <Typography 
-                      variant="body1" 
-                      color="rgba(255, 255, 255, 0.9)"
-                      sx={{ mt: 0.5 }}
-                    >
-                      Let's set up your profile
-                    </Typography>
-                  </Box>
-                  
-                  {isProfileComplete() && (
-                    <IconButton
-                      edge="end"
-                      onClick={handleCloseProfileModal}
-                      aria-label="close"
-                      sx={{
-                        color: "white",
-                        backgroundColor: "rgba(255, 255, 255, 0.2)",
-                        "&:hover": {
-                          backgroundColor: "rgba(255, 255, 255, 0.3)",
-                        },
-                        transition: 'all 0.2s ease',
-                      }}
-                    >
-                      <CloseIcon />
-                    </IconButton>
-                  )}
-                </Box>
-              </Box>
-            </Box>
-
-            {/* Progress indicator */}
-            <Box sx={{ px: { xs: 2.5, sm: 3 }, pt: 3 }}>
+            {/* Header */}
+            <Box sx={{ textAlign: 'center', mb: 4 }}>
               <Typography 
-                variant="caption" 
+                variant="h4" 
+                fontWeight={700} 
                 sx={{ 
-                  color: '#718096', 
-                  fontSize: '0.75rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px',
-                  fontWeight: 600,
+                  fontSize: { xs: '1.75rem', sm: '2rem' },
+                  color: '#4a6cf7',
+                  mb: 0.5,
                 }}
               >
-                Step 1 of 2
+                SkillAble
               </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', mt: 1, mb: 3 }}>
-                <Box sx={{ flex: 1, height: 6, bgcolor: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
-                  <Box 
-                    sx={{ 
-                      width: '50%', 
-                      height: '100%', 
-                      bgcolor: '#4a6cf7',
-                      borderRadius: 3,
-                      boxShadow: '0 2px 8px rgba(74, 108, 247, 0.4)',
-                    }} 
-                  />
-                </Box>
-                <Typography variant="caption" sx={{ ml: 2, color: '#4a6cf7', fontWeight: 600 }}>
-                  50%
-                </Typography>
-              </Box>
+              <Divider sx={{ mb: 2, backgroundColor: '#e5e7eb' }} />
+              <Typography 
+                variant="h5" 
+                fontWeight={600} 
+                sx={{ 
+                  color: '#374151',
+                  fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                }}
+              >
+                Complete Your Profile
+              </Typography>
             </Box>
 
             {/* Form content */}
-            <Box component="form" onSubmit={handleFormSubmit} sx={{ px: { xs: 2.5, sm: 3 }, pb: 4 }}>
-              <Box sx={{ mb: 2 }}>
+            <Box component="form" onSubmit={handleFormSubmit} sx={{ width: '100%' }}>
+              <Box sx={{ mb: 3 }}>
                 <Typography 
-                  variant="h6" 
+                  variant="subtitle1" 
                   fontWeight={600} 
                   sx={{ 
-                    color: '#2d3748',
-                    fontSize: { xs: '1.1rem', sm: '1.25rem' },
-                    mb: 0.5,
+                    color: '#374151',
+                    mb: 1.5,
+                    fontSize: '0.95rem',
                   }}
                 >
-                  Basic Information
+                  First Name
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#718096' }}>
-                  Tell us a bit about yourself
-                </Typography>
+                <TextField
+                  required
+                  fullWidth
+                  placeholder="Enter your first name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  variant="outlined"
+                  sx={{ 
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: "8px",
+                      backgroundColor: '#f9fafb',
+                      "& fieldset": {
+                        borderColor: "#e5e7eb",
+                        borderWidth: 1,
+                      },
+                      "&:hover fieldset": {
+                        borderColor: "#d1d5db",
+                      },
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#4a6cf7",
+                        borderWidth: 2,
+                      }
+                    },
+                    "& .MuiOutlinedInput-input": {
+                      padding: '12px 16px',
+                      color: '#374151',
+                    },
+                    "& .MuiInputLabel-root": {
+                      color: "#6b7280",
+                      "&.Mui-focused": {
+                        color: "#4a6cf7",
+                      }
+                    }
+                  }}
+                />
               </Box>
-
-              <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ position: 'relative' }}>
-                    <TextField
-                      required
-                      fullWidth
-                      label="First Name"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      variant="outlined"
-                      sx={{ 
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: "12px",
-                          backgroundColor: '#ffffff',
-                          "& fieldset": {
-                            borderColor: "#e2e8f0",
-                            borderWidth: 2,
-                          },
-                          "&:hover fieldset": {
-                            borderColor: "#cbd5e0",
-                          },
-                          "&.Mui-focused fieldset": {
-                            borderColor: "#4a6cf7",
-                            boxShadow: '0 0 0 3px rgba(74, 108, 247, 0.1)',
-                          }
-                        },
-                        "& .MuiInputLabel-root": {
-                          color: "#718096",
-                          "&.Mui-focused": {
-                            color: "#4a6cf7",
-                          }
-                        },
-                        "& .MuiOutlinedInput-input": {
-                          padding: '14px 16px',
-                        }
-                      }}
-                    />
-                    {firstName && (
-                      <Box
-                        sx={{
-                          position: 'absolute',
-                          top: -8,
-                          right: 12,
-                          bgcolor: '#4a6cf7',
-                          color: 'white',
-                          fontSize: '0.75rem',
-                          px: 1,
-                          py: 0.25,
-                          borderRadius: 4,
-                          zIndex: 1,
-                        }}
-                      >
-                        ✓
-                      </Box>
-                    )}
-                  </Box>
-                </Grid>
-                
-                <Grid item xs={12} sm={6}>
-                  <Box sx={{ position: 'relative' }}>
-                    <TextField
-                      required
-                      fullWidth
-                      label="Last Name"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      variant="outlined"
-                      sx={{ 
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: "12px",
-                          backgroundColor: '#ffffff',
-                          "& fieldset": {
-                            borderColor: "#e2e8f0",
-                            borderWidth: 2,
-                          },
-                          "&:hover fieldset": {
-                            borderColor: "#cbd5e0",
-                          },
-                          "&.Mui-focused fieldset": {
-                            borderColor: "#4a6cf7",
-                            boxShadow: '0 0 0 3px rgba(74, 108, 247, 0.1)',
-                          }
-                        },
-                        "& .MuiInputLabel-root": {
-                          color: "#718096",
-                          "&.Mui-focused": {
-                            color: "#4a6cf7",
-                          }
-                        },
-                        "& .MuiOutlinedInput-input": {
-                          padding: '14px 16px',
-                        }
-                      }}
-                    />
-                    {lastName && (
-                      <Box
-                        sx={{
-                          position: 'absolute',
-                          top: -8,
-                          right: 12,
-                          bgcolor: '#4a6cf7',
-                          color: 'white',
-                          fontSize: '0.75rem',
-                          px: 1,
-                          py: 0.25,
-                          borderRadius: 4,
-                          zIndex: 1,
-                        }}
-                      >
-                        ✓
-                      </Box>
-                    )}
-                  </Box>
-                </Grid>
-              </Grid>
 
               <Box sx={{ mb: 3 }}>
                 <Typography 
                   variant="subtitle1" 
                   fontWeight={600} 
                   sx={{ 
-                    color: '#2d3748',
-                    mb: 1,
+                    color: '#374151',
+                    mb: 1.5,
+                    fontSize: '0.95rem',
+                  }}
+                >
+                  Last Name
+                </Typography>
+                <TextField
+                  required
+                  fullWidth
+                  placeholder="Enter your last name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  variant="outlined"
+                  sx={{ 
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: "8px",
+                      backgroundColor: '#f9fafb',
+                      "& fieldset": {
+                        borderColor: "#e5e7eb",
+                        borderWidth: 1,
+                      },
+                      "&:hover fieldset": {
+                        borderColor: "#d1d5db",
+                      },
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#4a6cf7",
+                        borderWidth: 2,
+                      }
+                    },
+                    "& .MuiOutlinedInput-input": {
+                      padding: '12px 16px',
+                      color: '#374151',
+                    },
+                    "& .MuiInputLabel-root": {
+                      color: "#6b7280",
+                      "&.Mui-focused": {
+                        color: "#4a6cf7",
+                      }
+                    }
+                  }}
+                />
+              </Box>
+
+              <Box sx={{ mb: 4 }}>
+                <Typography 
+                  variant="subtitle1" 
+                  fontWeight={600} 
+                  sx={{ 
+                    color: '#374151',
+                    mb: 1.5,
+                    fontSize: '0.95rem',
                   }}
                 >
                   Date of Birth
                 </Typography>
-                <Box sx={{ position: 'relative' }}>
-                  <TextField
-                    required
-                    fullWidth
-                    type="date"
-                    value={dateOfBirth}
-                    onChange={(e) => setDateOfBirth(e.target.value)}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    sx={{ 
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: "12px",
-                        backgroundColor: '#ffffff',
-                        "& fieldset": {
-                          borderColor: "#e2e8f0",
-                          borderWidth: 2,
-                        },
-                        "&:hover fieldset": {
-                          borderColor: "#cbd5e0",
-                        },
-                        "&.Mui-focused fieldset": {
-                          borderColor: "#4a6cf7",
-                          boxShadow: '0 0 0 3px rgba(74, 108, 247, 0.1)',
-                        }
+                <TextField
+                  required
+                  fullWidth
+                  type="date"
+                  placeholder="mm/dd/yyyy"
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  sx={{ 
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: "8px",
+                      backgroundColor: '#f9fafb',
+                      "& fieldset": {
+                        borderColor: "#e5e7eb",
+                        borderWidth: 1,
                       },
-                      "& .MuiInputLabel-root": {
-                        color: "#718096",
-                        "&.Mui-focused": {
-                          color: "#4a6cf7",
-                        }
+                      "&:hover fieldset": {
+                        borderColor: "#d1d5db",
                       },
-                      "& .MuiOutlinedInput-input": {
-                        padding: '14px 16px',
+                      "&.Mui-focused fieldset": {
+                        borderColor: "#4a6cf7",
+                        borderWidth: 2,
                       }
-                    }}
-                  />
-                  <CalendarMonthIcon 
-                    sx={{ 
-                      position: 'absolute',
-                      right: 16,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: dateOfBirth ? '#4a6cf7' : '#cbd5e0',
-                      transition: 'color 0.2s ease',
-                    }} 
-                  />
-                </Box>
-                {dateOfBirth && (
-                  <Typography variant="caption" sx={{ color: '#48bb78', mt: 1, display: 'flex', alignItems: 'center' }}>
-                    <CheckCircleIcon sx={{ fontSize: 16, mr: 0.5 }} />
-                    Perfect! You're all set
-                  </Typography>
-                )}
+                    },
+                    "& .MuiOutlinedInput-input": {
+                      padding: '12px 16px',
+                      color: '#374151',
+                      "&::placeholder": {
+                        color: '#9ca3af',
+                      }
+                    },
+                    "& .MuiInputLabel-root": {
+                      color: "#6b7280",
+                      "&.Mui-focused": {
+                        color: "#4a6cf7",
+                      }
+                    }
+                  }}
+                />
               </Box>
-
-              {/* Helper text */}
-              <Paper
-                sx={{
-                  p: 2,
-                  mb: 3,
-                  bgcolor: '#edf2f7',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '12px',
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
-                  <InfoIcon sx={{ color: '#4a6cf7', mr: 1.5, mt: 0.25 }} />
-                  <Box>
-                    <Typography variant="caption" fontWeight={600} sx={{ color: '#2d3748', display: 'block' }}>
-                      Why do we need this?
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: '#718096' }}>
-                      This helps us personalize your learning experience and track your progress.
-                    </Typography>
-                  </Box>
-                </Box>
-              </Paper>
 
               {/* Submit button */}
               <Button
@@ -1022,73 +867,70 @@ function StudentDashboard() {
                 variant="contained"
                 disabled={!firstName || !lastName || !dateOfBirth}
                 sx={{ 
-                  height: "56px",
-                  borderRadius: "14px",
-                  background: 'linear-gradient(135deg, #4a6cf7 0%, #3a5ce5 100%)',
+                  height: "48px",
+                  borderRadius: "8px",
+                  backgroundColor: "#4a6cf7",
                   fontSize: "16px",
                   fontWeight: 600,
                   textTransform: 'none',
-                  boxShadow: '0 4px 20px rgba(74, 108, 247, 0.4)',
-                  transition: 'all 0.3s ease',
+                  boxShadow: 'none',
+                  transition: 'all 0.2s ease',
                   position: 'relative',
                   overflow: 'hidden',
                   "&:hover": {
-                    transform: "translateY(-2px)",
-                    boxShadow: '0 8px 25px rgba(74, 108, 247, 0.5)',
-                    background: 'linear-gradient(135deg, #3a5ce5 0%, #2a4cd3 100%)',
+                    backgroundColor: "#3a5ce5",
+                    boxShadow: '0 4px 12px rgba(74, 108, 247, 0.3)',
+                    transform: "translateY(-1px)",
+                  },
+                  "&:active": {
+                    transform: "translateY(0)",
                   },
                   "&:disabled": {
-                    background: '#e2e8f0',
-                    color: '#a0aec0',
+                    backgroundColor: '#e5e7eb',
+                    color: '#9ca3af',
                     transform: 'none',
-                    boxShadow: 'none',
-                  },
-                  "&:after": {
-                    content: '""',
-                    position: 'absolute',
-                    top: '-50%',
-                    left: '-60%',
-                    width: '20%',
-                    height: '200%',
-                    opacity: 0,
-                    transform: 'rotate(30deg)',
-                    background: 'linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.2), rgba(255,255,255,0.1))',
-                    transition: 'none',
-                  },
-                  "&:hover:after": {
-                    animation: 'shimmer 0.8s ease',
-                  },
-                  "@keyframes shimmer": {
-                    "0%": {
-                      left: '-60%',
-                      opacity: 0,
-                    },
-                    "10%": {
-                      opacity: 1,
-                    },
-                    "100%": {
-                      left: '140%',
-                      opacity: 0,
-                    },
                   },
                 }}
               >
-                {isProfileComplete() ? 'Update Profile →' : 'Continue to Next Step →'}
+                SAVE PROFILE
               </Button>
 
+              {/* Footer note */}
               <Typography 
                 variant="caption" 
                 sx={{ 
-                  color: '#718096', 
+                  color: '#6b7280', 
                   display: 'block', 
                   textAlign: 'center', 
-                  mt: 2,
+                  mt: 3,
                   fontSize: '0.75rem',
                 }}
               >
-                Next: Choose your role (Student or Teacher)
+                Your information helps us personalize your learning experience
               </Typography>
             </Box>
+
+            {/* Close button for completed profile */}
+            {isProfileComplete() && (
+              <IconButton
+                edge="end"
+                onClick={handleCloseProfileModal}
+                aria-label="close"
+                sx={{
+                  position: 'absolute',
+                  top: 16,
+                  right: 16,
+                  color: "#9ca3af",
+                  "&:hover": {
+                    color: "#4a6cf7",
+                    backgroundColor: "rgba(74, 108, 247, 0.1)",
+                  },
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
+            )}
           </Paper>
         </Fade>
       </Modal>
