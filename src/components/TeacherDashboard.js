@@ -1,4 +1,4 @@
-// TeacherDashboard.jsx - Updated with completed lessons in leaderboard
+// TeacherDashboard.jsx - Fixed API call and removed "Active Students"
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -360,34 +360,50 @@ function TeacherDashboard() {
 
     try {
       const userEmail = localStorage.getItem("userEmail");
-      const response = await fetch(`https://skillable-pdv0.onrender.com/api/teachers/profile`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          email: userEmail,
-          name: teacherName.trim()
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update profile");
-      }
-
-      const updatedProfile = await response.json();
-      setUserProfile(updatedProfile);
-      setSuccess("Profile updated successfully!");
-      setError("");
-      setOpenSnackbar(true);
-      setOpenProfileModal(false);
       
-      if (isProfileComplete()) {
-        fetchTeacherData();
+      // Try different methods to find what works with the API
+      const methodsToTry = ['PUT', 'POST', 'PATCH'];
+      let lastError = null;
+      
+      for (const method of methodsToTry) {
+        try {
+          const response = await fetch(`https://skillable-pdv0.onrender.com/api/teachers/profile`, {
+            method: method,
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              email: userEmail,
+              name: teacherName.trim()
+            })
+          });
+
+          if (response.ok) {
+            const updatedProfile = await response.json();
+            setUserProfile(updatedProfile);
+            setSuccess("Profile updated successfully!");
+            setError("");
+            setOpenSnackbar(true);
+            setOpenProfileModal(false);
+            
+            if (isProfileComplete()) {
+              fetchTeacherData();
+            }
+            return; // Exit function if successful
+          } else {
+            lastError = new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+        } catch (err) {
+          lastError = err;
+        }
       }
+      
+      // If we get here, all methods failed
+      throw lastError || new Error("Failed to update profile - no method worked");
+
     } catch (err) {
       console.error("Error updating profile:", err);
-      setError("Failed to update profile. Please try again.");
+      setError("Failed to update profile. Please try again later.");
       setOpenSnackbar(true);
     }
   };
@@ -783,7 +799,7 @@ function TeacherDashboard() {
                   overflow: 'hidden'
                 }}
               >
-                {/* Leaderboard Header */}
+                {/* Leaderboard Header - REMOVED "Active Students" Chip */}
                 <Box sx={{ 
                   p: 3, 
                   borderBottom: `1px solid ${alpha(fontColor, 0.1)}`,
@@ -808,14 +824,7 @@ function TeacherDashboard() {
                       </Typography>
                     </Box>
                   </Box>
-                  <Chip
-                    label={`${leaderboardData.length} Active Students`}
-                    sx={{
-                      backgroundColor: alpha(fontColor, 0.1),
-                      color: fontColor,
-                      fontWeight: 600
-                    }}
-                  />
+                  {/* REMOVED: Active Students Chip */}
                 </Box>
 
                 {/* Leaderboard Content */}
@@ -885,7 +894,6 @@ function TeacherDashboard() {
                             const stars = getTotalStars(student.moduleProgresses);
                             const completedLessons = getCompletedLessons(student.moduleProgresses);
                             const moduleCount = student.moduleProgresses?.length || 0;
-                            const status = getProgressStatus(progress);
                             
                             return (
                               <TableRow 
@@ -970,36 +978,26 @@ function TeacherDashboard() {
                                 {/* Progress Cell */}
                                 <TableCell sx={{ py: 2, textAlign: 'center' }}>
                                   <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                      <Typography variant="body1" sx={{ 
-                                        fontWeight: 700, 
-                                        color: fontColor
-                                      }}>
-                                        {progress}%
-                                      </Typography>
-                                      <Chip
-                                        label={status.label}
-                                        size="small"
-                                        sx={{
-                                          backgroundColor: status.bg,
-                                          color: status.color,
-                                          fontWeight: 600,
-                                          fontSize: '0.7rem',
-                                          height: 20
-                                        }}
-                                      />
-                                    </Box>
+                                    <Typography variant="h6" sx={{ 
+                                      fontWeight: 700, 
+                                      color: fontColor,
+                                      mb: 1
+                                    }}>
+                                      {progress}%
+                                    </Typography>
                                     <LinearProgress 
                                       variant="determinate" 
                                       value={progress}
                                       sx={{
                                         width: '80%',
-                                        height: 6,
-                                        borderRadius: 3,
+                                        height: 8,
+                                        borderRadius: 4,
                                         backgroundColor: alpha(fontColor, 0.1),
                                         '& .MuiLinearProgress-bar': {
-                                          backgroundColor: status.color,
-                                          borderRadius: 3
+                                          background: progress >= 70 ? 'linear-gradient(90deg, #10b981 0%, #22c55e 100%)' : 
+                                                     progress >= 50 ? 'linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%)' : 
+                                                     'linear-gradient(90deg, #ef4444 0%, #f87171 100%)',
+                                          borderRadius: 4
                                         }
                                       }}
                                     />
@@ -1013,7 +1011,7 @@ function TeacherDashboard() {
                                       color: '#fbbf24',
                                       fontSize: 20
                                     }} />
-                                    <Typography variant="body1" sx={{ 
+                                    <Typography variant="h6" sx={{ 
                                       fontWeight: 700, 
                                       color: fontColor
                                     }}>
@@ -1189,18 +1187,24 @@ function TeacherDashboard() {
                         onClick={() => navigate("/admin")}
                         sx={{ 
                           borderRadius: "12px",
-                          backgroundColor: alpha('#ffffff', 0.2),
+                          backgroundColor: darkMode ? '#667eea' : '#6366f1',
                           color: 'white',
                           py: 1.5,
                           px: 3,
                           fontSize: '1rem',
                           fontWeight: 600,
                           textTransform: 'none',
+                          boxShadow: darkMode 
+                            ? '0 4px 15px rgba(102, 126, 234, 0.3)'
+                            : '0 4px 15px rgba(99, 102, 241, 0.3)',
                           '&:hover': {
-                            backgroundColor: alpha('#ffffff', 0.3),
+                            backgroundColor: darkMode ? '#5a67d8' : '#4f46e5',
+                            boxShadow: darkMode 
+                              ? '0 6px 20px rgba(102, 126, 234, 0.4)'
+                              : '0 6px 20px rgba(99, 102, 241, 0.4)',
                             transform: 'translateY(-1px)'
                           },
-                          transition: 'all 0.2s ease'
+                          transition: 'all 0.2s ease',
                         }}
                       >
                         Access Admin Dashboard
@@ -1323,15 +1327,19 @@ function TeacherDashboard() {
                       mt: 2, 
                       height: "56px",
                       borderRadius: "16px",
-                      backgroundColor: fontColor,
+                      backgroundColor: darkMode ? '#667eea' : '#6366f1',
                       fontSize: "1.1rem",
                       fontWeight: 600,
                       textTransform: 'none',
-                      boxShadow: "0 8px 25px rgba(40, 11, 96, 0.4)",
+                      boxShadow: darkMode 
+                        ? '0 8px 25px rgba(102, 126, 234, 0.4)'
+                        : '0 8px 25px rgba(99, 102, 241, 0.4)',
                       "&:hover": {
-                        backgroundColor: darkMode ? '#5a67d8' : '#1f0750',
+                        backgroundColor: darkMode ? '#5a67d8' : '#4f46e5',
                         transform: "translateY(-2px)",
-                        boxShadow: "0 12px 35px rgba(40, 11, 96, 0.5)",
+                        boxShadow: darkMode 
+                          ? '0 12px 35px rgba(102, 126, 234, 0.5)'
+                          : '0 12px 35px rgba(99, 102, 241, 0.5)',
                       },
                       transition: 'all 0.3s ease'
                     }}

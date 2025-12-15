@@ -201,9 +201,6 @@ function StudentProgress() {
     switch (tabValue) {
       case 0: // All students
         break;
-      case 1: // Active students
-        filtered = filtered.filter(s => s.moduleProgresses?.length > 0);
-        break;
       case 2: // Leaderboard - sorted by performance
         filtered = filtered.filter(s => s.moduleProgresses?.length > 0);
         // Sort by overall progress, then by total stars, then by average score
@@ -311,6 +308,12 @@ function StudentProgress() {
 
   const { fontColor, sidebarBgColor, offWhiteColors, gradientColors } = colors;
 
+  // Color constants for consistent use
+  const whiteColor = '#ffffff';
+  const darkTextColor = '#1f0750';
+  const primaryColor = '#667eea';
+  const secondaryColor = '#764ba2';
+
   if (loading) {
     return (
       <div style={{ 
@@ -382,7 +385,6 @@ function StudentProgress() {
           </Box>
         </Box>
 
-        {/* Main Menu */}
         {/* Main Menu */}
         <List sx={{ p: 1, flex: 1 }}>
           {menuItems.map((item) => (
@@ -480,12 +482,12 @@ function StudentProgress() {
             }}
             sx={{
               borderRadius: '12px',
-              backgroundColor: darkMode ? '#667eea' : fontColor,
+              backgroundColor: darkMode ? primaryColor : fontColor,
               color: 'white',
               textTransform: 'none',
               fontWeight: 500,
               '&:hover': {
-                backgroundColor: darkMode ? '#5a67d8' : '#1f0750',
+                backgroundColor: darkMode ? '#5a67d8' : darkTextColor,
                 transform: 'translateY(-2px)',
                 boxShadow: '0 4px 12px rgba(40, 11, 96, 0.3)',
               },
@@ -540,7 +542,7 @@ function StudentProgress() {
               </Card>
             </Grid>
             
-            <Grid item xs={12} sm={6} md={3}>
+            {/* <Grid item xs={12} sm={6} md={3}>
               <Card sx={{ 
                 p: 3, 
                 backgroundColor: offWhiteColors.surface,
@@ -567,7 +569,7 @@ function StudentProgress() {
                   </Box>
                 </Box>
               </Card>
-            </Grid>
+            </Grid> */}
             
             <Grid item xs={12} sm={6} md={3}>
               <Card sx={{ 
@@ -702,7 +704,6 @@ function StudentProgress() {
                 }}
               >
                 <Tab label={`All Students (${studentsProgress.length})`} sx={{ color: fontColor }} />
-                <Tab label={`Active (${studentsProgress.filter(s => s.moduleProgresses?.length > 0).length})`} sx={{ color: fontColor }} />
                 <Tab 
                   icon={<LeaderboardIcon />}
                   iconPosition="start"
@@ -743,7 +744,7 @@ function StudentProgress() {
                               top: -8, 
                               right: 16, 
                               backgroundColor: fontColor,
-                              color: 'white',
+                              color: whiteColor,
                               borderRadius: '50%',
                               width: 32,
                               height: 32,
@@ -771,7 +772,7 @@ function StudentProgress() {
                                     `linear-gradient(135deg, ${alpha(fontColor, 0.8)} 0%, ${alpha(fontColor, 0.6)} 100%)`,
                                   fontSize: '1.25rem',
                                   fontWeight: 700,
-                                  color: 'white'
+                                  color: whiteColor
                                 }}
                               >
                                 {student.firstName ? student.firstName[0].toUpperCase() : 'S'}
@@ -874,7 +875,7 @@ function StudentProgress() {
                               </Grid>
                             </Grid>
 
-                            {/* Action Button - Details Only */}
+                            {/* Action Button - Details Only - FIXED COLOR */}
                             <Button
                               fullWidth
                               variant="contained"
@@ -882,14 +883,16 @@ function StudentProgress() {
                               onClick={() => handleViewDetails(student)}
                               sx={{
                                 borderRadius: "12px",
-                                backgroundColor: fontColor,
+                                backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                color: whiteColor,
                                 py: 1.5,
                                 fontWeight: 600,
                                 textTransform: 'none',
-                                boxShadow: `0 4px 20px ${alpha(fontColor, 0.3)}`,
+                                boxShadow: '0 4px 20px rgba(102, 126, 234, 0.3)',
                                 "&:hover": {
-                                  backgroundColor: darkMode ? '#5a67d8' : '#1f0750',
-                                  boxShadow: `0 6px 25px ${alpha(fontColor, 0.4)}`,
+                                  background: 'linear-gradient(135deg, #5a67d8 0%, #6b4a91 100%)',
+                                  boxShadow: '0 6px 25px rgba(102, 126, 234, 0.4)',
                                   transform: 'translateY(-1px)'
                                 },
                                 transition: 'all 0.2s ease'
@@ -925,7 +928,7 @@ function StudentProgress() {
         </Container>
       </Box>
 
-      {/* Enhanced Detailed Progress Modal */}
+      {/* Enhanced Detailed Progress Modal - FIXED COLORS */}
       <Dialog
         open={openDetailModal}
         onClose={() => setOpenDetailModal(false)}
@@ -947,23 +950,32 @@ function StudentProgress() {
           justifyContent: 'space-between', 
           alignItems: 'center',
           fontWeight: 700,
-          color: fontColor,
-          borderBottom: `1px solid ${alpha(fontColor, 0.1)}`,
-          pb: 2
+          color: darkMode ? whiteColor : darkTextColor,
+          borderBottom: `1px solid ${alpha(darkMode ? whiteColor : darkTextColor, 0.1)}`,
+          pb: 2,
+          backgroundColor: darkMode ? alpha(darkTextColor, 0.1) : alpha(primaryColor, 0.05),
+          borderRadius: '16px 16px 0 0'
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <PersonIcon sx={{ color: fontColor, mr: 2, fontSize: 28 }} />
-            <Typography variant="h5" sx={{ fontWeight: 700, color: fontColor }}>
+            <PersonIcon sx={{ 
+              color: darkMode ? primaryColor : darkTextColor,
+              mr: 2, 
+              fontSize: 28 
+            }} />
+            <Typography variant="h5" sx={{ 
+              fontWeight: 700, 
+              color: darkMode ? whiteColor : darkTextColor
+            }}>
               Detailed Student Progress
             </Typography>
           </Box>
           <IconButton
             onClick={() => setOpenDetailModal(false)}
             sx={{ 
-              color: alpha(fontColor, 0.7),
-              backgroundColor: alpha(fontColor, 0.1),
+              color: darkMode ? whiteColor : darkTextColor,
+              backgroundColor: darkMode ? alpha(whiteColor, 0.1) : alpha(darkTextColor, 0.1),
               '&:hover': {
-                backgroundColor: alpha(fontColor, 0.2),
+                backgroundColor: darkMode ? alpha(whiteColor, 0.2) : alpha(darkTextColor, 0.2),
                 transform: 'scale(1.1)'
               },
               transition: 'all 0.2s ease'
@@ -983,9 +995,10 @@ function StudentProgress() {
               <Paper sx={{ 
                 p: 4, 
                 mb: 4, 
-                backgroundColor: fontColor,
+                backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 borderRadius: 3,
-                color: 'white'
+                color: whiteColor
               }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                   <Avatar 
@@ -993,8 +1006,8 @@ function StudentProgress() {
                       width: 80, 
                       height: 80, 
                       mr: 3, 
-                      backgroundColor: alpha('#ffffff', 0.2),
-                      color: 'white',
+                      backgroundColor: alpha(whiteColor, 0.2),
+                      color: whiteColor,
                       fontSize: '2rem',
                       fontWeight: 700,
                       border: '3px solid rgba(255,255,255,0.3)'
@@ -1016,7 +1029,7 @@ function StudentProgress() {
                     {/* Quick Stats */}
                     <Grid container spacing={2}>
                       <Grid item xs={3}>
-                        <Box sx={{ textAlign: 'center', p: 2, backgroundColor: alpha('#ffffff', 0.15), borderRadius: 2 }}>
+                        <Box sx={{ textAlign: 'center', p: 2, backgroundColor: alpha(whiteColor, 0.15), borderRadius: 2 }}>
                           <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
                             {getOverallProgress(detailedProgress.moduleProgresses)}%
                           </Typography>
@@ -1026,7 +1039,7 @@ function StudentProgress() {
                         </Box>
                       </Grid>
                       <Grid item xs={3}>
-                        <Box sx={{ textAlign: 'center', p: 2, backgroundColor: alpha('#ffffff', 0.15), borderRadius: 2 }}>
+                        <Box sx={{ textAlign: 'center', p: 2, backgroundColor: alpha(whiteColor, 0.15), borderRadius: 2 }}>
                           <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
                             {detailedProgress.moduleProgresses?.length || 0}
                           </Typography>
@@ -1036,7 +1049,7 @@ function StudentProgress() {
                         </Box>
                       </Grid>
                       <Grid item xs={3}>
-                        <Box sx={{ textAlign: 'center', p: 2, backgroundColor: alpha('#ffffff', 0.15), borderRadius: 2 }}>
+                        <Box sx={{ textAlign: 'center', p: 2, backgroundColor: alpha(whiteColor, 0.15), borderRadius: 2 }}>
                           <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
                             {getTotalStars(detailedProgress.moduleProgresses)}
                           </Typography>
@@ -1046,7 +1059,7 @@ function StudentProgress() {
                         </Box>
                       </Grid>
                       <Grid item xs={3}>
-                        <Box sx={{ textAlign: 'center', p: 2, backgroundColor: alpha('#ffffff', 0.15), borderRadius: 2 }}>
+                        <Box sx={{ textAlign: 'center', p: 2, backgroundColor: alpha(whiteColor, 0.15), borderRadius: 2 }}>
                           <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
                             {getAverageScore(detailedProgress.moduleProgresses)}%
                           </Typography>
@@ -1061,16 +1074,25 @@ function StudentProgress() {
               </Paper>
 
               {/* Module Progress Details */}
-              <Typography variant="h5" sx={{ fontWeight: 700, color: fontColor, mb: 3 }}>
+              <Typography variant="h5" sx={{ 
+                fontWeight: 700, 
+                color: darkMode ? whiteColor : darkTextColor,
+                mb: 3 
+              }}>
                 Module Progress Details
               </Typography>
 
               {detailedProgress.moduleProgresses?.length > 0 ? (
                 <Box sx={{ mb: 4 }}>
                   {detailedProgress.moduleProgresses.map((moduleProgress) => (
-                    <Accordion key={moduleProgress.id} sx={{ mb: 3, borderRadius: '16px !important', border: `1px solid ${alpha(fontColor, 0.1)}`, backgroundColor: offWhiteColors.surface }}>
+                    <Accordion key={moduleProgress.id} sx={{ 
+                      mb: 3, 
+                      borderRadius: '16px !important', 
+                      border: `1px solid ${alpha(darkMode ? whiteColor : darkTextColor, 0.1)}`, 
+                      backgroundColor: offWhiteColors.surface 
+                    }}>
                       <AccordionSummary
-                        expandIcon={<ExpandMoreIcon sx={{ color: fontColor }} />}
+                        expandIcon={<ExpandMoreIcon sx={{ color: darkMode ? whiteColor : darkTextColor }} />}
                         sx={{ 
                           backgroundColor: offWhiteColors.subtleBg,
                           borderRadius: '16px',
@@ -1086,35 +1108,53 @@ function StudentProgress() {
                             <Box sx={{ 
                               p: 2, 
                               borderRadius: 2, 
-                              backgroundColor: fontColor,
+                              backgroundColor: darkMode ? primaryColor : darkTextColor,
                               mr: 3,
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center'
                             }}>
-                              <SchoolIcon sx={{ color: 'white', fontSize: 24 }} />
+                              <SchoolIcon sx={{ color: whiteColor, fontSize: 24 }} />
                             </Box>
                             <Box>
-                              <Typography variant="h6" sx={{ fontWeight: 700, color: fontColor, mb: 0.5 }}>
+                              <Typography variant="h6" sx={{ 
+                                fontWeight: 700, 
+                                color: darkMode ? whiteColor : darkTextColor, 
+                                mb: 0.5 
+                              }}>
                                 {moduleProgress.moduleName}
                               </Typography>
-                              <Typography variant="body2" sx={{ color: alpha(fontColor, 0.7) }}>
+                              <Typography variant="body2" sx={{ color: alpha(darkMode ? whiteColor : darkTextColor, 0.7) }}>
                                 {moduleProgress.completedLessons} of {moduleProgress.totalLessons} lessons completed
                               </Typography>
                             </Box>
                           </Box>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                             <Box sx={{ textAlign: 'center' }}>
-                              <Typography variant="h6" sx={{ fontWeight: 700, color: fontColor }}>
+                              <Typography variant="h6" sx={{ 
+                                fontWeight: 700, 
+                                color: darkMode ? whiteColor : darkTextColor 
+                              }}>
                                 {Math.round((moduleProgress.completedLessons / moduleProgress.totalLessons) * 100)}%
                               </Typography>
-                              <Typography variant="caption" sx={{ color: alpha(fontColor, 0.7) }}>
+                              <Typography variant="caption" sx={{ color: alpha(darkMode ? whiteColor : darkTextColor, 0.7) }}>
                                 Complete
                               </Typography>
                             </Box>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, backgroundColor: alpha(fontColor, 0.05), px: 2, py: 1, borderRadius: 2 }}>
-                              <StarIcon sx={{ color: fontColor, fontSize: 16 }} />
-                              <Typography variant="body2" sx={{ fontWeight: 600, color: fontColor }}>
+                            <Box sx={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: 1, 
+                              backgroundColor: alpha(darkMode ? whiteColor : darkTextColor, 0.05), 
+                              px: 2, 
+                              py: 1, 
+                              borderRadius: 2 
+                            }}>
+                              <StarIcon sx={{ color: darkMode ? whiteColor : darkTextColor, fontSize: 16 }} />
+                              <Typography variant="body2" sx={{ 
+                                fontWeight: 600, 
+                                color: darkMode ? whiteColor : darkTextColor 
+                              }}>
                                 {moduleProgress.totalStars}
                               </Typography>
                             </Box>
@@ -1137,7 +1177,11 @@ function StudentProgress() {
                         <Grid container spacing={4}>
                           <Grid item xs={12} md={8}>
                             <Box sx={{ mb: 3 }}>
-                              <Typography variant="h6" sx={{ color: fontColor, mb: 2, fontWeight: 600 }}>
+                              <Typography variant="h6" sx={{ 
+                                color: darkMode ? whiteColor : darkTextColor, 
+                                mb: 2, 
+                                fontWeight: 600 
+                              }}>
                                 Progress Overview
                               </Typography>
                               <LinearProgress 
@@ -1149,42 +1193,78 @@ function StudentProgress() {
                                   backgroundColor: offWhiteColors.subtleBg,
                                   mb: 2,
                                   '& .MuiLinearProgress-bar': {
-                                    background: moduleProgress.completed ? 'linear-gradient(90deg, #10b981 0%, #22c55e 100%)' : `linear-gradient(90deg, ${fontColor} 0%, ${alpha(fontColor, 0.7)} 100%)`,
+                                    background: moduleProgress.completed ? 
+                                      'linear-gradient(90deg, #10b981 0%, #22c55e 100%)' : 
+                                      'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
                                     borderRadius: 6
                                   }
                                 }}
                               />
                               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <Typography variant="body2" sx={{ color: alpha(fontColor, 0.7), fontWeight: 500 }}>
+                                <Typography variant="body2" sx={{ 
+                                  color: alpha(darkMode ? whiteColor : darkTextColor, 0.7), 
+                                  fontWeight: 500 
+                                }}>
                                   {moduleProgress.completedLessons} completed
                                 </Typography>
-                                <Typography variant="body2" sx={{ color: alpha(fontColor, 0.7), fontWeight: 500 }}>
+                                <Typography variant="body2" sx={{ 
+                                  color: alpha(darkMode ? whiteColor : darkTextColor, 0.7), 
+                                  fontWeight: 500 
+                                }}>
                                   {moduleProgress.totalLessons - moduleProgress.completedLessons} remaining
                                 </Typography>
                               </Box>
                             </Box>
                           </Grid>
                           <Grid item xs={12} md={4}>
-                            <Typography variant="h6" sx={{ color: fontColor, mb: 2, fontWeight: 600 }}>
+                            <Typography variant="h6" sx={{ 
+                              color: darkMode ? whiteColor : darkTextColor, 
+                              mb: 2, 
+                              fontWeight: 600 
+                            }}>
                               Performance Metrics
                             </Typography>
                             <Grid container spacing={2}>
                               <Grid item xs={12}>
-                                <Paper sx={{ p: 3, textAlign: 'center', backgroundColor: alpha(fontColor, 0.05), border: `1px solid ${alpha(fontColor, 0.1)}` }}>
-                                  <Typography variant="h5" sx={{ fontWeight: 700, color: fontColor, mb: 1 }}>
+                                <Paper sx={{ 
+                                  p: 3, 
+                                  textAlign: 'center', 
+                                  backgroundColor: alpha(darkMode ? whiteColor : darkTextColor, 0.05), 
+                                  border: `1px solid ${alpha(darkMode ? whiteColor : darkTextColor, 0.1)}` 
+                                }}>
+                                  <Typography variant="h5" sx={{ 
+                                    fontWeight: 700, 
+                                    color: darkMode ? whiteColor : darkTextColor, 
+                                    mb: 1 
+                                  }}>
                                     {moduleProgress.totalStars}
                                   </Typography>
-                                  <Typography variant="body2" sx={{ color: alpha(fontColor, 0.7), fontWeight: 500 }}>
+                                  <Typography variant="body2" sx={{ 
+                                    color: alpha(darkMode ? whiteColor : darkTextColor, 0.7), 
+                                    fontWeight: 500 
+                                  }}>
                                     Stars Earned
                                   </Typography>
                                 </Paper>
                               </Grid>
                               <Grid item xs={12}>
-                                <Paper sx={{ p: 3, textAlign: 'center', backgroundColor: alpha('#2563eb', 0.05), border: '1px solid rgba(37, 99, 235, 0.1)' }}>
-                                  <Typography variant="h5" sx={{ fontWeight: 700, color: '#2563eb', mb: 1 }}>
+                                <Paper sx={{ 
+                                  p: 3, 
+                                  textAlign: 'center', 
+                                  backgroundColor: alpha('#2563eb', 0.05), 
+                                  border: '1px solid rgba(37, 99, 235, 0.1)' 
+                                }}>
+                                  <Typography variant="h5" sx={{ 
+                                    fontWeight: 700, 
+                                    color: '#2563eb', 
+                                    mb: 1 
+                                  }}>
                                     {Math.round(moduleProgress.averageScore)}%
                                   </Typography>
-                                  <Typography variant="body2" sx={{ color: '#1d4ed8', fontWeight: 500 }}>
+                                  <Typography variant="body2" sx={{ 
+                                    color: '#1d4ed8', 
+                                    fontWeight: 500 
+                                  }}>
                                     Average Score
                                   </Typography>
                                 </Paper>
@@ -1193,15 +1273,31 @@ function StudentProgress() {
                           </Grid>
                           <Grid item xs={12}>
                             <Divider sx={{ my: 2 }} />
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, p: 3, backgroundColor: offWhiteColors.subtleBg, borderRadius: 3 }}>
-                              <TimerIcon sx={{ color: alpha(fontColor, 0.7), fontSize: 24 }} />
-                              <Typography variant="body1" sx={{ color: alpha(fontColor, 0.7), fontWeight: 500 }}>
+                            <Box sx={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: 3, 
+                              p: 3, 
+                              backgroundColor: offWhiteColors.subtleBg, 
+                              borderRadius: 3 
+                            }}>
+                              <TimerIcon sx={{ 
+                                color: alpha(darkMode ? whiteColor : darkTextColor, 0.7), 
+                                fontSize: 24 
+                              }} />
+                              <Typography variant="body1" sx={{ 
+                                color: alpha(darkMode ? whiteColor : darkTextColor, 0.7), 
+                                fontWeight: 500 
+                              }}>
                                 <strong>Started:</strong> {formatDate(moduleProgress.createdAt)}
                               </Typography>
                               {moduleProgress.completedAt && (
                                 <>
                                   <CheckIcon sx={{ color: '#10b981', fontSize: 24 }} />
-                                  <Typography variant="body1" sx={{ color: alpha(fontColor, 0.7), fontWeight: 500 }}>
+                                  <Typography variant="body1" sx={{ 
+                                    color: alpha(darkMode ? whiteColor : darkTextColor, 0.7), 
+                                    fontWeight: 500 
+                                  }}>
                                     <strong>Completed:</strong> {formatDate(moduleProgress.completedAt)}
                                   </Typography>
                                 </>
@@ -1218,14 +1314,20 @@ function StudentProgress() {
                   p: 6, 
                   textAlign: 'center', 
                   backgroundColor: offWhiteColors.subtleBg,
-                  border: `2px dashed ${alpha(fontColor, 0.2)}`,
+                  border: `2px dashed ${alpha(darkMode ? whiteColor : darkTextColor, 0.2)}`,
                   borderRadius: 4
                 }}>
-                  <SchoolIcon sx={{ fontSize: 64, color: alpha(fontColor, 0.3), mb: 2 }} />
-                  <Typography variant="h5" sx={{ color: alpha(fontColor, 0.7), mb: 1, fontWeight: 600 }}>
+                  <SchoolIcon sx={{ fontSize: 64, color: alpha(darkMode ? whiteColor : darkTextColor, 0.3), mb: 2 }} />
+                  <Typography variant="h5" sx={{ 
+                    color: alpha(darkMode ? whiteColor : darkTextColor, 0.7), 
+                    mb: 1, 
+                    fontWeight: 600 
+                  }}>
                     No Module Progress
                   </Typography>
-                  <Typography variant="body1" sx={{ color: alpha(fontColor, 0.7) }}>
+                  <Typography variant="body1" sx={{ 
+                    color: alpha(darkMode ? whiteColor : darkTextColor, 0.7) 
+                  }}>
                     This student hasn't started any learning modules yet.
                   </Typography>
                 </Paper>
@@ -1234,42 +1336,98 @@ function StudentProgress() {
               {/* Lesson Progress Summary */}
               {detailedProgress.lessonProgresses?.length > 0 && (
                 <Box>
-                  <Typography variant="h5" sx={{ fontWeight: 700, color: fontColor, mb: 3 }}>
+                  <Typography variant="h5" sx={{ 
+                    fontWeight: 700, 
+                    color: darkMode ? whiteColor : darkTextColor, 
+                    mb: 3 
+                  }}>
                     Recent Lesson Activity
                   </Typography>
-                  <TableContainer component={Paper} sx={{ borderRadius: 3, border: `1px solid ${alpha(fontColor, 0.1)}`, backgroundColor: offWhiteColors.surface }}>
+                  <TableContainer component={Paper} sx={{ 
+                    borderRadius: 3, 
+                    border: `1px solid ${alpha(darkMode ? whiteColor : darkTextColor, 0.1)}`, 
+                    backgroundColor: offWhiteColors.surface 
+                  }}>
                     <Table>
                       <TableHead>
                         <TableRow sx={{ backgroundColor: offWhiteColors.subtleBg }}>
-                          <TableCell sx={{ fontWeight: 700, color: fontColor, py: 2 }}>Lesson</TableCell>
-                          <TableCell sx={{ fontWeight: 700, color: fontColor, py: 2 }}>Score</TableCell>
-                          <TableCell sx={{ fontWeight: 700, color: fontColor, py: 2 }}>Stars</TableCell>
-                          <TableCell sx={{ fontWeight: 700, color: fontColor, py: 2 }}>Status</TableCell>
-                          <TableCell sx={{ fontWeight: 700, color: fontColor, py: 2 }}>Date</TableCell>
+                          <TableCell sx={{ 
+                            fontWeight: 700, 
+                            color: darkMode ? whiteColor : darkTextColor, 
+                            py: 2 
+                          }}>
+                            Lesson
+                          </TableCell>
+                          <TableCell sx={{ 
+                            fontWeight: 700, 
+                            color: darkMode ? whiteColor : darkTextColor, 
+                            py: 2 
+                          }}>
+                            Score
+                          </TableCell>
+                          <TableCell sx={{ 
+                            fontWeight: 700, 
+                            color: darkMode ? whiteColor : darkTextColor, 
+                            py: 2 
+                          }}>
+                            Stars
+                          </TableCell>
+                          <TableCell sx={{ 
+                            fontWeight: 700, 
+                            color: darkMode ? whiteColor : darkTextColor, 
+                            py: 2 
+                          }}>
+                            Status
+                          </TableCell>
+                          <TableCell sx={{ 
+                            fontWeight: 700, 
+                            color: darkMode ? whiteColor : darkTextColor, 
+                            py: 2 
+                          }}>
+                            Date
+                          </TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         {detailedProgress.lessonProgresses.slice(0, 10).map((lessonProgress) => (
-                          <TableRow key={lessonProgress.id} hover sx={{ '&:hover': { backgroundColor: offWhiteColors.subtleBg } }}>
+                          <TableRow key={lessonProgress.id} hover sx={{ 
+                            '&:hover': { 
+                              backgroundColor: offWhiteColors.subtleBg 
+                            } 
+                          }}>
                             <TableCell sx={{ py: 2 }}>
-                              <Typography variant="body1" sx={{ fontWeight: 600, color: fontColor }}>
+                              <Typography variant="body1" sx={{ 
+                                fontWeight: 600, 
+                                color: darkMode ? whiteColor : darkTextColor 
+                              }}>
                                 {lessonProgress.lessonTitle}
                               </Typography>
                             </TableCell>
                             <TableCell sx={{ py: 2 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Typography variant="body1" sx={{ fontWeight: 600, color: fontColor }}>
+                                <Typography variant="body1" sx={{ 
+                                  fontWeight: 600, 
+                                  color: darkMode ? whiteColor : darkTextColor 
+                                }}>
                                   {lessonProgress.score}
                                 </Typography>
-                                <Typography variant="body2" sx={{ color: alpha(fontColor, 0.7) }}>
+                                <Typography variant="body2" sx={{ 
+                                  color: alpha(darkMode ? whiteColor : darkTextColor, 0.7) 
+                                }}>
                                   / {lessonProgress.maxScore}
                                 </Typography>
                               </Box>
                             </TableCell>
                             <TableCell sx={{ py: 2 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <StarIcon sx={{ color: fontColor, fontSize: 18 }} />
-                                <Typography variant="body1" sx={{ fontWeight: 600, color: fontColor }}>
+                                <StarIcon sx={{ 
+                                  color: darkMode ? whiteColor : darkTextColor, 
+                                  fontSize: 18 
+                                }} />
+                                <Typography variant="body1" sx={{ 
+                                  fontWeight: 600, 
+                                  color: darkMode ? whiteColor : darkTextColor 
+                                }}>
                                   {lessonProgress.starsEarned}
                                 </Typography>
                               </Box>
@@ -1287,7 +1445,10 @@ function StudentProgress() {
                               />
                             </TableCell>
                             <TableCell sx={{ py: 2 }}>
-                              <Typography variant="body2" sx={{ color: alpha(fontColor, 0.7), fontWeight: 500 }}>
+                              <Typography variant="body2" sx={{ 
+                                color: alpha(darkMode ? whiteColor : darkTextColor, 0.7), 
+                                fontWeight: 500 
+                              }}>
                                 {formatDate(lessonProgress.completedAt || lessonProgress.createdAt)}
                               </Typography>
                             </TableCell>
