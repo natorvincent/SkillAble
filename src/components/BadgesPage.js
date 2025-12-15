@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Container, Grid, Card, CardContent, CircularProgress } from '@mui/material';
-import SchoolIcon from '@mui/icons-material/School';
-import StarIcon from '@mui/icons-material/Star';
-import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { getStudentModuleProgressStats } from '../services/progressService';
 import Navbar from './Navbar';
 import Background from './Background';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate for navigation
+
+// Import PNG icons
+import FirstLessonIcon from '../assets/badges/first_lesson.png';
+import StarMasterIcon from '../assets/badges/star_master.png';
+import FirstModuleIcon from '../assets/badges/first_module.png';
+import SuperLearnerIcon from '../assets/badges/super_learner.png';
+import LockedIcon from '../assets/badges/locked.png'; // Import locked badge icon
+import ExitButtonIcon from '../assets/exitbtn.png'; // Import exit button icon
 
 function BadgesPage() {
   const [progressStats, setProgressStats] = useState(null);
   const [badges, setBadges] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate(); // Initialize navigate function
 
   useEffect(() => {
     fetchProgressAndBadges();
@@ -23,54 +29,6 @@ function BadgesPage() {
       const studentId = localStorage.getItem('studentId');
       
       if (studentId) {
-        // Try to fetch badges from your new backend endpoint first
-        try {
-          const badgesResponse = await fetch(`https://skillable-pdv0.onrender.com/api/badges/student/${studentId}`, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${localStorage.getItem('token') || ''}`
-            }
-          });
-          
-          if (badgesResponse.ok) {
-            const badgesData = await badgesResponse.json();
-            console.log("Backend badges data:", badgesData);
-            
-            // Transform backend data to frontend format - ensure all 4 main badges are always present
-            const requiredBadges = ['super-learner', 'shining-bright', 'star-master', 'module-legend'];
-            const backendBadges = badgesData.badges || [];
-            
-            const transformedBadges = requiredBadges.map(badgeId => {
-              const backendBadge = backendBadges.find(b => b.id === badgeId);
-              if (backendBadge) {
-                return {
-                  id: backendBadge.id,
-                  label: backendBadge.label || getBadgeDefaultData(badgeId).label,
-                  description: backendBadge.description || getBadgeDefaultData(badgeId).description,
-                  category: backendBadge.category || getBadgeDefaultData(badgeId).category,
-                  earned: backendBadge.earned || false,
-                  progress: backendBadge.progress || getBadgeDefaultData(badgeId).progress,
-                  icon: getBadgeIcon(badgeId, backendBadge.color)
-                };
-              } else {
-                // If badge not found in backend, create default
-                const defaultData = getBadgeDefaultData(badgeId);
-                return {
-                  ...defaultData,
-                  icon: getBadgeIcon(badgeId, '#ccc')
-                };
-              }
-            });
-            
-            setBadges(transformedBadges);
-            return; // Successfully got badges from backend
-          }
-        } catch (backendError) {
-          console.log("Backend endpoint not available, using fallback:", backendError);
-        }
-        
-        // Fallback to local calculation if backend fails - FETCHES REAL DATA
         const progressResponse = await getStudentModuleProgressStats(studentId);
         console.log("Progress stats from database:", progressResponse);
         setProgressStats(progressResponse);
@@ -86,40 +44,55 @@ function BadgesPage() {
     }
   };
 
+  // Handle back button click
+  const handleBackClick = () => {
+    navigate(-1); // Go back to previous page
+    // Alternatively, you can navigate to a specific route:
+    // navigate('/dashboard'); // Or whatever your main page route is
+  };
+
   // Helper function to get default badge data
   const getBadgeDefaultData = (badgeId) => {
     const defaults = {
       'super-learner': {
         id: 'super-learner',
         label: 'Super Learner',
-        description: 'Complete 100 lessons',
+        description: 'Complete 10 lessons',
         category: 'Lessons',
         earned: false,
-        progress: '0/100'
-      },
-      'shining-bright': {
-        id: 'shining-bright',
-        label: 'Shining Bright',
-        description: 'Earn 100 stars',
-        category: 'Stars',
-        earned: false,
-        progress: '⭐ 0/100'
+        progress: '0/10'
       },
       'star-master': {
         id: 'star-master',
         label: 'Star Master',
-        description: 'Earn 500 stars',
+        description: 'Earn 15 stars',
         category: 'Stars',
         earned: false,
-        progress: '⭐ 0/500'
+        progress: '⭐ 0/15'
       },
       'module-legend': {
         id: 'module-legend',
         label: 'Module Legend',
-        description: 'Complete 25 modules',
+        description: 'Complete 3 modules',
         category: 'Modules',
         earned: false,
-        progress: '0/25'
+        progress: '0/3'
+      },
+      'first-module': {
+        id: 'first-module',
+        label: 'First Module',
+        description: 'Complete your first module',
+        category: 'Milestones',
+        earned: false,
+        progress: '1/1'
+      },
+      'first-lesson': {
+        id: 'first-lesson',
+        label: 'First Lesson',
+        description: 'Complete your first lesson',
+        category: 'Milestones',
+        earned: false,
+        progress: '1/1'
       }
     };
     return defaults[badgeId] || {
@@ -132,22 +105,27 @@ function BadgesPage() {
     };
   };
 
-  // Helper function to get the correct icon based on badge ID and color
-  const getBadgeIcon = (badgeId, color) => {
-    const iconColor = color === '#ccc' ? '#ccc' : color;
-    const iconSize = 32;
+  // Helper function to get the correct icon based on badge ID
+  const getBadgeIcon = (badgeId, earned) => {
+    // Use locked icon for unearned badges
+    if (!earned) {
+      return <img src={LockedIcon} alt="Locked" style={{ width: 200, height: 200 }} />;
+    }
     
+    // Use actual badge icons for earned badges
     switch (badgeId) {
       case 'super-learner':
-        return <SchoolIcon sx={{ fontSize: iconSize, color: iconColor }} />;
-      case 'shining-bright':
-        return <StarIcon sx={{ fontSize: iconSize, color: iconColor }} />;
+        return <img src={SuperLearnerIcon} alt="Super Learner" style={{ width: 200, height: 200 }} />;
       case 'star-master':
-        return <StarIcon sx={{ fontSize: iconSize, color: iconColor }} />;
+        return <img src={StarMasterIcon} alt="Star Master" style={{ width: 200, height: 200 }} />;
       case 'module-legend':
-        return <AssignmentTurnedInIcon sx={{ fontSize: iconSize, color: iconColor }} />;
+        return <img src={FirstModuleIcon} alt="Module Legend" style={{ width: 200, height: 200 }} />;
+      case 'first-module':
+        return <img src={FirstModuleIcon} alt="First Module" style={{ width: 200, height: 200 }} />;
+      case 'first-lesson':
+        return <img src={FirstLessonIcon} alt="First Lesson" style={{ width: 200, height: 200 }} />;
       default:
-        return <HelpOutlineIcon sx={{ fontSize: iconSize, color: iconColor }} />;
+        return <img src={LockedIcon} alt="Locked" style={{ width: 200, height: 200 }} />;
     }
   };
 
@@ -155,11 +133,14 @@ function BadgesPage() {
     // Add null safety for stats
     if (!stats) {
       console.log("No stats available, returning default badges");
-      // Return all four main badges in locked state using helper function
-      return ['super-learner', 'shining-bright', 'star-master', 'module-legend'].map(badgeId => ({
-        ...getBadgeDefaultData(badgeId),
-        icon: getBadgeIcon(badgeId, '#ccc')
-      }));
+      // Return all badges in locked state using helper function
+      return ['super-learner', 'star-master', 'module-legend', 'first-module', 'first-lesson'].map(badgeId => {
+        const badgeData = getBadgeDefaultData(badgeId);
+        return {
+          ...badgeData,
+          icon: getBadgeIcon(badgeId, false) // Show locked icon
+        };
+      });
     }
 
     console.log("Calculating badges with stats:", stats);
@@ -171,52 +152,63 @@ function BadgesPage() {
 
     console.log("Safe values:", { completedLessons, totalStars, completedModules });
 
-    // Always return all four main achievement badges in consistent order
+    // Always return all achievement badges in consistent order
     const badges = [
-      // Super Learner Badge
+      // First Lesson Badge
+      {
+        id: 'first-lesson',
+        label: 'First Lesson',
+        earned: completedLessons >= 1,
+        description: 'Complete your first lesson',
+        category: 'Milestones',
+        progress: completedLessons >= 1 ? '1/1' : '0/1'
+      },
+      // First Module Badge
+      {
+        id: 'first-module',
+        label: 'First Module',
+        earned: completedModules >= 1,
+        description: 'Complete your first module',
+        category: 'Milestones',
+        progress: completedModules >= 1 ? '1/1' : '0/1'
+      },
+      // Super Learner Badge (changed from 100 to 10)
       {
         id: 'super-learner',
         label: 'Super Learner',
-        icon: <SchoolIcon sx={{ fontSize: 40, color: completedLessons >= 100 ? '#4a6cf7' : '#ccc' }} />,
-        description: 'Complete 100 lessons',
+        earned: completedLessons >= 10,
+        description: 'Complete 10 lessons',
         category: 'Lessons',
-        earned: completedLessons >= 100,
-        progress: `${completedLessons}/100`
+        progress: `${completedLessons}/10`
       },
-      // Shining Bright Badge
-      {
-        id: 'shining-bright',
-        label: 'Shining Bright',
-        icon: <StarIcon sx={{ fontSize: 40, color: totalStars >= 100 ? '#ff6b35' : '#ccc' }} />,
-        description: 'Earn 100 stars',
-        category: 'Stars',
-        earned: totalStars >= 100,
-        progress: `⭐ ${totalStars}/100`
-      },
-      // Star Master Badge
+      // Star Master Badge (changed from 500 to 15)
       {
         id: 'star-master',
         label: 'Star Master',
-        icon: <StarIcon sx={{ fontSize: 40, color: totalStars >= 500 ? '#ffc107' : '#ccc' }} />,
-        description: 'Earn 500 stars',
+        earned: totalStars >= 15,
+        description: 'Earn 15 stars',
         category: 'Stars',
-        earned: totalStars >= 500,
-        progress: `⭐ ${totalStars}/500`
+        progress: `⭐ ${totalStars}/15`
       },
       // Module Legend Badge 
       {
         id: 'module-legend',
         label: 'Module Legend',
-        icon: <AssignmentTurnedInIcon sx={{ fontSize: 40, color: completedModules >= 25 ? '#28a745' : '#ccc' }} />,
-        description: 'Complete 25 modules',
+        earned: completedModules >= 3,
+        description: 'Complete 3 modules',
         category: 'Modules',
-        earned: completedModules >= 25,
-        progress: `${completedModules}/25`
+        progress: `${completedModules}/3`
       }
     ];
 
-    console.log("Final badges calculated:", badges.length);
-    return badges;
+    // Add icons based on earned status
+    const badgesWithIcons = badges.map(badge => ({
+      ...badge,
+      icon: getBadgeIcon(badge.id, badge.earned)
+    }));
+
+    console.log("Final badges calculated:", badgesWithIcons.length);
+    return badgesWithIcons;
   };
 
   const earnedBadgesCount = badges.filter(badge => badge && badge.earned).length;
@@ -260,7 +252,52 @@ function BadgesPage() {
       <div style={{ position: "relative", zIndex: 1, minHeight: "100vh" }}>
         <Navbar />
         
-        <Container maxWidth="xl" sx={{ paddingTop: { xs: 2, sm: 3 }, paddingBottom: { xs: 3, sm: 5 }, px: { xs: 2, sm: 3 } }}>
+        {/* Back Button - Positioned in upper left corner */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: { xs: 80, sm: 90, md: 100 }, // Position below navbar
+            left: { xs: 16, sm: 24, md: 32 },
+            zIndex: 10,
+          }}
+        >
+          <Box
+            component="button"
+            onClick={handleBackClick}
+            sx={{
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'transform 0.2s ease',
+              '&:hover': {
+                transform: 'scale(1.1)',
+              },
+              '&:active': {
+                transform: 'scale(0.95)',
+              }
+            }}
+          >
+            <img 
+              src={ExitButtonIcon} 
+              alt="Back" 
+              style={{ 
+                width: 80, 
+                height: 80,
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+              }} 
+            />
+          </Box>
+        </Box>
+        
+        <Container maxWidth="xl" sx={{ 
+          paddingTop: { xs: 10, sm: 12, md: 14 }, // Increased top padding to accommodate back button
+          paddingBottom: { xs: 3, sm: 5 }, 
+          px: { xs: 2, sm: 3 } 
+        }}>
           {/* Enhanced Achievements Section */}
           <Box sx={{ mb: { xs: 4, sm: 6 } }}>
             {/* Centered Header with Fun Design */}
@@ -272,21 +309,9 @@ function BadgesPage() {
               textAlign: 'center',
               px: { xs: 2, sm: 0 }
             }}>
-              {/* Main Title */}
-              <Typography variant="h3" sx={{ 
-                color: '#2c3e50', 
-                fontWeight: 700, 
-                mb: { xs: 1.5, sm: 2 },
-                textShadow: '2px 2px 4px rgba(0,0,0,0.1)',
-                fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem', lg: '3rem' },
-                px: { xs: 1, sm: 0 }
-              }}>
-                🏆 Your Amazing Achievements! 🏆
-              </Typography>
-
               {/* Colorful Achievement Button */}
               <Box sx={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: '#282828',
                 borderRadius: { xs: '20px', sm: '25px' },
                 padding: { xs: '10px 20px', sm: '12px 30px' },
                 color: 'white',
@@ -296,214 +321,127 @@ function BadgesPage() {
                 transform: 'translateY(-2px)',
                 transition: 'all 0.3s ease',
                 marginBottom: { xs: 2, sm: 3 },
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: '0 12px 30px rgba(102, 126, 234, 0.6)',
-                }
               }}>
-                ✨ Badge Unlocked: {earnedBadgesCount}/{totalBadgesCount} ✨
+                Badges Unlocked: {earnedBadgesCount}/{totalBadgesCount}
               </Box>
-
-              {/* Motivational Message */}
-              <Typography variant="h6" sx={{
-                color: '#34495e',
-                fontWeight: 500,
-                maxWidth: { xs: '100%', sm: '600px' },
-                lineHeight: 1.6,
-                fontSize: { xs: '0.875rem', sm: '1rem', md: '1.1rem', lg: '1.25rem' },
-                px: { xs: 2, sm: 0 }
-              }}>
-                🌟 Every achievement is a step forward on your learning journey! 
-                Keep up the fantastic work! 🌟
-              </Typography>
             </Box>
 
-            {/* Badges Grid - Centered */}
+            {/* Badges Grid - 3 badges per row on medium screens and up */}
             <Grid container spacing={{ xs: 2, sm: 3, md: 4 }} sx={{ justifyContent: 'center' }}>
               {badges.map((badge, index) => {
                 // Additional safety check for each badge
                 if (!badge) return null;
                 
                 return (
-                  <Grid item xs={12} sm={6} md={4} lg={3} key={badge.id || index}>
+                  <Grid item xs={12} sm={6} md={4} key={badge.id || index}>
                     <Box sx={{ 
                       display: 'flex',
                       justifyContent: 'center',
                       width: '100%'
                     }}>
                       <Card sx={{
-                        height: { xs: '240px', sm: '260px', md: '280px' },
+                        height: { xs: '340px', sm: '360px', md: '400px' }, // Adjusted height
                         width: '100%',
-                        maxWidth: { xs: '100%', sm: '280px', md: '260px' },
+                        maxWidth: { xs: '320px', sm: '340px', md: '360px' }, // Adjusted width
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         padding: { xs: '16px', sm: '20px', md: '24px' },
-                        background: badge.earned 
-                          ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                          : 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
-                        border: badge.earned ? '4px solid #ffd700' : '4px solid #dee2e6',
-                        borderRadius: '20px',
-                        opacity: badge.earned ? 1 : 0.8,
+                        background: 'transparent',
+                        boxShadow: 'none',
                         transition: 'all 0.4s ease',
                         cursor: 'pointer',
                         position: 'relative',
                         transform: badge.earned ? 'scale(1.02)' : 'scale(1)',
                         '&:hover': {
-                          transform: badge.earned ? 'scale(1.08) translateY(-8px)' : 'scale(1.05) translateY(-4px)',
-                          boxShadow: badge.earned 
-                            ? '0 20px 40px rgba(102, 126, 234, 0.4)'
-                            : '0 12px 24px rgba(0,0,0,0.15)',
-                          borderColor: badge.earned ? '#ffd700' : '#adb5bd'
+                          transform: badge.earned ? 'scale(1.05) translateY(-6px)' : 'scale(1.03) translateY(-3px)',
                         }
                       }}>
-                        {/* Super Enhanced Earned Badge Indicator */}
-                        {badge.earned && (
-                          <>
-                            {/* Outer glow ring */}
-                            <Box sx={{
-                              position: 'absolute',
-                              top: -12,
-                              right: -12,
-                              background: 'radial-gradient(circle, #ffd700 0%, #ffed4e 100%)',
-                              borderRadius: '50%',
-                              width: 48,
-                              height: 48,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              boxShadow: '0 4px 20px rgba(255, 215, 0, 0.6)',
-                              animation: 'pulse 2s infinite',
-                              '@keyframes pulse': {
-                                '0%': { transform: 'scale(1)', opacity: 1 },
-                                '50%': { transform: 'scale(1.1)', opacity: 0.8 },
-                                '100%': { transform: 'scale(1)', opacity: 1 }
-                              }
-                            }}>
-                              <Box sx={{
-                                background: '#fff',
-                                borderRadius: '50%',
-                                width: 32,
-                                height: 32,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: '#ffd700',
-                                fontSize: '20px',
-                                fontWeight: 900,
-                                textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
-                              }}>
-                                ✓
-                              </Box>
-                            </Box>
-                            
-                            {/* Sparkle effects */}
-                            <Box sx={{
-                              position: 'absolute',
-                              top: 5,
-                              left: 5,
-                              color: '#ffd700',
-                              fontSize: '16px',
-                              animation: 'twinkle 1.5s infinite',
-                              '@keyframes twinkle': {
-                                '0%, 100%': { opacity: 0.3 },
-                                '50%': { opacity: 1 }
-                              }
-                            }}>
-                              ✨
-                            </Box>
-                            <Box sx={{
-                              position: 'absolute',
-                              bottom: 5,
-                              right: 5,
-                              color: '#ffd700',
-                              fontSize: '12px',
-                              animation: 'twinkle 2s infinite 0.5s',
-                            }}>
-                              ⭐
-                            </Box>
-                          </>
-                        )}
-
+                        
                         <CardContent sx={{ 
                           textAlign: 'center', 
                           padding: 0,
                           width: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          flex: 1,
+                          justifyContent: 'space-between',
                           '&:last-child': { paddingBottom: 0 }
                         }}>
-                          {/* Badge Icon with Enhanced Styling */}
+                          {/* Badge Icon Area - Larger with transparent background */}
                           <Box sx={{
-                            width: { xs: 60, sm: 70, md: 80 },
-                            height: { xs: 60, sm: 70, md: 80 },
-                            background: badge.earned 
-                              ? 'linear-gradient(135deg, #fff 0%, #f8f9fa 100%)'
-                              : 'linear-gradient(135deg, #fff 0%, #f1f3f4 100%)',
-                            borderRadius: '50%',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            mb: 2,
-                            boxShadow: badge.earned 
-                              ? '0 8px 20px rgba(0,0,0,0.2)'
-                              : '0 4px 12px rgba(0,0,0,0.1)',
-                            margin: '0 auto 16px auto',
-                            border: badge.earned ? '3px solid #ffd700' : '3px solid #e9ecef',
-                            transition: 'all 0.3s ease'
+                            mb: { xs: 1, sm: 2 },
+                            flex: 1,
+                            minHeight: '140px', // Increased minimum height
+                            width: '100%',
+                            background: 'transparent', // Transparent background
                           }}>
-                            {React.cloneElement(badge.icon || <HelpOutlineIcon />, {
-                              sx: { fontSize: { xs: 36, sm: 42, md: 48 }, color: badge.earned ? badge.icon?.props?.sx?.color || '#4a6cf7' : '#adb5bd' }
-                            })}
+                            {/* Render the badge icon - PNG will show with its own background */}
+                            <Box sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              height: '100%',
+                              width: '100%',
+                              background: 'transparent',
+                            }}>
+                              {badge.icon || <img src={LockedIcon} alt="Locked" style={{ width: 200, height: 200 }} />}
+                            </Box>
                           </Box>
 
-                          {/* Badge Name with Enhanced Typography */}
+                          {/* Badge Name */}
                           <Typography variant="h6" sx={{
-                            color: badge.earned ? '#fff' : '#495057',
+                            color: '#495057',
                             fontWeight: 700,
-                            fontSize: { xs: '14px', sm: '15px', md: '16px' },
-                            mb: { xs: 0.5, sm: 1 },
+                            fontSize: { xs: '16px', sm: '17px', md: '18px' },
+                            mb: { xs: 1, sm: 1 },
                             lineHeight: 1.2,
                             textAlign: 'center',
                             minHeight: { xs: '36px', sm: '40px', md: '44px' },
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            textShadow: badge.earned ? '1px 1px 2px rgba(0,0,0,0.3)' : 'none'
+                            textShadow: badge.earned ? '0 1px 2px rgba(74, 108, 247, 0.3)' : 'none'
                           }}>
                             {badge.label || 'Unknown Badge'}
                           </Typography>
 
-                          {/* Badge Description with Better Contrast */}
+                          {/* Badge Description */}
                           <Typography variant="body2" sx={{
-                            color: badge.earned ? 'rgba(255,255,255,0.9)' : '#6c757d',
-                            fontSize: { xs: '11px', sm: '12px', md: '13px' },
-                            mb: { xs: 1, sm: 1.5 },
+                            color: badge.earned ? '#6c757d' : '#868e96',
+                            fontSize: { xs: '12px', sm: '13px', md: '14px' },
+                            mb: { xs: 1.5, sm: 2 },
                             lineHeight: 1.4,
                             textAlign: 'center',
                             minHeight: { xs: '32px', sm: '36px', md: '40px' },
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            textShadow: badge.earned ? '1px 1px 2px rgba(0,0,0,0.2)' : 'none'
                           }}>
                             {badge.description || 'No description'}
                           </Typography>
 
-                          {/* Enhanced Progress Display */}
+                          {/* Progress Display */}
                           <Box sx={{
                             background: badge.earned 
-                              ? 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)'
-                              : 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                              ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.9) 0%, rgba(255, 237, 78, 0.9) 100%)'
+                              : 'linear-gradient(135deg, rgba(248, 249, 250, 0.9) 0%, rgba(233, 236, 239, 0.9) 100%)',
                             color: badge.earned ? '#2c3e50' : '#6c757d',
                             fontSize: { xs: '12px', sm: '13px', md: '14px' },
                             fontWeight: 700,
-                            padding: { xs: '6px 12px', sm: '8px 16px' },
-                            borderRadius: { xs: '15px', sm: '20px' },
+                            padding: { xs: '6px 14px', sm: '8px 18px' },
+                            borderRadius: { xs: '18px', sm: '22px' },
                             display: 'inline-block',
                             boxShadow: badge.earned 
-                              ? '0 4px 12px rgba(255, 215, 0, 0.3)'
-                              : '0 2px 8px rgba(0,0,0,0.1)',
-                            border: badge.earned ? '2px solid #fff' : '2px solid #dee2e6',
-                            minWidth: { xs: '70px', sm: '80px' }
+                              ? '0 3px 10px rgba(255, 215, 0, 0.3)'
+                              : '0 2px 6px rgba(0,0,0,0.1)',
+                            border: badge.earned ? '2px solid rgba(255, 255, 255, 0.8)' : '2px solid rgba(222, 226, 230, 0.8)',
+                            minWidth: { xs: '70px', sm: '80px' },
+                            backdropFilter: 'blur(5px)',
                           }}>
                             {badge.progress || '0/0'}
                           </Box>
