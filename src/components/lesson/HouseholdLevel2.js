@@ -8,7 +8,8 @@ import {
   Dialog,
   Chip,
   LinearProgress,
-  Paper
+  Paper,
+  Modal
 } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -46,6 +47,13 @@ import mainGameBackground from '../../assets/householdLevel2/MainGameBackground.
 
 // Import sound effects
 import bathroomBackgroundMusic from '../../assets/householdLevel2/Background-Music.mp3';
+import welcomeEffect from '../../assets/householdLevel2/welcome.mp3';
+import cleaningWaterEffect from '../../assets/householdLevel2/cleaning_water_spills.mp3';
+import wipingDirtEffect from '../../assets/householdLevel2/wiping_dirt.mp3';
+import collectingClothesEffect from '../../assets/householdLevel2/collecting_clothes.mp3';
+import collectingTrashEffect from '../../assets/householdLevel2/collecting_trash.mp3';
+import cleaningWebsEffect from '../../assets/householdLevel2/cleaning_cobwebs.mp3';
+import finalEffect from '../../assets/householdLevel2/final.mp3';
 
 import Navbar from '../Navbar';
 
@@ -73,9 +81,112 @@ const theme = createTheme({
   },
 });
 
+// Sound Manager Class
+class SoundManager {
+  constructor() {
+    this.sounds = {};
+    this.currentlyPlaying = new Set();
+    this.audioContext = null;
+    this.userInteracted = false;
+  }
+
+  async initAudioContext() {
+    if (this.audioContext && this.audioContext.state !== 'closed') {
+      if (this.audioContext.state === 'suspended') {
+        await this.audioContext.resume();
+      }
+      return this.audioContext;
+    }
+    
+    try {
+      this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      console.log('AudioContext created:', this.audioContext.state);
+      return this.audioContext;
+    } catch (error) {
+      console.error('Failed to initialize audio context:', error);
+      return null;
+    }
+  }
+
+  registerSound(id, audioElement) {
+    this.sounds[id] = audioElement;
+  }
+
+  async playSound(id, volume = 1.0, interrupt = false) {
+    // Initialize audio context first
+    await this.initAudioContext();
+    
+    // Stop all other sounds except background music
+    if (interrupt && id !== 'background') {
+      this.stopAllSounds();
+    }
+    
+    const sound = this.sounds[id];
+    if (!sound) {
+      console.warn(`Sound not found: ${id}`);
+      return;
+    }
+
+    try {
+      // Reset and play
+      sound.currentTime = 0;
+      sound.volume = volume;
+      
+      const playPromise = sound.play();
+      
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          console.log(`Sound ${id} playing successfully`);
+          this.currentlyPlaying.add(id);
+          
+          sound.onended = () => {
+            this.currentlyPlaying.delete(id);
+          };
+        }).catch(error => {
+          console.log(`Sound play failed for ${id}:`, error);
+        });
+      }
+    } catch (error) {
+      console.error(`Error playing sound ${id}:`, error);
+    }
+  }
+
+  stopSound(id) {
+    const sound = this.sounds[id];
+    if (sound) {
+      sound.pause();
+      sound.currentTime = 0;
+      this.currentlyPlaying.delete(id);
+    }
+  }
+
+  stopAllSounds() {
+    Object.entries(this.sounds).forEach(([id, sound]) => {
+      if (id !== 'background') { // Don't stop background music
+        sound.pause();
+        sound.currentTime = 0;
+      }
+    });
+    this.currentlyPlaying.delete(id => id !== 'background');
+  }
+
+  isPlaying(id) {
+    return this.currentlyPlaying.has(id);
+  }
+
+  markUserInteraction() {
+    this.userInteracted = true;
+  }
+}
+
+// Create global sound manager instance
+const soundManager = new SoundManager();
+
 const HouseholdLevel2 = () => {
   const [showStartScreen, setShowStartScreen] = useState(true);
-  const [currentStep, setCurrentStep] = useState(1); // 1: Laundry, 2: Trash, 3: Water spits, 4: Mud stains, 5: Cobwebs
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [welcomePlayed, setWelcomePlayed] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
   const [gameCompleted, setGameCompleted] = useState(false);
   const [score, setScore] = useState(0);
   const [draggedItem, setDraggedItem] = useState(null);
@@ -90,8 +201,30 @@ const HouseholdLevel2 = () => {
   const [taskStars, setTaskStars] = useState([]);
   const [draggingPosition, setDraggingPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  
+  // Track completed task sounds
+  const [taskSoundsPlayed, setTaskSoundsPlayed] = useState({
+    laundry: false,
+    trash: false,
+    water: false,
+    mud: false,
+    cobwebs: false,
+    final: false
+  });
+
   const navigate = useNavigate();
   const { lessonId } = useParams();
+
+  // Audio refs
+  const welcomeAudioRef = useRef(null);
+  const clothesAudioRef = useRef(null);
+  const trashAudioRef = useRef(null);
+  const waterAudioRef = useRef(null);
+  const dirtAudioRef = useRef(null);
+  const websAudioRef = useRef(null);
+  const finalAudioRef = useRef(null);
+  const [userHasInteracted, setUserHasInteracted] = useState(false);
 
   // All items scattered around the bathroom
   const [allItems, setAllItems] = useState([
@@ -148,7 +281,7 @@ const HouseholdLevel2 = () => {
   const [availableTools, setAvailableTools] = useState([
     { id: 1, name: 'Basin', image: basinImg, step: 1, collected: false, used: false },
     { id: 2, name: 'Trash Can', image: trashCanImg, step: 2, collected: false, used: false },
-    { id: 3, name: 'Broom', image: broomImg, step: 3, collected: false, used: false },
+    { id: 3, name: 'Mop', image: broomImg, step: 3, collected: false, used: false },
     { id: 4, name: 'Towel', image: towelImg, step: 4, collected: false, used: false },
     { id: 5, name: 'Duster', image: dusterImg, step: 5, collected: false, used: false }
   ]);
@@ -157,6 +290,86 @@ const HouseholdLevel2 = () => {
   const gameAreaRef = useRef(null);
   const basinRef = useRef(null);
   const trashCanRef = useRef(null);
+
+  // Initialize audio manager
+  useEffect(() => {
+    // Register all audio elements
+    const registerAudio = () => {
+      if (welcomeAudioRef.current) {
+        soundManager.registerSound('welcome', welcomeAudioRef.current);
+      }
+      if (clothesAudioRef.current) {
+        soundManager.registerSound('clothes', clothesAudioRef.current);
+      }
+      if (trashAudioRef.current) {
+        soundManager.registerSound('trash', trashAudioRef.current);
+      }
+      if (waterAudioRef.current) {
+        soundManager.registerSound('water', waterAudioRef.current);
+      }
+      if (dirtAudioRef.current) {
+        soundManager.registerSound('dirt', dirtAudioRef.current);
+      }
+      if (websAudioRef.current) {
+        soundManager.registerSound('webs', websAudioRef.current);
+      }
+      if (finalAudioRef.current) {
+        soundManager.registerSound('final', finalAudioRef.current);
+      }
+    };
+
+    const timer = setTimeout(registerAudio, 100);
+    
+    // Handle user interaction for audio
+    const handleUserInteraction = () => {
+      console.log('User interaction detected for audio');
+      setUserHasInteracted(true);
+      soundManager.markUserInteraction();
+    };
+
+    // Add event listeners
+    document.addEventListener('click', handleUserInteraction, { once: true });
+    document.addEventListener('touchstart', handleUserInteraction, { once: true });
+    document.addEventListener('keydown', handleUserInteraction, { once: true });
+    
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+      document.removeEventListener('keydown', handleUserInteraction);
+      soundManager.stopAllSounds();
+    };
+  }, []);
+
+  // Function to play task completion sound
+  const playTaskSound = (taskType) => {
+    if (taskSoundsPlayed[taskType]) return; // Don't play if already played
+    
+    switch(taskType) {
+      case 'laundry':
+        soundManager.playSound('clothes', 0.7, true);
+        break;
+      case 'trash':
+        soundManager.playSound('trash', 0.7, true);
+        break;
+      case 'water':
+        soundManager.playSound('water', 0.7, true);
+        break;
+      case 'mud':
+        soundManager.playSound('dirt', 0.7, true);
+        break;
+      case 'cobwebs':
+        soundManager.playSound('webs', 0.7, true);
+        break;
+      case 'final':
+        soundManager.stopAllSounds();
+        soundManager.playSound('final', 0.7, false);
+        break;
+    }
+    
+    // Mark sound as played
+    setTaskSoundsPlayed(prev => ({ ...prev, [taskType]: true }));
+  };
 
   // Add twinkling stars effect for task completion
   const triggerTaskStars = (x, y, count = 3) => {
@@ -207,12 +420,43 @@ const HouseholdLevel2 = () => {
     5: (cobwebs.filter(web => web.cleaned).length / cobwebs.length) * 100
   };
 
+  // Check task completion and play sounds
+  useEffect(() => {
+    // Check laundry completion (Step 1)
+    if (currentStep === 1 && stepProgress[1] === 100 && !taskSoundsPlayed.laundry) {
+      playTaskSound('laundry');
+    }
+    
+    // Check trash completion (Step 2)
+    if (currentStep === 2 && stepProgress[2] === 100 && !taskSoundsPlayed.trash) {
+      playTaskSound('trash');
+    }
+    
+    // Check water completion (Step 3)
+    if (currentStep === 3 && stepProgress[3] === 100 && !taskSoundsPlayed.water) {
+      playTaskSound('water');
+    }
+    
+    // Check mud completion (Step 4)
+    if (currentStep === 4 && stepProgress[4] === 100 && !taskSoundsPlayed.mud) {
+      playTaskSound('mud');
+    }
+    
+    // Check cobwebs completion (Step 5)
+    if (currentStep === 5 && stepProgress[5] === 100 && !taskSoundsPlayed.cobwebs) {
+      playTaskSound('cobwebs');
+    }
+  }, [stepProgress, currentStep, taskSoundsPlayed]);
+
   // Background music setup
   useEffect(() => {
     const audio = new Audio(bathroomBackgroundMusic);
     audio.loop = true;
     audio.volume = 0.3;
     setBackgroundAudioRef(audio);
+    
+    // Register background music with sound manager
+    soundManager.registerSound('background', audio);
 
     const playAudio = () => {
       audio.play().then(() => {
@@ -252,6 +496,10 @@ const HouseholdLevel2 = () => {
         setTimeout(() => {
           setGameCompleted(true);
           setScore(prev => prev + 20);
+          // Play final sound when all tasks are completed
+          if (!taskSoundsPlayed.final) {
+            playTaskSound('final');
+          }
         }, 1500);
       }
     }
@@ -267,6 +515,17 @@ const HouseholdLevel2 = () => {
   // Start screen handler
   const handleStartGame = () => {
     setShowStartScreen(false);
+    setShowWelcomeModal(true);
+  };
+
+  // Handle welcome modal close
+  const handleWelcomeClose = () => {
+    setShowWelcomeModal(false);
+    // Play welcome sound only once
+    if (!welcomePlayed) {
+      soundManager.playSound('welcome', 0.7, true);
+      setWelcomePlayed(true);
+    }
   };
 
   // Tool selection handler
@@ -414,8 +673,8 @@ const HouseholdLevel2 = () => {
 
     const updatedDirt = dirtSpots.map(spot => {
       if (spot.step === 3 && !spot.cleaned && !spot.cleaning && Math.abs(spot.x - x) < 10 && Math.abs(spot.y - y) < 10) {
-        if (selectedTool.name !== 'Broom') {
-          console.log('Use Broom for water spits!');
+        if (selectedTool.name !== 'Mop') {
+          console.log('Use Mop for water spits!');
           return spot;
         }
 
@@ -594,6 +853,15 @@ const HouseholdLevel2 = () => {
     setCollectedTrash([]);
     setTaskStars([]);
     setShowDropZone(false);
+    // Reset task sounds
+    setTaskSoundsPlayed({
+      laundry: false,
+      trash: false,
+      water: false,
+      mud: false,
+      cobwebs: false,
+      final: false
+    });
   };
 
   const handleGoHome = () => {
@@ -628,6 +896,29 @@ const HouseholdLevel2 = () => {
 
   const toggleHints = () => {
     setShowHints(prev => !prev);
+  };
+
+  // Toggle background music
+  const toggleBackgroundMusic = async () => {
+    if (!backgroundAudioRef) return;
+    
+    try {
+      if (audioPlaying) {
+        backgroundAudioRef.pause();
+        setAudioPlaying(false);
+      } else {
+        // Ensure user has interacted
+        if (!userHasInteracted) {
+          setUserHasInteracted(true);
+          soundManager.markUserInteraction();
+        }
+        
+        await backgroundAudioRef.play();
+        setAudioPlaying(true);
+      }
+    } catch (error) {
+      console.error('Error toggling background music:', error);
+    }
   };
 
   // Start screen
@@ -708,9 +999,115 @@ const HouseholdLevel2 = () => {
             </Button>
           </Stack>
         </Box>
+
+        {/* Hidden audio elements */}
+        <audio ref={welcomeAudioRef} preload="auto">
+          <source src={welcomeEffect} type="audio/mpeg" />
+        </audio>
+        <audio ref={clothesAudioRef} preload="auto">
+          <source src={collectingClothesEffect} type="audio/mpeg" />
+        </audio>
+        <audio ref={trashAudioRef} preload="auto">
+          <source src={collectingTrashEffect} type="audio/mpeg" />
+        </audio>
+        <audio ref={waterAudioRef} preload="auto">
+          <source src={cleaningWaterEffect} type="audio/mpeg" />
+        </audio>
+        <audio ref={dirtAudioRef} preload="auto">
+          <source src={wipingDirtEffect} type="audio/mpeg" />
+        </audio>
+        <audio ref={websAudioRef} preload="auto">
+          <source src={cleaningWebsEffect} type="audio/mpeg" />
+        </audio>
+        <audio ref={finalAudioRef} preload="auto">
+          <source src={finalEffect} type="audio/mpeg" />
+        </audio>
       </div>
     );
   }
+
+  // Welcome Modal
+  const welcomeModal = (
+    <Modal
+      open={showWelcomeModal}
+      onClose={handleWelcomeClose}
+      aria-labelledby="welcome-modal-title"
+      aria-describedby="welcome-modal-description"
+    >
+      <Box sx={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: { xs: '90%', md: 600 },
+        bgcolor: 'background.paper',
+        borderRadius: '20px',
+        boxShadow: 24,
+        p: 4,
+        textAlign: 'center'
+      }}>
+        <Typography id="welcome-modal-title" variant="h4" component="h2" sx={{ 
+          mb: 3,
+          color: '#2196F3',
+          fontWeight: 'bold'
+        }}>
+          Welcome to Bathroom Cleanup! 
+        </Typography>
+        
+        <Typography id="welcome-modal-description" variant="h6" sx={{ mb: 4 }}>
+          Complete these 5 tasks to clean the bathroom:
+        </Typography>
+        
+        <Box sx={{ textAlign: 'left', mb: 4 }}>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            1. <strong>Collect Laundry</strong> - Drag clothes to the basin
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            2. <strong>Dispose Trash</strong> - Drag trash items to the trash can
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            3. <strong>Sweep Floor</strong> - Use the broom to clean water spills
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            4. <strong>Wipe Floor</strong> - Use the towel to clean mud stains
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 3 }}>
+            5. <strong>Dust Walls</strong> - Use the duster to clean cobwebs
+          </Typography>
+        </Box>
+        
+     <Button
+          onClick={handleWelcomeClose}
+          variant="contained"
+          size="large"
+          sx={{
+            background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+            color: 'white',
+            px: 6,
+            py: 1.5,
+            borderRadius: '20px',
+            fontSize: '1.2rem',
+            fontWeight: 'bold',
+            border: '3px solid transparent',
+            animation: 'borderBlink 1.2s infinite',
+            boxShadow: '0 6px 20px rgba(255, 89, 94, 0.4)',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
+              transform: 'translateY(-2px)',
+              animation: 'borderBlinkFast 0.8s infinite',
+              boxShadow: '0 8px 25px rgba(255, 89, 94, 0.6)',
+            },
+            '&:active': {
+              transform: 'translateY(0)',
+            }
+          }}
+        >
+          Let's Start!
+        </Button>
+      </Box>
+    </Modal>
+  );
 
   // Main game screen
   return (
@@ -738,6 +1135,31 @@ const HouseholdLevel2 = () => {
           }
         }}
       >
+        
+        {/* Hidden audio elements */}
+        <audio ref={welcomeAudioRef} preload="auto">
+          <source src={welcomeEffect} type="audio/mpeg" />
+        </audio>
+        <audio ref={clothesAudioRef} preload="auto">
+          <source src={collectingClothesEffect} type="audio/mpeg" />
+        </audio>
+        <audio ref={trashAudioRef} preload="auto">
+          <source src={collectingTrashEffect} type="audio/mpeg" />
+        </audio>
+        <audio ref={waterAudioRef} preload="auto">
+          <source src={cleaningWaterEffect} type="audio/mpeg" />
+        </audio>
+        <audio ref={dirtAudioRef} preload="auto">
+          <source src={wipingDirtEffect} type="audio/mpeg" />
+        </audio>
+        <audio ref={websAudioRef} preload="auto">
+          <source src={cleaningWebsEffect} type="audio/mpeg" />
+        </audio>
+        <audio ref={finalAudioRef} preload="auto">
+          <source src={finalEffect} type="audio/mpeg" />
+        </audio>
+        
+        {welcomeModal}
         
         {/* Task Completion Stars */}
         {taskStars.map(star => (
@@ -771,20 +1193,7 @@ const HouseholdLevel2 = () => {
           zIndex: 1000
         }}>
           <Button
-            onClick={() => {
-              if (backgroundAudioRef) {
-                if (audioPlaying) {
-                  backgroundAudioRef.pause();
-                  setAudioPlaying(false);
-                } else {
-                  backgroundAudioRef.play().then(() => {
-                    setAudioPlaying(true);
-                  }).catch(error => {
-                    console.log('Audio play failed:', error);
-                  });
-                }
-              }
-            }}
+            onClick={toggleBackgroundMusic}
             sx={{
               width: '60px',
               height: '60px',
@@ -798,7 +1207,8 @@ const HouseholdLevel2 = () => {
               '&:hover': {
                 transform: 'scale(1.1)',
                 boxShadow: '0 6px 20px rgba(0,0,0,0.4)'
-              }
+              },
+              animation: !audioPlaying ? 'pulse 2s infinite' : 'none',
             }}
           >
             {audioPlaying ? '🔊' : '🔇'}
@@ -964,7 +1374,7 @@ const HouseholdLevel2 = () => {
                 Step {currentStep}/5: {
                   currentStep === 1 ? 'Collect Laundry' :
                   currentStep === 2 ? 'Dispose Trash' :
-                  currentStep === 3 ? 'Sweep Floor: Clean water spits with Broom' :
+                  currentStep === 3 ? 'Sweep Floor: Clean water spits with Mop' :
                   currentStep === 4 ? 'Wipe Floor: Clean mud stains with Towel' :
                   'Dust Walls: Clean cobwebs with Duster'
                 }
@@ -1561,6 +1971,32 @@ const HouseholdLevel2 = () => {
                 opacity: 0;
                 transform: scale(0.6) rotate(10deg);
               }
+               @keyframes borderBlink {
+                0%, 100% { 
+                  border-color: transparent;
+                  box-shadow: 0 6px 20px rgba(255, 89, 94, 0.4);
+                  transform: scale(1);
+                }
+                50% { 
+                  border-color: #ffffff;
+                  box-shadow: 0 6px 25px rgba(255, 89, 94, 0.7), 
+                              0 0 15px rgba(255, 255, 255, 0.8);
+                  transform: scale(1.03);
+                }
+              }
+              
+              @keyframes borderBlinkFast {
+                0%, 100% { 
+                  border-color: transparent;
+                  box-shadow: 0 8px 25px rgba(255, 89, 94, 0.6);
+                  transform: translateY(-2px) scale(1);
+                }
+                50% { 
+                  border-color: #ffffff;
+                  box-shadow: 0 8px 30px rgba(255, 89, 94, 0.9), 
+                              0 0 20px rgba(255, 255, 255, 1);
+                  transform: translateY(-2px) scale(1.05);
+                }
             }
           `}
         </style>
