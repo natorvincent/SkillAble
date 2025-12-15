@@ -22,8 +22,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import PersonIcon from '@mui/icons-material/Person';
 import SchoolIcon from '@mui/icons-material/School';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import InfoIcon from '@mui/icons-material/Info';
 import Navbar from "./Navbar";
 import Background from "./Background";
 import { 
@@ -650,7 +648,7 @@ function StudentDashboard() {
         </Container>
       </div>
 
-      {/* Updated Profile Modal - Clean Design */}
+      {/* Profile Modal */}
       <Modal
         open={openProfileModal}
         onClose={handleCloseProfileModal}
@@ -663,274 +661,158 @@ function StudentDashboard() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backdropFilter: 'blur(4px)',
         }}
       >
         <Fade in={openProfileModal}>
           <Paper
             sx={{
-              width: { xs: '90%', sm: '450px', md: '500px' },
+              width: { xs: '90%', sm: '450px' },
               p: 4,
               outline: 'none',
-              borderRadius: '16px',
-              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
-              border: '1px solid #e5e7eb',
-              background: 'white',
-              position: 'relative',
+              borderRadius: '20px',
+              boxShadow: "0 10px 40px rgba(74, 108, 247, 0.15)",
+              border: '2px solid #4a6cf7',
+              background: 'linear-gradient(135deg, #ffffff 0%, #f8faff 100%)',
             }}
           >
-            {/* Header */}
-            <Box sx={{ textAlign: 'center', mb: 4 }}>
-              <Typography 
-                variant="h4" 
-                fontWeight={700} 
-                sx={{ 
-                  fontSize: { xs: '1.75rem', sm: '2rem' },
-                  color: '#4a6cf7',
-                  mb: 0.5,
-                }}
-              >
-                SkillAble
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2, alignItems: 'center' }}>
+              <Typography variant="h5" fontWeight={600} color="#4a6cf7">
+                {isProfileComplete() ? 'Edit Your Profile' : 'Complete Your Profile'}
               </Typography>
-              <Divider sx={{ mb: 2, backgroundColor: '#e5e7eb' }} />
-              <Typography 
-                variant="h5" 
-                fontWeight={600} 
-                sx={{ 
-                  color: '#374151',
-                  fontSize: { xs: '1.25rem', sm: '1.5rem' },
-                }}
-              >
-                Complete Your Profile
-              </Typography>
+              {isProfileComplete() && (
+                <IconButton
+                  edge="end"
+                  onClick={handleCloseProfileModal}
+                  aria-label="close"
+                  sx={{
+                    color: "#4a6cf7",
+                    backgroundColor: "rgba(74, 108, 247, 0.1)",
+                    "&:hover": {
+                      backgroundColor: "rgba(74, 108, 247, 0.2)",
+                    }
+                  }}
+                >
+                  <CloseIcon />
+                </IconButton>
+              )}
             </Box>
 
-            {/* Form content */}
-            <Box component="form" onSubmit={handleFormSubmit} sx={{ width: '100%' }}>
-              <Box sx={{ mb: 3 }}>
-                <Typography 
-                  variant="subtitle1" 
-                  fontWeight={600} 
-                  sx={{ 
-                    color: '#374151',
-                    mb: 1.5,
-                    fontSize: '0.95rem',
-                  }}
-                >
-                  First Name
-                </Typography>
-                <TextField
-                  required
-                  fullWidth
-                  placeholder="Enter your first name"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  variant="outlined"
-                  sx={{ 
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "8px",
-                      backgroundColor: '#f9fafb',
-                      "& fieldset": {
-                        borderColor: "#e5e7eb",
-                        borderWidth: 1,
-                      },
-                      "&:hover fieldset": {
-                        borderColor: "#d1d5db",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#4a6cf7",
-                        borderWidth: 2,
-                      }
+            <Divider sx={{ mb: 3, backgroundColor: "#4a6cf7", height: 2 }} />
+            
+            <Box component="form" onSubmit={handleFormSubmit} sx={{ mt: 2 }}>
+              <TextField
+                required
+                fullWidth
+                label="First Name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                sx={{ 
+                  mb: 3,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "10px",
+                    "& fieldset": {
+                      borderColor: "#4a6cf7",
+                      borderWidth: 2,
                     },
-                    "& .MuiOutlinedInput-input": {
-                      padding: '12px 16px',
-                      color: '#374151',
+                    "&:hover fieldset": {
+                      borderColor: "#3a5ce5",
                     },
-                    "& .MuiInputLabel-root": {
-                      color: "#6b7280",
-                      "&.Mui-focused": {
-                        color: "#4a6cf7",
-                      }
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#4a6cf7",
                     }
-                  }}
-                />
-              </Box>
-
-              <Box sx={{ mb: 3 }}>
-                <Typography 
-                  variant="subtitle1" 
-                  fontWeight={600} 
-                  sx={{ 
-                    color: '#374151',
-                    mb: 1.5,
-                    fontSize: '0.95rem',
-                  }}
-                >
-                  Last Name
-                </Typography>
-                <TextField
-                  required
-                  fullWidth
-                  placeholder="Enter your last name"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  variant="outlined"
-                  sx={{ 
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "8px",
-                      backgroundColor: '#f9fafb',
-                      "& fieldset": {
-                        borderColor: "#e5e7eb",
-                        borderWidth: 1,
-                      },
-                      "&:hover fieldset": {
-                        borderColor: "#d1d5db",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#4a6cf7",
-                        borderWidth: 2,
-                      }
-                    },
-                    "& .MuiOutlinedInput-input": {
-                      padding: '12px 16px',
-                      color: '#374151',
-                    },
-                    "& .MuiInputLabel-root": {
-                      color: "#6b7280",
-                      "&.Mui-focused": {
-                        color: "#4a6cf7",
-                      }
+                  },
+                  "& .MuiInputLabel-root": {
+                    color: "#4a6cf7",
+                    "&.Mui-focused": {
+                      color: "#4a6cf7",
                     }
-                  }}
-                />
-              </Box>
-
-              <Box sx={{ mb: 4 }}>
-                <Typography 
-                  variant="subtitle1" 
-                  fontWeight={600} 
-                  sx={{ 
-                    color: '#374151',
-                    mb: 1.5,
-                    fontSize: '0.95rem',
-                  }}
-                >
-                  Date of Birth
-                </Typography>
-                <TextField
-                  required
-                  fullWidth
-                  type="date"
-                  placeholder="mm/dd/yyyy"
-                  value={dateOfBirth}
-                  onChange={(e) => setDateOfBirth(e.target.value)}
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  sx={{ 
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "8px",
-                      backgroundColor: '#f9fafb',
-                      "& fieldset": {
-                        borderColor: "#e5e7eb",
-                        borderWidth: 1,
-                      },
-                      "&:hover fieldset": {
-                        borderColor: "#d1d5db",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#4a6cf7",
-                        borderWidth: 2,
-                      }
+                  }
+                }}
+              />
+              <TextField
+                required
+                fullWidth
+                label="Last Name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                sx={{ 
+                  mb: 3,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "10px",
+                    "& fieldset": {
+                      borderColor: "#4a6cf7",
+                      borderWidth: 2,
                     },
-                    "& .MuiOutlinedInput-input": {
-                      padding: '12px 16px',
-                      color: '#374151',
-                      "&::placeholder": {
-                        color: '#9ca3af',
-                      }
+                    "&:hover fieldset": {
+                      borderColor: "#3a5ce5",
                     },
-                    "& .MuiInputLabel-root": {
-                      color: "#6b7280",
-                      "&.Mui-focused": {
-                        color: "#4a6cf7",
-                      }
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#4a6cf7",
                     }
-                  }}
-                />
-              </Box>
-
-              {/* Submit button */}
+                  },
+                  "& .MuiInputLabel-root": {
+                    color: "#4a6cf7",
+                    "&.Mui-focused": {
+                      color: "#4a6cf7",
+                    }
+                  }
+                }}
+              />
+              <TextField
+                required
+                fullWidth
+                label="Date of Birth"
+                type="date"
+                value={dateOfBirth}
+                onChange={(e) => setDateOfBirth(e.target.value)}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                sx={{ 
+                  mb: 3,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: "10px",
+                    "& fieldset": {
+                      borderColor: "#4a6cf7",
+                      borderWidth: 2,
+                    },
+                    "&:hover fieldset": {
+                      borderColor: "#3a5ce5",
+                    },
+                    "&.Mui-focused fieldset": {
+                      borderColor: "#4a6cf7",
+                    }
+                  },
+                  "& .MuiInputLabel-root": {
+                    color: "#4a6cf7",
+                    "&.Mui-focused": {
+                      color: "#4a6cf7",
+                    }
+                  }
+                }}
+              />
               <Button
                 type="submit"
                 fullWidth
                 variant="contained"
-                disabled={!firstName || !lastName || !dateOfBirth}
                 sx={{ 
-                  height: "48px",
-                  borderRadius: "8px",
+                  mt: 2, 
+                  height: "50px",
+                  borderRadius: "10px",
                   backgroundColor: "#4a6cf7",
                   fontSize: "16px",
                   fontWeight: 600,
-                  textTransform: 'none',
-                  boxShadow: 'none',
-                  transition: 'all 0.2s ease',
-                  position: 'relative',
-                  overflow: 'hidden',
+                  boxShadow: "0 4px 15px rgba(74, 108, 247, 0.3)",
                   "&:hover": {
                     backgroundColor: "#3a5ce5",
-                    boxShadow: '0 4px 12px rgba(74, 108, 247, 0.3)',
+                    boxShadow: "0 6px 20px rgba(74, 108, 247, 0.4)",
                     transform: "translateY(-1px)",
-                  },
-                  "&:active": {
-                    transform: "translateY(0)",
-                  },
-                  "&:disabled": {
-                    backgroundColor: '#e5e7eb',
-                    color: '#9ca3af',
-                    transform: 'none',
-                  },
+                  }
                 }}
               >
-                SAVE PROFILE
+                {isProfileComplete() ? 'Update Profile' : 'Save Profile'}
               </Button>
-
-              {/* Footer note */}
-              <Typography 
-                variant="caption" 
-                sx={{ 
-                  color: '#6b7280', 
-                  display: 'block', 
-                  textAlign: 'center', 
-                  mt: 3,
-                  fontSize: '0.75rem',
-                }}
-              >
-                Your information helps us personalize your learning experience
-              </Typography>
             </Box>
-
-            {/* Close button for completed profile */}
-            {isProfileComplete() && (
-              <IconButton
-                edge="end"
-                onClick={handleCloseProfileModal}
-                aria-label="close"
-                sx={{
-                  position: 'absolute',
-                  top: 16,
-                  right: 16,
-                  color: "#9ca3af",
-                  "&:hover": {
-                    color: "#4a6cf7",
-                    backgroundColor: "rgba(74, 108, 247, 0.1)",
-                  },
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                <CloseIcon />
-              </IconButton>
-            )}
           </Paper>
         </Fade>
       </Modal>
@@ -944,386 +826,175 @@ function StudentDashboard() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backdropFilter: 'blur(8px)',
         }}
       >
         <Fade in={showRoleSelection}>
           <Paper
             sx={{
-              width: { xs: '90%', sm: '480px', md: '520px' },
-              p: 0,
+              width: { xs: '90%', sm: '480px' },
+              p: 3,
               outline: 'none',
-              borderRadius: '24px',
-              boxShadow: '0 20px 60px rgba(74, 108, 247, 0.25)',
-              border: 'none',
+              borderRadius: '20px',
+              boxShadow: "0 10px 40px rgba(74, 108, 247, 0.15)",
+              border: '2px solid #4a6cf7',
               background: 'linear-gradient(135deg, #ffffff 0%, #f8faff 100%)',
-              overflow: 'hidden',
-              position: 'relative',
             }}
           >
-            {/* Header */}
-            <Box
-              sx={{
-                background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-                py: { xs: 2.5, sm: 3 },
-                px: { xs: 2.5, sm: 3 },
-                position: 'relative',
-                overflow: 'hidden',
-              }}
-            >
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: -30,
-                  right: -30,
-                  width: 120,
-                  height: 120,
-                  borderRadius: '50%',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                }}
-              />
-              <Box
-                sx={{
-                  position: 'absolute',
-                  bottom: -20,
-                  left: -20,
-                  width: 80,
-                  height: 80,
-                  borderRadius: '50%',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                }}
-              />
-              
-              <Box sx={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-                <Typography 
-                  variant="h4" 
-                  fontWeight={700} 
-                  color="white" 
-                  sx={{ 
-                    fontSize: { xs: '1.5rem', sm: '1.75rem' },
-                    textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                  }}
-                >
-                  🎯 Almost There!
-                </Typography>
-                <Typography 
-                  variant="body1" 
-                  color="rgba(255, 255, 255, 0.9)"
-                  sx={{ mt: 0.5 }}
-                >
-                  Choose how you'll use Skillable
-                </Typography>
-              </Box>
+            <Box sx={{ textAlign: 'center', mb: 1.5 }}>
+              <Typography variant="h5" fontWeight={600} color="#4a6cf7" gutterBottom>
+                Choose Your Role
+              </Typography>
+              <Typography variant="body2" color="#4a5568">
+                Are you joining as a student or a teacher?
+              </Typography>
             </Box>
 
-            {/* Progress indicator */}
-            <Box sx={{ px: { xs: 2.5, sm: 3 }, pt: 3 }}>
-              <Typography 
-                variant="caption" 
-                sx={{ 
-                  color: '#718096', 
-                  fontSize: '0.75rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px',
-                  fontWeight: 600,
+            <Divider sx={{ my: 2, backgroundColor: "#4a6cf7", height: 2 }} />
+
+            <Box sx={{ mb: 2.5, px: 2 }}>
+              <Card
+                onClick={() => handleRoleCardClick('STUDENT')}
+                sx={{
+                  p: 2.5,
+                  mb: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  position: 'relative',
+                  border: tempSelectedRole === 'STUDENT' ? '3px solid #4a6cf7' : '2px solid #e0e0e0',
+                  borderRadius: '15px',
+                  backgroundColor: tempSelectedRole === 'STUDENT' ? 'rgba(74, 108, 247, 0.05)' : 'white',
+                  '&:hover': {
+                    transform: 'translateY(-3px)',
+                    boxShadow: '0 8px 25px rgba(74, 108, 247, 0.2)',
+                    borderColor: '#4a6cf7',
+                  }
                 }}
               >
-                Step 2 of 2
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', mt: 1, mb: 3 }}>
-                <Box sx={{ flex: 1, height: 6, bgcolor: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
-                  <Box 
+                {tempSelectedRole === 'STUDENT' && (
+                  <CheckCircleIcon 
                     sx={{ 
-                      width: '100%', 
-                      height: '100%', 
-                      bgcolor: '#22c55e',
-                      borderRadius: 3,
-                      boxShadow: '0 2px 8px rgba(34, 197, 94, 0.4)',
+                      position: 'absolute',
+                      top: 10,
+                      right: 10,
+                      color: '#4a6cf7',
+                      fontSize: 28
                     }} 
                   />
+                )}
+                <Box
+                  sx={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(74, 108, 247, 0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    mb: 1.5,
+                  }}
+                >
+                  <PersonIcon sx={{ fontSize: 36, color: '#4a6cf7' }} />
                 </Box>
-                <Typography variant="caption" sx={{ ml: 2, color: '#22c55e', fontWeight: 600 }}>
-                  100%
+                <Typography variant="h6" fontWeight={600} color="#2d3748" gutterBottom>
+                  Student
                 </Typography>
-              </Box>
-            </Box>
-
-            {/* Role selection content */}
-            <Box sx={{ px: { xs: 2.5, sm: 3 }, pb: 4 }}>
-              <Box sx={{ mb: 2 }}>
-                <Typography 
-                  variant="h6" 
-                  fontWeight={600} 
-                  sx={{ 
-                    color: '#2d3748',
-                    fontSize: { xs: '1.1rem', sm: '1.25rem' },
-                    mb: 0.5,
-                  }}
-                >
-                  Select Your Role
+                <Typography variant="body2" color="#4a5568">
+                  I'm here to learn and complete educational modules
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#718096' }}>
-                  Choose the experience that matches your goals
-                </Typography>
-              </Box>
+              </Card>
 
-              <Box sx={{ mb: 3 }}>
-                <Card
-                  onClick={() => handleRoleCardClick('STUDENT')}
-                  sx={{
-                    p: 3,
-                    mb: 2,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    position: 'relative',
-                    border: tempSelectedRole === 'STUDENT' ? '3px solid #4a6cf7' : '2px solid #e2e8f0',
-                    borderRadius: '16px',
-                    backgroundColor: tempSelectedRole === 'STUDENT' ? 'rgba(74, 108, 247, 0.05)' : 'white',
-                    '&:hover': {
-                      transform: 'translateY(-3px)',
-                      boxShadow: '0 12px 30px rgba(74, 108, 247, 0.2)',
-                      borderColor: '#4a6cf7',
-                      backgroundColor: 'rgba(74, 108, 247, 0.02)',
-                    }
-                  }}
-                >
-                  {tempSelectedRole === 'STUDENT' && (
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        top: 12,
-                        right: 12,
-                        bgcolor: '#4a6cf7',
-                        color: 'white',
-                        width: 28,
-                        height: 28,
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 2px 8px rgba(74, 108, 247, 0.4)',
-                      }}
-                    >
-                      <CheckCircleIcon sx={{ fontSize: 18 }} />
-                    </Box>
-                  )}
-                  <Box
-                    sx={{
-                      width: 70,
-                      height: 70,
-                      borderRadius: '50%',
-                      background: 'linear-gradient(135deg, rgba(74, 108, 247, 0.15) 0%, rgba(74, 108, 247, 0.25) 100%)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      mb: 2,
-                    }}
-                  >
-                    <PersonIcon sx={{ fontSize: 40, color: '#4a6cf7' }} />
-                  </Box>
-                  <Typography variant="h6" fontWeight={700} sx={{ color: '#2d3748', mb: 1 }}>
-                    Student
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: '#718096', mb: 2 }}>
-                    I'm here to learn and complete educational modules
-                  </Typography>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      justifyContent: 'center',
-                      gap: 1,
-                    }}
-                  >
-                    <Typography variant="caption" sx={{ color: '#4a6cf7', bgcolor: 'rgba(74, 108, 247, 0.1)', px: 1.5, py: 0.5, borderRadius: 4 }}>
-                      Interactive Lessons
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: '#4a6cf7', bgcolor: 'rgba(74, 108, 247, 0.1)', px: 1.5, py: 0.5, borderRadius: 4 }}>
-                      Progress Tracking
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: '#4a6cf7', bgcolor: 'rgba(74, 108, 247, 0.1)', px: 1.5, py: 0.5, borderRadius: 4 }}>
-                      Skill Building
-                    </Typography>
-                  </Box>
-                </Card>
-
-                <Card
-                  onClick={() => handleRoleCardClick('TEACHER')}
-                  sx={{
-                    p: 3,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    position: 'relative',
-                    border: tempSelectedRole === 'TEACHER' ? '3px solid #22c55e' : '2px solid #e2e8f0',
-                    borderRadius: '16px',
-                    backgroundColor: tempSelectedRole === 'TEACHER' ? 'rgba(34, 197, 94, 0.05)' : 'white',
-                    '&:hover': {
-                      transform: 'translateY(-3px)',
-                      boxShadow: '0 12px 30px rgba(34, 197, 94, 0.2)',
-                      borderColor: '#22c55e',
-                      backgroundColor: 'rgba(34, 197, 94, 0.02)',
-                    }
-                  }}
-                >
-                  {tempSelectedRole === 'TEACHER' && (
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        top: 12,
-                        right: 12,
-                        bgcolor: '#22c55e',
-                        color: 'white',
-                        width: 28,
-                        height: 28,
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 2px 8px rgba(34, 197, 94, 0.4)',
-                      }}
-                    >
-                      <CheckCircleIcon sx={{ fontSize: 18 }} />
-                    </Box>
-                  )}
-                  <Box
-                    sx={{
-                      width: 70,
-                      height: 70,
-                      borderRadius: '50%',
-                      background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.25) 100%)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      mb: 2,
-                    }}
-                  >
-                    <SchoolIcon sx={{ fontSize: 40, color: '#22c55e' }} />
-                  </Box>
-                  <Typography variant="h6" fontWeight={700} sx={{ color: '#2d3748', mb: 1 }}>
-                    Teacher
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: '#718096', mb: 2 }}>
-                    I'm here to teach and manage students
-                  </Typography>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      justifyContent: 'center',
-                      gap: 1,
-                    }}
-                  >
-                    <Typography variant="caption" sx={{ color: '#22c55e', bgcolor: 'rgba(34, 197, 94, 0.1)', px: 1.5, py: 0.5, borderRadius: 4 }}>
-                      Class Management
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: '#22c55e', bgcolor: 'rgba(34, 197, 94, 0.1)', px: 1.5, py: 0.5, borderRadius: 4 }}>
-                      Progress Monitoring
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: '#22c55e', bgcolor: 'rgba(34, 197, 94, 0.1)', px: 1.5, py: 0.5, borderRadius: 4 }}>
-                      Assign Modules
-                    </Typography>
-                  </Box>
-                </Card>
-              </Box>
-
-              {/* Helper text */}
-              <Paper
+              <Card
+                onClick={() => handleRoleCardClick('TEACHER')}
                 sx={{
-                  p: 2,
-                  mb: 3,
-                  bgcolor: '#f0fdf4',
-                  border: '1px solid #bbf7d0',
-                  borderRadius: '12px',
+                  p: 2.5,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  position: 'relative',
+                  border: tempSelectedRole === 'TEACHER' ? '3px solid #22c55e' : '2px solid #e0e0e0',
+                  borderRadius: '15px',
+                  backgroundColor: tempSelectedRole === 'TEACHER' ? 'rgba(34, 197, 94, 0.05)' : 'white',
+                  '&:hover': {
+                    transform: 'translateY(-3px)',
+                    boxShadow: '0 8px 25px rgba(34, 197, 94, 0.2)',
+                    borderColor: '#22c55e',
+                  }
                 }}
               >
-                <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
-                  <InfoIcon sx={{ color: '#22c55e', mr: 1.5, mt: 0.25 }} />
-                  <Box>
-                    <Typography variant="caption" fontWeight={600} sx={{ color: '#166534', display: 'block' }}>
-                      You can always change this later
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: '#22c55e' }}>
-                      Don't worry if you're not sure - you can switch roles from your profile settings.
-                    </Typography>
-                  </Box>
+                {tempSelectedRole === 'TEACHER' && (
+                  <CheckCircleIcon 
+                    sx={{ 
+                      position: 'absolute',
+                      top: 10,
+                      right: 10,
+                      color: '#22c55e',
+                      fontSize: 28
+                    }} 
+                  />
+                )}
+                <Box
+                  sx={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: '50%',
+                    backgroundColor: 'rgba(34, 197, 94, 0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    mb: 1.5,
+                  }}
+                >
+                  <SchoolIcon sx={{ fontSize: 36, color: '#22c55e' }} />
                 </Box>
-              </Paper>
+                <Typography variant="h6" fontWeight={600} color="#2d3748" gutterBottom>
+                  Teacher
+                </Typography>
+                <Typography variant="body2" color="#4a5568">
+                  I'm here to teach and manage students
+                </Typography>
+              </Card>
+            </Box>
 
-              {/* Action buttons */}
+            <Box sx={{ px: 2 }}>
               <Button
                 fullWidth
                 variant="contained"
                 onClick={handleSaveRole}
                 disabled={!tempSelectedRole || savingRole || isRedirecting}
                 sx={{ 
-                  height: "56px",
-                  borderRadius: "14px",
-                  background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-                  fontSize: "16px",
+                  height: "48px",
+                  borderRadius: "10px",
+                  backgroundColor: "#4a6cf7",
+                  fontSize: "15px",
                   fontWeight: 600,
-                  textTransform: 'none',
-                  boxShadow: '0 4px 20px rgba(34, 197, 94, 0.4)',
-                  transition: 'all 0.3s ease',
-                  position: 'relative',
-                  overflow: 'hidden',
+                  boxShadow: "0 4px 15px rgba(74, 108, 247, 0.3)",
                   "&:hover": {
-                    transform: "translateY(-2px)",
-                    boxShadow: '0 8px 25px rgba(34, 197, 94, 0.5)',
-                    background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+                    backgroundColor: "#3a5ce5",
+                    boxShadow: "0 6px 20px rgba(74, 108, 247, 0.4)",
+                    transform: "translateY(-1px)",
                   },
                   "&:disabled": {
-                    background: '#e2e8f0',
-                    color: '#a0aec0',
-                    transform: 'none',
-                    boxShadow: 'none',
-                  },
-                  "&:after": {
-                    content: '""',
-                    position: 'absolute',
-                    top: '-50%',
-                    left: '-60%',
-                    width: '20%',
-                    height: '200%',
-                    opacity: 0,
-                    transform: 'rotate(30deg)',
-                    background: 'linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.2), rgba(255,255,255,0.1))',
-                    transition: 'none',
-                  },
-                  "&:hover:after": {
-                    animation: 'shimmer 0.8s ease',
-                  },
+                    backgroundColor: "#cbd5e0",
+                    color: "#718096"
+                  }
                 }}
               >
                 {savingRole ? (
                   <CircularProgress size={24} sx={{ color: 'white' }} />
-                ) : isRedirecting ? (
-                  'Redirecting...'
                 ) : (
-                  `Start as ${tempSelectedRole || 'Your Role'} →`
+                  'Save Role'
                 )}
               </Button>
 
-              <Typography 
-                variant="caption" 
-                sx={{ 
-                  color: '#718096', 
-                  display: 'block', 
-                  textAlign: 'center', 
-                  mt: 2,
-                  fontSize: '0.75rem',
-                }}
-              >
-                {tempSelectedRole === 'STUDENT' ? 'Start learning with interactive modules' : 
-                 tempSelectedRole === 'TEACHER' ? 'Begin managing your classroom' : 
-                 'Select a role to continue'}
+              <Typography variant="caption" color="#718096" sx={{ display: 'block', textAlign: 'center', mt: 1.5 }}>
+                Click on a card to select your role, then click Save
               </Typography>
             </Box>
           </Paper>
@@ -1339,11 +1010,7 @@ function StudentDashboard() {
         <Alert
           onClose={handleCloseSnackbar}
           severity={success ? "success" : "error"}
-          sx={{ 
-            width: "100%", 
-            borderRadius: "12px",
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          }}
+          sx={{ width: "100%", borderRadius: "10px" }}
         >
           {success || error}
         </Alert>
