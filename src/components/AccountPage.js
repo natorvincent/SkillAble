@@ -22,12 +22,12 @@ import {
   Avatar,
   Fade,
   Chip,
-  List,
-  ListItem
+  Card,
+  CardContent,
+  Stack
 } from "@mui/material";
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
-import CancelIcon from '@mui/icons-material/Cancel';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SecurityIcon from '@mui/icons-material/Security';
@@ -36,11 +36,18 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import SchoolIcon from '@mui/icons-material/School';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import EventIcon from '@mui/icons-material/Event';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import LanguageIcon from '@mui/icons-material/Language';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import ContactMailIcon from '@mui/icons-material/ContactMail';
+import LogoutIcon from '@mui/icons-material/Logout';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import PaymentIcon from '@mui/icons-material/Payment';
+import HistoryIcon from '@mui/icons-material/History';
+import CardGiftcardIcon from '@mui/icons-material/CardGiftcard';
 import Navbar from "./Navbar";
 import Background from "./Background";
 
@@ -80,6 +87,15 @@ function AccountPage() {
   const [newPasswordError, setNewPasswordError] = useState("");
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
   
+  // New state for entry verification
+  const [entryVerificationOpen, setEntryVerificationOpen] = useState(true);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verificationPin, setVerificationPin] = useState(["", "", "", "", "", ""]);
+  const [verificationErrorMsg, setVerificationErrorMsg] = useState("");
+  
+  const [country, setCountry] = useState("Georgia, Tbilisi");
+  const [language, setLanguage] = useState("English (UK) - English");
+  
   const [accountInfo, setAccountInfo] = useState({
     joinedDate: "2024-01-15",
     lastLogin: new Date().toISOString(),
@@ -88,6 +104,17 @@ function AccountPage() {
   });
 
   const navigate = useNavigate();
+
+  // Generate random 6-digit verification code
+  const generateVerificationCode = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  };
+
+  // Initialize verification code on component mount
+  useEffect(() => {
+    const code = generateVerificationCode();
+    setVerificationCode(code);
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -105,8 +132,11 @@ function AccountPage() {
       setUserType(storedUserType);
     }
     
-    fetchUserProfile(userEmail);
-  }, [navigate]);
+    // Only fetch profile after entry verification
+    if (!entryVerificationOpen) {
+      fetchUserProfile(userEmail);
+    }
+  }, [navigate, entryVerificationOpen]);
 
   const fetchUserProfile = async (userEmail) => {
     try {
@@ -173,6 +203,56 @@ function AccountPage() {
     }
   };
 
+  // Handle verification pin input
+  const handlePinChange = (index, value) => {
+    if (value.length <= 1 && /^\d*$/.test(value)) {
+      const newPin = [...verificationPin];
+      newPin[index] = value;
+      setVerificationPin(newPin);
+      
+      // Auto-focus next input
+      if (value && index < 5) {
+        const nextInput = document.getElementById(`pin-input-${index + 1}`);
+        if (nextInput) nextInput.focus();
+      }
+    }
+  };
+
+  // Handle verification submission
+  const handleVerificationSubmit = () => {
+    const enteredCode = verificationPin.join("");
+    
+    if (enteredCode.length !== 6) {
+      setVerificationErrorMsg("Please enter all 6 digits");
+      return;
+    }
+    
+    if (enteredCode === verificationCode) {
+      setEntryVerificationOpen(false);
+      setVerificationErrorMsg("");
+      setVerificationPin(["", "", "", "", "", ""]);
+      setLoading(true); // Start loading profile
+    } else {
+      setVerificationErrorMsg("Incorrect code. Please try again.");
+      // Clear all inputs
+      setVerificationPin(["", "", "", "", "", ""]);
+      // Focus first input
+      const firstInput = document.getElementById("pin-input-0");
+      if (firstInput) firstInput.focus();
+    }
+  };
+
+  // Regenerate verification code
+  const handleRegenerateCode = () => {
+    const newCode = generateVerificationCode();
+    setVerificationCode(newCode);
+    setVerificationPin(["", "", "", "", "", ""]);
+    setVerificationErrorMsg("");
+    // Focus first input
+    const firstInput = document.getElementById("pin-input-0");
+    if (firstInput) firstInput.focus();
+  };
+
   const handleStudentFormSubmit = async (e) => {
     e.preventDefault();
     
@@ -209,7 +289,7 @@ function AccountPage() {
     setVerificationDialogOpen(true);
   };
 
-  const handleVerificationSubmit = async () => {
+  const handleVerificationSubmitOld = async () => {
     if (!verificationText.trim()) {
       setVerificationError("Please enter your password to confirm the update");
       return;
@@ -452,7 +532,6 @@ function AccountPage() {
   };
 
   const handleBack = () => {
-    // Redirect to appropriate dashboard based on user type
     if (userType === "TEACHER") {
       navigate("/teacherdashboard");
     } else if (userType === "ADMIN") {
@@ -513,96 +592,260 @@ function AccountPage() {
     return 'User';
   };
 
-  // Read-only Info Field Component
-  const InfoFieldReadOnly = ({ label, value, isDate = false }) => (
-    <Box sx={{ mb: 2 }}>
-      <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5, fontWeight: '500' }}>
+  const handleSignOut = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("userType");
+    navigate("/login");
+  };
+
+  // Individual Info Box Component
+  const InfoBox = ({ title, value, icon, isDate = false }) => (
+    <Paper 
+      variant="outlined" 
+      sx={{ 
+        p: 2,
+        borderRadius: 2,
+        height: '100%',
+        transition: 'all 0.2s ease-in-out',
+        '&:hover': {
+          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+        }
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+        <Box sx={{ 
+          color: 'primary.main',
+          mt: 0.5
+        }}>
+          {icon}
+        </Box>
+        <Box sx={{ flex: 1 }}>
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5, fontWeight: '500' }}>
+            {title}
+          </Typography>
+          <Typography variant="body1" fontWeight="600" sx={{ fontSize: '0.95rem' }}>
+            {isDate ? formatDateForDisplay(value) : value || 'Not set'}
+          </Typography>
+        </Box>
+      </Box>
+    </Paper>
+  );
+
+  // Info Row Component
+  const InfoRow = ({ label, value }) => (
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
+      <Typography variant="body2" fontWeight="500" color="text.secondary">
         {label}
       </Typography>
-      <Typography variant="body1" sx={{ 
-        p: 1.5, 
-        backgroundColor: 'grey.50', 
-        borderRadius: 1.5,
-        border: '1px solid',
-        borderColor: 'grey.200',
-        color: 'text.primary',
-        fontWeight: '500',
-        fontSize: '0.95rem'
-      }}>
-        {isDate ? formatDateForDisplay(value) : value}
+      <Typography variant="body2" fontWeight="500">
+        {value}
       </Typography>
     </Box>
   );
 
-  // Enhanced Security Item Component
-  const SecurityItem = ({ icon, label, value, action, status, isDestructive = false }) => (
-    <ListItem 
-      sx={{ 
-        px: 0, 
-        py: 2,
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        width: '100%',
-        gap: 2,
-        transition: 'all 0.2s ease-in-out',
-        '&:hover': {
-          backgroundColor: 'rgba(0, 0, 0, 0.02)',
-          borderRadius: 2,
-        }
-      }}
-    >
-      {/* Left side: Icon + Text */}
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, flex: 1, minWidth: 0 }}>
-        <Box sx={{ 
-          color: isDestructive ? 'error.main' : '#2E7D32',
-          mt: 0.5,
-          flexShrink: 0
-        }}>
-          {icon}
-        </Box>
-        <Box sx={{ minWidth: 0, flex: 1 }}>
-          <Typography 
-            variant="body1" 
-            fontWeight="500"
-            color={isDestructive ? 'error.main' : 'text.primary'}
-            sx={{ mb: 0.5 }}
-          >
-            {label}
-          </Typography>
-          {value && (
-            <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.4 }}>
-              {value}
-            </Typography>
-          )}
-        </Box>
-      </Box>
-
-      {/* Right side: Status + Action */}
-      <Box sx={{ 
-        display: 'flex', 
-        alignItems: 'center',
-        gap: 2,
-        flexShrink: 0,
-        ml: 2
+  // Entry verification dialog - shows before loading anything else
+  if (entryVerificationOpen) {
+    return (
+      <div style={{ 
+        position: "relative",
+        overflow: "hidden",
+        minHeight: "100vh",
+        width: "100%",
       }}>
-        {status && (
-          <Typography 
-            variant="body2" 
-            color={status === "Enabled" ? "success.main" : "text.secondary"}
-            sx={{ 
-              fontWeight: '500',
-              minWidth: 80,
-              textAlign: 'right'
-            }}
-          >
-            {status}
-          </Typography>
-        )}
-        {action}
-      </Box>
-    </ListItem>
-  );
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 0,
+        }}>
+          <Background />
+        </div>
+        
+        {/* Entry Verification Dialog */}
+        <Dialog 
+          open={entryVerificationOpen} 
+          maxWidth="sm" 
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              overflow: 'hidden',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+            }
+          }}
+        >
+          <DialogTitle sx={{ 
+            backgroundColor: '#2E7D32', 
+            color: 'white',
+            py: 3,
+            textAlign: 'center',
+            borderBottom: '1px solid rgba(255,255,255,0.1)'
+          }}>
+            <Typography variant="h5" fontWeight="bold" sx={{ 
+              textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 1
+            }}>
+              <SecurityIcon sx={{ fontSize: 28 }} />
+              Account Access Verification
+            </Typography>
+          </DialogTitle>
+          
+          <DialogContent sx={{ py: 4, px: 4 }}>
+            <Box sx={{ textAlign: 'center', mb: 4 }}>
+              <LockIcon sx={{ fontSize: 60, color: '#2E7D32', mb: 2, mt: 2, opacity: 0.8 }} />
+              
+              {/*
+              <Typography variant="h6" fontWeight="600" color="text.primary" sx={{ mb: 2 }}>
+                Security Verification Required
+              </Typography>
+              
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                For security purposes, please verify your identity to access your account settings.
+              </Typography>
+              */}
+              
+              {/* Verification Code Display */}
+              <Paper 
+                elevation={3}
+                sx={{
+                  p: 3,
+                  mb: 4,
+                  borderRadius: 3,
+                  backgroundColor: '#f8f9fa',
+                  border: '2px dashed #2E7D32',
+                  textAlign: 'center'
+                }}
+              >
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1, fontWeight: 500 }}>
+                  Enter this verification code:
+                </Typography>
+                <Typography 
+                  variant="h3" 
+                  fontWeight="bold" 
+                  sx={{ 
+                    color: '#2E7D32',
+                    letterSpacing: '0.5em',
+                    textAlign: 'center',
+                    mb: 1
+                  }}
+                >
+                  {verificationCode}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  This code will refresh if you generate a new one
+                </Typography>
+              </Paper>
+              
+              {/* Pin Input Fields */}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontWeight: 500 }}>
+                  Enter the 6-digit code in the fields below:
+                </Typography>
+                
+                <Box sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  gap: 1.5,
+                  mb: 2 
+                }}>
+                  {[0, 1, 2, 3, 4, 5].map((index) => (
+                    <TextField
+                      key={index}
+                      id={`pin-input-${index}`}
+                      value={verificationPin[index]}
+                      onChange={(e) => handlePinChange(index, e.target.value)}
+                      inputProps={{
+                        maxLength: 1,
+                        style: { 
+                          textAlign: 'center',
+                          fontSize: '1.5rem',
+                          fontWeight: 'bold'
+                        }
+                      }}
+                      sx={{
+                        width: 55,
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          height: 55,
+                          '& input': {
+                            textAlign: 'center',
+                            padding: '12px',
+                          }
+                        },
+                      }}
+                    />
+                  ))}
+                </Box>
+                
+                {verificationErrorMsg && (
+                  <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+                    {verificationErrorMsg}
+                  </Typography>
+                )}
+              </Box>
+              
+              {/* Regenerate Code Button */}
+              <Box sx={{ mb: 4 }}>
+                <Button
+                  onClick={handleRegenerateCode}
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    color: '#2E7D32',
+                    borderColor: '#2E7D32',
+                    '&:hover': {
+                      backgroundColor: 'rgba(46, 125, 50, 0.04)',
+                      borderColor: '#1B5E20',
+                    }
+                  }}
+                >
+                  Generate New Code
+                </Button>
+              </Box>
+            </Box>
+          </DialogContent>
+          
+          <DialogActions sx={{ 
+            px: 4, 
+            py: 3, 
+            borderTop: '1px solid rgba(0,0,0,0.1)',
+            justifyContent: 'center'
+          }}>
+            <Button
+              onClick={handleVerificationSubmit}
+              variant="contained"
+              size="large"
+              sx={{ 
+                borderRadius: 3, 
+                textTransform: 'none',
+                fontWeight: '600',
+                px: 6,
+                py: 1.5,
+                backgroundColor: '#2E7D32',
+                fontSize: '1.1rem',
+                '&:hover': {
+                  backgroundColor: '#1B5E20',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 8px 20px rgba(27, 94, 32, 0.3)',
+                },
+                transition: 'all 0.2s ease'
+              }}
+            >
+              Verify & Continue
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -674,46 +917,84 @@ function AccountPage() {
         <Navbar />
         
         <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 2.5, md: 3 }, px: { xs: 2, sm: 3 } }}>
-          {/* Header Section */}
+          {/* Header Section - Compact */}
           <Box sx={{ mb: { xs: 2, sm: 2.5, md: 3 } }}>
-            <Button
-              startIcon={<ArrowBackIcon />}
-              onClick={handleBack}
-              sx={{
-                color: 'white',
-                mb: { xs: 1.5, sm: 2 },
-                backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                backdropFilter: 'blur(10px)',
-                '&:hover': {
-                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                  transform: 'translateY(-1px)',
-                },
-                borderRadius: 2,
-                textTransform: 'none',
-                fontWeight: '600',
-                px: { xs: 1.5, sm: 2 },
-                py: 0.75,
-                fontSize: { xs: '0.875rem', sm: '1rem' },
-                transition: 'all 0.2s ease-in-out',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-              }}
-            >
-              Back to {userType === "TEACHER" ? "Teacher" : userType === "ADMIN" ? "Admin" : "Student"} Dashboard
-            </Button>
-            
             <Paper
               elevation={0}
               sx={{
-                background: 'rgba(255, 255, 255, 0.12)',
+                background: 'none',
                 backdropFilter: 'blur(25px)',
                 borderRadius: { xs: 2, sm: 3 },
-                p: { xs: 2, sm: 2.5, md: 3 },
+                p: { xs: 2, sm: 2, md: 2.5 },
                 color: 'white',
                 border: '1px solid rgba(255, 255, 255, 0.25)',
                 boxShadow: '0 8px 40px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)',
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 2, sm: 2.5, md: 3 }, flexWrap: { xs: 'wrap', sm: 'nowrap' } }}>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between', 
+                flexWrap: 'wrap', 
+                gap: 2,
+                mb: 2 
+              }}>
+                {/*}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                  <Button
+                    startIcon={<ArrowBackIcon />}
+                    onClick={handleBack}
+                    sx={{
+                      color: 'white',
+                      backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                      backdropFilter: 'blur(10px)',
+                      '&:hover': {
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                      },
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: '600',
+                      px: 1.5,
+                      py: 0.5,
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      minWidth: 'auto'
+                    }}
+                  >
+                    Back to Dashboard
+                  </Button>
+                  
+                  <Button
+                    startIcon={<LogoutIcon />}
+                    onClick={handleSignOut}
+                    sx={{
+                      color: 'white',
+                      backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                      backdropFilter: 'blur(10px)',
+                      '&:hover': {
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                      },
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: '600',
+                      px: 1.5,
+                      py: 0.5,
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      minWidth: 'auto'
+                    }}
+                  >
+                    Sign out
+                  </Button>
+                </Box>
+                */}
+              </Box>
+              
+             <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: { xs: 2, sm: 2.5, md: 3 },
+                flexWrap: 'wrap',
+                mt: -2
+              }}>
                 <Avatar
                   sx={{
                     width: { xs: 60, sm: 70, md: 80 },
@@ -729,103 +1010,247 @@ function AccountPage() {
                     }
                   }}
                 >
-                  {getUserInitials()}
+                  {getUserInitials()} 
                 </Avatar>
-                <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: 0 } }}>
-                  <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ 
+                
+                <Box>
+                  <Typography variant="h5" fontWeight="bold" sx={{ 
                     textShadow: '0 2px 8px rgba(0,0,0,0.4)',
-                    fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' }
+                    fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2.5rem' },
+                    //mb: 0.5,
+                    color: 'white'
                   }}>
-                    {getUserDisplayName()}
+                    Hello! {getUserDisplayName()}
                   </Typography>
-                  
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, flexWrap: 'wrap', mb: 2 }}>
-                    <Chip
-                      icon={userType === "ADMIN" ? <AdminPanelSettingsIcon /> : userType === "TEACHER" ? <SchoolIcon /> : <PersonIcon />}
-                      label={userType.toLowerCase()}
-                      size="medium"
-                      variant="outlined"
-                      sx={{
-                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                        color: 'rgba(0, 0, 0, 0.9)',
-                        fontWeight: '600',
-                        backdropFilter: 'blur(10px)',
-                        border: '1px solid rgba(255, 255, 255, 0.6)',
-                        borderRadius: 2,
-                        '& .MuiChip-icon': { 
-                          color: 'rgba(0, 0, 0, 0.9)',
-                        }
-                      }}
-                    />
-                    <Chip
-                      icon={<EmailIcon sx={{ color: 'white !important' }} />}
-                      label={email}
-                      size="medium"
-                      variant="outlined"
-                      sx={{
-                        backgroundColor: 'rgba(46, 125, 50, 0.8)',
-                        color: 'white',
-                        fontWeight: '500',
-                        backdropFilter: 'blur(10px)',
-                        border: '1px solid rgba(255, 255, 255, 0.3)',
-                        borderRadius: 2,
-                        '& .MuiChip-icon': { 
-                          color: 'white',
-                        }
-                      }}
-                    />
-                  </Box>
-
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, pl: 0.5 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <EventIcon fontSize="small" sx={{ opacity: 0.9 }} />
-                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                        Joined {formatDateForDisplay(accountInfo.joinedDate)}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <AccessTimeIcon fontSize="small" sx={{ opacity: 0.9 }} />
-                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                        Last login: {formatDateTime(accountInfo.lastLogin)}
-                      </Typography>
-                    </Box>
-                  </Box>
+                  {/* Optionally add email below the name */}
+                  {/* <Typography variant="body1" sx={{ 
+                    opacity: 0.9, 
+                    fontSize: '0.95rem',
+                    color: 'rgba(255, 255, 255, 0.8)'
+                  }}>
+                    {email}
+                  </Typography> */}
                 </Box>
+                <Button
+                    startIcon={<ArrowBackIcon />}
+                    onClick={handleBack}
+                    sx={{
+                      color: 'white',
+                      backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                      backdropFilter: 'blur(10px)',
+                      '&:hover': {
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                      },
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: '600',
+                      marginLeft: '440px',
+                      px: 1.5,
+                      py: 0.5,
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      minWidth: 'auto'
+                    }}
+                  >
+                    Back to Dashboard
+                  </Button>
               </Box>
+              
             </Paper>
           </Box>
+          
 
-          {/* Main Content Grid */}
+          {/* Main Content Grid - Personal Information on RIGHT side */}
           <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
-            {/* Profile Information Card */}
-            <Grid item xs={12} md={6}>
-              <Paper
+            {/* Left Column - Account Info & Security (4 grid units) */}
+            <Grid item xs={12} md={4}>
+              <Stack spacing={{ xs: 2, sm: 2.5, md: 3 }}>
+                {/* Account Information Card */}
+                <Card 
+                  elevation={2}
+                  sx={{
+                    borderRadius: { xs: 2, sm: 3 },
+                    boxShadow: '0 2px 16px rgba(0, 0, 0, 0.08)',
+                    height: '100%'
+                  }}
+                >
+                  <CardContent sx={{ p: { xs: 2, sm: 2, md: 2.5 } }}>
+                    <Typography variant="h6" fontWeight="600" color="text.primary" sx={{ mb: 2 }}>
+                      Account Information
+                    </Typography>
+                    
+                    <Paper variant="outlined" sx={{ borderRadius: 2, p: 1.5 }}>
+                      <InfoRow 
+                        label="Account Type" 
+                        value={
+                          <Chip
+                            icon={userType === "ADMIN" ? <AdminPanelSettingsIcon /> : userType === "TEACHER" ? <SchoolIcon /> : <PersonIcon />}
+                            label={userType.toLowerCase()}
+                            size="small"
+                            sx={{
+                              backgroundColor: 'grey.100',
+                              color: 'text.primary',
+                              fontWeight: '500',
+                              fontSize: '0.75rem'
+                            }}
+                          />
+                        }
+                      />
+                      <InfoRow 
+                        label="Joined Date" 
+                        value={formatDateForDisplay(accountInfo.joinedDate)}
+                      />
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
+                        <Typography variant="body2" fontWeight="500" color="text.secondary">
+                          Last Login
+                        </Typography>
+                        <Typography variant="body2" fontWeight="500">
+                          {formatDateTime(accountInfo.lastLogin)}
+                        </Typography>
+                      </Box>
+                    </Paper>
+                  </CardContent>
+                </Card>
+
+                {/* Security Settings Card */}
+                <Card 
+                  elevation={2}
+                  sx={{
+                    borderRadius: { xs: 2, sm: 3 },
+                    boxShadow: '0 2px 16px rgba(0, 0, 0, 0.08)',
+                    height: '100%'
+                  }}
+                >
+                  <CardContent sx={{ p: { xs: 2, sm: 2, md: 2.5 } }}>
+                    <Typography variant="h6" fontWeight="600" color="text.primary" sx={{ mb: 2 }}>
+                      Security Settings
+                    </Typography>
+                    
+                    <Paper variant="outlined" sx={{ borderRadius: 2, mb: 1.5, overflow: 'hidden' }}>
+                      <Box sx={{ p: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <Box>
+                            <Typography variant="body2" fontWeight="500" sx={{ mb: 0.5 }}>
+                              Password
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Last updated {formatDateForDisplay(accountInfo.passwordLastUpdated)}
+                            </Typography>
+                          </Box>
+                          <Button
+                            variant="contained"
+                            size="small"
+                            sx={{
+                              borderRadius: 2,
+                              textTransform: 'none',
+                              fontWeight: '600',
+                              backgroundColor: '#2E7D32',
+                              fontSize: '0.75rem',
+                              px: 1.5,
+                              py: 0.5,
+                              '&:hover': {
+                                backgroundColor: '#1B5E20',
+                              }
+                            }}
+                            onClick={handleOpenPasswordDialog}
+                          >
+                            Update
+                          </Button>
+                        </Box>
+                      </Box>
+                      
+                      {/* Only show delete account for non-admin users */}
+                      {userType !== "ADMIN" && (
+                        <Box sx={{ p: 1.5 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Box>
+                              <Typography variant="body2" fontWeight="500" color="error.main" sx={{ mb: 0.5 }}>
+                                Delete Account
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                Permanently remove your account and data
+                              </Typography>
+                            </Box>
+                            <Button
+                              variant="contained"
+                              color="error"
+                              size="small"
+                              sx={{
+                                borderRadius: 2,
+                                textTransform: 'none',
+                                fontWeight: '600',
+                                fontSize: '0.75rem',
+                                px: 1.5,
+                                py: 0.5,
+                                marginLeft: 1.49,
+                                '&:hover': {
+                                  backgroundColor: 'error.dark',
+                                }
+                              }}
+                              onClick={handleOpenDeleteDialog}
+                            >
+                              Delete
+                            </Button>
+                          </Box>
+                        </Box>
+                      )}
+                    </Paper>
+                  </CardContent>
+                </Card>
+              </Stack>
+            </Grid>
+
+            {/* Right Column - Personal Information (8 grid units) */}
+            <Grid item xs={12} md={8}>
+              <Card 
                 elevation={2}
                 sx={{
-                  background: 'white',
                   borderRadius: { xs: 2, sm: 3 },
                   boxShadow: '0 2px 16px rgba(0, 0, 0, 0.08)',
-                  overflow: 'hidden',
-                  height: '100%',
-                  transition: 'all 0.3s ease-in-out',
-                  '&:hover': {
-                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.12)',
-                  }
+                  height: '100%'
                 }}
               >
-                <Box sx={{ p: { xs: 2, sm: 2.5, md: 3 }, pb: { xs: 1.5, sm: 2 } }}>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center',
-                    mb: 3,
-                    width: '100%',
-                    gap: 2
-                  }}>
-                    <Typography variant="h6" fontWeight="600" color="text.primary" sx={{ flexShrink: 0 }}>
-                      Profile Information
-                    </Typography>
-                    {!editing && userType !== "ADMIN" && (
+                <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
+                  <Typography variant="h5" fontWeight="600" color="text.primary" sx={{ mb: 2 }}>
+                    Personal Information
+                  </Typography>
+                  
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                    Manage your personal information, including phone numbers and email address where you can be contacted
+                  </Typography>
+
+              
+
+                  {/* Individual Info Boxes Grid */}
+                  <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }} sx={{ mb: 3 }}>
+                    <Grid item xs={12} sm={6}>
+                      <InfoBox
+                        title="Name"
+                        value={userType === "STUDENT" 
+                          ? `${capitalizeName(userProfile.firstName || '')} ${capitalizeName(userProfile.lastName || '')}`.trim()
+                          : capitalizeName(userProfile?.name || '')}
+                        icon={<PersonIcon />}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <InfoBox
+                        title="Date of Birth"
+                        value={userType === "STUDENT" ? userProfile?.dateOfBirth : ''}
+                        icon={<CalendarTodayIcon />}
+                        isDate={true}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <InfoBox
+                        title="Email"
+                        value={email}
+                        icon={<ContactMailIcon />}
+                      />
+                    </Grid>
+                  </Grid>
+
+                  {/* Edit Button */}
+                  {userType !== "ADMIN" && (
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-start', mt: 2 }}>
                       <Button
                         startIcon={<EditIcon />}
                         onClick={() => setEditing(true)}
@@ -834,314 +1259,177 @@ function AccountPage() {
                           borderRadius: 2,
                           textTransform: 'none',
                           fontWeight: '600',
-                          flexShrink: 0,
-                          ml: 'auto',
-                          transition: 'all 0.2s ease-in-out',
                           backgroundColor: '#2E7D32',
                           '&:hover': {
                             backgroundColor: '#1B5E20',
-                            transform: 'translateY(-1px)',
-                            boxShadow: '0 4px 12px rgba(46, 125, 50, 0.3)',
                           }
                         }}
                       >
-                        Edit
+                        Edit Personal Information
                       </Button>
-                    )}
-                  </Box>
-
-                  {!editing ? (
-                    <Box>
-                      {userType === "STUDENT" && (
-                        <>
-                          <InfoFieldReadOnly 
-                            label="First Name"
-                            value={capitalizeName(userProfile.firstName) || "Not set"}
-                          />
-                          <InfoFieldReadOnly 
-                            label="Last Name"
-                            value={capitalizeName(userProfile.lastName) || "Not set"}
-                          />
-                          <InfoFieldReadOnly 
-                            label="Date of Birth"
-                            value={formatDateForDisplay(userProfile.dateOfBirth)}
-                            isDate={true}
-                          />
-                        </>
-                      )}
-                      {userType === "TEACHER" && (
-                        <InfoFieldReadOnly 
-                          label="Full Name"
-                          value={capitalizeName(userProfile.name) || "Not set"}
-                        />
-                      )}
-                      {userType === "ADMIN" && (
-                        <InfoFieldReadOnly 
-                          label="Role"
-                          value="Administrator"
-                        />
-                      )}
-                    </Box>
-                  ) : (
-                    <Box component="form" onSubmit={userType === "STUDENT" ? handleStudentFormSubmit : handleTeacherFormSubmit}>
-                      <Alert 
-                        severity="info" 
-                        sx={{ 
-                          mb: 3, 
-                          borderRadius: 2,
-                          backgroundColor: 'rgba(46, 125, 50, 0.08)',
-                          border: '1px solid rgba(46, 125, 50, 0.2)',
-                        }}
-                        icon={<SecurityIcon />}
-                      >
-                        You will need to enter your password to verify this update for security purposes.
-                      </Alert>
-
-                      {userType === "STUDENT" ? (
-                        <Grid container spacing={2}>
-                          <Grid item xs={12} sm={6}>
-                            <TextField
-                              required
-                              fullWidth
-                              label="First Name"
-                              value={firstName}
-                              onChange={(e) => setFirstName(e.target.value)}
-                              size="small"
-                              sx={{
-                                '& .MuiOutlinedInput-root': {
-                                  borderRadius: 2,
-                                },
-                              }}
-                            />
-                          </Grid>
-                          <Grid item xs={12} sm={6}>
-                            <TextField
-                              required
-                              fullWidth
-                              label="Last Name"
-                              value={lastName}
-                              onChange={(e) => setLastName(e.target.value)}
-                              size="small"
-                              sx={{
-                                '& .MuiOutlinedInput-root': {
-                                  borderRadius: 2,
-                                },
-                              }}
-                            />
-                          </Grid>
-                          <Grid item xs={12}>
-                            <TextField
-                              required
-                              fullWidth
-                              label="Date of Birth"
-                              type="date"
-                              value={dateOfBirth}
-                              onChange={(e) => setDateOfBirth(e.target.value)}
-                              InputLabelProps={{ shrink: true }}
-                              size="small"
-                              sx={{
-                                '& .MuiOutlinedInput-root': {
-                                  borderRadius: 2,
-                                },
-                              }}
-                            />
-                          </Grid>
-                        </Grid>
-                      ) : (
-                        <TextField
-                          required
-                          fullWidth
-                          label="Full Name"
-                          value={teacherName}
-                          onChange={(e) => setTeacherName(e.target.value)}
-                          size="small"
-                          sx={{
-                            '& .MuiOutlinedInput-root': {
-                              borderRadius: 2,
-                            },
-                            mb: 2
-                          }}
-                        />
-                      )}
-
-                      <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', mt: 3 }}>
-                        <Button
-                          variant="outlined"
-                          color="inherit"
-                          onClick={handleCancelEdit}
-                          sx={{ 
-                            borderRadius: 2, 
-                            textTransform: 'none',
-                            px: 3,
-                            fontWeight: '500',
-                            transition: 'all 0.2s ease-in-out',
-                            '&:hover': {
-                              transform: 'translateY(-1px)',
-                            }
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          type="submit"
-                          variant="contained"
-                          sx={{ 
-                            borderRadius: 2, 
-                            textTransform: 'none', 
-                            px: 3,
-                            fontWeight: '600',
-                            transition: 'all 0.2s ease-in-out',
-                            backgroundColor: '#2E7D32',
-                            '&:hover': {
-                              backgroundColor: '#1B5E20',
-                              transform: 'translateY(-1px)',
-                              boxShadow: '0 4px 12px rgba(46, 125, 50, 0.3)',
-                            }
-                          }}
-                          startIcon={<SaveIcon />}
-                        >
-                          Save Changes
-                        </Button>
-                      </Box>
                     </Box>
                   )}
-                </Box>
-              </Paper>
-            </Grid>
-
-            {/* Security Card */}
-            <Grid item xs={12} md={6}>
-              <Paper
-                elevation={2}
-                sx={{
-                  background: 'white',
-                  borderRadius: 3,
-                  boxShadow: '0 2px 16px rgba(0, 0, 0, 0.08)',
-                  overflow: 'hidden',
-                  height: '100%',
-                  transition: 'all 0.3s ease-in-out',
-                  '&:hover': {
-                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.12)',
-                  }
-                }}
-              >
-                <Box sx={{ p: 3 }}>
-                  <Typography variant="h6" fontWeight="600" color="text.primary" sx={{ mb: 3 }}>
-                    Security Settings
-                  </Typography>
-                  
-                  <List sx={{ width: '100%', p: 0 }}>
-                    {/* Password Row */}
-                    <SecurityItem
-                      icon={<LockIcon />}
-                      label="Password"
-                      value={`Last updated ${formatDateForDisplay(accountInfo.passwordLastUpdated)}`}
-                      action={
-                        <Button
-                          variant="contained"
-                          sx={{
-                            borderRadius: 2,
-                            textTransform: 'none',
-                            fontWeight: '600',
-                            minWidth: 100,
-                            transition: 'all 0.2s ease-in-out',
-                            backgroundColor: '#2E7D32',
-                            '&:hover': {
-                              backgroundColor: '#1B5E20',
-                              transform: 'translateY(-1px)',
-                              boxShadow: '0 4px 12px rgba(46, 125, 50, 0.3)',
-                            }
-                          }}
-                          onClick={handleOpenPasswordDialog}
-                          startIcon={<LockIcon />}
-                        >
-                          Update
-                        </Button>
-                      }
-                    />
-                    
-                    {/* Only show delete account for non-admin users */}
-                    {userType !== "ADMIN" && (
-                      <>
-                        <Divider sx={{ my: 2 }} />
-                        
-                        {/* Delete Account Row */}
-                        <SecurityItem
-                          icon={<DeleteIcon />}
-                          label="Delete Account"
-                          value="Permanently remove your account and data"
-                          action={
-                            <Button
-                              variant="contained"
-                              color="error"
-                              size="small"
-                              onClick={handleOpenDeleteDialog}
-                              sx={{
-                                borderRadius: 2,
-                                textTransform: 'none',
-                                fontWeight: '600',
-                                minWidth: 100,
-                                backgroundColor: 'error.main',
-                                color: 'white',
-                                transition: 'all 0.2s ease-in-out',
-                                '&:hover': {
-                                  backgroundColor: 'error.dark',
-                                  transform: 'translateY(-1px)',
-                                  boxShadow: '0 4px 12px rgba(244, 67, 54, 0.3)',
-                                }
-                              }}
-                              startIcon={<DeleteIcon />}
-                            >
-                              Delete
-                            </Button>
-                          }
-                          isDestructive={true}
-                        />
-                      </>
-                    )}
-                  </List>
-                </Box>
-              </Paper>
+                </CardContent>
+              </Card>
             </Grid>
           </Grid>
         </Container>
       </div>
 
+    {/* Edit Dialog */}
+      <Dialog open={editing} onClose={handleCancelEdit} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ 
+          backgroundColor: '#2E7D32', 
+          color: 'white',
+          py: 2,
+          borderBottom: '1px solid rgba(0,0,0,0.1)',
+        
+        }}>
+          <Typography variant="h6" fontWeight="600">
+            Edit Personal Information
+          </Typography>
+        </DialogTitle>
+        <DialogContent sx={{ py: 3 }}>
+          {userType === "STUDENT" ? (
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <Box sx={{ mt: 3 }}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="First Name"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    size="small"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                      },
+                    }}
+                  />
+                </Box>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Box sx={{ mt: 3 }}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="Last Name"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    size="small"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                      },
+                    }}
+                  />
+                </Box>
+              </Grid>
+              <Grid item xs={12}>
+                <Box sx={{ mt: 1 }}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="Date of Birth"
+                    type="date"
+                    value={dateOfBirth}
+                    onChange={(e) => setDateOfBirth(e.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    size="small"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                      },
+                    }}
+                  />
+                </Box>
+              </Grid>
+            </Grid>
+          ) : (
+            <Box sx={{ mt: 1 }}>
+              <TextField
+                required
+                fullWidth
+                label="Full Name"
+                value={teacherName}
+                onChange={(e) => setTeacherName(e.target.value)}
+                size="small"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                  },
+                  mb: 2
+                }}
+              />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+          <Button
+            onClick={handleCancelEdit}
+            sx={{ 
+              borderRadius: 2, 
+              textTransform: 'none',
+              fontWeight: '500',
+              px: 3
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={userType === "STUDENT" ? handleStudentFormSubmit : handleTeacherFormSubmit}
+            variant="contained"
+            sx={{ 
+              borderRadius: 2, 
+              textTransform: 'none',
+              fontWeight: '600',
+              px: 3,
+              backgroundColor: '#2E7D32',
+              '&:hover': {
+                backgroundColor: '#1B5E20',
+              }
+            }}
+          >
+            Save Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Verification Dialog */}
       <Dialog open={verificationDialogOpen} onClose={handleCloseVerificationDialog} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ 
-          backgroundColor: 'primary.main', 
+          backgroundColor: '#2E7D32', 
           color: 'white',
           py: 2,
           borderBottom: '1px solid rgba(0,0,0,0.1)'
         }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <SecurityIcon />
-            <Typography variant="h6" fontWeight="600">
-              Verify Your Identity
-            </Typography>
-          </Box>
+          <Typography variant="h6" fontWeight="600">
+            Verify Your Identity
+          </Typography>
         </DialogTitle>
         <DialogContent sx={{ py: 3 }}>
-          <DialogContentText sx={{ mb: 3, color: 'text.primary', fontWeight: '500' }}>
-            For security purposes, please enter your current password to confirm these changes.
+          <DialogContentText sx={{ mb: 3, color: 'text.primary' }}>
+            Please enter your password to confirm these changes.
           </DialogContentText>
           
-          <TextField
-            autoFocus
-            fullWidth
-            type="password"
-            label="Current Password"
-            value={verificationText}
-            onChange={(e) => setVerificationText(e.target.value)}
-            error={!!verificationError}
-            helperText={verificationError}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-              },
-            }}
-          />
+          <Box sx={{ mt: 3 }}>
+            <TextField
+              autoFocus
+              fullWidth
+              type="password"
+              label="Current Password"
+              value={verificationText}
+              onChange={(e) => setVerificationText(e.target.value)}
+              error={!!verificationError}
+              helperText={verificationError}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                },
+              }}
+            />
+          </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
           <Button
@@ -1156,7 +1444,7 @@ function AccountPage() {
             Cancel
           </Button>
           <Button
-            onClick={handleVerificationSubmit}
+            onClick={handleVerificationSubmitOld}
             variant="contained"
             sx={{ 
               borderRadius: 2, 
@@ -1168,7 +1456,6 @@ function AccountPage() {
                 backgroundColor: '#1B5E20',
               }
             }}
-            startIcon={<LockIcon />}
           >
             Verify & Update
           </Button>
@@ -1183,111 +1470,101 @@ function AccountPage() {
           py: 2,
           borderBottom: '1px solid rgba(0,0,0,0.1)'
         }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <LockIcon />
-            <Typography variant="h6" fontWeight="600">
-              Change Password
-            </Typography>
-          </Box>
+          <Typography variant="h6" fontWeight="600">
+            Change Password
+          </Typography>
         </DialogTitle>
         <DialogContent sx={{ py: 3 }}>
-          <DialogContentText sx={{ mb: 3, color: 'text.primary', fontWeight: '500' }}>
-            Please enter your current password and set a new password.
-          </DialogContentText>
-
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-            {/* Current Password */}
-            <TextField
-              fullWidth
-              type={showCurrentPassword ? "text" : "password"}
-              label="Current Password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              error={!!currentPasswordError}
-              helperText={currentPasswordError}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                      edge="end"
-                      size="small"
-                    >
-                      {showCurrentPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                },
-              }}
-            />
+            <Box sx={{ mt: 3 }}>
+              <TextField
+                fullWidth
+                type={showCurrentPassword ? "text" : "password"}
+                label="Current Password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                error={!!currentPasswordError}
+                helperText={currentPasswordError}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        edge="end"
+                        size="small"
+                      >
+                        {showCurrentPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                  },
+                }}
+              />
+            </Box>
 
-            {/* New Password */}
-            <TextField
-              fullWidth
-              type={showNewPassword ? "text" : "password"}
-              label="New Password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              error={!!newPasswordError}
-              helperText={newPasswordError}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowNewPassword(!showNewPassword)}
-                      edge="end"
-                      size="small"
-                    >
-                      {showNewPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                },
-              }}
-            />
+            <Box sx={{ mt: 1 }}>
+              <TextField
+                fullWidth
+                type={showNewPassword ? "text" : "password"}
+                label="New Password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                error={!!newPasswordError}
+                helperText={newPasswordError}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        edge="end"
+                        size="small"
+                      >
+                        {showNewPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                  },
+                }}
+              />
+            </Box>
 
-            {/* Confirm New Password */}
-            <TextField
-              fullWidth
-              type={showConfirmPassword ? "text" : "password"}
-              label="Confirm New Password"
-              value={confirmNewPassword}
-              onChange={(e) => setConfirmNewPassword(e.target.value)}
-              error={!!confirmPasswordError}
-              helperText={confirmPasswordError}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      edge="end"
-                      size="small"
-                    >
-                      {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                },
-              }}
-            />
-
-            {passwordError && (
-              <Alert severity="error" sx={{ borderRadius: 2 }}>
-                {passwordError}
-              </Alert>
-            )}
+            <Box sx={{ mt: 1 }}>
+              <TextField
+                fullWidth
+                type={showConfirmPassword ? "text" : "password"}
+                label="Confirm New Password"
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                error={!!confirmPasswordError}
+                helperText={confirmPasswordError}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        edge="end"
+                        size="small"
+                      >
+                        {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                  },
+                }}
+              />
+            </Box>
           </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
@@ -1315,7 +1592,6 @@ function AccountPage() {
                 backgroundColor: '#1B5E20',
               }
             }}
-            startIcon={<SaveIcon />}
           >
             Update Password
           </Button>
@@ -1330,46 +1606,35 @@ function AccountPage() {
           py: 2,
           borderBottom: '1px solid rgba(0,0,0,0.1)'
         }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <DeleteIcon />
-            <Typography variant="h6" fontWeight="600">
-              Delete Account
-            </Typography>
-          </Box>
+          <Typography variant="h6" fontWeight="600">
+            Delete Account
+          </Typography>
         </DialogTitle>
-        <DialogContent sx={{ py: 3 }}>
-          <Alert severity="error" sx={{ mb: 3, borderRadius: 2, border: '1px solid rgba(244, 67, 54, 0.3)' }}>
-            <Typography fontWeight="600" gutterBottom>
-              This action cannot be undone
-            </Typography>
-            <Typography variant="body2">
-              All your data, including progress, courses, and personal information will be permanently deleted.
-            </Typography>
+        <DialogContent sx={{ py: 3, mt: 3 }}>
+          <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+            This action cannot be undone. All your data will be permanently deleted.
           </Alert>
 
-          <DialogContentText sx={{ mb: 2, color: 'text.primary' }}>
+          <DialogContentText sx={{ mb: 1, color: 'text.primary' }}>
             To confirm deletion, please type your email address:
           </DialogContentText>
 
-          <Typography variant="body2" fontWeight="600" color="text.secondary" sx={{ mb: 1 }}>
-            {email}
-          </Typography>
-
-          <TextField
-            autoFocus
-            fullWidth
-            label="Confirm Email"
-            value={confirmEmail}
-            onChange={(e) => setConfirmEmail(e.target.value)}
-            error={!!deleteError}
-            helperText={deleteError}
-            sx={{
-              mt: 1,
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-              },
-            }}
-          />
+          <Box sx={{ mt: 1 }}>
+            <TextField
+              autoFocus
+              fullWidth
+              label="Confirm Email"
+              value={confirmEmail}
+              onChange={(e) => setConfirmEmail(e.target.value)}
+              error={!!deleteError}
+              helperText={deleteError}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                },
+              }}
+            />
+          </Box>
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
           <Button
@@ -1396,9 +1661,8 @@ function AccountPage() {
                 backgroundColor: 'error.dark',
               }
             }}
-            startIcon={<DeleteIcon />}
           >
-            Delete Account Permanently
+            Delete Account
           </Button>
         </DialogActions>
       </Dialog>
