@@ -36,6 +36,7 @@ import toothpasteImg from "../../assets/hygienelevel2/toothpaste.png"
 import toothbrushWithPasteImg from "../../assets/hygienelevel2/with_paste.png"
 import waterCupImg from "../../assets/hygienelevel2/water.png"
 import containerImg from "../../assets/hygienelevel2/cup.png"
+import bubbleImg from "../../assets/hygienelevel2/bubble.png" // Added bubble image
 
 import characterCatDefault from "../../assets/hygienelevel3/cat.png"
 import characterCatExcited from "../../assets/hygienelevel3/cat_excited.png"
@@ -66,6 +67,7 @@ const AssetLoader = ({ onComplete }) => {
     const imageAssets = [
       Bg, bathroomBg, teethImg, afterTeethImg, blob1Img, blob2Img,
       toothbrushImg, toothpasteImg, toothbrushWithPasteImg, waterCupImg, containerImg,
+      bubbleImg, // Added bubble image to preload
       characterCatDefault, characterCatExcited, characterCatCurious, 
       characterCatHelpful, characterCatProud, characterCatWorried,
       require("../../assets/hygienelevel3/resetbtn.png"),
@@ -787,6 +789,7 @@ export default function PersonalHygieneLevel2() {
   
   const [blobs, setBlobs] = useState([]);
   const [blobsRemoved, setBlobsRemoved] = useState(0);
+  const [bubbles, setBubbles] = useState([]); // Added bubbles state
 
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
   const [isOverToothbrush, setIsOverToothbrush] = useState(false);
@@ -938,6 +941,63 @@ export default function PersonalHygieneLevel2() {
 
     return () => clearInterval(cleanup);
   }, [gamePhase, gameStep]);
+
+  // Clean bubbles
+  useEffect(() => {
+    const cleanupBubbles = setInterval(() => {
+      if (gamePhase === 'brushSequence' && gameStep === 2) {
+        const now = Date.now();
+        setBubbles(prev => prev.filter(bubble => now - bubble.createdAt < 3000));
+      }
+    }, 1000);
+
+    return () => clearInterval(cleanupBubbles);
+  }, [gamePhase, gameStep]);
+
+  // Animate bubbles
+  useEffect(() => {
+    let animationFrameId;
+    
+    const animateBubbles = () => {
+      setBubbles(prevBubbles => {
+        return prevBubbles.map(bubble => {
+          // Calculate age of bubble
+          const age = Date.now() - bubble.createdAt;
+          const lifetime = 3000; // 3 seconds
+          
+          // Update bubble position (float upward)
+          const newY = bubble.y - bubble.speed;
+          const newX = bubble.x + bubble.drift;
+          
+          // Calculate opacity based on age
+          const newOpacity = Math.max(0, bubble.opacity * (1 - age / lifetime));
+          
+          return {
+            ...bubble,
+            x: newX,
+            y: newY,
+            opacity: newOpacity
+          };
+        }).filter(bubble => {
+          // Remove bubbles that are too old or have floated away
+          const age = Date.now() - bubble.createdAt;
+          return age < 3000 && bubble.y > -10 && bubble.opacity > 0.1;
+        });
+      });
+      
+      animationFrameId = requestAnimationFrame(animateBubbles);
+    };
+    
+    if (gamePhase === 'brushSequence' && gameStep === 2 && bubbles.length > 0) {
+      animationFrameId = requestAnimationFrame(animateBubbles);
+    }
+    
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [gamePhase, gameStep, bubbles.length]);
 
   // Fetch user progress
   useEffect(() => {
@@ -1198,6 +1258,31 @@ export default function PersonalHygieneLevel2() {
     }
   };
 
+  // Create bubbles function
+  const createBubbles = (x, y, count = 3) => {
+    const newBubbles = [];
+    for (let i = 0; i < count; i++) {
+      // Create bubbles mostly in the center area
+      const centerX = 50; // Center of teeth
+      const centerY = 50;
+      const offsetX = (Math.random() - 0.5) * 40; // Mostly within center 40% area
+      const offsetY = (Math.random() - 0.5) * 40;
+      
+      newBubbles.push({
+        id: Date.now() + Math.random(),
+        x: centerX + offsetX, // Center bubbles around teeth center
+        y: centerY + offsetY,
+        size: Math.random() * 20 + 15, // Bubble size (15-35px)
+        opacity: 0.7 + Math.random() * 0.3, // 0.7-1.0 opacity
+        speed: Math.random() * 1.5 + 0.5, // Rising speed
+        drift: (Math.random() - 0.5) * 0.8, // Horizontal drift
+        createdAt: Date.now(),
+        scale: 0.8 + Math.random() * 0.4 // Random scale variation
+      });
+    }
+    setBubbles(prev => [...prev, ...newBubbles]);
+  };
+
   const handleCharacterIntroductionComplete = () => {
     // Stop purrnando audio when introduction is complete
     stopPurrnandoAudio();
@@ -1376,21 +1461,28 @@ export default function PersonalHygieneLevel2() {
         const relativeX = ((e.clientX - containerRect.left) / containerRect.width) * 100;
         const relativeY = ((e.clientY - containerRect.top) / containerRect.height) * 100;
 
-        if (relativeX >= 10 && relativeX <= 90 && relativeY >= 15 && relativeY <= 85) {
+        if (relativeX >= 5 && relativeX <= 95 && relativeY >= 10 && relativeY <= 90) {
           addScratchMark(relativeX, relativeY);
           checkBlobCollision(relativeX, relativeY);
+          
+          // Create bubbles during brushing (step 2)
+          if (gameStep === 2 && toothpasteApplied && Math.random() > 0.7) {
+            createBubbles(relativeX, relativeY, Math.floor(Math.random() * 2) + 1);
+          }
         }
       }
       
-      // Check if score reaches 60% and automatically complete to 100%
-      if (score >= 60 && gameStep === 2 && !step2Completed) {
-        setScore(100);
+      // Check if score reaches 95% and automatically complete step 2
+      if (score >= 95 && gameStep === 2 && !step2Completed) {
         setStep2Completed(true);
         setGameStep(3);
         setWaterCupVisible(true);
         setIsDragging(false);
         setDraggedItem(null);
         playSoundEffect('success');
+        
+        // Stop step 2 audio when moving to step 3
+        stopStepAudio(2);
       }
     }
   };
@@ -1412,7 +1504,7 @@ export default function PersonalHygieneLevel2() {
       setToothpasteApplied(true);
       setPasteSliding(false);
       setGameStep(2);
-      setScore(20);
+      setScore(0); // Start from 0 in step 2
       
       createSparkles();
       
@@ -1448,6 +1540,15 @@ export default function PersonalHygieneLevel2() {
     setIsDragging(true);
     setDraggedItem('toothbrush');
     setToothbrushPosition({ x: e.clientX, y: e.clientY });
+    
+    // Create initial bubbles when starting to brush
+    const teethContainer = teethContainerRef.current;
+    if (teethContainer) {
+      const containerRect = teethContainer.getBoundingClientRect();
+      const relativeX = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+      const relativeY = ((e.clientY - containerRect.top) / containerRect.height) * 100;
+      createBubbles(relativeX, relativeY, 5);
+    }
   };
 
   const handleWaterCupDrag = (e) => {
@@ -1502,10 +1603,14 @@ export default function PersonalHygieneLevel2() {
           Math.pow(brushX - blob.x, 2) + Math.pow(brushY - blob.y, 2)
         );
         
-        const collisionThreshold = Math.max(20, blob.size / 4);
+        const collisionThreshold = Math.max(25, blob.size / 3); // Increased collision area
         
         if (distance < collisionThreshold) {
           playSoundEffect('correct');
+          
+          // Create bubbles when blob is removed
+          createBubbles(blob.x, blob.y, 3);
+          
           return { ...blob, removed: true };
         }
         return blob;
@@ -1525,44 +1630,61 @@ export default function PersonalHygieneLevel2() {
       id: Date.now() + Math.random(),
       x: x,
       y: y,
-      size: Math.random() * 40 + 30,
+      size: Math.random() * 50 + 40, // Increased brush size from 30-70 to 40-90
       timestamp: Date.now()
     };
     
     setScratchMarks(prev => [...prev, newMark]);
     
+    // Expanded bounds for larger brushing area
     const teethBounds = {
-      minX: 15, maxX: 85,
-      minY: 20, maxY: 80  
+      minX: 10, maxX: 90, // Was: minX: 15, maxX: 85
+      minY: 15, maxY: 85  // Was: minY: 20, maxY: 80
     };
     
     if (x >= teethBounds.minX && x <= teethBounds.maxX && 
         y >= teethBounds.minY && y <= teethBounds.maxY) {
       
-      const gridSize = 8;
+      const gridSize = 12; // Increased from 8 for faster coverage
       const gridX = Math.floor((x - teethBounds.minX) / gridSize);
       const gridY = Math.floor((y - teethBounds.minY) / gridSize);
-      const cellKey = `${gridX}-${gridY}`;
+      
+      // Add multiple cells around the brush for larger coverage
+      const cellsToAdd = [];
+      
+      // Add cells in a 3x3 area around the brush (bigger brush path)
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+          const cellX = gridX + dx;
+          const cellY = gridY + dy;
+          if (cellX >= 0 && cellY >= 0) {
+            cellsToAdd.push(`${cellX}-${cellY}`);
+          }
+        }
+      }
       
       setTeethCoverage(prev => {
         const newCoverage = new Set(prev);
-        newCoverage.add(cellKey);
+        
+        // Add all cells in the brush area
+        cellsToAdd.forEach(cellKey => {
+          newCoverage.add(cellKey);
+        });
         
         const totalCellsX = Math.ceil((teethBounds.maxX - teethBounds.minX) / gridSize);
         const totalCellsY = Math.ceil((teethBounds.maxY - teethBounds.minY) / gridSize);
         const totalCells = totalCellsX * totalCellsY;
         
-        const coveragePercent = (newCoverage.size / totalCells) * 60;
-        const blobBonus = (blobsRemoved / 5) * 15;
-        let totalScore = 20 + coveragePercent + blobBonus;
+        // Calculate coverage percentage (increased from 85% to 90%)
+        const coveragePercent = (newCoverage.size / totalCells) * 90;
         
-        // Cap the score at 60% if not already completed
-        if (!step2Completed && totalScore >= 60) {
-          totalScore = 60;
-        }
+        // Calculate blob bonus (decreased from 15% to 10% since brushing is faster)
+        const blobBonus = (blobsRemoved / blobs.length) * 10;
+        
+        let totalScore = Math.min(100, coveragePercent + blobBonus);
         
         setScratchedPercentage(coveragePercent + blobBonus);
-        setScore(Math.min(100, totalScore));
+        setScore(totalScore);
         
         return newCoverage;
       });
@@ -1719,6 +1841,7 @@ export default function PersonalHygieneLevel2() {
     
     setBlobs([]);
     setBlobsRemoved(0);
+    setBubbles([]); // Clear bubbles
     
     setShowCharacterIntroduction(false);
     setShowToolIntroduction(false);
@@ -1961,6 +2084,35 @@ export default function PersonalHygieneLevel2() {
             {dropFeedback}
           </Box>
         )}
+
+        {/* Render bubbles */}
+        {gameStep === 2 && bubbles.map(bubble => (
+          <Box
+            key={bubble.id}
+            sx={{
+              position: 'absolute',
+              left: `${bubble.x}%`,
+              top: `${bubble.y}%`,
+              transform: 'translate(-50%, -50%)',
+              zIndex: 998,
+              pointerEvents: 'none',
+              opacity: bubble.opacity,
+              transition: 'opacity 0.3s ease',
+              filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.5))'
+            }}
+          >
+            <img 
+              src={bubbleImg} 
+              alt="Bubble" 
+              style={{
+                width: `${bubble.size}px`,
+                height: `${bubble.size}px`,
+                objectFit: 'contain',
+                transform: `scale(${bubble.scale})`
+              }}
+            />
+          </Box>
+        ))}
 
         <Box sx={{
           position: 'fixed',
