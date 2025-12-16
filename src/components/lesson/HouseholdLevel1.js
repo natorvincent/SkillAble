@@ -11,6 +11,7 @@ import {
   IconButton
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
+import StarIcon from '@mui/icons-material/Star';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
 // Import all images
@@ -261,6 +262,32 @@ const BubbleBurstEffect = ({ position }) => {
   );
 };
 
+// Helper function to get student ID
+const getStudentId = () => {
+  try {
+    const studentId = localStorage.getItem('studentId');
+    
+    console.log('Retrieving student ID:', { studentId });
+    
+    if (!studentId || studentId === 'null' || studentId === 'undefined') {
+      console.warn('No student ID found in localStorage');
+      return null;
+    }
+    
+    const parsedId = parseInt(studentId, 10);
+    if (isNaN(parsedId)) {
+      console.warn('Invalid student ID format:', studentId);
+      return null;
+    }
+    
+    console.log('Successfully retrieved student ID:', parsedId);
+    return parsedId;
+  } catch (error) {
+    console.error('Error retrieving student ID:', error);
+    return null;
+  }
+};
+
 const HouseholdLevel1 = () => {
   const navigate = useNavigate();
   const { lessonId } = useParams();
@@ -409,6 +436,18 @@ const HouseholdLevel1 = () => {
     }
   }, [currentItemIndex, gameWon, showHint, isTablet]);
 
+  // Add this useEffect for auto-saving progress when game is won
+  useEffect(() => {
+    const saveProgressOnComplete = async () => {
+      if (gameWon && !progressSaved && !progressSaving) {
+        console.log('Game completed, auto-saving progress...');
+        await handleSaveProgress();
+      }
+    };
+    
+    saveProgressOnComplete();
+  }, [gameWon, progressSaved, progressSaving]);
+
   // Background music setup
   useEffect(() => {
     if (!backgroundAudioRef.current) {
@@ -499,39 +538,55 @@ const HouseholdLevel1 = () => {
   };
 
   // Progress saving
+  // Replace the existing handleSaveProgress function with:
   const handleSaveProgress = async () => {
     if (!lessonId) return;
     
     setProgressSaving(true);
-    setProgressSaved(false);
     
     try {
+      const studentId = getStudentId();
+      const lessonIdNum = parseInt(lessonId, 10);
       const score = calculateScore();
       
-      const savedProgress = await saveStudentLessonProgress({
-        moduleId: 'household',
-        lessonId: lessonId || 'level1',
-        progress: 100,
-        score: score,
-        completed: true,
-        lastPlayed: new Date().toISOString()
-      });
+      console.log('Saving progress with:', { studentId, lessonId: lessonIdNum, score });
       
-      await updateModuleProgress('household', lessonId || 'level1');
+      if (!studentId || !lessonIdNum) {
+        throw new Error(`Missing IDs: studentId=${studentId}, lessonId=${lessonIdNum}`);
+      }
       
-      setProgressSaving(false);
-      setProgressSaved(true);
+      // Use the progress service function
+      const result = await saveStudentLessonProgress(
+        studentId,
+        lessonIdNum,
+        {
+          score: score,
+          maxScore: 100,
+          completed: true,
+          starsEarned: getStarRating(score)
+        }
+      );
       
-      console.log('Progress saved successfully:', savedProgress);
+      console.log('Progress save result:', result);
+      
+      if (result.success || result.queued) {
+        setProgressSaved(true);
+        console.log('Progress saved or queued successfully');
+      } else {
+        throw new Error('Progress save failed');
+      }
       
     } catch (error) {
-      console.error('Error saving progress:', error);
+      console.error('Save error:', error);
+      setProgressSaved(false);
+    } finally {
       setProgressSaving(false);
     }
   };
 
   const calculateScore = () => {
-    return Math.round((correctItems / clothingItems.length) * 100);
+    const percentage = (correctItems / clothingItems.length) * 100;
+    return Math.round(percentage);
   };
 
   const generateConfetti = () => {
@@ -566,10 +621,20 @@ const HouseholdLevel1 = () => {
     }, 300);
   };
 
-  const handleNextLevel = () => {
+  const getStarRating = (score) => {
+    if (score >= 90) return 3;
+    if (score >= 70) return 2;
+    if (score >= 50) return 1;
+    return 0;
+  };
+
+  // Update handleNextLevel to ensure progress is saved
+  const handleNextLevel = async () => {
     try {
-      saveStudentLessonProgress('household', 'level2', 100);
-      updateModuleProgress('household', 'level2');
+      // Ensure progress is saved before navigating
+      if (!progressSaved && !progressSaving) {
+        await handleSaveProgress();
+      }
       
       if (lessonId) {
         navigate(`/lesson/household-chores/level-2/${lessonId}`);
@@ -667,12 +732,14 @@ const handleStartGame = () => {
     setDraggedItem(null);
   };
 
+  // Update resetGame function to reset progress states
   const resetGame = () => {
     setCurrentItemIndex(0);
     setCorrectItems(0);
     setGameWon(false);
     setAvatar('wonder');
     setProgressSaved(false);
+    setProgressSaving(false);
     setStarAnimationStage(0);
     setConfettiPieces([]);
   };
@@ -681,7 +748,11 @@ const handleStartGame = () => {
     navigate('/studentdashboard');
   };
 
-  const handleContinue = () => {
+  // Update handleContinue to ensure progress is saved
+  const handleContinue = async () => {
+    if (!progressSaved && !progressSaving) {
+      await handleSaveProgress();
+    }
     navigate('/studentdashboard');
   };
 
@@ -1092,280 +1163,330 @@ const handleStartGame = () => {
       </AnimatePresence>
 
       {/* Success Dialog */}
-      <Dialog
-        open={gameWon}
-        fullScreen
-        PaperProps={{
-          sx: { 
-            background: 'linear-gradient(135deg, rgba(255, 202, 58, 0.95) 0%, rgba(230, 184, 0, 0.95) 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexDirection: 'column'
+      // Success Dialog
+<Dialog
+  open={gameWon}
+  fullScreen
+  PaperProps={{
+    sx: { 
+      background: 'linear-gradient(135deg, rgba(255, 202, 58, 0.95) 0%, rgba(230, 184, 0, 0.95) 100%)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexDirection: 'column'
+    }
+  }}
+  onEnter={() => {
+    generateConfetti();
+    animateStars();
+    handleSaveProgress();
+  }}
+>
+  {/* Confetti Effect */}
+  <Box sx={{
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    pointerEvents: 'none',
+    zIndex: 1000,
+    overflow: 'hidden'
+  }}>
+    {confettiPieces.map(piece => (
+      <Box
+        key={piece.id}
+        sx={{
+          position: 'absolute',
+          left: `${piece.x}%`,
+          top: `${piece.y}%`,
+          width: `${piece.width}px`,
+          height: `${piece.height}px`,
+          backgroundColor: piece.color,
+          transform: `rotate(${piece.rotation}deg)`,
+          boxShadow: `0 0 10px ${piece.color}`,
+          animation: `confettiFall 4s linear infinite`,
+          animationDelay: `${Math.random() * 3}s`,
+          '@keyframes confettiFall': {
+            '0%': {
+              transform: `translateY(-100vh) rotate(${piece.rotation}deg) scale(0.8)`,
+              opacity: 1
+            },
+            '10%': {
+              opacity: 1,
+              transform: `translateY(-90vh) rotate(${piece.rotation + 36}deg) scale(1)`
+            },
+            '90%': {
+              opacity: 0.8,
+              transform: `translateY(90vh) translateX(${piece.drift * 60}px) rotate(${piece.rotation + 324}deg) scale(0.6)`
+            },
+            '100%': {
+              transform: `translateY(100vh) translateX(${piece.drift * 70}px) rotate(${piece.rotation + 360}deg) scale(0)`,
+              opacity: 0
+            }
           }
         }}
-        onEnter={() => {
-          generateConfetti();
-          animateStars();
-          handleSaveProgress();
+      />
+    ))}
+  </Box>
+  
+  <Box sx={{
+    textAlign: 'center',
+    color: 'white',
+    zIndex: 1001,
+    px: isTablet ? 2 : 4,
+    py: isTablet ? 4 : 6
+  }}>
+    {/* Trophy Icon - Updated to match reference */}
+    <Box sx={{ 
+      mb: 4,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
+    }}>
+      <Box
+        sx={{
+          width: isTablet ? '120px' : '150px',
+          height: isTablet ? '120px' : '150px',
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 10px 30px rgba(255, 215, 0, 0.5)',
+          border: '5px solid white',
+          animation: 'trophyGlow 2s ease-in-out infinite',
+          '@keyframes trophyGlow': {
+            '0%, 100%': { 
+              transform: 'scale(1)',
+              boxShadow: '0 10px 30px rgba(255, 215, 0, 0.5)'
+            },
+            '50%': { 
+              transform: 'scale(1.05)',
+              boxShadow: '0 15px 40px rgba(255, 215, 0, 0.8)'
+            }
+          }
         }}
       >
-        {/* Confetti Effect */}
-        <Box sx={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          pointerEvents: 'none',
-          zIndex: 1000,
-          overflow: 'hidden'
-        }}>
-          {confettiPieces.map(piece => (
-            <Box
-              key={piece.id}
-              sx={{
-                position: 'absolute',
-                left: `${piece.x}%`,
-                top: `${piece.y}%`,
-                width: `${piece.width}px`,
-                height: `${piece.height}px`,
-                backgroundColor: piece.color,
-                transform: `rotate(${piece.rotation}deg)`,
-                boxShadow: `0 0 10px ${piece.color}`,
-                animation: `confettiFall 4s linear infinite`,
-                animationDelay: `${Math.random() * 3}s`,
-                '@keyframes confettiFall': {
-                  '0%': {
-                    transform: `translateY(-100vh) rotate(${piece.rotation}deg) scale(0.8)`,
-                    opacity: 1
-                  },
-                  '10%': {
-                    opacity: 1,
-                    transform: `translateY(-90vh) rotate(${piece.rotation + 36}deg) scale(1)`
-                  },
-                  '90%': {
-                    opacity: 0.8,
-                    transform: `translateY(90vh) translateX(${piece.drift * 60}px) rotate(${piece.rotation + 324}deg) scale(0.6)`
-                  },
-                  '100%': {
-                    transform: `translateY(100vh) translateX(${piece.drift * 70}px) rotate(${piece.rotation + 360}deg) scale(0)`,
-                    opacity: 0
-                  }
-                }
-              }}
-            />
-          ))}
-        </Box>
-        
-        <Box sx={{
-          textAlign: 'center',
-          color: 'white',
-          zIndex: 1001
-        }}>
-          <Box sx={{ 
-            fontSize: isTablet ? 100 : 150,
-            color: 'white',
-            mb: 4
-          }}>
-            🏆
-          </Box>
-          
-          <Typography variant="h1" sx={{ 
+        <Typography 
+          sx={{ 
+            fontSize: isTablet ? '60px' : '80px',
             fontWeight: 'bold',
             color: 'white',
-            fontFamily: 'Poppins, sans-serif',
-            fontSize: isTablet ? '2rem' : '3rem',
-            textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
-            mb: 2
-          }}>
-            Perfectly Sorted Laundry!
-          </Typography>
-          
-          <Chip 
-            label="Laundry Sorting Level Completed!"
-            sx={{
-              backgroundColor: 'rgba(255, 255, 255, 0.3)',
-              color: 'white',
-              fontWeight: 'bold',
-              fontSize: isTablet ? '1rem' : '1.1rem',
-              fontFamily: 'Poppins, sans-serif',
-              mb: 4,
-              px: isTablet ? 2 : 3,
-              py: 1
-            }}
-          />
-          
-          {/* Star Rating */}
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
-            {[...Array(3)].map((_, i) => {
-              const shouldAnimate = i < starAnimationStage;
-              
-              return (
-                <Box 
-                  key={i}
-                  sx={{ 
-                    color: 'white',
-                    fontSize: isTablet ? 60 : 80,
-                    mx: 1,
-                    textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-                    animation: shouldAnimate ? `starPop 0.6s ease-out ${i * 0.2}s both` : 'none',
-                    '@keyframes starPop': {
-                      '0%': {
-                        transform: 'scale(0)',
-                        opacity: 0
-                      },
-                      '50%': {
-                        transform: 'scale(1.5)',
-                        opacity: 1
-                      },
-                      '100%': {
-                        transform: 'scale(1)',
-                        opacity: 1
+            textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+          }}
+        >
+          🏆
+        </Typography>
+      </Box>
+    </Box>
+    
+    <Typography variant="h1" sx={{ 
+      fontWeight: 'bold',
+      color: 'white',
+      fontFamily: 'Poppins, sans-serif',
+      fontSize: isTablet ? '2rem' : '3rem',
+      textShadow: '3px 3px 6px rgba(0,0,0,0.5)',
+      mb: 2
+    }}>
+      Perfectly Sorted Laundry!
+    </Typography>
+    
+
+    
+    {/* Star Rating */}
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+              {[...Array(3)].map((_, i) => {
+                const isActive = i < getStarRating();
+                const shouldAnimate = i < starAnimationStage;
+                
+                return (
+                  <StarIcon 
+                    key={i} 
+                    sx={{ 
+                      color: isActive ? 'white' : 'rgba(255,255,255,0.3)',
+                      fontSize: 80,
+                      mx: 1,
+                      textShadow: isActive ? '2px 2px 4px rgba(0,0,0,0.3)' : 'none',
+                      transform: shouldAnimate ? 'scale(1.3)' : 'scale(1)',
+                      transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                      animation: shouldAnimate ? 'starPop 0.6s ease-out' : 'none',
+                      '@keyframes starPop': {
+                        '0%': {
+                          transform: 'scale(0)',
+                          opacity: 0
+                        },
+                        '50%': {
+                          transform: 'scale(1.5)',
+                          opacity: 1
+                        },
+                        '100%': {
+                          transform: 'scale(1)',
+                          opacity: 1
+                        }
                       }
-                    }
-                  }}
-                >
-                  ⭐
-                </Box>
-              );
-            })}
-          </Box>
-          
-          {/* Progress Saving Indicators */}
-          {progressSaving && (
-            <Box sx={{ 
-              mb: 4, 
-              p: 3, 
-              backgroundColor: 'rgba(25, 130, 196, 0.8)', 
-              borderRadius: '15px',
-              color: 'white'
-            }}>
-              <Box sx={{ 
-                mr: 2, 
-                width: 30, 
-                height: 30, 
-                borderRadius: '50%',
-                border: '3px solid rgba(255,255,255,0.3)',
-                borderTop: '3px solid white',
-                animation: 'spin 1s linear infinite',
-                display: 'inline-block',
-                '@keyframes spin': {
-                  '0%': { transform: 'rotate(0deg)' },
-                  '100%': { transform: 'rotate(360deg)' }
-                }
-              }} />
-              <Typography variant="h5" sx={{ fontFamily: 'Poppins, sans-serif', display: 'inline' }}>
-                Saving your progress...
-              </Typography>
+                    }} 
+                  />
+                );
+              })}
             </Box>
-          )}
-          
-          {progressSaved && (
-            <Box sx={{ 
-              mb: 4, 
-              p: 3, 
-              backgroundColor: 'rgba(144, 190, 109, 0.8)', 
-              borderRadius: '15px',
-              color: 'white'
-            }}>
-              <Box sx={{ mr: 2, fontSize: 30, verticalAlign: 'middle', display: 'inline-flex' }}>
-                ✓
-              </Box>
-              <Typography variant="h6" sx={{ fontFamily: 'Poppins, sans-serif', display: 'inline' }}>
-                Progress saved successfully!
-              </Typography>
-            </Box>
-          )}
-          
-          <Typography variant="h6" sx={{ 
-            color: 'white',
-            fontFamily: 'Inter, sans-serif',
-            lineHeight: 1.6,
-            mb: 6,
-            maxWidth: isTablet ? '90%' : '800px',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-            fontSize: isTablet ? '1rem' : '1.25rem'
-          }}>
-            Excellent work! You've successfully sorted all the clothes into the correct washing machines - whites and colors separated perfectly!
+    
+    {/* Progress Saving Status */}
+    <Box sx={{ mb: 4 }}>
+      {progressSaving && (
+        <Box sx={{ 
+          mb: 2, 
+          p: 2, 
+          backgroundColor: 'rgba(25, 130, 196, 0.8)', 
+          borderRadius: '15px',
+          color: 'white',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 2
+        }}>
+          <Box sx={{ 
+            width: 20, 
+            height: 20, 
+            borderRadius: '50%',
+            border: '3px solid rgba(255,255,255,0.3)',
+            borderTop: '3px solid white',
+            animation: 'spin 1s linear infinite',
+            display: 'inline-block',
+            '@keyframes spin': {
+              '0%': { transform: 'rotate(0deg)' },
+              '100%': { transform: 'rotate(360deg)' }
+            }
+          }} />
+          <Typography variant="h6" sx={{ fontFamily: 'Poppins, sans-serif' }}>
+            Saving your progress...
           </Typography>
-          
-          <Box sx={{ display: 'flex', gap: 3, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Button 
-              onClick={() => {
-                resetGame();
-              }} 
-              variant="outlined"
-              sx={{ 
-                borderColor: 'white',
-                color: 'white',
-                px: isTablet ? 3 : 4,
-                py: isTablet ? 1.5 : 2,
-                borderRadius: '25px',
-                fontFamily: 'Poppins, sans-serif',
-                fontWeight: '600',
-                fontSize: isTablet ? '1rem' : '1.2rem',
-                borderWidth: '2px',
-                textTransform: 'none',
-                '&:hover': {
-                  borderColor: 'white',
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  borderWidth: '2px'
-                }
-              }}
-            >
-              Sort Again
-            </Button>
-            
-            <Button 
-              variant="contained"
-              onClick={handleContinue}
-              disabled={progressSaving}
-              sx={{ 
-                background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
-                color: 'white',
-                px: isTablet ? 4 : 6,
-                py: isTablet ? 1.5 : 2,
-                borderRadius: '25px',
-                fontFamily: 'Poppins, sans-serif',
-                fontWeight: '700',
-                fontSize: isTablet ? '1rem' : '1.2rem',
-                textTransform: 'none',
-                boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
-                '&:hover': { 
-                  background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
-                  transform: 'translateY(-2px)'
-                }
-              }}
-            >
-              {progressSaving ? 'Saving...' : 'Continue'}
-            </Button>
-            
-            <Button 
-              variant="contained"
-              onClick={handleNextLevel}
-              sx={{ 
-                background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)',
-                color: 'white',
-                px: isTablet ? 4 : 6,
-                py: isTablet ? 1.5 : 2,
-                borderRadius: '25px',
-                fontFamily: 'Poppins, sans-serif',
-                fontWeight: '700',
-                fontSize: isTablet ? '1rem' : '1.2rem',
-                textTransform: 'none',
-                boxShadow: '0 10px 25px rgba(33, 150, 243, 0.5)',
-                '&:hover': { 
-                  background: 'linear-gradient(135deg, #42A5F5 0%, #2196F3 100%)',
-                  transform: 'translateY(-2px)'
-                }
-              }}
-            >
-              Next Level
-            </Button>
-          </Box>
         </Box>
-      </Dialog>
+      )}
+
+      {progressSaved && (
+        <Box sx={{ 
+          mb: 2,
+          p: 2, 
+          backgroundColor: 'rgba(144, 190, 109, 0.8)', 
+          borderRadius: '15px',
+          color: 'white',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 2
+        }}>
+          <Box sx={{ fontSize: 24, display: 'flex', alignItems: 'center' }}>
+            ✓
+          </Box>
+          <Typography variant="h6" sx={{ fontFamily: 'Poppins, sans-serif' }}>
+            Progress saved successfully!
+          </Typography>
+        </Box>
+      )}
+    </Box>
+    
+    
+    {/* THREE BUTTONS - Updated to match reference */}
+    <Box sx={{ 
+      display: 'flex', 
+      gap: 3, 
+      justifyContent: 'center', 
+      flexWrap: 'wrap',
+      maxWidth: '800px',
+      mx: 'auto'
+    }}>
+      {/* Sort Again Button */}
+      <Button 
+        onClick={() => {
+          resetGame();
+          setGameWon(false);
+        }} 
+        variant="contained"
+        sx={{ 
+          background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
+          color: 'white',
+          px: isTablet ? 4 : 6,
+          py: isTablet ? 1.5 : 2,
+          borderRadius: '25px',
+          fontFamily: 'Poppins, sans-serif',
+          fontWeight: '700',
+          fontSize: isTablet ? '1rem' : '1.2rem',
+          textTransform: 'none',
+          boxShadow: '0 10px 25px rgba(255, 89, 94, 0.5)',
+          border: '2px solid rgba(255, 255, 255, 0.3)',
+          minWidth: isTablet ? '180px' : '200px',
+          '&:hover': { 
+            background: 'linear-gradient(135deg, #FF7B7E 0%, #FF595E 100%)',
+            transform: 'translateY(-2px)',
+            boxShadow: '0 12px 30px rgba(255, 89, 94, 0.7)'
+          },
+          '&:disabled': {
+            opacity: 0.7
+          }
+        }}
+      >
+        Sort Again
+      </Button>
+      
+      {/* Go Home Button */}
+      <Button 
+        variant="contained"
+        onClick={handleGoHome}
+        sx={{ 
+          background: 'linear-gradient(135deg, #1982C4 0%, #1568A0 100%)',
+          color: 'white',
+          px: isTablet ? 4 : 6,
+          py: isTablet ? 1.5 : 2,
+          borderRadius: '25px',
+          fontFamily: 'Poppins, sans-serif',
+          fontWeight: '700',
+          fontSize: isTablet ? '1rem' : '1.2rem',
+          textTransform: 'none',
+          boxShadow: '0 10px 25px rgba(25, 130, 196, 0.5)',
+          border: '2px solid rgba(255, 255, 255, 0.3)',
+          minWidth: isTablet ? '180px' : '200px',
+          '&:hover': { 
+            background: 'linear-gradient(135deg, #42A5F5 0%, #1982C4 100%)',
+            transform: 'translateY(-2px)',
+            boxShadow: '0 12px 30px rgba(25, 130, 196, 0.7)'
+          },
+          '&:disabled': {
+            opacity: 0.7
+          }
+        }}
+      >
+        Go Home
+      </Button>
+      
+      {/* Next Level Button */}
+      <Button 
+        variant="contained"
+        onClick={handleNextLevel}
+        disabled={progressSaving}
+        sx={{ 
+          background: 'linear-gradient(135deg, #90BE6D 0%, #7BA05B 100%)',
+          color: 'white',
+          px: isTablet ? 4 : 6,
+          py: isTablet ? 1.5 : 2,
+          borderRadius: '25px',
+          fontFamily: 'Poppins, sans-serif',
+          fontWeight: '700',
+          fontSize: isTablet ? '1rem' : '1.2rem',
+          textTransform: 'none',
+          boxShadow: '0 10px 25px rgba(144, 190, 109, 0.5)',
+          border: '2px solid rgba(255, 255, 255, 0.3)',
+          minWidth: isTablet ? '180px' : '200px',
+          '&:hover': { 
+            background: 'linear-gradient(135deg, #A8D08D 0%, #90BE6D 100%)',
+            transform: 'translateY(-2px)',
+            boxShadow: '0 12px 30px rgba(144, 190, 109, 0.7)'
+          }
+        }}
+      >
+        {progressSaving ? 'Saving...' : 'Next Level'}
+      </Button>
+    </Box>
+  </Box>
+</Dialog>
 
       {/* PROPER LAYERING ORDER */}
 

@@ -201,6 +201,8 @@ const HouseholdLevel2 = () => {
   const [taskStars, setTaskStars] = useState([]);
   const [draggingPosition, setDraggingPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [progressSaving, setProgressSaving] = useState(false);
+  const [progressSaved, setProgressSaved] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   
   // Track completed task sounds
@@ -505,6 +507,73 @@ const HouseholdLevel2 = () => {
     }
   }, [stepProgress, currentStep]);
 
+  // Progress saving function
+  const handleSaveProgress = async () => {
+    if (!lessonId) return;
+    
+    try {
+      setProgressSaving(true);
+      const studentId = getStudentId();
+      const lessonIdNum = parseInt(lessonId, 10);
+      
+      console.log('Saving progress with:', { studentId, lessonId: lessonIdNum, score });
+      
+      if (!studentId || !lessonIdNum) {
+        throw new Error(`Missing IDs: studentId=${studentId}, lessonId=${lessonIdNum}`);
+      }
+      
+      // Calculate final score (maximum 100 points)
+      const finalScore = Math.min(score, 100);
+      
+      // Use the progress service function
+      const result = await saveStudentLessonProgress(
+        studentId,
+        lessonIdNum,
+        {
+          score: finalScore,
+          maxScore: 100,
+          completed: true,
+          starsEarned: getStarRating(finalScore)
+        }
+      );
+      
+      console.log('Progress save result:', result);
+      
+      if (result.success || result.queued) {
+        setProgressSaved(true);
+        console.log('Progress saved or queued successfully');
+      } else {
+        throw new Error('Progress save failed');
+      }
+      
+    } catch (error) {
+      console.error('Save error:', error);
+      setProgressSaved(false);
+    } finally {
+      setProgressSaving(false);
+    }
+  };
+
+  // Helper function to get star rating
+  const getStarRating = (score) => {
+    if (score >= 90) return 3;
+    if (score >= 70) return 2;
+    if (score >= 50) return 1;
+    return 0;
+  };
+
+  // Add this useEffect for auto-saving progress when game is completed
+  useEffect(() => {
+    const saveProgressOnComplete = async () => {
+      if (gameCompleted && !progressSaved && !progressSaving) {
+        console.log('Game completed, auto-saving progress...');
+        await handleSaveProgress();
+      }
+    };
+    
+    saveProgressOnComplete();
+  }, [gameCompleted, progressSaved, progressSaving]);
+
   // Start with basin available
   useEffect(() => {
     setAvailableTools(prev => prev.map(tool => 
@@ -553,6 +622,32 @@ const HouseholdLevel2 = () => {
   const handleMouseMove = (e) => {
     if (isDragging && draggedItem) {
       updateDraggingPosition(e);
+    }
+  };
+
+  // Helper function to get student ID
+  const getStudentId = () => {
+    try {
+      const studentId = localStorage.getItem('studentId');
+      
+      console.log('Retrieving student ID:', { studentId });
+      
+      if (!studentId || studentId === 'null' || studentId === 'undefined') {
+        console.warn('No student ID found in localStorage');
+        return null;
+      }
+      
+      const parsedId = parseInt(studentId, 10);
+      if (isNaN(parsedId)) {
+        console.warn('Invalid student ID format:', studentId);
+        return null;
+      }
+      
+      console.log('Successfully retrieved student ID:', parsedId);
+      return parsedId;
+    } catch (error) {
+      console.error('Error retrieving student ID:', error);
+      return null;
     }
   };
 
@@ -853,6 +948,9 @@ const HouseholdLevel2 = () => {
     setCollectedTrash([]);
     setTaskStars([]);
     setShowDropZone(false);
+
+    setProgressSaving(false);
+    setProgressSaved(false);
     // Reset task sounds
     setTaskSoundsPlayed({
       laundry: false,
@@ -868,18 +966,11 @@ const HouseholdLevel2 = () => {
     window.location.href = '/studentdashboard';
   };
 
-  const handleNextLevel = () => {
+  const handleNextLevel = async () => {
     try {
-      try {
-        saveStudentLessonProgress('household', 'level3', 100);
-      } catch (error) {
-        console.log('Progress saving not available in demo');
-      }
-      
-      try {
-        updateModuleProgress('household', 'level3');
-      } catch (error) {
-        console.log('Module progress update not available in demo');
+      // Ensure progress is saved before navigating
+      if (!progressSaved && !progressSaving) {
+        await handleSaveProgress();
       }
       
       if (lessonId) {
@@ -1838,6 +1929,48 @@ const HouseholdLevel2 = () => {
               }}
             />
             
+            {/* Progress Saving Status */}
+            {progressSaving && (
+              <Box sx={{ 
+                mb: 4, 
+                p: 3, 
+                backgroundColor: 'rgba(25, 130, 196, 0.8)', 
+                borderRadius: '15px',
+                color: 'white'
+              }}>
+                <Box sx={{ 
+                  mr: 2, 
+                  width: 30, 
+                  height: 30, 
+                  borderRadius: '50%',
+                  border: '3px solid rgba(255,255,255,0.3)',
+                  borderTop: '3px solid white',
+                  animation: 'spin 1s linear infinite',
+                  display: 'inline-block'
+                }} />
+                <Typography variant="h5" sx={{ fontFamily: 'Poppins, sans-serif', display: 'inline' }}>
+                  Saving your progress...
+                </Typography>
+              </Box>
+            )}
+            
+            {progressSaved && (
+              <Box sx={{ 
+                mb: 4, 
+                p: 3, 
+                backgroundColor: 'rgba(144, 190, 109, 0.8)', 
+                borderRadius: '15px',
+                color: 'white'
+              }}>
+                <Box sx={{ mr: 2, fontSize: 30, verticalAlign: 'middle', display: 'inline-flex' }}>
+                  ✓
+                </Box>
+                <Typography variant="h6" sx={{ fontFamily: 'Poppins, sans-serif', display: 'inline' }}>
+                  Progress saved successfully!
+                </Typography>
+              </Box>
+            )}
+            
             <Typography variant="h6" sx={{ 
               color: 'white',
               fontFamily: 'Inter, sans-serif',
@@ -1877,6 +2010,7 @@ const HouseholdLevel2 = () => {
               <Button 
                 variant="contained"
                 onClick={handleNextLevel}
+                disabled={progressSaving}
                 sx={{ 
                   background: 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)',
                   color: 'white',
@@ -1891,10 +2025,14 @@ const HouseholdLevel2 = () => {
                   '&:hover': { 
                     background: 'linear-gradient(135deg, #42A5F5 0%, #2196F3 100%)',
                     transform: 'translateY(-2px)'
+                  },
+                  '&.Mui-disabled': {
+                    background: 'linear-gradient(135deg, #90A4AE 0%, #78909C 100%)',
+                    color: 'rgba(255, 255, 255, 0.7)'
                   }
                 }}
               >
-                Next Level
+                {progressSaving ? 'Saving...' : 'Next Level'}
               </Button>
             </Box>
           </Box>  

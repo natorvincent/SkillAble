@@ -24,6 +24,7 @@ import {
   Switch,
   FormControlLabel
 } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import { useNavigate } from 'react-router-dom';
 import { useParams } from 'react-router-dom'; 
 import Navbar from '../Navbar';
@@ -57,6 +58,14 @@ import backgroundMusic from "../../assets/householdLevel3/background-music.mp3";
 import correctSound from "../../assets/householdLevel3/correct-sound.mp3";
 import incorrectSound from "../../assets/householdLevel3/incorrect-sound.mp3";
 import successSound from "../../assets/householdLevel3/drum-success-sound.mp3";
+import bloopSound from "../../assets/bloop.mp3";
+
+// Add this import at the top with other imports:
+import { 
+  getStudentLessonProgress, 
+  saveStudentLessonProgress,
+  updateModuleProgress
+} from '../../services/progressService';
 
 // Page constants
 const PAGES = {
@@ -79,9 +88,9 @@ const trashItems = [
     image: bananaPeel,
     category: CATEGORIES.BIODEGRADABLE,
     description: "Food waste that decomposes naturally",
-    voiceText: "Banana Peel. This is biodegradable because it's food waste that breaks down naturally and enriches the soil.",
-    explanation: "Banana peels are biodegradable because they're organic food waste that decomposes quickly and adds nutrients back to the soil.",
-    tip: "Think about whether this item comes from plants or animals - those usually go in the green bin!"
+    voiceText: "Correct! Banana Peel is biodegradable because it's food waste that breaks down naturally and enriches the soil.",
+    explanation: "Banana Peel is biodegradable because it's food waste that breaks down naturally and enriches the soil.",
+    tip: "Try Again! Think about whether this item can decompose naturally!"
   },
   {
     id: 2,
@@ -89,9 +98,9 @@ const trashItems = [
     image: candyWrapper,
     category: CATEGORIES.NON_BIODEGRADABLE,
     description: "Plastic packaging that doesn't decompose",
-    voiceText: "Candy Wrapper. This is non-biodegradable because it's made of plastic that doesn't break down and can harm the environment.",
-    explanation: "Candy wrappers are non-biodegradable because they're made of mixed plastics and foils that don't break down naturally and can harm wildlife.",
-    tip: "Most shiny, crinkly food wrappers can't be recycled and belong in the red bin."
+    voiceText: "Correct! Candy Wrapper is non-biodegradable because it's made of plastic that doesn't break down in the soil.",
+    explanation: "Candy Wrapper is non-biodegradable because it's made of plastic that doesn't break down in the soil.",
+    tip: "Try Again! Most shiny, crinkly food wrappers can't be recycled."
   },
   {
     id: 3,
@@ -99,9 +108,9 @@ const trashItems = [
     image: cardboard,
     category: CATEGORIES.RECYCLABLE,
     description: "Paper product that can be recycled",
-    voiceText: "Cardboard. This is recyclable because it can be processed into new paper products, saving trees and energy.",
-    explanation: "Cardboard is recyclable because it's made from paper fibers that can be broken down and made into new cardboard or paper products.",
-    tip: "Paper-based materials like cardboard usually go in the blue recycling bin!"
+    voiceText: "Correct! Cardboard is recyclable because it can be processed into new paper products.",
+    explanation: "Cardboard is recyclable because it can be processed into new paper products.",
+    tip: "Try Again! Paper-based materials are usually reusable."
   },
   {
     id: 4,
@@ -109,9 +118,9 @@ const trashItems = [
     image: carrotPeel,
     category: CATEGORIES.BIODEGRADABLE,
     description: "Vegetable waste that decomposes quickly",
-    voiceText: "Carrot Peel. This is biodegradable because it's vegetable waste that decomposes quickly and returns nutrients to the soil.",
-    explanation: "Carrot peels are biodegradable vegetable waste that break down quickly and make excellent compost for gardens.",
-    tip: "Food scraps from fruits and vegetables almost always belong in the green biodegradable bin."
+    voiceText: "Correct! Carrot Peel is biodegradable because it's vegetable waste that decomposes quickly.",
+    explanation: "Carrot Peel is biodegradable because it's vegetable waste that decomposes quickly.",
+    tip: "Try Again! Food scraps can decompose naturally."
   },
   {
     id: 5,
@@ -119,9 +128,9 @@ const trashItems = [
     image: diaper,
     category: CATEGORIES.NON_BIODEGRADABLE,
     description: "Hygiene product that takes centuries to decompose",
-    voiceText: "Diaper. This is non-biodegradable because it contains plastics and synthetic materials that take hundreds of years to break down.",
-    explanation: "Diapers are non-biodegradable because they contain plastics, super absorbent polymers, and other synthetic materials that don't break down.",
-    tip: "Personal hygiene products with multiple materials usually can't be recycled and go in red bins."
+    voiceText: "Correct! Diaper is non-biodegradable because it contains plastics and synthetic materials.",
+    explanation: "Diaper is non-biodegradable because it contains plastics and synthetic materials.",
+    tip: "Try Again! Used personal hygiene products with multiple materials can be used only once."
   },
   {
     id: 6,
@@ -129,9 +138,9 @@ const trashItems = [
     image: eggShell,
     category: CATEGORIES.BIODEGRADABLE,
     description: "Natural material that decomposes",
-    voiceText: "Egg Shell. This is biodegradable because it's a natural material that decomposes and adds calcium to compost.",
-    explanation: "Egg shells are biodegradable natural materials that break down slowly and add valuable calcium to compost.",
-    tip: "Natural materials from animals or plants typically go in the green bin for composting."
+    voiceText: "Correct! Egg Shell is biodegradable because it's a natural material that decomposes and adds calcium to compost.",
+    explanation: "Egg Shell is biodegradable because it's a natural material that decomposes and adds calcium to compost.",
+    tip: "Try Again! Natural materials from animals or plants are great for composting."
   },
   {
     id: 7,
@@ -139,9 +148,9 @@ const trashItems = [
     image: glassBottle,
     category: CATEGORIES.RECYCLABLE,
     description: "Glass can be melted and reused",
-    voiceText: "Glass Bottle. This is recyclable because glass can be melted down and made into new bottles and jars endlessly.",
-    explanation: "Glass bottles are highly recyclable because glass can be melted and reformed into new containers indefinitely without losing quality.",
-    tip: "Clear glass containers for food and drinks are almost always recyclable in blue bins!"
+    voiceText: "Correct! Glass Bottle is recyclable because glass can be melted down and made into new bottles and jars endlessly.",
+    explanation: "Glass Bottle is recyclable because glass can be melted down and made into new bottles and jars endlessly.",
+    tip: "Try Again! Clear glass containers for food and drinks are almost always recyclable in blue bins!"
   },
   {
     id: 8,
@@ -149,9 +158,9 @@ const trashItems = [
     image: grassTrimmings,
     category: CATEGORIES.BIODEGRADABLE,
     description: "Yard waste that decomposes naturally",
-    voiceText: "Grass Trimmings. This is biodegradable because yard waste breaks down naturally and makes great compost for gardens.",
-    explanation: "Grass trimmings are biodegradable yard waste that decompose quickly and create nutrient-rich compost for plants.",
-    tip: "Yard and garden waste like grass clippings belong in the green compost bin."
+    voiceText: "Correct! Grass Trimmings are biodegradable because yard waste breaks down naturally.",
+    explanation: "Grass Trimmings are biodegradable because yard waste breaks down naturally.",
+    tip: "Try Again! Yard and garden waste can enrich the soil."
   },
   {
     id: 9,
@@ -159,9 +168,9 @@ const trashItems = [
     image: newspaper,
     category: CATEGORIES.RECYCLABLE,
     description: "Paper that can be recycled into new paper",
-    voiceText: "Newspaper. This is recyclable because paper can be pulped and made into new paper products, reducing deforestation.",
-    explanation: "Newspapers are recyclable paper products that can be turned into new newsprint, cardboard, or other paper materials.",
-    tip: "Clean, dry paper products typically go in the blue recycling bin."
+    voiceText: "Correct! Newspaper is recyclable because paper can be pulped and made into new paper products.",
+    explanation: "Newspaper is recyclable because paper can be pulped and made into new paper products.",
+    tip: "Try Again! Clean, dry paper products can still be used for other purposes."
   },
   {
     id: 10,
@@ -169,9 +178,9 @@ const trashItems = [
     image: can,
     category: CATEGORIES.RECYCLABLE,
     description: "Metal that can be recycled into new products",
-    voiceText: "Metal Can. This is recyclable because metals like aluminum and steel can be melted and reformed into new cans and products.",
-    explanation: "Metal cans are recyclable because aluminum and steel can be melted down and remade into new cans infinitely, saving enormous energy.",
-    tip: "Food and beverage cans made of metal are perfect for the blue recycling bin!"
+    voiceText: "Correct! Metal Can is recyclable because metals can be melted and reformed into new cans and products.",
+    explanation: "Metal Can is recyclable because metals can be melted and reformed into new cans and products.",
+    tip: "Try Again! Food and beverage cans made of metal are reusable."
   },
   {
     id: 11,
@@ -179,9 +188,9 @@ const trashItems = [
     image: plasticBottle,
     category: CATEGORIES.RECYCLABLE,
     description: "Plastic that can be processed into new products",
-    voiceText: "Plastic Bottle. This is recyclable because certain plastics can be melted and made into new bottles, furniture, and clothing.",
-    explanation: "Plastic bottles are recyclable because they're typically made from PET or HDPE plastics that can be remade into new bottles or other products.",
-    tip: "Look for recycling symbols on plastic containers - numbers 1 and 2 are usually recyclable!"
+    voiceText: "Correct! Plastic Bottle is recyclable because certain plastics can be melted and made into new products.",
+    explanation: "Plastic Bottle is recyclable because certain plastics can be melted and made into new products.",
+    tip: "Try Again! Look for recycling symbols on plastic containers - numbers 1 and 2 can be reprocessed!"
   },
   {
     id: 12,
@@ -189,9 +198,9 @@ const trashItems = [
     image: styrofoam,
     category: CATEGORIES.NON_BIODEGRADABLE,
     description: "Foam plastic that doesn't decompose",
-    voiceText: "Styrofoam. This is non-biodegradable because this foam plastic doesn't break down and can release harmful chemicals.",
-    explanation: "Styrofoam is non-biodegradable because it's a foam plastic that doesn't decompose and can break into tiny pieces that harm wildlife.",
-    tip: "Foam packaging and food containers usually can't be recycled and belong in red bins."
+    voiceText: "Correct! Styrofoam is non-biodegradable because this foam plastic doesn't break down naturally.",
+    explanation: "Styrofoam is non-biodegradable because this foam plastic doesn't break down naturally.",
+    tip: "Try Again! Foam packaging and food containers usually can't be recycled and belong in red bins."
   },
   {
     id: 13,
@@ -199,9 +208,9 @@ const trashItems = [
     image: teaBag,
     category: CATEGORIES.BIODEGRADABLE,
     description: "Organic material that decomposes",
-    voiceText: "Tea Bag. This is biodegradable because the tea leaves are organic material that decomposes, though some bags have plastic fibers.",
-    explanation: "Tea bags are mostly biodegradable because the tea leaves decompose, though some bags contain plastic fibers that don't break down.",
-    tip: "Most food and beverage leftovers from plants go in the green compost bin."
+    voiceText: "Correct! Tea Bag is biodegradable because the tea leaves are organic material that decomposes.",
+    explanation: "Tea Bag is biodegradable because the tea leaves are organic material that decomposes.",
+    tip: "Try Again! Most food and beverage leftovers from plants go in the green compost bin."
   },
   {
     id: 14,
@@ -209,9 +218,9 @@ const trashItems = [
     image: plasticBag,
     category: CATEGORIES.NON_BIODEGRADABLE,
     description: "Plastic that cannot be recycled",
-    voiceText: "Plastic Bag. This is non-biodegradable because most plastic bags aren't recyclable and can take centuries to break down, harming wildlife.",
-    explanation: "Plastic bags are non-biodegradable because they're made from polyethylene that doesn't break down and can clog recycling machinery.",
-    tip: "Thin plastic films and bags usually can't go in regular recycling - they belong in red bins."
+    voiceText: "Correct! Plastic Bag is non-biodegradable because most plastic bags aren't recyclable.",
+    explanation: "Plastic Bag is non-biodegradable because most plastic bags aren't recyclable.",
+    tip: "Try Again! Thin plastic films and bags usually can't be salvaged."
   },
   {
     id: 15,
@@ -219,9 +228,9 @@ const trashItems = [
     image: wetWipes,
     category: CATEGORIES.NON_BIODEGRADABLE,
     description: "Synthetic material that persists in environment",
-    voiceText: "Wet Wipes. This is non-biodegradable because they contain synthetic fibers that don't break down and can clog pipes and harm ecosystems.",
-    explanation: "Wet wipes are non-biodegradable because they contain plastic fibers that don't decompose and can cause serious plumbing and environmental issues.",
-    tip: "Personal care wipes and cleaning cloths with synthetic materials belong in red bins."
+    voiceText: "Correct! Wet Wipes is non-biodegradable because they contain synthetic material that persists in environment",
+    explanation: "Wet Wipes is non-biodegradable because they contain synthetic material that persists in environment.",
+    tip: "Try Again! Personal care wipes can only be used once."
   }
 ];
 
@@ -245,7 +254,7 @@ export default function HouseholdLevel4() {
   const [showSettings, setShowSettings] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [volume, setVolume] = useState({
-    background: 50,
+    background: 5,
     voice: 80,
     effects: 70
   });
@@ -284,6 +293,9 @@ export default function HouseholdLevel4() {
   // NEW: Track attempts for each item
   const [itemAttempts, setItemAttempts] = useState({});
 
+  // NEW: Track drag over state for bins (for bounce effect)
+  const [dragOverBin, setDragOverBin] = useState(null);
+
   // Constants
   const MAX_POSSIBLE_SCORE = 150;
 
@@ -292,10 +304,32 @@ export default function HouseholdLevel4() {
   const correctSoundRef = useRef(null);
   const incorrectSoundRef = useRef(null);
   const successSoundRef = useRef(null);
+  const bloopSoundRef = useRef(null);
 
   // Helper functions
   const getStudentId = () => {
-    return localStorage.getItem('studentId') || 'mock-student-id';
+    try {
+      const studentId = localStorage.getItem('studentId');
+      
+      console.log('Retrieving student ID:', { studentId });
+      
+      if (!studentId || studentId === 'null' || studentId === 'undefined') {
+        console.warn('No student ID found in localStorage');
+        return null;
+      }
+      
+      const parsedId = parseInt(studentId, 10);
+      if (isNaN(parsedId)) {
+        console.warn('Invalid student ID format:', studentId);
+        return null;
+      }
+      
+      console.log('Successfully retrieved student ID:', parsedId);
+      return parsedId;
+    } catch (error) {
+      console.error('Error retrieving student ID:', error);
+      return null;
+    }
   };
 
   const getStarRating = (score, maxScore = MAX_POSSIBLE_SCORE) => {
@@ -306,16 +340,7 @@ export default function HouseholdLevel4() {
     return 0;
   };
 
-  // Mock API functions
-  const saveStudentLessonProgress = async (studentId, lessonId, progressData) => {
-    console.log('Saving lesson progress:', progressData);
-    return { success: true, data: progressData };
-  };
 
-  const updateModuleProgress = async (studentId, moduleId, progressData) => {
-    console.log('Updating module progress:', progressData);
-    return { success: true, data: progressData };
-  };
   
   const [gameCompleted, setGameCompleted] = useState(false);
   const [score, setScore] = useState(0);
@@ -363,6 +388,14 @@ export default function HouseholdLevel4() {
     }
   };
 
+  const playBloopSound = () => {
+    if (bloopSoundRef.current && soundEnabled) {
+      bloopSoundRef.current.volume = volume.effects / 100;
+      bloopSoundRef.current.currentTime = 0;
+      bloopSoundRef.current.play().catch(e => console.log('Bloop sound play failed:', e));
+    }
+  };
+
   // Update background music volume
   useEffect(() => {
     if (backgroundMusicRef.current) {
@@ -380,6 +413,18 @@ export default function HouseholdLevel4() {
       }
     }
   }, [currentPage, soundEnabled, showTutorial, volume.background]);
+
+  // Add this useEffect for auto-saving progress
+  useEffect(() => {
+    const saveProgressOnComplete = async () => {
+      if (gameCompleted && !progressSaved && !progressSaving) {
+        console.log('Game completed, auto-saving progress...');
+        await saveProgress();
+      }
+    };
+    
+    saveProgressOnComplete();
+  }, [gameCompleted, progressSaved, progressSaving]);
 
   // Handle sound toggle
   const handleSoundToggle = (enabled) => {
@@ -584,61 +629,56 @@ export default function HouseholdLevel4() {
     }
   };
 
+  // Replace the existing saveProgress function with:
   const saveProgress = async () => {
-      if (progressSaving || progressSaved) return;
-  
-      try {
-        setProgressSaving(true);
-        const studentId = getStudentId();
-        
-        if (!studentId || !lessonId) {
-          console.error('Cannot save progress - missing data:', { studentId, lessonId });
-          return;
-        }
-        
-        const cappedScore = Math.min(score, MAX_POSSIBLE_SCORE);
-        const finalScore = cappedScore;
-        
-        const progressData = {
-          studentId: studentId,
-          lessonId: parseInt(lessonId, 10),
-          score: finalScore,
-          maxScore: MAX_POSSIBLE_SCORE,
-          completed: true,
-          starsEarned: getStarRating()
-        };
-        
-        try {
-          const lessonProgress = await saveStudentLessonProgress(studentId, lessonId, progressData);
-          console.log('Lesson progress saved successfully:', lessonProgress);
-        } catch (lessonError) {
-          console.error('Failed to save lesson progress:', lessonError);
-        }
-        
-        try {
-          const moduleId = 4;
-          const moduleProgress = await updateModuleProgress(studentId, moduleId, {
-            score: finalScore,
-            completed: true,
-            starsEarned: getStarRating()
-          });
-          if (moduleProgress) {
-            console.log('Module progress updated successfully:', moduleProgress);
-          }
-        } catch (moduleError) {
-          console.log('Module progress update failed:', moduleError);
-        }
-        
-        setProgressSaved(true);
-        console.log('Progress saving process completed');
-        
-      } catch (error) {
-        console.error('Error in save progress process:', error);
-        setProgressSaved(true);
-      } finally {
-        setProgressSaving(false);
+    if (progressSaving || progressSaved) return;
+
+    try {
+      setProgressSaving(true);
+      const studentId = getStudentId();
+      const lessonIdNum = parseInt(lessonId, 10);
+      
+      console.log('Saving progress with:', { studentId, lessonId: lessonIdNum });
+      
+      if (!studentId || !lessonIdNum) {
+        throw new Error(`Missing IDs: studentId=${studentId}, lessonId=${lessonIdNum}`);
       }
-    };
+      
+      const cappedScore = Math.min(score, MAX_POSSIBLE_SCORE);
+      const finalScore = cappedScore;
+      
+      const progressData = {
+        score: finalScore,
+        maxScore: MAX_POSSIBLE_SCORE,
+        completed: true,
+        starsEarned: getStarRating(score)
+      };
+      
+      console.log('Attempting to save progress with data:', {
+        studentId,
+        lessonId: lessonIdNum,
+        ...progressData
+      });
+      
+      // Use mock functions if real services aren't available
+      const lessonResult = await saveStudentLessonProgress(studentId, lessonIdNum, progressData);
+      
+      console.log('Progress save result:', lessonResult);
+      
+      if (lessonResult.success) {
+        setProgressSaved(true);
+        console.log('Progress saved successfully');
+      } else {
+        throw new Error('Progress save failed');
+      }
+      
+    } catch (error) {
+      console.error('Error in save progress process:', error);
+      setProgressSaved(false);
+    } finally {
+      setProgressSaving(false);
+    }
+  };
 
   // Initialize game
   const initializeGame = () => {
@@ -657,6 +697,7 @@ export default function HouseholdLevel4() {
     setScore(0);
     setGameCompleted(false);
     setItemAttempts({});
+    setDragOverBin(null);
   };
 
   // Page navigation handlers
@@ -732,6 +773,9 @@ export default function HouseholdLevel4() {
             return newState;
           });
 
+          // Reset drag over bin
+          setDragOverBin(null);
+
           // Auto-hide message after 5 seconds (longer for explanations)
           const timeout = setTimeout(() => {
             setMascotVisible(false);
@@ -747,7 +791,7 @@ export default function HouseholdLevel4() {
         }));
         
         // Update mascot message with tip
-        const tipMessage = `Not quite! ${item.tip}`;
+        const tipMessage = `${item.tip}`;
         setMascotMessage(tipMessage);
         setMascotVisible(true);
         setIsHappyMascot(false);
@@ -755,8 +799,11 @@ export default function HouseholdLevel4() {
 
         // Speak the tip
         if (voiceEnabled && soundEnabled) {
-          speakText(`Try again! ${item.tip}`);
+          speakText(`${item.tip}`);
         }
+
+        // Reset drag over bin
+        setDragOverBin(null);
 
         // Auto-hide error message after 4 seconds
         const timeout = setTimeout(() => {
@@ -773,6 +820,25 @@ export default function HouseholdLevel4() {
       return;
     }
     event.dataTransfer.setData('itemId', itemId);
+  };
+
+  // NEW: Handle drag over for bins (for bounce effect)
+  const handleDragOver = (e, category) => {
+    if (showTutorial) {
+      e.preventDefault();
+      return;
+    }
+    e.preventDefault();
+    if (dragOverBin !== category) {
+      setDragOverBin(category);
+    }
+  };
+
+  // NEW: Handle drag leave from bins
+  const handleDragLeave = () => {
+    if (!showTutorial) {
+      setDragOverBin(null);
+    }
   };
 
   const getCategoryName = (category) => {
@@ -808,6 +874,9 @@ export default function HouseholdLevel4() {
     initializeGame();
     setMascotVisible(false);
     setShowSettings(false);
+
+    setProgressSaving(false);
+    setProgressSaved(false);
   };
 
   // Render different pages based on currentPage state
@@ -850,7 +919,10 @@ export default function HouseholdLevel4() {
         </Typography>
         <Button 
         variant="contained"
-        onClick={goToGame}
+        onClick={() => {
+          playBloopSound();
+          goToGame();
+        }}
         sx={{ 
             background: 'linear-gradient(135deg, #FF595E 0%, #E04549 100%)',
             color: 'white',
@@ -903,11 +975,30 @@ export default function HouseholdLevel4() {
         src={successSound} 
         preload="auto" 
       />
+      <audio 
+        ref={bloopSoundRef} 
+        src={bloopSound} 
+        preload="auto" 
+      />
 
       {/* Settings Button - Larger */}
       <Fab
         size="large"
-        onClick={() => setShowSettings(true)}
+        onClick={() => {
+          playBloopSound(); // Play bloop sound
+          
+          // Pause background music when settings open
+          if (backgroundMusicRef.current && soundEnabled) {
+            backgroundMusicRef.current.pause();
+          }
+          
+          // Stop any ongoing speech
+          if (window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+          }
+          
+          setShowSettings(true);
+        }}
         sx={{
           position: 'fixed',
           bottom: 20,
@@ -926,83 +1017,103 @@ export default function HouseholdLevel4() {
         </Typography>
       </Fab>
 
-      {/* Dinosaur Mascot - Used for both tutorial and game feedback */}
+      {/* Dinosaur Mascot - MODIFIED: With bounce effect and bigger size */}
       {mascotVisible && (
         <Paper sx={{
           position: 'fixed',
-          bottom: 20,
-          right: 20,
-          p: 2,
-          maxWidth: 350,
+          bottom: 50,
+          left: '50%',
+          transform: 'translateX(-50%)',
           backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          zIndex: 1300,
+          borderRadius: '20px',
+          padding: 3,
+          height: 'auto',
+          maxWidth: '470px',
+          width: '100%',
+          boxShadow: '0 10px 30px rgba(0, 0, 0, 0.5)',
           border: `3px solid ${isHappyMascot ? '#90BE6D' : '#FF595E'}`,
-          borderRadius: '20px'
+          display: 'flex',
+          alignItems: 'center',
+          gap: 3,
+          zIndex: 1300
         }}>
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-            <img 
-              src={dinomascot}
-              alt="Dinosort" 
-              style={{ 
-                width: 60, 
-                height: 60, 
-                borderRadius: '50%',
-                objectFit: 'cover'
-              }} 
-            />
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 1 }}>
-                Dinosort
-              </Typography>
-              <Typography variant="body2">
-                {mascotMessage}
-              </Typography>
-              {showTutorial && (
-                <Box sx={{ display: 'flex', gap: 1, mt: 2, justifyContent: 'center' }}>
-                  <Button 
-                    variant="outlined"
-                    size="small"
-                    onClick={handlePreviousTutorial}
-                    disabled={tutorialStep === 0}
-                    sx={{ 
-                      borderColor: '#90BE6D',
-                      color: '#90BE6D',
-                      fontSize: '0.7rem',
-                      minWidth: 'auto',
-                      px: 1
-                    }}
-                  >
-                    Previous
-                  </Button>
-                  <Button 
-                    variant="contained"
-                    size="small"
-                    onClick={tutorialStep === tutorialSteps.length - 1 ? endTutorial : handleNextTutorial}
-                    sx={{ 
-                      backgroundColor: '#90BE6D',
-                      fontSize: '0.7rem',
-                      minWidth: 'auto',
-                      px: 1,
-                      '&:hover': {
-                        backgroundColor: '#7DA85D'
-                      }
-                    }}
-                  >
-                    {tutorialStep === tutorialSteps.length - 1 ? 'Start' : 'Next'}
-                  </Button>
-                </Box>
-              )}
-            </Box>
-            {!showTutorial && (
-              <IconButton 
-                size="small" 
-                onClick={() => setMascotVisible(false)}
-                sx={{ alignSelf: 'flex-start' }}
-              >
-                ×
-              </IconButton>
+          {/* MODIFIED: Dinosaur on left side with bigger size and bounce animation */}
+          <Box
+            component="img"
+            src={dinomascot}
+            alt="Dinosort Helper"
+            sx={{
+              width: 110, // Increased from 60px
+              height: 'auto',
+              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+              animation: 'happyDance 3s ease-in-out infinite',
+              '@keyframes happyDance': {
+                '0%': { transform: 'translateY(0px) rotate(0deg)' },
+                '25%': { transform: 'translateY(-10px) rotate(5deg)' },
+                '50%': { transform: 'translateY(0px) rotate(0deg)' },
+                '75%': { transform: 'translateY(-5px) rotate(-5deg)' },
+                '100%': { transform: 'translateY(0px) rotate(0deg)' }
+              }
+            }}
+          />
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="body1" sx={{ fontWeight: 'bold', mb: 1 }}>
+              Dinosort
+            </Typography>
+            <Typography variant="body2">
+              {mascotMessage}
+            </Typography>
+            {showTutorial && (
+              <Box sx={{ display: 'flex', gap: 1, mt: 2, justifyContent: 'center' }}>
+                <Button 
+                  variant="outlined"
+                  size="small"
+                  onClick={() => {
+                    playBloopSound();
+                    handlePreviousTutorial();
+                  }}
+                  disabled={tutorialStep === 0}
+                  sx={{ 
+                    borderColor: '#90BE6D',
+                    color: '#90BE6D',
+                    fontSize: '0.7rem',
+                    minWidth: 'auto',
+                    px: 1
+                  }}
+                >
+                  Previous
+                </Button>
+                <Button 
+                  variant="contained"
+                  size="small"
+                  onClick={() => {
+                    playBloopSound();
+                    tutorialStep === tutorialSteps.length - 1 ? endTutorial() : handleNextTutorial();
+                  }}
+                  sx={{ 
+                    backgroundColor: '#90BE6D',
+                    fontSize: '0.7rem',
+                    minWidth: 'auto',
+                    px: 1,
+                    '&:hover': {
+                      backgroundColor: '#7DA85D'
+                    }
+                  }}
+                >
+                  {tutorialStep === tutorialSteps.length - 1 ? 'Start' : 'Next'}
+                </Button>
+              </Box>
             )}
           </Box>
+          {!showTutorial && (
+            <IconButton 
+              size="small"
+              onClick={() => setMascotVisible(false)}
+              sx={{ alignSelf: 'flex-start' }}
+            >
+              <CloseIcon />
+            </IconButton>
+          )}
         </Paper>
       )}
 
@@ -1022,10 +1133,10 @@ export default function HouseholdLevel4() {
           {tutorialSteps[tutorialStep].highlight === "bins" && (
             <Box sx={{
               position: 'absolute',
-              top: '30%',
+              top: '22%',
               left: '1%',
               right: '34.5%',
-              bottom: '13%',
+              bottom: '19%',
               border: '4px solid #FFCA3A',
               borderRadius: '20px',
               boxShadow: '0 0 0 9999px rgba(0,0,0,0.7)',
@@ -1053,8 +1164,8 @@ export default function HouseholdLevel4() {
             <Box sx={{
               position: 'absolute',
               top: '12.5%',
-              left: '92.5%',
-              right: '1%',
+              left: '91%',
+              right: '1.1%',
               bottom: '82%',
               border: '4px solid #FFCA3A',
               borderRadius: '10px',
@@ -1136,25 +1247,27 @@ export default function HouseholdLevel4() {
       {/* Game Area */}
       <Box sx={{ 
         display: 'flex', 
-        height: '70vh',
+        height: '60vh',
         gap: 3,
         pointerEvents: showTutorial ? 'none' : 'auto'
       }}>
-        {/* Left Section - Trash Bins */}
+        {/* Left Section - Trash Bins - FIXED: Proper bin sizing */}
         <Box sx={{ 
           flex: 2, 
           display: 'flex', 
           flexDirection: 'row', 
           gap: 2, 
-          alignItems: 'center',
+          alignItems: 'flex-end', // Changed to align at bottom
           justifyContent: 'space-around'
         }}>
-          {/* Biodegradable Bin */}
+          {/* Biodegradable Bin - FIXED: Restored original sizing */}
           <Box sx={{ 
-            flex: 1, 
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
             position: 'relative',
-            height: '400px', 
-            maxWidth: '350px' 
+            maxWidth: '250px' // Reduced from 350px
           }}>
             <Typography variant="h6" sx={{ 
               textAlign: 'center', 
@@ -1164,97 +1277,126 @@ export default function HouseholdLevel4() {
               borderRadius: '5px',
               fontWeight: 'bold',
               mt: 0.5,
-              fontSize: '1.2rem'
+              fontSize: '1.2rem',
+              width: '100%',
+              mb: 1
             }}>
               ♻️ Biodegradable
             </Typography>
-            <img 
-              src={greenBin} 
-              alt="Biodegradable Bin" 
-              style={{ 
-                width: '100%', 
-                height: '100%', 
-                objectFit: 'contain',
-              }} 
-            />
-            <Box 
-              sx={{ 
-                position: 'absolute',
-                top: '20%',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: '40%',
-                height: '80%',
-                display: 'flex',
-                flexDirection: 'column-reverse',
-                gap: '2px',
-                padding: '4px',
-                backgroundColor: 'rgba(255, 255, 255, 0.3)', 
-                borderRadius: '5px',
-                border: '1px solid rgba(0,0,0,0.2)',
-                overflow: 'hidden'
+            
+            {/* Bin Container with Bounce Effect */}
+            <Box
+              sx={{
+                position: 'relative',
+                transition: 'all 0.3s ease',
+                transform: dragOverBin === CATEGORIES.BIODEGRADABLE 
+                  ? 'scale(1.08) translateY(-10px)'
+                  : 'scale(1)',
+                filter: dragOverBin === CATEGORIES.BIODEGRADABLE 
+                  ? 'drop-shadow(0 0 30px rgba(144, 190, 109, 0.9))' 
+                  : 'drop-shadow(0 6px 15px rgba(0,0,0,0.25))',
+                zIndex: dragOverBin === CATEGORIES.BIODEGRADABLE ? 360 : 350,
+                width: '350px', // Fixed width
+                height: '400px' // Fixed height
               }}
-              onDragOver={(e) => showTutorial ? e.preventDefault() : e.preventDefault()}
-              onDrop={(e) => handleDropWithAnimation(CATEGORIES.BIODEGRADABLE, e)}
             >
-              {sortedItems[CATEGORIES.BIODEGRADABLE].map((item, index) => (
-                <Box key={item.id} sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  backgroundColor: 'white', 
-                  borderRadius: '3px',
-                  border: '1px solid #90BE6D',
-                  minHeight: '60px',
-                  animation: 'slideIn 0.8s ease-out'
-                }}>
-                  <img 
-                    src={item.image} 
-                    alt={item.name}
-                    style={{ 
-                      width: '45px', 
-                      height: '45px', 
-                      objectFit: 'contain'
-                    }}
-                  />
-                </Box>
-              ))}
-              {gameItems.filter(item => animatingItems[item.id] && item.category === CATEGORIES.BIODEGRADABLE).map(item => (
-                <Box key={item.id} sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  backgroundColor: 'white', 
-                  borderRadius: '3px',
-                  border: '1px solid #90BE6D',
-                  minHeight: '60px',
-                  animation: 'slideDown 0.8s ease-in-out forwards',
+              <img 
+                src={greenBin} 
+                alt="Biodegradable Bin" 
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: 'contain',
                   position: 'absolute',
                   top: 0,
+                  left: 0
+                }} 
+              />
+              
+              {/* FIXED: Drop Area Box - Now visible and properly sized */}
+              <Box 
+                sx={{ 
+                  position: 'absolute',
+                  top: '25%',
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  width: '90%'
-                }}>
-                  <img 
-                    src={item.image} 
-                    alt={item.name}
-                    style={{ 
-                      width: '45px', 
-                      height: '45px', 
-                      objectFit: 'contain'
-                    }}
-                  />
-                </Box>
-              ))}
+                  width: '40%',
+                  height: '60%',
+                  display: 'flex',
+                  flexDirection: 'column-reverse',
+                  gap: '2px',
+                  padding: '4px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.5)', // Made more visible
+                  borderRadius: '5px',
+                  border: '2px dashed rgba(144, 190, 109, 0.7)', // Added dashed border
+                  overflow: 'hidden',
+                  zIndex: 10
+                }}
+                onDragOver={(e) => handleDragOver(e, CATEGORIES.BIODEGRADABLE)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDropWithAnimation(CATEGORIES.BIODEGRADABLE, e)}
+              >
+                {sortedItems[CATEGORIES.BIODEGRADABLE].map((item, index) => (
+                  <Box key={item.id} sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    backgroundColor: 'white', 
+                    borderRadius: '3px',
+                    border: '1px solid #90BE6D',
+                    minHeight: '45px',
+                    animation: 'slideIn 0.8s ease-out'
+                  }}>
+                    <img 
+                      src={item.image} 
+                      alt={item.name}
+                      style={{ 
+                        width: '45px', 
+                        height: '45px', 
+                        objectFit: 'contain'
+                      }}
+                    />
+                  </Box>
+                ))}
+                {gameItems.filter(item => animatingItems[item.id] && item.category === CATEGORIES.BIODEGRADABLE).map(item => (
+                  <Box key={item.id} sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    backgroundColor: 'white', 
+                    borderRadius: '3px',
+                    border: '1px solid #90BE6D',
+                    minHeight: '40px',
+                    animation: 'slideDown 0.8s ease-in-out forwards',
+                    position: 'absolute',
+                    top: 0,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: '90%'
+                  }}>
+                    <img 
+                      src={item.image} 
+                      alt={item.name}
+                      style={{ 
+                        width: '45px', 
+                        height: '45px', 
+                        objectFit: 'contain'
+                      }}
+                    />
+                  </Box>
+                ))}
+              </Box>
             </Box>
           </Box>
 
-          {/* Non-Biodegradable Bin */}
+          {/* Non-Biodegradable Bin - FIXED: Restored original sizing */}
           <Box sx={{ 
-            flex: 1, 
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
             position: 'relative',
-            height: '400px',
-            maxWidth: '350px'
+            maxWidth: '250px' // Reduced from 350px
           }}>
             <Typography variant="h6" sx={{ 
               textAlign: 'center', 
@@ -1264,97 +1406,126 @@ export default function HouseholdLevel4() {
               borderRadius: '5px',
               fontWeight: 'bold',
               mt: 0.5,
-              fontSize: '1.2rem'
+              fontSize: '1.2rem',
+              width: '100%',
+              mb: 1
             }}>
               🚫 Non-Biodegradable
             </Typography>
-            <img 
-              src={redBin} 
-              alt="Non-Biodegradable Bin" 
-              style={{ 
-                width: '100%', 
-                height: '100%', 
-                objectFit: 'contain',
-              }} 
-            />
-            <Box 
-              sx={{ 
-                position: 'absolute',
-                top: '20%',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: '40%',
-                height: '80%',
-                display: 'flex',
-                flexDirection: 'column-reverse',
-                gap: '2px',
-                padding: '4px',
-                backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                borderRadius: '5px',
-                border: '1px solid rgba(0,0,0,0.2)',
-                overflow: 'hidden'
+            
+            {/* Bin Container with Bounce Effect */}
+            <Box
+              sx={{
+                position: 'relative',
+                transition: 'all 0.3s ease',
+                transform: dragOverBin === CATEGORIES.NON_BIODEGRADABLE 
+                  ? 'scale(1.08) translateY(-10px)'
+                  : 'scale(1)',
+                filter: dragOverBin === CATEGORIES.NON_BIODEGRADABLE 
+                  ? 'drop-shadow(0 0 30px rgba(255, 89, 94, 0.9))' 
+                  : 'drop-shadow(0 6px 15px rgba(0,0,0,0.25))',
+                zIndex: dragOverBin === CATEGORIES.NON_BIODEGRADABLE ? 360 : 350,
+                width: '350px', // Fixed width
+                height: '400px' // Fixed height
               }}
-              onDragOver={(e) => showTutorial ? e.preventDefault() : e.preventDefault()}
-              onDrop={(e) => handleDropWithAnimation(CATEGORIES.NON_BIODEGRADABLE, e)}
             >
-              {sortedItems[CATEGORIES.NON_BIODEGRADABLE].map((item, index) => (
-                <Box key={item.id} sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  backgroundColor: 'white',
-                  borderRadius: '3px',
-                  border: '1px solid #FF595E',
-                  minHeight: '60px',
-                  animation: 'slideIn 0.8s ease-out'
-                }}>
-                  <img 
-                    src={item.image} 
-                    alt={item.name}
-                    style={{ 
-                      width: '45px', 
-                      height: '45px', 
-                      objectFit: 'contain'
-                    }}
-                  />
-                </Box>
-              ))}
-              {gameItems.filter(item => animatingItems[item.id] && item.category === CATEGORIES.NON_BIODEGRADABLE).map(item => (
-                <Box key={item.id} sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  backgroundColor: 'white',
-                  borderRadius: '3px',
-                  border: '1px solid #FF595E',
-                  minHeight: '60px',
-                  animation: 'slideDown 0.8s ease-in-out forwards',
+              <img 
+                src={redBin} 
+                alt="Non-Biodegradable Bin" 
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: 'contain',
                   position: 'absolute',
                   top: 0,
+                  left: 0
+                }} 
+              />
+              
+              {/* FIXED: Drop Area Box - Now visible and properly sized */}
+              <Box 
+                sx={{ 
+                  position: 'absolute',
+                  top: '25%',
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  width: '90%'
-                }}>
-                  <img 
-                    src={item.image} 
-                    alt={item.name}
-                    style={{ 
-                      width: '45px', 
-                      height: '45px', 
-                      objectFit: 'contain'
-                    }}
-                  />
-                </Box>
-              ))}
+                  width: '40%',
+                  height: '60%',
+                  display: 'flex',
+                  flexDirection: 'column-reverse',
+                  gap: '2px',
+                  padding: '4px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.5)', // Made more visible
+                  borderRadius: '5px',
+                  border: '2px dashed rgba(255, 89, 94, 0.7)', // Added dashed border
+                  overflow: 'hidden',
+                  zIndex: 10
+                }}
+                onDragOver={(e) => handleDragOver(e, CATEGORIES.NON_BIODEGRADABLE)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDropWithAnimation(CATEGORIES.NON_BIODEGRADABLE, e)}
+              >
+                {sortedItems[CATEGORIES.NON_BIODEGRADABLE].map((item, index) => (
+                  <Box key={item.id} sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    backgroundColor: 'white',
+                    borderRadius: '3px',
+                    border: '1px solid #FF595E',
+                    minHeight: '40px',
+                    animation: 'slideIn 0.8s ease-out'
+                  }}>
+                    <img 
+                      src={item.image} 
+                      alt={item.name}
+                      style={{ 
+                        width: '45px', 
+                        height: '45px', 
+                        objectFit: 'contain'
+                      }}
+                    />
+                  </Box>
+                ))}
+                {gameItems.filter(item => animatingItems[item.id] && item.category === CATEGORIES.NON_BIODEGRADABLE).map(item => (
+                  <Box key={item.id} sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    backgroundColor: 'white',
+                    borderRadius: '3px',
+                    border: '1px solid #FF595E',
+                    minHeight: '45px',
+                    animation: 'slideDown 0.8s ease-in-out forwards',
+                    position: 'absolute',
+                    top: 0,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: '90%'
+                  }}>
+                    <img 
+                      src={item.image} 
+                      alt={item.name}
+                      style={{ 
+                        width: '45px', 
+                        height: '45px', 
+                        objectFit: 'contain'
+                      }}
+                    />
+                  </Box>
+                ))}
+              </Box>
             </Box>
           </Box>
 
-          {/* Recyclable Bin */}
+          {/* Recyclable Bin - FIXED: Restored original sizing */}
           <Box sx={{ 
-            flex: 1, 
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
             position: 'relative',
-            height: '400px',
-            maxWidth: '350px'
+            maxWidth: '250px' // Reduced from 350px
           }}>
             <Typography variant="h6" sx={{ 
               textAlign: 'center', 
@@ -1364,88 +1535,115 @@ export default function HouseholdLevel4() {
               borderRadius: '5px',
               fontWeight: 'bold',
               mt: 0.5,
-              fontSize: '1.2rem'
+              fontSize: '1.2rem',
+              width: '100%',
+              mb: 1
             }}>
               🔄 Recycle
             </Typography>
-            <img 
-              src={blueBin} 
-              alt="Recyclable Bin" 
-              style={{ 
-                width: '100%', 
-                height: '100%', 
-                objectFit: 'contain',
-              }} 
-            />
-            <Box 
-              sx={{ 
-                position: 'absolute',
-                top: '20%',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: '40%',
-                height: '80%',
-                display: 'flex',
-                flexDirection: 'column-reverse',
-                gap: '2px',
-                padding: '4px',
-                backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                borderRadius: '5px',
-                border: '1px solid rgba(0,0,0,0.2)',
-                overflow: 'hidden'
+            
+            {/* Bin Container with Bounce Effect */}
+            <Box
+              sx={{
+                position: 'relative',
+                transition: 'all 0.3s ease',
+                transform: dragOverBin === CATEGORIES.RECYCLABLE 
+                  ? 'scale(1.08) translateY(-10px)'
+                  : 'scale(1)',
+                filter: dragOverBin === CATEGORIES.RECYCLABLE 
+                  ? 'drop-shadow(0 0 30px rgba(25, 130, 196, 0.9))' 
+                  : 'drop-shadow(0 6px 15px rgba(0,0,0,0.25))',
+                zIndex: dragOverBin === CATEGORIES.RECYCLABLE ? 360 : 350,
+                width: '350px', // Fixed width
+                height: '400px' // Fixed height
               }}
-              onDragOver={(e) => showTutorial ? e.preventDefault() : e.preventDefault()}
-              onDrop={(e) => handleDropWithAnimation(CATEGORIES.RECYCLABLE, e)}
             >
-              {sortedItems[CATEGORIES.RECYCLABLE].map((item, index) => (
-                <Box key={item.id} sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  backgroundColor: 'white',
-                  borderRadius: '3px',
-                  border: '1px solid #1982C4',
-                  minHeight: '60px',
-                  animation: 'slideIn 0.8s ease-out'
-                }}>
-                  <img 
-                    src={item.image} 
-                    alt={item.name}
-                    style={{ 
-                      width: '45px', 
-                      height: '45px', 
-                      objectFit: 'contain'
-                    }}
-                  />
-                </Box>
-              ))}
-              {gameItems.filter(item => animatingItems[item.id] && item.category === CATEGORIES.RECYCLABLE).map(item => (
-                <Box key={item.id} sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  backgroundColor: 'white',
-                  borderRadius: '3px',
-                  border: '1px solid #1982C4',
-                  minHeight: '60px',
-                  animation: 'slideDown 0.8s ease-in-out forwards',
+              <img 
+                src={blueBin} 
+                alt="Recyclable Bin" 
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: 'contain',
                   position: 'absolute',
                   top: 0,
+                  left: 0
+                }} 
+              />
+              
+              {/* FIXED: Drop Area Box - Now visible and properly sized */}
+              <Box 
+                sx={{ 
+                  position: 'absolute',
+                  top: '25%',
                   left: '50%',
                   transform: 'translateX(-50%)',
-                  width: '90%'
-                }}>
-                  <img 
-                    src={item.image} 
-                    alt={item.name}
-                    style={{ 
-                      width: '45px', 
-                      height: '45px', 
-                      objectFit: 'contain'
-                    }}
-                  />
-                </Box>
-              ))}
+                  width: '40%',
+                  height: '60%',
+                  display: 'flex',
+                  flexDirection: 'column-reverse',
+                  gap: '2px',
+                  padding: '4px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.5)', // Made more visible
+                  borderRadius: '5px',
+                  border: '2px dashed rgba(25, 130, 196, 0.7)', // Added dashed border
+                  overflow: 'hidden',
+                  zIndex: 10
+                }}
+                onDragOver={(e) => handleDragOver(e, CATEGORIES.RECYCLABLE)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDropWithAnimation(CATEGORIES.RECYCLABLE, e)}
+              >
+                {sortedItems[CATEGORIES.RECYCLABLE].map((item, index) => (
+                  <Box key={item.id} sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    backgroundColor: 'white',
+                    borderRadius: '3px',
+                    border: '1px solid #1982C4',
+                    minHeight: '45px',
+                    animation: 'slideIn 0.8s ease-out'
+                  }}>
+                    <img 
+                      src={item.image} 
+                      alt={item.name}
+                      style={{ 
+                        width: '45px', 
+                        height: '45px', 
+                        objectFit: 'contain'
+                      }}
+                    />
+                  </Box>
+                ))}
+                {gameItems.filter(item => animatingItems[item.id] && item.category === CATEGORIES.RECYCLABLE).map(item => (
+                  <Box key={item.id} sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    backgroundColor: 'white',
+                    borderRadius: '3px',
+                    border: '1px solid #1982C4',
+                    minHeight: '40px',
+                    animation: 'slideDown 0.8s ease-in-out forwards',
+                    position: 'absolute',
+                    top: 0,
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: '90%'
+                  }}>
+                    <img 
+                      src={item.image} 
+                      alt={item.name}
+                      style={{ 
+                        width: '45px', 
+                        height: '45px', 
+                        objectFit: 'contain'
+                      }}
+                    />
+                  </Box>
+                ))}
+              </Box>
             </Box>
           </Box>
         </Box>
@@ -1490,7 +1688,7 @@ export default function HouseholdLevel4() {
                   cursor: showTutorial ? 'default' : 'grab',
                   transition: 'all 0.3s ease',
                   '&:hover': {
-                    transform: showTutorial ? 'scale(1)' : 'scale(1.05)',
+                    transform: showTutorial ? 'scale(1)' : 'scale(1.10)',
                     boxShadow: showTutorial ? 0 : 2
                   }
                 }}
@@ -1579,13 +1777,21 @@ export default function HouseholdLevel4() {
           50% { border-color: #FFB347; }
           100% { border-color: #FFCA3A; }
         }
+        
+        @keyframes happyDance {
+          0% { transform: translateY(0px) rotate(0deg); }
+          25% { transform: translateY(-10px) rotate(5deg); }
+          50% { transform: translateY(0px) rotate(0deg); }
+          75% { transform: translateY(-5px) rotate(-5deg); }
+          100% { transform: translateY(0px) rotate(0deg); }
+        }
       `}</style>
 
       {/* Render current page based on state */}
       {currentPage === PAGES.LANDING && renderLandingPage()}
       {currentPage === PAGES.GAME && renderGamePage()}
 
-      {/* Intro Dialog */}
+      {/* Intro Dialog - FIXED: Added bounce effect */}
       {showIntroDialog && (
         <Box sx={{
           position: 'fixed',
@@ -1609,15 +1815,16 @@ export default function HouseholdLevel4() {
             textAlign: 'center'
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, justifyContent: 'center' }}>
-              <img 
-                src={dinomascot} 
-                alt="Dinosort" 
-                style={{ 
-                  width: 60, 
-                  height: 60, 
-                  borderRadius: '50%',
-                  objectFit: 'cover'
-                }} 
+              <Box
+                component="img"
+                src={dinomascot}
+                alt="Dinosort Helper"
+                sx={{
+                  width: 80,
+                  height: 'auto',
+                  filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))',
+                  animation: 'happyDance 3s ease-in-out infinite',
+                }}
               />
               <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                 Dinosort
@@ -1628,7 +1835,10 @@ export default function HouseholdLevel4() {
             </Typography>
             <Button 
               variant="contained"
-              onClick={startTutorial}
+              onClick={() => {
+                playBloopSound();
+                startTutorial();
+              }}
               sx={{ 
                 backgroundColor: '#90BE6D',
                 '&:hover': {
@@ -1721,7 +1931,10 @@ export default function HouseholdLevel4() {
             <Stack direction="column" spacing={2} sx={{ alignItems: 'center' }}>
               <Button 
                 variant="outlined"
-                onClick={() => setShowRestartDialog(true)}
+                onClick={() => {
+                  playBloopSound();
+                  setShowRestartDialog(true);
+                }}
                 sx={{ 
                   borderColor: '#90BE6D',
                   color: '#90BE6D',
@@ -1731,19 +1944,40 @@ export default function HouseholdLevel4() {
                 🔄 Restart Game
               </Button>
               <Button 
-                variant="outlined"
-                onClick={() => setShowHomeDialog(true)}
+                variant="contained"
+                onClick={() => {
+                  playBloopSound();
+                  
+                  // Save progress before going home
+                  if (!progressSaved && !progressSaving) {
+                    saveProgress().then(() => {
+                      goToHome();
+                    });
+                  } else {
+                    goToHome();
+                  }
+                }}
                 sx={{ 
-                  borderColor: '#FF595E',
-                  color: '#FF595E',
-                  width: '200px'
+                  backgroundColor: '#1976d2',
+                  '&:hover': {
+                    backgroundColor: '#1565c0'
+                  }
                 }}
               >
-                🏠 Go Home
+                Go Home
               </Button>
               <Button 
                 variant="contained"
-                onClick={() => setShowSettings(false)}
+                onClick={() => {
+                  playBloopSound();
+                  
+                  // Resume background music when closing settings (if sound is enabled)
+                  if (backgroundMusicRef.current && soundEnabled && !showTutorial) {
+                    backgroundMusicRef.current.play().catch(e => console.log('Background music restart failed:', e));
+                  }
+                  
+                  setShowSettings(false);
+                }}
                 sx={{ 
                   backgroundColor: '#90BE6D',
                   width: '200px',
@@ -1803,7 +2037,10 @@ export default function HouseholdLevel4() {
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
               <Button 
                 variant="outlined"
-                onClick={() => setShowRestartDialog(false)}
+                onClick={() => {
+                  playBloopSound();
+                  setShowRestartDialog(false);
+                }}
                 sx={{ 
                   borderColor: '#90BE6D',
                   color: '#90BE6D',
@@ -1817,6 +2054,7 @@ export default function HouseholdLevel4() {
               <Button 
                 variant="contained"
                 onClick={() => {
+                  playBloopSound();
                   resetGame();
                   setShowRestartDialog(false);
                   setShowSettings(false);
@@ -1879,7 +2117,10 @@ export default function HouseholdLevel4() {
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
               <Button 
                 variant="outlined"
-                onClick={() => setShowHomeDialog(false)}
+                onClick={() => {
+                  playBloopSound();
+                  setShowHomeDialog(false);
+                }}
                 sx={{ 
                   borderColor: '#90BE6D',
                   color: '#90BE6D',
@@ -1892,7 +2133,11 @@ export default function HouseholdLevel4() {
               </Button>
               <Button 
                 variant="contained"
-                onClick={goToHome}
+                onClick={() => {
+                  playBloopSound();
+                  goToHome();
+                  
+                }}
                 sx={{ 
                   backgroundColor: '#1976d2',
                   '&:hover': {
@@ -1963,7 +2208,7 @@ export default function HouseholdLevel4() {
               </Typography>
             </Box>
           )}
-          
+
           {progressSaved && (
             <Box sx={{ 
               mb: 4, 
@@ -1982,7 +2227,10 @@ export default function HouseholdLevel4() {
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
             <Button 
               variant="contained"
-              onClick={goToHome}
+              onClick={() => {
+                playBloopSound();
+                goToHome();
+              }}
               sx={{ 
                 backgroundColor: '#FF595E',
                 px: 4,
@@ -1997,6 +2245,7 @@ export default function HouseholdLevel4() {
             <Button 
               variant="outlined"
               onClick={() => {
+                playBloopSound();
                 resetGame();
                 setGameCompleted(false);
               }}
@@ -2009,21 +2258,7 @@ export default function HouseholdLevel4() {
             >
               🔄 Play Again
             </Button>
-            <Button 
-              variant="contained"
-              onClick={handleContinue}
-              disabled={progressSaving}
-              sx={{ 
-                backgroundColor: '#90BE6D',
-                px: 4,
-                minWidth: '140px',
-                '&:hover': {
-                  backgroundColor: '#7DA95D'
-                }
-              }}
-            >
-              {progressSaving ? 'Saving...' : '➡️ Next Module'}
-            </Button>
+            
           </Box>
         </Box>
       </Dialog>

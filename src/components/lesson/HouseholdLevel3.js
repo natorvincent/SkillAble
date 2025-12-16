@@ -166,7 +166,7 @@ export default function HouseholdLevel3() {
   ];
 
   const progressPercentage = ((currentStep + (gameCompleted ? 1 : 0)) / steps.length) * 100;
-  const { lessonId } = useParams();
+  const { lessonId, moduleId } = useParams();
 
   // Sound functions
   const playCorrectSound = () => {
@@ -259,26 +259,29 @@ export default function HouseholdLevel3() {
 
   // Get student ID from localStorage
   const getStudentId = () => {
-    const studentId = localStorage.getItem('studentId');
-    const userRole = localStorage.getItem('userRole');
-    
-    if (userRole !== 'STUDENT') {
-      console.error('User is not a student:', userRole);
+    try {
+      const studentId = localStorage.getItem('studentId');
+      
+      console.log('Retrieving student ID:', { studentId });
+      
+      // Check if we have a valid student ID
+      if (!studentId || studentId === 'null' || studentId === 'undefined') {
+        console.warn('No student ID found');
+        return null;
+      }
+      
+      const parsedId = parseInt(studentId, 10);
+      if (isNaN(parsedId)) {
+        console.warn('Invalid student ID format:', studentId);
+        return null;
+      }
+      
+      console.log('Successfully retrieved student ID:', parsedId);
+      return parsedId;
+    } catch (error) {
+      console.error('Error retrieving student ID:', error);
       return null;
     }
-    
-    if (!studentId || studentId === 'null') {
-      console.error('No student ID found in localStorage');
-      return null;
-    }
-    
-    const parsedId = parseInt(studentId, 10);
-    if (isNaN(parsedId)) {
-      console.error('Invalid student ID format:', studentId);
-      return null;
-    }
-    
-    return parsedId;
   };
 
   const getStepMessage = (step, includeDishName = true) => {
@@ -333,6 +336,17 @@ export default function HouseholdLevel3() {
     
     fetchUserProgress();
   }, [lessonId]);
+
+  useEffect(() => {
+    const saveProgressOnComplete = async () => {
+      if (gameCompleted && !progressSaved && !progressSaving) {
+        console.log('Game completed, auto-saving progress...');
+        await saveProgress();
+      }
+    };
+    
+    saveProgressOnComplete();
+  }, [gameCompleted, progressSaved, progressSaving]);
 
   // Page navigation handlers
   const goToGame = () => {
@@ -540,62 +554,45 @@ export default function HouseholdLevel3() {
     try {
       setProgressSaving(true);
       const studentId = getStudentId();
+      const lessonIdNum = parseInt(lessonId, 10);
       
-      if (!studentId || !lessonId) {
-        console.error('Cannot save progress - missing data:', { studentId, lessonId });
-        return;
+      console.log('Saving progress with:', { studentId, lessonId: lessonIdNum });
+      
+      if (!studentId || !lessonIdNum) {
+        throw new Error(`Missing IDs: studentId=${studentId}, lessonId=${lessonIdNum}`);
       }
       
-      const cappedScore = Math.min(score, MAX_POSSIBLE_SCORE);
+      const cappedScore = Math.min(score, 100);
       const finalScore = cappedScore;
+      
+      const progressData = {
+        score: finalScore,
+        maxScore: 100,
+        completed: true,
+        starsEarned: getStarRating(),
+        moduleId: moduleId ? parseInt(moduleId, 10) : null
+      };
       
       console.log('Attempting to save progress with data:', {
         studentId,
-        lessonId: parseInt(lessonId, 10),
-        score: finalScore,
-        maxScore: MAX_POSSIBLE_SCORE,
-        completed: true,
-        starsEarned: getStarRating()
+        lessonId: lessonIdNum,
+        ...progressData
       });
       
-      const progressData = {
-        studentId: studentId,
-        lessonId: parseInt(lessonId, 10),
-        score: finalScore,
-        maxScore: MAX_POSSIBLE_SCORE,
-        completed: true,
-        starsEarned: getStarRating()
-      };
+      const result = await saveStudentLessonProgress(studentId, lessonIdNum, progressData);
       
-      try {
-        const lessonProgress = await saveStudentLessonProgress(studentId, lessonId, progressData);
-        console.log('Lesson progress saved successfully:', lessonProgress);
-      } catch (lessonError) {
-        console.error('Failed to save lesson progress:', lessonError);
+      console.log('Progress save result:', result);
+      
+      if (result.success || result.queued) {
+        setProgressSaved(true);
+        console.log('Progress saved or queued successfully');
+      } else {
+        throw new Error('Progress save failed');
       }
-      
-      try {
-        const moduleId = 4;
-        const moduleProgress = await updateModuleProgress(studentId, moduleId, {
-          score: finalScore,
-          completed: true,
-          starsEarned: getStarRating()
-        });
-        if (moduleProgress) {
-          console.log('Module progress updated successfully:', moduleProgress);
-        } else {
-          console.log('Module progress update skipped (endpoint may not exist)');
-        }
-      } catch (moduleError) {
-        console.log('Module progress update failed (expected if endpoint not available):', moduleError);
-      }
-      
-      setProgressSaved(true);
-      console.log('Progress saving process completed');
       
     } catch (error) {
       console.error('Error in save progress process:', error);
-      setProgressSaved(true);
+      setProgressSaved(false);
     } finally {
       setProgressSaving(false);
     }
@@ -826,14 +823,26 @@ export default function HouseholdLevel3() {
       backgroundMusicRef.current.currentTime = 0;
       backgroundMusicRef.current.play().catch(e => console.log('Background music restart failed:', e));
     }
+    setProgressSaving(false);
+    setProgressSaved(false);
   };
 
   // Handle continue to next module
   const handleContinue = async () => {
+    console.log('Continue clicked, progress state:', { progressSaved, progressSaving });
+    
     if (!progressSaved && !progressSaving) {
+      console.log('Saving progress before continue...');
       await saveProgress();
+    } else if (progressSaving) {
+      console.log('Progress is currently saving, please wait...');
+      return;
     }
-    navigate(`/lesson/household-chores/level-4/${lessonId}`);
+    
+    console.log('Navigating...');
+    setTimeout(() => {
+      navigate(`/lesson/household-chores/level-4/${lessonId}`);
+    }, 300);
   };
 
   // Render different pages based on currentPage state
