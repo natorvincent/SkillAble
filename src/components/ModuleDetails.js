@@ -12,7 +12,8 @@ import {
   Stack,
   Card,
   CardContent,
-  CardActions
+  CardActions,
+  Dialog
 } from '@mui/material';
 import {
   BookOutlined,
@@ -38,6 +39,16 @@ import AudioToggleButton from "../components/background music/AudioToggleButton"
 import backgroundMusic from '../assets/background-music.mp3';
 import exitbtn from '../assets/exitbtn.png';
 
+// Import badge images for the claim popup
+import FirstLessonIcon from '../assets/badges/first_lesson.png';
+import StarMasterIcon from '../assets/badges/star_master.png';
+import FirstModuleIcon from '../assets/badges/first_module.png';
+import SuperLearnerIcon from '../assets/badges/super_learner.png';
+
+// Import audio files for badge popups
+import congratulationsSound from '../assets/badges/success-sound.mp3';
+import badgeSound from '../assets/badges/badge.mp3';
+
 function ModuleDetails() {
   const { moduleId } = useParams();
   const navigate = useNavigate();
@@ -51,6 +62,12 @@ function ModuleDetails() {
   const [progressStats, setProgressStats] = useState(null);
   const [lessonProgress, setLessonProgress] = useState({});
   const { audioPlaying, toggleAudio } = useGlobalBackgroundMusic(backgroundMusic);
+  
+  // New state for badge claiming
+  const [newBadgeUnlocked, setNewBadgeUnlocked] = useState(null);
+  const [showBadgeModal, setShowBadgeModal] = useState(false);
+  const [claimedBadges, setClaimedBadges] = useState({});
+  const [previousProgress, setPreviousProgress] = useState(null);
 
   const moduleImages = [
     module1,
@@ -71,11 +88,41 @@ function ModuleDetails() {
         setError('Failed to load module data. Please try again.');
         setLoading(false);
       });
+    
+    // Load claimed badges from localStorage
+    const savedClaimedBadges = localStorage.getItem('claimedBadges');
+    if (savedClaimedBadges) {
+      setClaimedBadges(JSON.parse(savedClaimedBadges));
+    }
   }, [moduleId]);
   
   const getModuleImage = (moduleId) => {
     const index = moduleId ? (moduleId - 1) % moduleImages.length : 0;
     return moduleImages[index];
+  };
+
+  // Function to play badge sounds
+  const playBadgeSounds = () => {
+    try {
+      // Create audio elements
+      const congratsAudio = new Audio(congratulationsSound);
+      const badgeAudio = new Audio(badgeSound);
+      
+      // Set volume (0 to 1)
+      congratsAudio.volume = 0.7;
+      badgeAudio.volume = 0.7;
+      
+      // Play congratulations sound first
+      congratsAudio.play().catch(e => console.log('Error playing congratulations sound:', e));
+      
+      // Play badge sound after a short delay
+      setTimeout(() => {
+        badgeAudio.play().catch(e => console.log('Error playing badge sound:', e));
+      }, 500);
+      
+    } catch (error) {
+      console.error('Error playing badge sounds:', error);
+    }
   };
 
   const fetchModuleProgress = async () => {
@@ -87,7 +134,14 @@ function ModuleDetails() {
       const moduleProgressResponse = await getStudentModuleProgress(studentId, moduleId);
       setModuleProgress(moduleProgressResponse);
       
-      const progressStatsResponse = await getStudentModuleProgressStats(studentId, moduleId);
+      const progressStatsResponse = await getStudentModuleProgressStats(studentId);
+      console.log("Current progress stats:", progressStatsResponse);
+      
+      // Check for new badges when we get progress stats
+      if (progressStatsResponse) {
+        checkForNewBadges(progressStatsResponse);
+      }
+      
       setProgressStats(progressStatsResponse);
     } catch (error) {
       console.error('Error fetching module progress:', error);
@@ -181,32 +235,144 @@ function ModuleDetails() {
     }
   };
 
+  // Helper function to calculate badges based on progress
+  const calculateBadges = (stats) => {
+    if (!stats) return [];
+    
+    const completedLessons = Number(stats.completedLessons) || 0;
+    const totalStars = Number(stats.totalStars) || 0;
+    const completedModules = Number(stats.completedModules) || 0;
+
+    const badges = [
+      // First Lesson Badge
+      {
+        id: 'first-lesson',
+        label: 'First Lesson',
+        earned: completedLessons >= 1,
+        description: 'Complete your first lesson',
+        icon: FirstLessonIcon,
+        progress: completedLessons >= 1 ? '1/1' : '0/1'
+      },
+      // First Module Badge
+      {
+        id: 'first-module',
+        label: 'First Module',
+        earned: completedModules >= 1,
+        description: 'Complete your first module',
+        icon: FirstModuleIcon,
+        progress: completedModules >= 1 ? '1/1' : '0/1'
+      },
+      // Super Learner Badge
+      {
+        id: 'super-learner',
+        label: 'Super Learner',
+        earned: completedLessons >= 10,
+        description: 'Complete 10 lessons',
+        icon: SuperLearnerIcon,
+        progress: `${completedLessons}/10`
+      },
+      // Star Master Badge
+      {
+        id: 'star-master',
+        label: 'Star Master',
+        earned: totalStars >= 15,
+        description: 'Earn 15 stars',
+        icon: StarMasterIcon,
+        progress: `⭐ ${totalStars}/15`
+      },
+      // Module Legend Badge 
+      {
+        id: 'module-legend',
+        label: 'Module Legend',
+        earned: completedModules >= 3,
+        description: 'Complete 3 modules',
+        icon: FirstModuleIcon, // Using same icon for now
+        progress: `${completedModules}/3`
+      }
+    ];
+
+    return badges;
+  };
+
+  // Check for newly unlocked badges
+  const checkForNewBadges = (currentStats) => {
+    const savedClaimedBadges = JSON.parse(localStorage.getItem('claimedBadges') || '{}');
+    
+    // Calculate badges based on current progress
+    const currentBadges = calculateBadges(currentStats);
+    
+    // Find badges that are earned but not claimed
+    const newlyEarnedBadges = currentBadges.filter(badge => 
+      badge.earned && !savedClaimedBadges[badge.id]
+    );
+    
+    if (newlyEarnedBadges.length > 0) {
+      // Play congratulation sounds when badge pops up
+      playBadgeSounds();
+      
+      // Show the first newly earned badge
+      setNewBadgeUnlocked(newlyEarnedBadges[0]);
+      setShowBadgeModal(true);
+    }
+  };
+
+  // Handle claiming a badge
+  const handleClaimBadge = () => {
+    if (newBadgeUnlocked) {
+      // Mark this badge as claimed
+      const updatedClaimedBadges = {
+        ...claimedBadges,
+        [newBadgeUnlocked.id]: true
+      };
+      
+      // Save to localStorage
+      localStorage.setItem('claimedBadges', JSON.stringify(updatedClaimedBadges));
+      setClaimedBadges(updatedClaimedBadges);
+      
+      // Close modal
+      setShowBadgeModal(false);
+      setNewBadgeUnlocked(null);
+      
+      // Show success notification
+      setNotification({
+        message: `Congratulations! You've earned the "${newBadgeUnlocked.label}" badge!`,
+        severity: 'success'
+      });
+    }
+  };
+
   const handleStartLesson = (lesson, index) => {
     console.log("🚀 Starting lesson:", lesson);
     console.log("📍 Module ID:", moduleId);
     
+    // Save current progress before starting lesson
+    const studentId = localStorage.getItem('studentId') || localStorage.getItem('userId');
+    if (studentId) {
+      getStudentModuleProgressStats(studentId)
+        .then(stats => {
+          localStorage.setItem('previousProgress', JSON.stringify(stats));
+        })
+        .catch(error => console.error('Error saving previous progress:', error));
+    }
+    
     // Check if the lesson has a custom activity path
     if (lesson.activityPath) {
-      // Special handling for hygiene Level 2 that needs moduleId
       if (lesson.activityPath === '/lesson/hygiene/level-2') {
         const navigationPath = `${lesson.activityPath}/${moduleId}/${lesson.id}`;
         console.log("📍 Navigating to hygiene level 2:", navigationPath);
         navigate(navigationPath);
       } 
-      // ADD THIS: Special handling for hygiene Level 3 that also needs moduleId
       else if (lesson.activityPath === '/lesson/hygiene/level-3') {
         const navigationPath = `${lesson.activityPath}/${moduleId}/${lesson.id}`;
         console.log("📍 Navigating to hygiene level 3:", navigationPath);
         navigate(navigationPath);
       }
       else {
-        // All other lessons (including hygiene level 1) use original format
         const navigationPath = `${lesson.activityPath}/${lesson.id}`;
         console.log("📍 Navigating to other lesson:", navigationPath);
         navigate(navigationPath);
       }
     } else {
-      // Default lesson route
       console.log("📍 Navigating to default lesson route");
       navigate(`/lessons/${lesson.id}`);
     }
@@ -268,6 +434,134 @@ function ModuleDetails() {
       </div>
       <div style={{ position: "relative", zIndex: 1, minHeight: "100vh" }}>
         <Navbar />
+        
+        {/* Badge Claim Modal */}
+        <Dialog
+          open={showBadgeModal}
+          onClose={() => setShowBadgeModal(false)}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: '20px',
+              background: 'white',
+              color: 'white',
+              textAlign: 'center',
+              overflow: 'hidden'
+            }
+          }}
+        >
+          <Box sx={{ 
+            position: 'relative',
+            padding: { xs: 3, sm: 4, md: 5 }
+          }}>
+      
+            <Typography variant="h4" 
+            sx={{ 
+              fontWeight: 'bold', 
+              mb: 2,
+              color: '#280b60'
+              }}>
+              🎉 Congratulations! 🎉
+            </Typography>
+            
+            <Typography variant="h6" sx={{ mb: 3, color: '#280b60' }}>
+              You've unlocked a new badge!
+            </Typography>
+            
+            {newBadgeUnlocked && (
+              <Box sx={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                alignItems: 'center',
+                mb: 3
+              }}>
+                  <img 
+                    src={newBadgeUnlocked.icon} 
+                    alt={newBadgeUnlocked.label}
+                    style={{ width: 200, height: 200 }}
+                  />
+   
+                <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1, color: '#280b60' }}>
+                  {newBadgeUnlocked.label}
+                </Typography>
+                
+                <Typography variant="body1" sx={{ mb: 2, color: '#280b60' }}>
+                  {newBadgeUnlocked.description}
+                </Typography>
+              </Box>
+            )}
+            
+            <Button
+  variant="contained"
+  onClick={handleClaimBadge}
+  sx={{
+    background: 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)',
+    color: '#2c3e50',
+    fontWeight: 'bold',
+    fontSize: '18px',
+    padding: '12px 40px',
+    borderRadius: '25px',
+    boxShadow: '0 4px 15px rgba(255, 255, 255, 0.3)', // Initial white shadow
+    animation: 'pulseGlow 2s infinite', // Added animation
+    position: 'relative',
+    overflow: 'hidden',
+    '&:hover': {
+      background: 'linear-gradient(135deg, #ffed4e 0%, #ffd700 100%)',
+      transform: 'scale(1.05)',
+      animation: 'none', // Stop animation on hover
+    },
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: '-50%',
+      left: '-50%',
+      width: '200%',
+      height: '200%',
+      background: 'linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.5), transparent)',
+      transform: 'rotate(45deg)',
+      animation: 'shimmer 2.5s infinite', // White shimmer effect
+    },
+    transition: 'all 0.3s ease',
+    // Keyframes for white pulse and glow effect
+    '@keyframes pulseGlow': {
+      '0%': {
+        boxShadow: '0 4px 15px rgba(255, 255, 255, 0.3)',
+        transform: 'scale(1)',
+      },
+      '50%': {
+        boxShadow: '0 0 25px rgba(255, 255, 255, 0.8), 0 0 35px rgba(255, 255, 255, 0.6), 0 0 45px rgba(255, 255, 255, 0.4)',
+        transform: 'scale(1.08)',
+      },
+      '100%': {
+        boxShadow: '0 4px 15px rgba(255, 255, 255, 0.3)',
+        transform: 'scale(1)',
+      },
+    },
+    // Keyframes for white shimmer effect
+    '@keyframes shimmer': {
+      '0%': {
+        transform: 'translateX(-100%) rotate(45deg)',
+      },
+      '100%': {
+        transform: 'translateX(100%) rotate(45deg)',
+      },
+    },
+  }}
+>
+  {/* Add a subtle arrow icon to hint clicking */}
+  <Box component="span" sx={{ 
+    display: 'inline-flex', 
+    alignItems: 'center',
+    gap: 1,
+    position: 'relative',
+    zIndex: 2, // Ensure text stays above the shimmer
+  }}>
+    Claim Your Badge!
+  </Box>
+</Button>
+          </Box>
+        </Dialog>
         
         <Container maxWidth="lg" sx={{ py: { xs: 3, sm: 4, md: 5 }, px: { xs: 2, sm: 3 } }}>
           
@@ -347,7 +641,7 @@ function ModuleDetails() {
                           borderRadius: '20px 20px 50px 20px',
                           border: '1px solid',
                           borderColor: completed ? '#4caf50' : '#e0e0e0',
-                          backgroundColor: completed ? 'rgba(76, 175, 80, 0.05)' : 'white',
+                          backgroundColor: 'white',
                           transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                           position: 'relative',
                           display: 'flex',
@@ -378,27 +672,7 @@ function ModuleDetails() {
                             <CheckCircle />
                           </Box>
                         )}
-                        
-                        {hasActivity && !completed && (
-                          <Box 
-                            sx={{ 
-                              position: 'absolute', 
-                              top: 10, 
-                              right: 10, 
-                              bgcolor: '#4a6cf7',
-                              color: 'white',
-                              borderRadius: '12px',
-                              px: 1,
-                              py: 0.5,
-                              zIndex: 1,
-                              boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-                            }}
-                          >
-                            <Typography variant="caption" fontWeight="bold">
-                              Interactive
-                            </Typography>
-                          </Box>
-                        )}
+              
                         
                         <Box
                           sx={{
